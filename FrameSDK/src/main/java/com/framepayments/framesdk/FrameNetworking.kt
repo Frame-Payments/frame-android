@@ -66,7 +66,6 @@ object FrameNetworking {
         val request = requestBuilder.build()
 
         return try {
-            // Execute the request using our asyncURLSession.
             val response = asyncURLSession.execute(request)
             if (debugMode) {
                 println("API Endpoint: ${response.request.url}")
@@ -83,7 +82,6 @@ object FrameNetworking {
         } catch (e: UnknownHostException) {
             Pair(null, NetworkingError.InvalidURL)
         } catch (e: IOException) {
-            // Depending on the error, you could distinguish decoding issues.
             Pair(null, NetworkingError.UnknownError)
         } catch (e: Exception) {
             Pair(null, NetworkingError.UnknownError)
