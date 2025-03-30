@@ -10,7 +10,7 @@ data class QueryItem(val name: String, val value: String?)
 interface FrameNetworkingEndpoints {
     val endpointURL: String
     val httpMethod: String
-    val queryItems: List<QueryItem>? // Find replacement for URLQueryItem
+    val queryItems: List<QueryItem>?
 }
 
 sealed class NetworkingError : Exception() {
