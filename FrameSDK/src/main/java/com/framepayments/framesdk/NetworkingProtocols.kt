@@ -1,6 +1,7 @@
 package com.framepayments.framesdk
 import okhttp3.Request
 import okhttp3.Response
+import com.google.gson.annotations.SerializedName
 
 interface URLSessionProtocol {
     suspend fun execute(request: Request): Response
@@ -12,6 +13,12 @@ interface FrameNetworkingEndpoints {
     val httpMethod: String
     val queryItems: List<QueryItem>?
 }
+
+data class FrameMetadata(
+    val page: Int,
+    val url: String,
+    @SerializedName("has_more") val hasMore: Boolean
+)
 
 sealed class NetworkingError : Exception() {
     data object InvalidURL : NetworkingError() {
