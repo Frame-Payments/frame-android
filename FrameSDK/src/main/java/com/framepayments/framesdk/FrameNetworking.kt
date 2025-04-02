@@ -19,8 +19,7 @@ class DefaultURLSession : URLSessionProtocol {
 }
 
 object FrameNetworking {
-    private val gson: Gson = Gson()
-
+    val gson: Gson = Gson()
     var asyncURLSession: URLSessionProtocol = DefaultURLSession()
 
     private val okHttpClient: OkHttpClient = OkHttpClient()
