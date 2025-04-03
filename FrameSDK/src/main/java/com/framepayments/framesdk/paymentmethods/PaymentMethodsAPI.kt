@@ -93,7 +93,13 @@ class PaymentMethodsAPI {
 
     suspend fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest): FrameObjects.PaymentMethod? {
         val endpoint = PaymentMethodEndpoints.AttachPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
+        val requestBody: ByteArray? = try {
+            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
+        } catch (e: Exception) {
+            null
+        }
+
+        val (data, _) = FrameNetworking.performDataTask(endpoint, requestBody)
 
         if (data != null) {
             return try {
@@ -142,6 +148,126 @@ class PaymentMethodsAPI {
                         PaymentMethodResponses.ListPaymentMethodsResponse::class.java
                     )
                     completionHandler(decodedResponse.data)
+                } catch (e: Exception) {
+                    completionHandler(null)
+                }
+            } else {
+                completionHandler(null)
+            }
+        }
+    }
+
+    fun getPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.GetPaymentMethodWith(paymentMethodId = paymentMethodId)
+
+        FrameNetworking.performDataTask(endpoint) { data, response, error ->
+            if (data != null) {
+                try {
+                    val jsonString = String(data, Charsets.UTF_8)
+                    val decodedResponse = FrameNetworking.gson.fromJson(
+                        jsonString,
+                        FrameObjects.PaymentMethod::class.java
+                    )
+                    completionHandler(decodedResponse)
+                } catch (e: Exception) {
+                    completionHandler(null)
+                }
+            } else {
+                completionHandler(null)
+            }
+        }
+    }
+
+    fun createPaymentMethod(request: PaymentMethodRequests.CreatePaymentMethodRequest, encryptData: Boolean = true, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
+        val requestBody: ByteArray? = try {
+            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
+        } catch (e: Exception) {
+            null
+        }
+
+        FrameNetworking.performDataTask(endpoint, requestBody) { data, response, error ->
+            if (data != null) {
+                try {
+                    val jsonString = String(data, Charsets.UTF_8)
+                    val decodedResponse = FrameNetworking.gson.fromJson(
+                        jsonString,
+                        FrameObjects.PaymentMethod::class.java
+                    )
+                    completionHandler(decodedResponse)
+                } catch (e: Exception) {
+                    completionHandler(null)
+                }
+            } else {
+                completionHandler(null)
+            }
+        }
+    }
+
+    fun updatePaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.UpdatePaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.UpdatePaymentMethodWith(paymentMethodId = paymentMethodId)
+        val requestBody: ByteArray? = try {
+            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
+        } catch (e: Exception) {
+            null
+        }
+
+        FrameNetworking.performDataTask(endpoint, requestBody) { data, response, error ->
+            if (data != null) {
+                try {
+                    val jsonString = String(data, Charsets.UTF_8)
+                    val decodedResponse = FrameNetworking.gson.fromJson(
+                        jsonString,
+                        FrameObjects.PaymentMethod::class.java
+                    )
+                    completionHandler(decodedResponse)
+                } catch (e: Exception) {
+                    completionHandler(null)
+                }
+            } else {
+                completionHandler(null)
+            }
+        }
+    }
+
+    fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.AttachPaymentMethodWith(paymentMethodId = paymentMethodId)
+        val requestBody: ByteArray? = try {
+            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
+        } catch (e: Exception) {
+            null
+        }
+
+        FrameNetworking.performDataTask(endpoint, requestBody) { data, response, error ->
+            if (data != null) {
+                try {
+                    val jsonString = String(data, Charsets.UTF_8)
+                    val decodedResponse = FrameNetworking.gson.fromJson(
+                        jsonString,
+                        FrameObjects.PaymentMethod::class.java
+                    )
+                    completionHandler(decodedResponse)
+                } catch (e: Exception) {
+                    completionHandler(null)
+                }
+            } else {
+                completionHandler(null)
+            }
+        }
+    }
+
+    fun detachPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.DetachPaymentMethodWith(paymentMethodId = paymentMethodId)
+
+        FrameNetworking.performDataTask(endpoint) { data, response, error ->
+            if (data != null) {
+                try {
+                    val jsonString = String(data, Charsets.UTF_8)
+                    val decodedResponse = FrameNetworking.gson.fromJson(
+                        jsonString,
+                        FrameObjects.PaymentMethod::class.java
+                    )
+                    completionHandler(decodedResponse)
                 } catch (e: Exception) {
                     completionHandler(null)
                 }
