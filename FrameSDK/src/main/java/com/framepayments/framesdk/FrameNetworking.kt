@@ -31,6 +31,17 @@ object FrameNetworking {
         debugMode = debug
     }
 
+    inline fun <reified T> parseResponse(data: ByteArray?): T? {
+        if (data == null) return null
+
+        return try {
+            val jsonString = String(data, Charsets.UTF_8)
+            FrameNetworking.gson.fromJson(jsonString, T::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
         requestBody: ByteArray? = null
