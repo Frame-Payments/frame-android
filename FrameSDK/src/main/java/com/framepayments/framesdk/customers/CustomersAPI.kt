@@ -5,13 +5,7 @@ class CustomersAPI {
     //MARK: Methods using coroutines
     suspend fun createCustomer(request: CustomersRequests.CreateCustomerRequest): Customer? {
         val endpoint = CustomersEndpoints.CreateCustomer
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
-
-        val (data, _) = FrameNetworking.performDataTask(endpoint, requestBody)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
             return FrameNetworking.parseResponse<Customer>(data)
@@ -21,13 +15,7 @@ class CustomersAPI {
 
     suspend fun updateCustomer(customerId: String, request: CustomersRequests.UpdateCustomerRequest): Customer? {
         val endpoint = CustomersEndpoints.UpdateCustomer(customerId)
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
-
-        val (data, _) = FrameNetworking.performDataTask(endpoint, requestBody)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
             return FrameNetworking.parseResponse<Customer>(data)
@@ -37,7 +25,6 @@ class CustomersAPI {
 
     suspend fun getCustomers(page: Int? = null, perPage: Int? = null): List<Customer>? {
         val endpoint = CustomersEndpoints.GetCustomers(perPage = perPage, page = page)
-
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
@@ -48,7 +35,6 @@ class CustomersAPI {
 
     suspend fun getCustomerWith(customerId: String): Customer? {
         val endpoint = CustomersEndpoints.GetCustomerWith(customerId)
-
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
@@ -59,13 +45,7 @@ class CustomersAPI {
 
     suspend fun searchCustomers(request: CustomersRequests.SearchCustomersRequest): List<Customer>? {
         val endpoint = CustomersEndpoints.SearchCustomers
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
-
-        val (data, _) = FrameNetworking.performDataTask(endpoint, requestBody)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
             return FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data)?.data
@@ -75,7 +55,6 @@ class CustomersAPI {
 
     suspend fun deleteCustomer(customerId: String): Customer? {
         val endpoint = CustomersEndpoints.DeleteCustomer(customerId)
-
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
@@ -87,13 +66,8 @@ class CustomersAPI {
     //MARK: Methods using callbacks
     fun createCustomer(request: CustomersRequests.CreateCustomerRequest, completionHandler: (Customer?) -> Unit) {
         val endpoint = CustomersEndpoints.CreateCustomer
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
 
-        FrameNetworking.performDataTask(endpoint, requestBody) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<Customer>(data))
             } else {
@@ -104,13 +78,8 @@ class CustomersAPI {
 
     fun updateCustomer(customerId: String, request: CustomersRequests.UpdateCustomerRequest, completionHandler: (Customer?) -> Unit) {
         val endpoint = CustomersEndpoints.UpdateCustomer(customerId)
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
 
-        FrameNetworking.performDataTask(endpoint, requestBody) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<Customer>(data))
             } else {
@@ -145,13 +114,8 @@ class CustomersAPI {
 
     suspend fun searchCustomers(request: CustomersRequests.SearchCustomersRequest, completionHandler: (List<Customer>?) -> Unit) {
         val endpoint = CustomersEndpoints.SearchCustomers
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data)?.data)
             } else {

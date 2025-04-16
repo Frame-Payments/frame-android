@@ -1,8 +1,6 @@
 package com.framepayments.framesdk
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -22,9 +20,9 @@ object FrameNetworking {
     val gson: Gson = Gson()
     var asyncURLSession: URLSessionProtocol = DefaultURLSession()
 
-    private val okHttpClient: OkHttpClient = OkHttpClient()
-    private var apiKey: String = ""
-    private var debugMode: Boolean = false
+    val okHttpClient: OkHttpClient = OkHttpClient()
+    var apiKey: String = ""
+    var debugMode: Boolean = false
 
     fun initializeWithAPIKey(key: String, debug: Boolean = false) {
         apiKey = key
@@ -43,8 +41,7 @@ object FrameNetworking {
     }
 
     suspend fun performDataTask(
-        endpoint: FrameNetworkingEndpoints,
-        requestBody: ByteArray? = null
+        endpoint: FrameNetworkingEndpoints
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = NetworkingConstants.MAIN_API_URL
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -63,6 +60,60 @@ object FrameNetworking {
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
             .header("User-Agent", "Android")
+
+        val method = endpoint.httpMethod.uppercase()
+        requestBuilder.method(method, null)
+        val request = requestBuilder.build()
+
+        return try {
+            val response = asyncURLSession.execute(request)
+            if (debugMode) {
+                println("API Endpoint: ${response.request.url}")
+                val responseData = response.body?.bytes()
+                printDataForTesting(responseData)
+            }
+            if (!response.isSuccessful) {
+                Pair(null, NetworkingError.ServerError(response.code))
+            } else {
+                val data = response.body?.bytes()
+                Pair(data, null)
+            }
+        } catch (e: UnknownHostException) {
+            Pair(null, NetworkingError.InvalidURL)
+        } catch (e: IOException) {
+            Pair(null, NetworkingError.UnknownError)
+        } catch (e: Exception) {
+            Pair(null, NetworkingError.UnknownError)
+        }
+    }
+
+    internal suspend inline fun <reified T> performDataTaskWithRequest(
+        endpoint: FrameNetworkingEndpoints,
+        request: T? = null
+    ): Pair<ByteArray?, NetworkingError?> {
+        val baseUrl = NetworkingConstants.MAIN_API_URL
+        val fullUrl = baseUrl + endpoint.endpointURL
+
+        var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return Pair(null, NetworkingError.InvalidURL)
+
+        endpoint.queryItems?.let { queryItems ->
+            val urlBuilder = httpUrl.newBuilder()
+            for (item in queryItems) {
+                urlBuilder.addQueryParameter(item.name, item.value)
+            }
+            httpUrl = urlBuilder.build()
+        }
+
+        val requestBuilder = Request.Builder()
+            .url(httpUrl)
+            .header("Authorization", "Bearer $apiKey")
+            .header("User-Agent", "Android")
+
+        val requestBody: ByteArray? = try {
+            gson.toJson(request).toByteArray(Charsets.UTF_8)
+        } catch (e: Exception) {
+            null
+        }
 
         val method = endpoint.httpMethod.uppercase()
         if (method == "POST" || method == "PATCH") {
@@ -100,7 +151,6 @@ object FrameNetworking {
 
     fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
-        requestBody: ByteArray? = null,
         completion: (data: ByteArray?, response: Response?, error: Exception?) -> Unit
     ) {
         val baseUrl = NetworkingConstants.MAIN_API_URL
@@ -119,6 +169,49 @@ object FrameNetworking {
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
             .header("User-Agent", "Android")
+
+        val method = endpoint.httpMethod.uppercase()
+        requestBuilder.method(method, null)
+        val request = requestBuilder.build()
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                completion(null, null, e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                completion(response.body?.bytes(), response, null)
+            }
+        })
+    }
+
+    inline fun <reified T> performDataTaskWithRequest(
+        endpoint: FrameNetworkingEndpoints,
+        request: T? = null,
+        crossinline completion: (data: ByteArray?, response: Response?, error: Exception?) -> Unit
+    ) {
+        val baseUrl = NetworkingConstants.MAIN_API_URL
+        val fullUrl = baseUrl + endpoint.endpointURL
+
+        var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, null, IllegalArgumentException("Invalid URL"))
+        endpoint.queryItems?.let { queryItems ->
+            val urlBuilder = httpUrl.newBuilder()
+            for (item in queryItems) {
+                urlBuilder.addQueryParameter(item.name, item.value)
+            }
+            httpUrl = urlBuilder.build()
+        }
+
+        val requestBuilder = Request.Builder()
+            .url(httpUrl)
+            .header("Authorization", "Bearer $apiKey")
+            .header("User-Agent", "Android")
+
+        val requestBody: ByteArray? = try {
+            gson.toJson(request).toByteArray(Charsets.UTF_8)
+        } catch (e: Exception) {
+            null
+        }
 
         val method = endpoint.httpMethod.uppercase()
         if (method == "POST" || method == "PATCH") {
