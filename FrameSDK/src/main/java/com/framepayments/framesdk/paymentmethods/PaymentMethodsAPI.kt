@@ -8,8 +8,7 @@ class PaymentMethodsAPI {
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
-            val response = FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)
-            return response?.data
+            return FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data
         }
         return null
     }
@@ -77,16 +76,7 @@ class PaymentMethodsAPI {
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
-            return try {
-                val jsonString = String(data, Charsets.UTF_8)
-                val response = FrameNetworking.gson.fromJson(
-                    jsonString,
-                    PaymentMethod::class.java
-                )
-                response
-            } catch (e: Exception) {
-                null
-            }
+            return FrameNetworking.parseResponse<PaymentMethod>(data)
         }
         return null
     }
