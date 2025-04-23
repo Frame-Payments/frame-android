@@ -1,5 +1,6 @@
 package com.framepayments.framesdk.paymentmethods
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.FrameObjects
 
 class PaymentMethodsAPI {
     //MARK: Methods using coroutines
@@ -8,16 +9,7 @@ class PaymentMethodsAPI {
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
-            return try {
-                val jsonString = String(data, Charsets.UTF_8)
-                val response = FrameNetworking.gson.fromJson(
-                    jsonString,
-                    PaymentMethodResponses.ListPaymentMethodsResponse::class.java
-                )
-                response.data
-            } catch (e: Exception) {
-                null
-            }
+            return FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data
         }
         return null
     }
@@ -27,91 +19,37 @@ class PaymentMethodsAPI {
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
-            return try {
-                val jsonString = String(data, Charsets.UTF_8)
-                val response = FrameNetworking.gson.fromJson(
-                    jsonString,
-                    FrameObjects.PaymentMethod::class.java
-                )
-                response
-            } catch (e: Exception) {
-                null
-            }
+            return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
         }
         return null
     }
 
     suspend fun createPaymentMethod(request: PaymentMethodRequests.CreatePaymentMethodRequest, encryptData: Boolean = true): FrameObjects.PaymentMethod? {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
-
-        val (data, _) = FrameNetworking.performDataTask(endpoint, requestBody)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
-            return try {
-                val jsonString = String(data, Charsets.UTF_8)
-                val response = FrameNetworking.gson.fromJson(
-                    jsonString,
-                    FrameObjects.PaymentMethod::class.java
-                )
-                response
-            } catch (e: Exception) {
-                null
-            }
+            return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
         }
         return null
     }
 
     suspend fun updatePaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.UpdatePaymentMethodRequest): FrameObjects.PaymentMethod? {
-        val endpoint = PaymentMethodEndpoints.UpdatePaymentMethodWith(paymentMethodId = paymentMethodId)
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
-
-        val (data, _) = FrameNetworking.performDataTask(endpoint, requestBody)
+        val endpoint = PaymentMethodEndpoints.UpdatePaymentMethodWith(paymentMethodId)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
-            return try {
-                val jsonString = String(data, Charsets.UTF_8)
-                val response = FrameNetworking.gson.fromJson(
-                    jsonString,
-                    FrameObjects.PaymentMethod::class.java
-                )
-                response
-            } catch (e: Exception) {
-                null
-            }
+            return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
         }
         return null
     }
 
     suspend fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest): FrameObjects.PaymentMethod? {
         val endpoint = PaymentMethodEndpoints.AttachPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
-
-        val (data, _) = FrameNetworking.performDataTask(endpoint, requestBody)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
-            return try {
-                val jsonString = String(data, Charsets.UTF_8)
-                val response = FrameNetworking.gson.fromJson(
-                    jsonString,
-                    FrameObjects.PaymentMethod::class.java
-                )
-                response
-            } catch (e: Exception) {
-                null
-            }
+            return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
         }
         return null
     }
@@ -121,16 +59,7 @@ class PaymentMethodsAPI {
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
-            return try {
-                val jsonString = String(data, Charsets.UTF_8)
-                val response = FrameNetworking.gson.fromJson(
-                    jsonString,
-                    FrameObjects.PaymentMethod::class.java
-                )
-                response
-            } catch (e: Exception) {
-                null
-            }
+            return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
         }
         return null
     }
@@ -141,16 +70,7 @@ class PaymentMethodsAPI {
 
         FrameNetworking.performDataTask(endpoint) { data, response, error ->
             if (data != null) {
-                try {
-                    val jsonString = String(data, Charsets.UTF_8)
-                    val decodedResponse = FrameNetworking.gson.fromJson(
-                        jsonString,
-                        PaymentMethodResponses.ListPaymentMethodsResponse::class.java
-                    )
-                    completionHandler(decodedResponse.data)
-                } catch (e: Exception) {
-                    completionHandler(null)
-                }
+                completionHandler(FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data)
             } else {
                 completionHandler(null)
             }
@@ -162,16 +82,7 @@ class PaymentMethodsAPI {
 
         FrameNetworking.performDataTask(endpoint) { data, response, error ->
             if (data != null) {
-                try {
-                    val jsonString = String(data, Charsets.UTF_8)
-                    val decodedResponse = FrameNetworking.gson.fromJson(
-                        jsonString,
-                        FrameObjects.PaymentMethod::class.java
-                    )
-                    completionHandler(decodedResponse)
-                } catch (e: Exception) {
-                    completionHandler(null)
-                }
+                completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
             } else {
                 completionHandler(null)
             }
@@ -180,24 +91,10 @@ class PaymentMethodsAPI {
 
     fun createPaymentMethod(request: PaymentMethodRequests.CreatePaymentMethodRequest, encryptData: Boolean = true, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
 
-        FrameNetworking.performDataTask(endpoint, requestBody) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
-                try {
-                    val jsonString = String(data, Charsets.UTF_8)
-                    val decodedResponse = FrameNetworking.gson.fromJson(
-                        jsonString,
-                        FrameObjects.PaymentMethod::class.java
-                    )
-                    completionHandler(decodedResponse)
-                } catch (e: Exception) {
-                    completionHandler(null)
-                }
+                completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
             } else {
                 completionHandler(null)
             }
@@ -205,25 +102,11 @@ class PaymentMethodsAPI {
     }
 
     fun updatePaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.UpdatePaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
-        val endpoint = PaymentMethodEndpoints.UpdatePaymentMethodWith(paymentMethodId = paymentMethodId)
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
+        val endpoint = PaymentMethodEndpoints.UpdatePaymentMethodWith(paymentMethodId)
 
-        FrameNetworking.performDataTask(endpoint, requestBody) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
-                try {
-                    val jsonString = String(data, Charsets.UTF_8)
-                    val decodedResponse = FrameNetworking.gson.fromJson(
-                        jsonString,
-                        FrameObjects.PaymentMethod::class.java
-                    )
-                    completionHandler(decodedResponse)
-                } catch (e: Exception) {
-                    completionHandler(null)
-                }
+                completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
             } else {
                 completionHandler(null)
             }
@@ -231,25 +114,11 @@ class PaymentMethodsAPI {
     }
 
     fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
-        val endpoint = PaymentMethodEndpoints.AttachPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val requestBody: ByteArray? = try {
-            FrameNetworking.gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
-            null
-        }
+        val endpoint = PaymentMethodEndpoints.AttachPaymentMethodWith(paymentMethodId)
 
-        FrameNetworking.performDataTask(endpoint, requestBody) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
-                try {
-                    val jsonString = String(data, Charsets.UTF_8)
-                    val decodedResponse = FrameNetworking.gson.fromJson(
-                        jsonString,
-                        FrameObjects.PaymentMethod::class.java
-                    )
-                    completionHandler(decodedResponse)
-                } catch (e: Exception) {
-                    completionHandler(null)
-                }
+                completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
             } else {
                 completionHandler(null)
             }
@@ -257,20 +126,11 @@ class PaymentMethodsAPI {
     }
 
     fun detachPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
-        val endpoint = PaymentMethodEndpoints.DetachPaymentMethodWith(paymentMethodId = paymentMethodId)
+        val endpoint = PaymentMethodEndpoints.DetachPaymentMethodWith(paymentMethodId)
 
         FrameNetworking.performDataTask(endpoint) { data, response, error ->
             if (data != null) {
-                try {
-                    val jsonString = String(data, Charsets.UTF_8)
-                    val decodedResponse = FrameNetworking.gson.fromJson(
-                        jsonString,
-                        FrameObjects.PaymentMethod::class.java
-                    )
-                    completionHandler(decodedResponse)
-                } catch (e: Exception) {
-                    completionHandler(null)
-                }
+                completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
             } else {
                 completionHandler(null)
             }

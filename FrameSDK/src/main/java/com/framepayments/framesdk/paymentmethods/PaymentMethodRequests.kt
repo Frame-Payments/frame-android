@@ -1,6 +1,6 @@
 package com.framepayments.framesdk.paymentmethods
-
 import com.google.gson.annotations.SerializedName
+import com.framepayments.framesdk.FrameObjects
 
 object PaymentMethodRequests {
     data class CreatePaymentMethodRequest(
