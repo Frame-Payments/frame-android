@@ -90,7 +90,7 @@ class ChargeIntentAPI {
     fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest, completionHandler: (ChargeIntent?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.CaptureChargeIntent(intentId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<ChargeIntent>(data))
             } else {
