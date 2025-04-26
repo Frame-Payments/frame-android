@@ -35,6 +35,20 @@ object FrameObjects {
         @SerializedName("last_four") val lastFourDigits: String
     )
 
+    data class Customer(
+        val id: String,
+        val created: Int,
+        val updated: Int?,
+        val livemode: Boolean,
+        val name: String,
+        val phone: String?,
+        val email: String?,
+        val description: String?,
+        @SerializedName("object") val customerObject: String?,
+        @SerializedName("shipping_address") val shippingAddress: BillingAddress?,
+        @SerializedName("billing_address") val billingAddress: BillingAddress?,
+        @SerializedName("payment_methods") val paymentMethods: List<PaymentMethod>?
+    )
 }
 
 data class QueryItem(val name: String, val value: String?)
