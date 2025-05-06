@@ -6,7 +6,6 @@ interface URLSessionProtocol {
     suspend fun execute(request: Request): Response
 }
 
-data class QueryItem(val name: String, val value: String?)
 interface FrameNetworkingEndpoints {
     val endpointURL: String
     val httpMethod: String
