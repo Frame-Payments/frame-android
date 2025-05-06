@@ -15,9 +15,9 @@ sealed class  SubscriptionEndpoints: FrameNetworkingEndpoints {
             is CreateSubscription, is GetSubscriptions ->
                 "/v1/subscriptions"
             is GetSubscriptionWith ->
-                "/v1/customers/${this.subscriptionId}"
+                "/v1/subscriptions/${this.subscriptionId}"
             is UpdateSubscription ->
-                "/v1/customers/${this.subscriptionId}"
+                "/v1/subscriptions/${this.subscriptionId}"
             is SearchSubscriptions ->
                 "/v1/subscriptions/search"
             is CancelSubscription ->
