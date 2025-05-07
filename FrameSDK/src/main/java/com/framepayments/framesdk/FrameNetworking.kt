@@ -34,7 +34,7 @@ object FrameNetworking {
 
         return try {
             val jsonString = String(data, Charsets.UTF_8)
-            FrameNetworking.gson.fromJson(jsonString, T::class.java)
+            gson.fromJson(jsonString, T::class.java)
         } catch (e: Exception) {
             null
         }
@@ -60,6 +60,7 @@ object FrameNetworking {
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
             .header("User-Agent", "Android")
+            .header("X-Package-Version", BuildConfig.SDK_VERSION)
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -108,6 +109,7 @@ object FrameNetworking {
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
             .header("User-Agent", "Android")
+            .header("X-Package-Version", BuildConfig.SDK_VERSION)
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
@@ -169,6 +171,7 @@ object FrameNetworking {
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
             .header("User-Agent", "Android")
+            .header("X-Package-Version", BuildConfig.SDK_VERSION)
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -206,6 +209,7 @@ object FrameNetworking {
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
             .header("User-Agent", "Android")
+            .header("X-Package-Version", BuildConfig.SDK_VERSION)
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
