@@ -7,9 +7,15 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import java.io.IOException
 import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
 
 class DefaultURLSession : URLSessionProtocol {
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .callTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(20, TimeUnit.SECONDS)
+        .writeTimeout(20, TimeUnit.SECONDS)
+        .build()
 
     override suspend fun execute(request: Request): Response = withContext(Dispatchers.IO) {
         client.newCall(request).execute()
@@ -20,7 +26,12 @@ object FrameNetworking {
     val gson: Gson = Gson()
     var asyncURLSession: URLSessionProtocol = DefaultURLSession()
 
-    val okHttpClient: OkHttpClient = OkHttpClient()
+    val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+        .callTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(20, TimeUnit.SECONDS)
+        .writeTimeout(20, TimeUnit.SECONDS)
+        .build()
     const val currentVersion = BuildConfig.SDK_VERSION
     var apiKey: String = ""
     var debugMode: Boolean = false
