@@ -21,6 +21,7 @@ object FrameNetworking {
     var asyncURLSession: URLSessionProtocol = DefaultURLSession()
 
     val okHttpClient: OkHttpClient = OkHttpClient()
+    const val currentVersion = BuildConfig.SDK_VERSION
     var apiKey: String = ""
     var debugMode: Boolean = false
 
@@ -59,8 +60,7 @@ object FrameNetworking {
         val requestBuilder = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android")
-            .header("X-Package-Version", BuildConfig.SDK_VERSION)
+            .header("User-Agent", "Android/$currentVersion")
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -108,8 +108,7 @@ object FrameNetworking {
         val requestBuilder = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android")
-            .header("X-Package-Version", BuildConfig.SDK_VERSION)
+            .header("User-Agent", "Android/$currentVersion")
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
@@ -170,8 +169,7 @@ object FrameNetworking {
         val requestBuilder = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android")
-            .header("X-Package-Version", BuildConfig.SDK_VERSION)
+            .header("User-Agent", "Android/$currentVersion")
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -208,8 +206,7 @@ object FrameNetworking {
         val requestBuilder = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android")
-            .header("X-Package-Version", BuildConfig.SDK_VERSION)
+            .header("User-Agent", "Android/$currentVersion")
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
