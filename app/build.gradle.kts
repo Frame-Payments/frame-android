@@ -36,7 +36,8 @@ android {
 }
 
 dependencies {
-
+    implementation(project(":FrameSDK"))
+    implementation(project(":FrameSDK-UI"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

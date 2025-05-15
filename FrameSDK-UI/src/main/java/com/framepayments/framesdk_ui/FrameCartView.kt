@@ -44,7 +44,9 @@ class FrameCartView @JvmOverloads constructor(
         // summary rows
         binding.subtotalLabel.text = context.getString(R.string.subtotal)
         binding.subtotalValue.text = CurrencyFormatter.convertCentsToCurrencyString(viewModel.subtotal)
+        binding.shippingLabel.text = context.getString(R.string.shipping)
         binding.shippingValue.text = CurrencyFormatter.convertCentsToCurrencyString(viewModel.shippingAmount)
+        binding.totalLabel.text = context.getString(R.string.total)
         binding.totalValue.text = CurrencyFormatter.convertCentsToCurrencyString(viewModel.finalTotal)
 
         // button

@@ -1,5 +1,5 @@
 <resources>
-    <string name="cart_title">Frame Cart</string>
+    <string name="cart_title">Cart</string>
     <string name="subtotal">Subtotal</string>
     <string name="shipping">Shipping</string>
     <string name="total">Total</string>
