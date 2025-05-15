@@ -33,10 +33,10 @@ android {
 }
 
 dependencies {
-    implementation("io.coil-kt:coil:2.6.0")      // image loader
-    implementation(project(":FrameSDK"))         // if core logic module exists
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-    implementation("androidx.cardview:cardview:1.0.0")
+    implementation(libs.coil)
+    implementation(project(":FrameSDK"))
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.cardview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
