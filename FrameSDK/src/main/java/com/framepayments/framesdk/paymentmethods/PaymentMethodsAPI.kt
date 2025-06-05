@@ -24,12 +24,12 @@ class PaymentMethodsAPI {
         return null
     }
 
-    suspend fun getPaymentMethodWithCustomer(customerId: String): FrameObjects.PaymentMethod? {
+    suspend fun getPaymentMethodsWithCustomer(customerId: String): List<FrameObjects.PaymentMethod>? {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
-            return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
+            return FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data
         }
         return null
     }
@@ -99,12 +99,12 @@ class PaymentMethodsAPI {
         }
     }
 
-    fun getPaymentMethodWithCustomer(customerId: String, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+    fun getPaymentMethodsWithCustomer(customerId: String, completionHandler: (List<FrameObjects.PaymentMethod>?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
 
         FrameNetworking.performDataTask(endpoint) { data, response, error ->
             if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
+                completionHandler(FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data)
             } else {
                 completionHandler(null)
             }
