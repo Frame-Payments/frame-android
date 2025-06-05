@@ -35,12 +35,17 @@ android {
 dependencies {
     implementation(libs.coil)
     implementation(project(":FrameSDK"))
+    implementation(libs.evervault.core)
+    implementation(libs.evervault.inputs)
+    implementation(libs.evervault.enclaves)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+    implementation(libs.coil)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
 }

@@ -39,7 +39,11 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.evervault.core)
+    implementation(libs.evervault.inputs)
+    implementation(libs.evervault.enclaves)
     implementation(libs.material)
     implementation(libs.okhttp)
     implementation(libs.gson)
