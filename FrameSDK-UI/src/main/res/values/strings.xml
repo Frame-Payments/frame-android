@@ -5,9 +5,13 @@
     <string name="total">Total</string>
     <string name="checkout">Checkout</string>
     <string name="or">Or</string>
+    <string name="card_information">Card Information</string>
     <string name="card_number">Card number</string>
     <string name="country">Country or region</string>
+    <string name="us">United States</string>
     <string name="zip">ZIP</string>
+    <string name="cvc">CVC</string>
     <string name="save_for_future">Save this card for future payments</string>
     <string name="pay_amount">Pay %s</string>
+    <string name="mm_yy">MM/YY</string>
 </resources>

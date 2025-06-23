@@ -20,9 +20,8 @@ class FrameCartView @JvmOverloads constructor(
         ViewFrameCartBinding.inflate(LayoutInflater.from(context), this, true)
 
     private lateinit var viewModel: FrameCartViewModel
-    private var listener: ((Int) -> Unit)? = null // returns final total when checkout tapped
+    private var listener: ((Int) -> Unit)? = null
 
-    /** Call from host app */
     fun configure(
         customer: FrameObjects.Customer?,
         items: List<FrameCartItem>,
