@@ -12,9 +12,9 @@ class GooglePayButton @JvmOverloads constructor(
     init {
         setIconResource(R.drawable.ic_google_pay)
         iconPadding = 0
-        iconGravity  = ICON_GRAVITY_TEXT_START
+        iconTint = null
+        iconGravity = ICON_GRAVITY_TEXT_START
         text = ""
-        strokeWidth = 0
         cornerRadius = 10
         setBackgroundColor(resources.getColor(android.R.color.black, null))
     }

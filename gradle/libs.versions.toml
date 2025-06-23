@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.0"
+agp = "8.10.1"
 cardview = "1.0.0"
 coil = "2.6.0"
 evervaultCore = "1.2"
