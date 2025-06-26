@@ -1,102 +1,170 @@
 package com.framepayments.framesdk_ui
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.framepayments.framesdk.FrameObjects.BillingAddress
-import com.framepayments.framesdk.FrameObjects.PaymentMethod
+import androidx.lifecycle.*
+import com.evervault.sdk.input.model.card.PaymentCardData
+import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.AuthorizationMode
-import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
+import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntentsRequests
+import com.framepayments.framesdk.customers.CustomersAPI
+import com.framepayments.framesdk.customers.CustomersRequests
+import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.evervault.sdk.input.model.card.PaymentCardData
+import kotlinx.coroutines.withContext
 
-class FrameCheckoutViewModel(
-    private val paymentAPI: PaymentMethodsAPI = PaymentMethodsAPI(),
-    private val chargeAPI: ChargeIntentAPI = ChargeIntentAPI()
-) : ViewModel() {
+class FrameCheckoutViewModel : ViewModel() {
 
-    private val _customerPaymentOptions = MutableStateFlow<List<PaymentMethod>?>(null)
+    // Observable customer payment options
+    private val _customerPaymentOptions = MutableLiveData<List<FrameObjects.PaymentMethod>?>(null)
+    val customerPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _customerPaymentOptions
 
-    val customerPaymentOptions: StateFlow<List<PaymentMethod>?> = _customerPaymentOptions
-    val customerCountry = MutableStateFlow("United States")
-    val customerZipCode = MutableStateFlow("")
-    val selectedOption = MutableStateFlow<PaymentMethod?>(null)
+    // Customer fields
+    val customerName = MutableLiveData("")
+    val customerEmail = MutableLiveData("")
+    val customerAddressLine1 = MutableLiveData("")
+    val customerAddressLine2 = MutableLiveData("")
+    val customerCity = MutableLiveData("")
+    val customerState = MutableLiveData("")
+    val customerCountry = MutableLiveData("United States")
+    val customerZipCode = MutableLiveData("")
 
-    val cardData = MutableStateFlow(PaymentCardData())
+    // Selected payment method and raw card data
+    var selectedCustomerPaymentOption: FrameObjects.PaymentMethod? = null
+    var cardData: PaymentCardData = PaymentCardData()
 
-    private var customerId: String = ""
-    private var amountInCents: Int = 0
+    // Internal tracking
+    private var currentCustomerId: String? = null
+    private var amount: Int = 0
 
-    fun loadCustomerPaymentMethods(customerId: String, amount: Int) {
-        this.customerId = customerId
-        this.amountInCents = amount
+    fun loadCustomerPaymentMethods(customerId: String?, amount: Int) {
+        this.amount = amount
+        if (customerId == null) return
+        currentCustomerId = customerId
 
-        viewModelScope.launch {
-            _customerPaymentOptions.value =
-                kotlin.runCatching<List<PaymentMethod>?> {
-                    paymentAPI.getPaymentMethodsWithCustomer(customerId)
-                }.getOrNull()
+        viewModelScope.launch(Dispatchers.IO) {
+            val customer = try {
+                CustomersAPI.getCustomerWith(customerId)
+            } catch (_: Exception) {
+                null
+            }
+            withContext(Dispatchers.Main) {
+                _customerPaymentOptions.value = customer?.paymentMethods
+                customerName.value = customer?.name ?: ""
+                customerEmail.value = customer?.email ?: ""
+            }
         }
     }
 
-    /* TODO: Integrate Pay-with-Android / Google Pay */
-    fun payWithGooglePay() { /* stub */  }
-    fun payWithApplePay()  { /* stub */  }
+    fun payWithApplePay() {
+        // TODO: implement Apple Pay flow
+    }
 
-    fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean) {
-        viewModelScope.launch {
-            val pm = selectedOption.value ?: createPaymentMethod() ?: return@launch
+    fun payWithGooglePay() {
+        // TODO: implement Google Pay flow
+    }
 
-            val req = ChargeIntentsRequests.CreateChargeIntentRequest(
-                amount = amountInCents,
-                currency = "USD",
-                customer = customerId,
-                description = "",
-                paymentMethod = pm?.id,
-                confirm  = true,
-                receiptEmail = null,
-                authorizationMode = AuthorizationMode.automatic,
-                customerData = null,
-                paymentMethodData = null
+    fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean): LiveData<ChargeIntent?> = liveData(Dispatchers.IO) {
+        if (amount == 0) {
+            emit(null)
+            return@liveData
+        }
+
+        // Determine or create payment method
+        val paymentMethodId = selectedCustomerPaymentOption?.id ?: run {
+            if (customerZipCode.value?.length != 5) {
+                emit(null)
+                return@liveData
+            }
+            val (newPmId, newCustId) = try {
+                createPaymentMethod(currentCustomerId)
+            } catch (_: Exception) {
+                Pair<String?, String?>(null, null)
+            }
+            currentCustomerId = newCustId
+            newPmId
+        }
+
+        if (paymentMethodId == null) {
+            emit(null)
+            return@liveData
+        }
+
+        // Build the charge intent request
+        val request = ChargeIntentsRequests.CreateChargeIntentRequest(
+            amount = amount,
+            currency = "usd",
+            customer = currentCustomerId,
+            description = "",
+            paymentMethod = paymentMethodId,
+            confirm = true,
+            receiptEmail = null,
+            authorizationMode = AuthorizationMode.automatic,
+            customerData = null,
+            paymentMethodData = null
+        )
+
+        // Create and emit the intent
+        val intent = try {
+            ChargeIntentAPI.createChargeIntent(request)
+        } catch (_: Exception) {
+            null
+        }
+        emit(intent)
+    }
+
+    private suspend fun createPaymentMethod(customerId: String? = null): Pair<String?, String?> {
+        if (customerCountry.value.isNullOrEmpty() ||
+            customerZipCode.value.isNullOrEmpty() ||
+            !cardData.isPotentiallyValid
+        ) return Pair(null, null)
+
+        val billingAddress = FrameObjects.BillingAddress(
+            city = customerCity.value.orEmpty(),
+            country = convertCustomerCountry(),
+            state = customerState.value.orEmpty(),
+            postalCode = customerZipCode.value.orEmpty(),
+            addressLine1 = customerAddressLine1.value.orEmpty(),
+            addressLine2 = customerAddressLine2.value.orEmpty()
+        )
+
+        // 1. Create or reuse customer
+        val newCustId = customerId ?: run {
+            val custReq = CustomersRequests.CreateCustomerRequest(
+                billingAddress = billingAddress,
+                name = customerName.value.orEmpty(),
+                email = customerEmail.value.orEmpty(),
+                shippingAddress = null,
+                phone = null,
+                description = null,
+                metadata = null
             )
-
-            runCatching { chargeAPI.createChargeIntent(req) }.onSuccess { /* handle */ }
-
-            if (saveMethod) attachPaymentMethod(pm.id)
+            val cust = CustomersAPI.createCustomer(custReq)
+            cust?.id.takeIf { it?.isNotEmpty() == true } ?: return Pair(null, null)
         }
+
+        // 2. Create payment method
+        val pmReq = PaymentMethodRequests.CreatePaymentMethodRequest(
+            type = "card",
+            cardNumber = cardData.card.number,
+            expMonth = cardData.card.expMonth,
+            expYear = cardData.card.expYear,
+            cvc = cardData.card.cvc,
+            customer = null,
+            billing = billingAddress
+        )
+        val pm = PaymentMethodsAPI.createPaymentMethod(pmReq, encryptData = false)
+        val pmId = pm?.id ?: return Pair(null, null)
+
+        // 3. Attach to customer
+        val attachReq = PaymentMethodRequests.AttachPaymentMethodRequest(customer = newCustId)
+        val attached = PaymentMethodsAPI.attachPaymentMethodWith(pmId, attachReq)
+        return Pair(attached?.id, newCustId)
     }
 
-    private suspend fun createPaymentMethod(): PaymentMethod? {
-
-        if (customerZipCode.value.length != 5) return null
-
-        val billing = BillingAddress(
-            country = customerCountry.value,
-            postalCode  = customerZipCode.value
-        )
-
-        val req = PaymentMethodRequests.CreatePaymentMethodRequest(
-            type = cardData.value.card.type?.brand.orEmpty(),
-            cardNumber = cardData.value.card.number,
-            expMonth = cardData.value.card.expMonth,
-            expYear = cardData.value.card.expYear,
-            cvc = cardData.value.card.cvc,
-            customer = customerId,
-            billing = billing
-        )
-
-        return runCatching { paymentAPI.createPaymentMethod(req) }.getOrNull()
-    }
-
-    private suspend fun attachPaymentMethod(paymentMethodId: String) {
-        val attachReq = PaymentMethodRequests.AttachPaymentMethodRequest(
-            customer = customerId
-        )
-
-        runCatching { paymentAPI.attachPaymentMethodWith(paymentMethodId, attachReq) }
+    private fun convertCustomerCountry(): String {
+        return "US"
     }
 }
