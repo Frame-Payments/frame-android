@@ -2,7 +2,7 @@ package com.framepayments.framesdk.paymentmethods
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 
-class PaymentMethodsAPI {
+object PaymentMethodsAPI {
     //MARK: Methods using coroutines
     suspend fun getPaymentMethods(page: Int? = null, perPage: Int? = null): List<FrameObjects.PaymentMethod>? {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethods(perPage = perPage, page = page)

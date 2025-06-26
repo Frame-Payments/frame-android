@@ -2,7 +2,7 @@ package com.framepayments.framesdk.customers
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 
-class CustomersAPI {
+object CustomersAPI {
     //MARK: Methods using coroutines
     suspend fun createCustomer(request: CustomersRequests.CreateCustomerRequest): FrameObjects.Customer? {
         val endpoint = CustomersEndpoints.CreateCustomer

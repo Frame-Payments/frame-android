@@ -3,7 +3,7 @@ import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentEndpoints
 
-class RefundsAPI {
+object RefundsAPI {
     //MARK: Methods using coroutines
     suspend fun createRefund(request: RefundRequests.CreateRefundRequest): Refund? {
         val endpoint = RefundEndpoints.CreateRefund

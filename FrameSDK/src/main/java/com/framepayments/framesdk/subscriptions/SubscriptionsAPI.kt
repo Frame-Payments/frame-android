@@ -1,7 +1,7 @@
 package com.framepayments.framesdk.subscriptions
 import com.framepayments.framesdk.FrameNetworking
 
-class SubscriptionsAPI {
+object SubscriptionsAPI {
     //MARK: Methods using coroutines
     suspend fun createSubscription(request: SubscriptionRequest.CreateSubscriptionRequest) : Subscription? {
         val endpoint = SubscriptionEndpoints.CreateSubscription
