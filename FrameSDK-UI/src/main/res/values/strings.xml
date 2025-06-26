@@ -14,4 +14,5 @@
     <string name="save_for_future">Save this card for future payments</string>
     <string name="pay_amount">Pay %s</string>
     <string name="mm_yy">MM/YY</string>
+    <string name="close">close</string>
 </resources>

@@ -14,7 +14,11 @@ android {
         consumerProguardFiles("consumer-rules.pro")
         vectorDrawables.useSupportLibrary = true
     }
-    buildFeatures { viewBinding = true }
+    buildFeatures {
+        viewBinding = true
+        //noinspection DataBindingWithoutKapt
+        dataBinding = true
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
