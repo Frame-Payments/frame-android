@@ -46,14 +46,18 @@ class FrameCheckoutViewModel : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             val customer = try {
-                CustomersAPI.getCustomerWith(customerId)
-            } catch (_: Exception) {
+                CustomersAPI.getCustomerWith(customerId).also {
+                    println("Customer response: $it")
+                }
+            } catch (e: Exception) {
+                println("Error loading customer: ${e.message}")
                 null
             }
             withContext(Dispatchers.Main) {
                 _customerPaymentOptions.value = customer?.paymentMethods
                 customerName.value = customer?.name ?: ""
                 customerEmail.value = customer?.email ?: ""
+
             }
         }
     }

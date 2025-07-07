@@ -38,14 +38,11 @@ class FrameCheckoutView @JvmOverloads constructor(
     var checkoutCallback: ((ChargeIntent) -> Unit)? = null
 
     init {
-        // Acquire ViewModel
         val activity = (context as? AppCompatActivity)
             ?: throw IllegalArgumentException("FrameCheckoutView must be used in an AppCompatActivity")
         viewModel = ViewModelProvider(activity)[FrameCheckoutViewModel::class.java]
 
-        // Wire up UI
         binding.closeButton.setOnClickListener { (context as Activity).finish() }
-
         binding.applePayBtn.setOnClickListener { viewModel.payWithApplePay() }
         binding.googlePayBtn.setOnClickListener { viewModel.payWithGooglePay() }
 
@@ -69,9 +66,7 @@ class FrameCheckoutView @JvmOverloads constructor(
             }
         }
 
-        // Two-way bindings
         binding.zip.doAfterTextChanged { viewModel.customerZipCode.value = it.toString() }
-
         binding.countryRegion.setOnClickListener {
             // TODO: Change Country Drawer when other countries are supported.
         }
@@ -95,7 +90,7 @@ class FrameCheckoutView @JvmOverloads constructor(
                 binding.paymentOptionsContainer,
                 false
             )
-            itemBinding.paymentCardText.text = "${option.card?.brand.orEmpty()} ${option.card?.lastFourDigits.orEmpty()}"
+            itemBinding.paymentCardText.text = "${option.card?.brand.orEmpty().replaceFirstChar { it.uppercase() }} ${option.card?.lastFourDigits.orEmpty()}"
             val color = if (viewModel.selectedCustomerPaymentOption == option)
                 ContextCompat.getColor(context, R.color.black)
             else
