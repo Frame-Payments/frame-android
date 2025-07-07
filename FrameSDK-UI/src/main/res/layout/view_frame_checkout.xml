@@ -103,11 +103,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
-<!--        <com.evervault.sdk.input.ui.card.RowsPaymentCard-->
-<!--            android:id="@+id/paymentCardInput"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="90dp" />-->
-
         <TextView
             android:id="@+id/country_region"
             android:text="@string/country"
