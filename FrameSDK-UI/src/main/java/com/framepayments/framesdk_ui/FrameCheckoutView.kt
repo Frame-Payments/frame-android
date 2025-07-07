@@ -79,7 +79,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         findViewById<ComposeView>(R.id.evervaultCompose).setContent {
             MaterialTheme {
                 RowsPaymentCard(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     onDataChange = { data -> viewModel.cardData = data }
                 )
             }

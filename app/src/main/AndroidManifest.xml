@@ -24,8 +24,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-    <!-- Other activities / services / receivers can go here -->
+        <activity
+            android:name=".CheckoutActivity" />
     </application>
 
 </manifest>

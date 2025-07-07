@@ -23,7 +23,7 @@ class FrameCartView @JvmOverloads constructor(
     private var listener: ((Int) -> Unit)? = null
 
     fun configure(
-        customer: FrameObjects.Customer?,
+        customerId: String?,
         items: List<FrameCartItem>,
         shippingCents: Int,
         onCheckout: (Int) -> Unit

@@ -16,16 +16,19 @@ class CartTestActivity : AppCompatActivity() {
             FrameCartItem("1", "Coffee Mug", 1299, "https://m.media-amazon.com/images/I/61NWeN3zY1L._AC_UF894,1000_QL80_.jpg"),
             FrameCartItem("2", "T-Shirt", 2599, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP2BAKInCCh3PZ5BwPdCBOk1v92vBLOgsgVw&s")
         )
+        val customerId = "0"
 
         val cartView = FrameCartView(this).apply {
             configure(
-                customer = null,
+                customerId = customerId,
                 items = items,
                 shippingCents = 500
             ) { total ->
-                android.widget.Toast
-                    .makeText(context, "Total cents: $total", android.widget.Toast.LENGTH_SHORT)
-                    .show()
+                val intent = android.content.Intent(this@CartTestActivity, CheckoutActivity::class.java).apply {
+                    putExtra("totalCents", total)
+                    putExtra("customerId", customerId)
+                }
+                startActivity(intent)
             }
         }
 
