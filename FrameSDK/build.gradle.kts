@@ -48,6 +48,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.gson)
     testImplementation(libs.junit)
+    testImplementation(libs.mockwebserver)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
