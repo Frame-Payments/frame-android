@@ -135,17 +135,16 @@ object FrameNetworking {
 
         return try {
             val response = asyncURLSession.execute(request)
+            val responseData = response.body?.bytes()
             if (debugMode) {
                 println("API Endpoint: ${response.request.url}")
                 printDataForTesting(requestBody)
-                val responseData = response.body?.bytes()
                 printDataForTesting(responseData)
             }
             if (!response.isSuccessful) {
                 Pair(null, NetworkingError.ServerError(response.code))
             } else {
-                val data = response.body?.bytes()
-                Pair(data, null)
+                Pair(responseData, null)
             }
         } catch (e: UnknownHostException) {
             Pair(null, NetworkingError.InvalidURL)
