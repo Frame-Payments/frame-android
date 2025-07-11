@@ -2,7 +2,7 @@ val sdkVersion = "1.0.0"
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    kotlin("android") version "2.2.0"
 }
 
 android {
@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.gson)
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver)
+    testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

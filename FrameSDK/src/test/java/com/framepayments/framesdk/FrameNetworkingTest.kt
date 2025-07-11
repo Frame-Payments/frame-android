@@ -1,13 +1,16 @@
 package com.framepayments.framesdk
 
 import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(org.robolectric.RobolectricTestRunner::class)
 class FrameNetworkingTest {
 
     private lateinit var mockWebServer: MockWebServer
@@ -16,7 +19,11 @@ class FrameNetworkingTest {
     fun setUp() {
         mockWebServer = MockWebServer()
         mockWebServer.start()
-        NetworkingConstants.MAIN_API_URL = mockWebServer.url("/").toString()
+
+        val testClient = OkHttpClient.Builder().build()
+        FrameNetworking.asyncURLSession = DefaultURLSession(testClient)
+
+        FrameNetworking.mainApiUrl = mockWebServer.url("/").toString()
         FrameNetworking.apiKey = "test_api_key"
         FrameNetworking.debugMode = true
     }
