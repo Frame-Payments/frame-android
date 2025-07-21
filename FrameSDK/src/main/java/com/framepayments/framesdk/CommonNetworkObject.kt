@@ -51,6 +51,10 @@ object FrameObjects {
     )
 }
 
+data class EmptyRequest (
+    val description: String?
+)
+
 data class QueryItem(val name: String, val value: String?)
 
 data class FrameMetadata(
