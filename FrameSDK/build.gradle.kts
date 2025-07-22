@@ -10,7 +10,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
         buildConfigField("String", "SDK_VERSION", "\"${sdkVersion}\"")
@@ -39,7 +39,11 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.evervault.core)
+    implementation(libs.evervault.inputs)
+    implementation(libs.evervault.enclaves)
     implementation(libs.material)
     implementation(libs.okhttp)
     implementation(libs.gson)

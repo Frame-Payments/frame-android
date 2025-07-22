@@ -2,7 +2,7 @@ package com.framepayments.framesdk.chargeintents
 
 import com.framepayments.framesdk.FrameNetworking
 
-class ChargeIntentAPI {
+object ChargeIntentAPI {
     //MARK: Methods using coroutines
     suspend fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest): ChargeIntent? {
         val endpoint = ChargeIntentEndpoints.CreateChargeIntent
