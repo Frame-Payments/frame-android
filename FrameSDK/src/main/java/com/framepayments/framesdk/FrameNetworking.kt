@@ -9,14 +9,7 @@ import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
-class DefaultURLSession : URLSessionProtocol {
-    private val client = OkHttpClient.Builder()
-        .callTimeout(30, TimeUnit.SECONDS)
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .writeTimeout(20, TimeUnit.SECONDS)
-        .build()
-
+class DefaultURLSession(private val client: OkHttpClient) : URLSessionProtocol {
     override suspend fun execute(request: Request): Response = withContext(Dispatchers.IO) {
         client.newCall(request).execute()
     }
@@ -24,14 +17,17 @@ class DefaultURLSession : URLSessionProtocol {
 
 object FrameNetworking {
     val gson: Gson = Gson()
-    var asyncURLSession: URLSessionProtocol = DefaultURLSession()
 
-    val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .callTimeout(30, TimeUnit.SECONDS)
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .writeTimeout(20, TimeUnit.SECONDS)
-        .build()
+    val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .callTimeout(30, TimeUnit.SECONDS)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .writeTimeout(20, TimeUnit.SECONDS)
+            .build()
+    }
+    var asyncURLSession: URLSessionProtocol = DefaultURLSession(okHttpClient)
+    var mainApiUrl: String = NetworkingConstants.MAIN_API_URL
     const val currentVersion = BuildConfig.SDK_VERSION
     var apiKey: String = ""
     var debugMode: Boolean = false
@@ -55,7 +51,7 @@ object FrameNetworking {
     suspend fun performDataTask(
         endpoint: FrameNetworkingEndpoints
     ): Pair<ByteArray?, NetworkingError?> {
-        val baseUrl = NetworkingConstants.MAIN_API_URL
+        val baseUrl = mainApiUrl
         val fullUrl = baseUrl + endpoint.endpointURL
 
         var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return Pair(null, NetworkingError.InvalidURL)
@@ -79,16 +75,15 @@ object FrameNetworking {
 
         return try {
             val response = asyncURLSession.execute(request)
+            val responseData = response.body?.bytes()
             if (debugMode) {
                 println("API Endpoint: ${response.request.url}")
-                val responseData = response.body?.bytes()
                 printDataForTesting(responseData)
             }
             if (!response.isSuccessful) {
                 Pair(null, NetworkingError.ServerError(response.code))
             } else {
-                val data = response.body?.bytes()
-                Pair(data, null)
+                Pair(responseData, null)
             }
         } catch (e: UnknownHostException) {
             Pair(null, NetworkingError.InvalidURL)
@@ -103,7 +98,7 @@ object FrameNetworking {
         endpoint: FrameNetworkingEndpoints,
         request: T? = null
     ): Pair<ByteArray?, NetworkingError?> {
-        val baseUrl = NetworkingConstants.MAIN_API_URL
+        val baseUrl = mainApiUrl
         val fullUrl = baseUrl + endpoint.endpointURL
 
         var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return Pair(null, NetworkingError.InvalidURL)
@@ -140,17 +135,16 @@ object FrameNetworking {
 
         return try {
             val response = asyncURLSession.execute(request)
+            val responseData = response.body?.bytes()
             if (debugMode) {
                 println("API Endpoint: ${response.request.url}")
                 printDataForTesting(requestBody)
-                val responseData = response.body?.bytes()
                 printDataForTesting(responseData)
             }
             if (!response.isSuccessful) {
                 Pair(null, NetworkingError.ServerError(response.code))
             } else {
-                val data = response.body?.bytes()
-                Pair(data, null)
+                Pair(responseData, null)
             }
         } catch (e: UnknownHostException) {
             Pair(null, NetworkingError.InvalidURL)
