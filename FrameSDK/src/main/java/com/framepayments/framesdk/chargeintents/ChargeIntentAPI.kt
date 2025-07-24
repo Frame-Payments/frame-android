@@ -1,5 +1,6 @@
 package com.framepayments.framesdk.chargeintents
 
+import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 
 object ChargeIntentAPI {
@@ -26,7 +27,7 @@ object ChargeIntentAPI {
 
     suspend fun confirmChargeIntent(intentId: String): ChargeIntent? {
         val endpoint = ChargeIntentEndpoints.ConfirmChargeIntent(intentId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
 
         if (data != null) {
             return FrameNetworking.parseResponse<ChargeIntent>(data)
@@ -36,7 +37,7 @@ object ChargeIntentAPI {
 
     suspend fun cancelChargeIntent(intentId: String): ChargeIntent? {
         val endpoint = ChargeIntentEndpoints.CancelChargeIntent(intentId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
 
         if (data != null) {
             return FrameNetworking.parseResponse<ChargeIntent>(data)
@@ -102,7 +103,7 @@ object ChargeIntentAPI {
     fun confirmChargeIntent(intentId: String, completionHandler: (ChargeIntent?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.ConfirmChargeIntent(intentId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<ChargeIntent>(data))
             } else {
@@ -114,7 +115,7 @@ object ChargeIntentAPI {
     fun cancelChargeIntent(intentId: String, completionHandler: (ChargeIntent?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.CancelChargeIntent(intentId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<ChargeIntent>(data))
             } else {
