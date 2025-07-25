@@ -128,8 +128,7 @@ object SubscriptionsAPI {
     fun cancelSubscriptionWith(subscriptionId: String, completionHandler: (Subscription?) -> Unit) {
         val endpoint = SubscriptionEndpoints.CancelSubscription(subscriptionId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint,
-            EmptyRequest(description = null)) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<Subscription>(data))
             } else {
