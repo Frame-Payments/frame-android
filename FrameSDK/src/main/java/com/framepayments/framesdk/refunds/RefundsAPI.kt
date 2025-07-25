@@ -1,4 +1,5 @@
 package com.framepayments.framesdk.refunds
+import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentEndpoints
@@ -37,7 +38,7 @@ object RefundsAPI {
 
     suspend fun cancelRefund(refundId: String): Refund? {
         val endpoint = RefundEndpoints.CancelRefund(refundId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
 
         if (data != null) {
             return FrameNetworking.parseResponse<Refund>(data)
@@ -85,7 +86,7 @@ object RefundsAPI {
     fun cancelRefund(refundId: String, completionHandler: (Refund?) -> Unit) {
         val endpoint = RefundEndpoints.CancelRefund(refundId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<Refund>(data))
             } else {

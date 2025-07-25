@@ -1,4 +1,5 @@
 package com.framepayments.framesdk.subscriptions
+import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 
 object SubscriptionsAPI {
@@ -55,7 +56,7 @@ object SubscriptionsAPI {
 
     suspend fun cancelSubscriptionWith(subscriptionId: String): Subscription? {
         val endpoint = SubscriptionEndpoints.CancelSubscription(subscriptionId)
-        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, SubscriptionRequest.CancelSubscriptionRequest(description = null))
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
 
         if (data != null) {
             return FrameNetworking.parseResponse<Subscription>(data)
@@ -127,7 +128,7 @@ object SubscriptionsAPI {
     fun cancelSubscriptionWith(subscriptionId: String, completionHandler: (Subscription?) -> Unit) {
         val endpoint = SubscriptionEndpoints.CancelSubscription(subscriptionId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, SubscriptionRequest.CancelSubscriptionRequest(description = null)) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<Subscription>(data))
             } else {
