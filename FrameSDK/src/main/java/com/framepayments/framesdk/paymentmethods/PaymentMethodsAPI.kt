@@ -1,4 +1,5 @@
 package com.framepayments.framesdk.paymentmethods
+import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 
@@ -66,7 +67,7 @@ object PaymentMethodsAPI {
 
     suspend fun detachPaymentMethodWith(paymentMethodId: String): FrameObjects.PaymentMethod? {
         val endpoint = PaymentMethodEndpoints.DetachPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
 
         if (data != null) {
             return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
@@ -150,7 +151,7 @@ object PaymentMethodsAPI {
     fun detachPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.DetachPaymentMethodWith(paymentMethodId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
             } else {
