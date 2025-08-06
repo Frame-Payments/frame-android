@@ -66,14 +66,6 @@ class FrameCheckoutView @JvmOverloads constructor(
             }
         }
 
-        // Bindings for customer information
-        binding.customerName.doAfterTextChanged { viewModel.customerName.value = it.toString() }
-        binding.customerEmail.doAfterTextChanged { viewModel.customerEmail.value = it.toString() }
-        binding.customerName.doAfterTextChanged { viewModel.customerName.value = it.toString() }
-        binding.address1.doAfterTextChanged { viewModel.customerAddressLine1.value = it.toString() }
-        binding.address2.doAfterTextChanged { viewModel.customerAddressLine2.value = it.toString() }
-        binding.city.doAfterTextChanged { viewModel.customerCity.value = it.toString() }
-        binding.state.doAfterTextChanged { viewModel.customerState.value = it.toString() }
         binding.zip.doAfterTextChanged { viewModel.customerZipCode.value = it.toString() }
         binding.countryRegion.setOnClickListener {
             // TODO: Change Country Drawer when other countries are supported.
