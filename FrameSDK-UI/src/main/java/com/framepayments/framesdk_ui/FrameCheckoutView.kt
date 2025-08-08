@@ -6,22 +6,29 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.FrameLayout
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentCardBinding
 import com.evervault.sdk.input.ui.card.RowsPaymentCard
+import com.framepayments.framesdk_ui.viewmodels.AvailableCountry
+import com.framepayments.framesdk_ui.viewmodels.FrameCheckoutViewModel
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class FrameCheckoutView @JvmOverloads constructor(
     context: Context,
@@ -75,8 +82,8 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.city.doAfterTextChanged { viewModel.customerCity.value = it.toString() }
         binding.state.doAfterTextChanged { viewModel.customerState.value = it.toString() }
         binding.zip.doAfterTextChanged { viewModel.customerZipCode.value = it.toString() }
-        binding.countryRegion.setOnClickListener {
-            // TODO: Change Country Drawer when other countries are supported.
+        binding.countryInput.setOnClickListener {
+            showCountryPicker()
         }
 
         findViewById<ComposeView>(R.id.evervaultCompose).setContent {
@@ -111,6 +118,38 @@ class FrameCheckoutView @JvmOverloads constructor(
             }
             binding.paymentOptionsContainer.addView(itemBinding.root)
         }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun showCountryPicker() {
+        val activity = context as? FragmentActivity ?: return
+        val view = LayoutInflater.from(context).inflate(R.layout.country_picker_sheet, null)
+        val bottomSheetDialog = BottomSheetDialog(activity)
+        bottomSheetDialog.setContentView(view)
+
+        val spinner: Spinner = view.findViewById(R.id.countrySpinner)
+        val doneButton: TextView = view.findViewById(R.id.doneButton)
+
+        val countries = AvailableCountry.allCountries
+        val adapter = ArrayAdapter(
+            activity,
+            android.R.layout.simple_spinner_item,
+            countries.mapNotNull { it?.displayName }
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        spinner.setSelection(countries.indexOfFirst { it == viewModel.customerCountry })
+
+        doneButton.setOnClickListener {
+            val selectedIndex = spinner.selectedItemPosition
+            viewModel.customerCountry = countries[selectedIndex]
+            binding.countryInput.setText(viewModel.customerCountry.displayName)
+            Toast.makeText(activity, "Selected: ${viewModel.customerCountry.displayName}", Toast.LENGTH_SHORT).show()
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.show()
     }
 
     @SuppressLint("SetTextI18n")
