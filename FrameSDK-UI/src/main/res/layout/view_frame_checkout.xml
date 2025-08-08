@@ -221,17 +221,22 @@
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/countryInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp">
+
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/us"
-                android:focusable="false"
-                android:text="@string/us"
-                android:textStyle="bold"
+                android:id="@+id/countryInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:color/transparent"/>
+                android:background="@android:color/transparent"
+                android:focusable="false"
+                android:clickable="true"
+                android:cursorVisible="false"
+                android:inputType="none"
+                android:textStyle="bold"
+                android:hint="Select Country" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout

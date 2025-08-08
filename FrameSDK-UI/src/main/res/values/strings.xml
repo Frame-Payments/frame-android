@@ -23,4 +23,5 @@
     <string name="state">State</string>
     <string name="customer_email">Customer Email</string>
     <string name="customer_name">Customer Name</string>
+    <string name="done">Done</string>
 </resources>
