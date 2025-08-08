@@ -40,39 +40,41 @@
             android:layout_height="1dp"
             android:layout_weight="1"
             android:background="#DDDDDD"/>
+-
 
-        <com.framepayments.framesdk_ui.buttons.ApplePayButton
-            android:id="@+id/applePayBtn"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginTop="18dp"
-            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>
+        <!-- Hiding the Apple Pay and Google Pay buttons until implementation on the API side is complete.-->
+<!--        <com.framepayments.framesdk_ui.buttons.ApplePayButton-->
+<!--            android:id="@+id/applePayBtn"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="60dp"-->
+<!--            android:layout_marginTop="18dp"-->
+<!--            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>-->
 
-        <com.framepayments.framesdk_ui.buttons.GooglePayButton
-            android:id="@+id/googlePayBtn"
-            android:layout_marginTop="8dp"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>
+<!--        <com.framepayments.framesdk_ui.buttons.GooglePayButton-->
+<!--            android:id="@+id/googlePayBtn"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="60dp"-->
+<!--            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>-->
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <View android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="#DDDDDD"/>
-            <TextView android:text="@string/or"
-                android:layout_height="20dp"
-                android:layout_width="15dp"/>
-            <View android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="#DDDDDD"/>
-        </LinearLayout>
+<!--        <LinearLayout-->
+<!--            android:orientation="horizontal"-->
+<!--            android:layout_marginTop="16dp"-->
+<!--            android:gravity="center"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content">-->
+<!--            <View android:layout_width="0dp"-->
+<!--                android:layout_height="1dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:background="#DDDDDD"/>-->
+<!--            <TextView android:text="@string/or"-->
+<!--                android:layout_height="20dp"-->
+<!--                android:layout_width="15dp"/>-->
+<!--            <View android:layout_width="0dp"-->
+<!--                android:layout_height="1dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:background="#DDDDDD"/>-->
+<!--        </LinearLayout>-->
 
         <HorizontalScrollView
             android:id="@+id/existingPaymentOptionsScrollView"

@@ -50,8 +50,8 @@ class FrameCheckoutView @JvmOverloads constructor(
         viewModel = ViewModelProvider(activity)[FrameCheckoutViewModel::class.java]
 
         binding.closeButton.setOnClickListener { (context as Activity).finish() }
-        binding.applePayBtn.setOnClickListener { viewModel.payWithApplePay() }
-        binding.googlePayBtn.setOnClickListener { viewModel.payWithGooglePay() }
+//        binding.applePayBtn.setOnClickListener { viewModel.payWithApplePay() }
+//        binding.googlePayBtn.setOnClickListener { viewModel.payWithGooglePay() }
 
         binding.payButton.setOnClickListener {
             binding.checkoutProgressBar.visibility = View.VISIBLE
