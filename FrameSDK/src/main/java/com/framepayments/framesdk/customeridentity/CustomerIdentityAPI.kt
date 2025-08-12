@@ -14,8 +14,8 @@ object CustomerIdentityAPI {
         return null
     }
 
-    suspend fun getCustomerIdentityWith(customerId: String): CustomerIdentity? {
-        val endpoint = CustomerIdentityEndpoints.GetCustomerIdentityWith(customerId)
+    suspend fun getCustomerIdentityWith(customerIdentityId: String): CustomerIdentity? {
+        val endpoint = CustomerIdentityEndpoints.GetCustomerIdentityWith(customerIdentityId)
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
@@ -37,8 +37,8 @@ object CustomerIdentityAPI {
         }
     }
 
-    fun getCustomerIdentityWith(customerId: String, completionHandler: (CustomerIdentity?) -> Unit) {
-        val endpoint = CustomerIdentityEndpoints.GetCustomerIdentityWith(customerId)
+    fun getCustomerIdentityWith(customerIdentityId: String, completionHandler: (CustomerIdentity?) -> Unit) {
+        val endpoint = CustomerIdentityEndpoints.GetCustomerIdentityWith(customerIdentityId)
 
         FrameNetworking.performDataTask(endpoint) { data, response, error ->
             if (data != null) {
