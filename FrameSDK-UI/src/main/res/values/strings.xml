@@ -15,4 +15,13 @@
     <string name="pay_amount">Pay %s</string>
     <string name="mm_yy">MM/YY</string>
     <string name="close">close</string>
+    <string name="customer_information">Customer Information</string>
+    <string name="customer_address">Customer Address</string>
+    <string name="address_line_1">Address Line 1</string>
+    <string name="address_line_2">Address Line 2</string>
+    <string name="city">City</string>
+    <string name="state">State</string>
+    <string name="customer_email">Customer Email</string>
+    <string name="customer_name">Customer Name</string>
+    <string name="done">Done</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.framepayments.framesdk_ui
+package com.framepayments.framesdk_ui.viewmodels
 
 import androidx.lifecycle.*
 import com.evervault.sdk.input.model.card.PaymentCardData
@@ -28,7 +28,7 @@ class FrameCheckoutViewModel : ViewModel() {
     val customerAddressLine2 = MutableLiveData("")
     val customerCity = MutableLiveData("")
     val customerState = MutableLiveData("")
-    val customerCountry = MutableLiveData("United States")
+    var customerCountry: AvailableCountry = AvailableCountries.defaultCountry
     val customerZipCode = MutableLiveData("")
 
     // Selected payment method and raw card data
@@ -120,14 +120,13 @@ class FrameCheckoutViewModel : ViewModel() {
     }
 
     private suspend fun createPaymentMethod(customerId: String? = null): Pair<String?, String?> {
-        if (customerCountry.value.isNullOrEmpty() ||
-            customerZipCode.value.isNullOrEmpty() ||
+        if (customerZipCode.value.isNullOrEmpty() ||
             !cardData.isPotentiallyValid
         ) return Pair(null, null)
 
         val billingAddress = FrameObjects.BillingAddress(
             city = customerCity.value.orEmpty(),
-            country = convertCustomerCountry(),
+            country = customerCountry.alpha2Code,
             state = customerState.value.orEmpty(),
             postalCode = customerZipCode.value.orEmpty(),
             addressLine1 = customerAddressLine1.value.orEmpty(),

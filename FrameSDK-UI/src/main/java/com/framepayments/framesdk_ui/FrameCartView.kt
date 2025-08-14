@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.framepayments.framesdk_ui.databinding.ItemCartBinding
 import com.framepayments.framesdk_ui.databinding.ViewFrameCartBinding
-import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk_ui.viewmodels.FrameCartViewModel
 
 class FrameCartView @JvmOverloads constructor(
     context: Context,

@@ -2,7 +2,7 @@ package com.framepayments.framesdk.subscriptions
 import com.framepayments.framesdk.FrameNetworkingEndpoints
 import com.framepayments.framesdk.QueryItem
 
-sealed class  SubscriptionEndpoints: FrameNetworkingEndpoints {
+sealed class SubscriptionEndpoints: FrameNetworkingEndpoints {
     object CreateSubscription : SubscriptionEndpoints()
     data class UpdateSubscription(val subscriptionId: String) : SubscriptionEndpoints()
     data class GetSubscriptions(val perPage: Int? = null, val page: Int? = null)  : SubscriptionEndpoints()
