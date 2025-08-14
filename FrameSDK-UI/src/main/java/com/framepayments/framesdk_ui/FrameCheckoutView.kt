@@ -26,7 +26,7 @@ import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentCardBinding
 import com.evervault.sdk.input.ui.card.RowsPaymentCard
-import com.framepayments.framesdk_ui.viewmodels.AvailableCountry
+import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk_ui.viewmodels.FrameCheckoutViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
@@ -130,7 +130,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         val spinner: Spinner = view.findViewById(R.id.countrySpinner)
         val doneButton: TextView = view.findViewById(R.id.doneButton)
 
-        val countries = AvailableCountry.allCountries
+        val countries = AvailableCountries.allCountries
         val adapter = ArrayAdapter(
             activity,
             android.R.layout.simple_spinner_item,

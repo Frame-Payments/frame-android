@@ -28,7 +28,7 @@ class FrameCheckoutViewModel : ViewModel() {
     val customerAddressLine2 = MutableLiveData("")
     val customerCity = MutableLiveData("")
     val customerState = MutableLiveData("")
-    var customerCountry: AvailableCountry = AvailableCountry.US
+    var customerCountry: AvailableCountry = AvailableCountries.defaultCountry
     val customerZipCode = MutableLiveData("")
 
     // Selected payment method and raw card data
