@@ -2,6 +2,8 @@ package com.framepayments.framesdk.chargeintents
 
 import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.managers.SiftActivityName
+import com.framepayments.framesdk.managers.SiftManager
 
 object ChargeIntentAPI {
     //MARK: Methods using coroutines
@@ -10,6 +12,7 @@ object ChargeIntentAPI {
         val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
+            SiftManager.addNewSiftEvent(SiftActivityName.sale)
             return FrameNetworking.parseResponse<ChargeIntent>(data)
         }
         return null
@@ -20,6 +23,7 @@ object ChargeIntentAPI {
         val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
+            SiftManager.addNewSiftEvent(SiftActivityName.capture)
             return FrameNetworking.parseResponse<ChargeIntent>(data)
         }
         return null
@@ -30,6 +34,7 @@ object ChargeIntentAPI {
         val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
 
         if (data != null) {
+            SiftManager.addNewSiftEvent(SiftActivityName.authorize)
             return FrameNetworking.parseResponse<ChargeIntent>(data)
         }
         return null
@@ -81,6 +86,7 @@ object ChargeIntentAPI {
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
+                SiftManager.addNewSiftEvent(SiftActivityName.sale)
                 completionHandler(FrameNetworking.parseResponse<ChargeIntent>(data))
             } else {
                 completionHandler(null)
@@ -93,6 +99,7 @@ object ChargeIntentAPI {
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
             if (data != null) {
+                SiftManager.addNewSiftEvent(SiftActivityName.capture)
                 completionHandler(FrameNetworking.parseResponse<ChargeIntent>(data))
             } else {
                 completionHandler(null)
@@ -105,6 +112,7 @@ object ChargeIntentAPI {
 
         FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, response, error ->
             if (data != null) {
+                SiftManager.addNewSiftEvent(SiftActivityName.authorize)
                 completionHandler(FrameNetworking.parseResponse<ChargeIntent>(data))
             } else {
                 completionHandler(null)

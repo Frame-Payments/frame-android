@@ -1,4 +1,6 @@
 package com.framepayments.framesdk
+import android.content.Context
+import com.framepayments.framesdk.managers.SiftManager
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,9 +34,19 @@ object FrameNetworking {
     var apiKey: String = ""
     var debugMode: Boolean = false
 
-    fun initializeWithAPIKey(key: String, debug: Boolean = false) {
+    private lateinit var applicationContext: Context
+
+    fun initializeWithAPIKey(context: Context, key: String, debug: Boolean = false) {
         apiKey = key
         debugMode = debug
+        applicationContext = context.applicationContext
+
+        SiftManager.initializeSift(apiKey)
+    }
+
+    fun getContext(): Context {
+        check(::applicationContext.isInitialized) { "FrameSDK must be initialized before use" }
+        return applicationContext
     }
 
     inline fun <reified T> parseResponse(data: ByteArray?): T? {
