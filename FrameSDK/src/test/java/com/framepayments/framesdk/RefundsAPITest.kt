@@ -1,6 +1,8 @@
-package com.framepayments.framesdk.refunds
+package com.framepayments.framesdk
 
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.refunds.RefundRequests
+import com.framepayments.framesdk.refunds.RefundsAPI
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer

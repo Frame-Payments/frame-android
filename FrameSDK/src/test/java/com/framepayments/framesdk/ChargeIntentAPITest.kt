@@ -1,10 +1,9 @@
-package com.framepayments.framesdk.chargeintents
+package com.framepayments.framesdk
 
-import com.framepayments.framesdk.FrameNetworking
-import com.framepayments.framesdk.refunds.RefundRequests
-import com.framepayments.framesdk.refunds.RefundsAPI
-import com.framepayments.framesdk.subscriptions.SubscriptionRequest
-import com.framepayments.framesdk.subscriptions.SubscriptionsAPI
+import com.framepayments.framesdk.chargeintents.AuthorizationMode
+import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
+import com.framepayments.framesdk.chargeintents.ChargeIntentStatus
+import com.framepayments.framesdk.chargeintents.ChargeIntentsRequests
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
