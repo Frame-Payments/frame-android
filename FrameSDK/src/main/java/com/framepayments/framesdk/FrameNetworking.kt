@@ -1,5 +1,10 @@
 package com.framepayments.framesdk
 import android.content.Context
+import com.evervault.sdk.Evervault
+import com.framepayments.framesdk.configurations.ConfigurationAPI
+import com.framepayments.framesdk.configurations.ConfigurationEndpoints
+import com.framepayments.framesdk.configurations.ConfigurationResponses
+import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import com.framepayments.framesdk.managers.SiftManager
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +38,7 @@ object FrameNetworking {
     const val currentVersion = BuildConfig.SDK_VERSION
     var apiKey: String = ""
     var debugMode: Boolean = false
+    var isEvervaultConfigured: Boolean = false
 
     private lateinit var applicationContext: Context
 
@@ -42,6 +48,7 @@ object FrameNetworking {
         applicationContext = context.applicationContext
 
         SiftManager.initializeSift(apiKey)
+        configureEvervault()
     }
 
     fun getContext(): Context {
@@ -257,6 +264,19 @@ object FrameNetworking {
         data?.let {
             val jsonString = String(it)
             println(jsonString)
+        }
+    }
+
+    fun configureEvervault() {
+        val config: ConfigurationResponses.GetEvervaultConfigurationResponse? = SecureConfigurationStorage.retrieve(getContext(), "evervault")
+        if (config == null) {
+            ConfigurationAPI.getEvervaultConfiguration { configFromAPI ->
+                Evervault.shared.configure(configFromAPI?.teamId ?: "", configFromAPI?.appId ?: "")
+                isEvervaultConfigured = true
+            }
+        } else {
+            Evervault.shared.configure(config.teamId ?: "", config.appId ?: "")
+            isEvervaultConfigured = true
         }
     }
 }
