@@ -7,34 +7,40 @@ import com.framepayments.framesdk.managers.SiftManager
 
 object ChargeIntentAPI {
     //MARK: Methods using coroutines
-    suspend fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest): ChargeIntent? {
+    suspend fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest, forTesting: Boolean = false): ChargeIntent? {
         val endpoint = ChargeIntentEndpoints.CreateChargeIntent
         val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
-            SiftManager.addNewSiftEvent(SiftActivityName.sale)
+            if (!forTesting) {
+                SiftManager.addNewSiftEvent(SiftActivityName.sale)
+            }
             return FrameNetworking.parseResponse<ChargeIntent>(data)
         }
         return null
     }
 
-    suspend fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest): ChargeIntent? {
+    suspend fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest, forTesting: Boolean = false): ChargeIntent? {
         val endpoint = ChargeIntentEndpoints.CaptureChargeIntent(intentId)
         val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
-            SiftManager.addNewSiftEvent(SiftActivityName.capture)
+            if (!forTesting) {
+                SiftManager.addNewSiftEvent(SiftActivityName.capture)
+            }
             return FrameNetworking.parseResponse<ChargeIntent>(data)
         }
         return null
     }
 
-    suspend fun confirmChargeIntent(intentId: String): ChargeIntent? {
+    suspend fun confirmChargeIntent(intentId: String, forTesting: Boolean = false): ChargeIntent? {
         val endpoint = ChargeIntentEndpoints.ConfirmChargeIntent(intentId)
         val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
 
         if (data != null) {
-            SiftManager.addNewSiftEvent(SiftActivityName.authorize)
+            if (!forTesting) {
+                SiftManager.addNewSiftEvent(SiftActivityName.authorize)
+            }
             return FrameNetworking.parseResponse<ChargeIntent>(data)
         }
         return null

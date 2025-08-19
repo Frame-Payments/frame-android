@@ -8,12 +8,14 @@ import com.framepayments.framesdk.managers.SiftManager
 
 object RefundsAPI {
     //MARK: Methods using coroutines
-    suspend fun createRefund(request: RefundRequests.CreateRefundRequest): Refund? {
+    suspend fun createRefund(request: RefundRequests.CreateRefundRequest, forTesting: Boolean = false): Refund? {
         val endpoint = RefundEndpoints.CreateRefund
         val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         if (data != null) {
-            SiftManager.addNewSiftEvent(SiftActivityName.refund)
+            if (!forTesting) {
+                SiftManager.addNewSiftEvent(SiftActivityName.refund)
+            }
             return FrameNetworking.parseResponse<Refund>(data)
         }
         return null

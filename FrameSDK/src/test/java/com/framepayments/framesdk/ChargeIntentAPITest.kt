@@ -34,7 +34,7 @@ class ChargeIntentAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = ChargeIntentsRequests.CreateChargeIntentRequest(amount = 100, currency = "usd", customer = null, description = null, confirm = true, paymentMethod = "1", receiptEmail = null, authorizationMode = AuthorizationMode.automatic, customerData = null, paymentMethodData = null)
-        val result = ChargeIntentAPI.createChargeIntent(request)
+        val result = ChargeIntentAPI.createChargeIntent(request, true)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
@@ -47,7 +47,7 @@ class ChargeIntentAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = ChargeIntentsRequests.CaptureChargeIntentRequest(amountCapturedCents = 100)
-        val result = ChargeIntentAPI.captureChargeIntent("1", request)
+        val result = ChargeIntentAPI.captureChargeIntent("1", request, true)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
@@ -59,7 +59,7 @@ class ChargeIntentAPITest {
         val responseBody = """{"id":"intent_123", "status":"succeeded"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = ChargeIntentAPI.cancelChargeIntent("intent_123")
+        val result = ChargeIntentAPI.confirmChargeIntent("intent_123", true)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
@@ -117,7 +117,7 @@ class ChargeIntentAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = ChargeIntentsRequests.UpdateChargeIntentRequest(amount = 400, currency = "usd", customer = null, description = null, confirm = true, paymentMethod = null, receiptEmail = null)
-        val result = ChargeIntentAPI.getChargeIntent("intent_123")
+        val result = ChargeIntentAPI.updateChargeIntent("intent_123", request)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
