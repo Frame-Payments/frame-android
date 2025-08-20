@@ -1,8 +1,9 @@
-val sdkVersion = "1.0.0"
+val sdkVersion = "1.0.4"
 
 plugins {
     alias(libs.plugins.android.library)
     kotlin("android") version "2.2.0"
+    id("com.vanniktech.maven.publish")
 }
 
 android {
@@ -15,7 +16,6 @@ android {
         consumerProguardFiles("consumer-rules.pro")
         buildConfigField("String", "SDK_VERSION", "\"${sdkVersion}\"")
     }
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -54,4 +54,38 @@ dependencies {
     testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+mavenPublishing {
+    coordinates("com.framepayments", "framesdk", sdkVersion)
+
+    pom {
+        name.set("FrameSDK")
+        description.set("Android SDK for Frame Payments.")
+        url.set("https://github.com/Frame-Payments/frame-android")
+
+        licenses {
+            license {
+                name.set("Apache-2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("eric")
+                name.set("Eric Townsend")
+                email.set("eric@framepayments.com")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/Frame-Payments/frame-android")
+            connection.set("scm:git:git://github.com/Frame-Payments/frame-android.git")
+            developerConnection.set("scm:git:ssh://git@github.com/Frame-Payments/frame-android.git")
+        }
+    }
+
+    publishToMavenCentral(automaticRelease = false)
+    signAllPublications()
 }
