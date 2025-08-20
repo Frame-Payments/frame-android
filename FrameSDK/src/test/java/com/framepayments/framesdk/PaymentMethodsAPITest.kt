@@ -39,7 +39,7 @@ class PaymentMethodsAPITest {
             customer = null,
             billing = null
         )
-        val result = PaymentMethodsAPI.createPaymentMethod(request)
+        val result = PaymentMethodsAPI.createPaymentMethod(request, encryptData = false)
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)

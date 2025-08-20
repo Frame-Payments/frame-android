@@ -5,10 +5,10 @@ import com.framepayments.framesdk.FrameObjects
 object PaymentMethodRequests {
     data class CreatePaymentMethodRequest(
         val type: String,
-        @SerializedName("card_number") val cardNumber: String,
+        @SerializedName("card_number") var cardNumber: String,
         @SerializedName("exp_month") val expMonth: String,
         @SerializedName("exp_year") val expYear: String,
-        val cvc: String,
+        var cvc: String,
         val customer: String? = null,
         val billing: FrameObjects.BillingAddress? = null
     )

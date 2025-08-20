@@ -1,4 +1,11 @@
 package com.framepayments.framesdk
+import android.content.Context
+import com.evervault.sdk.Evervault
+import com.framepayments.framesdk.configurations.ConfigurationAPI
+import com.framepayments.framesdk.configurations.ConfigurationEndpoints
+import com.framepayments.framesdk.configurations.ConfigurationResponses
+import com.framepayments.framesdk.configurations.SecureConfigurationStorage
+import com.framepayments.framesdk.managers.SiftManager
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,10 +38,22 @@ object FrameNetworking {
     const val currentVersion = BuildConfig.SDK_VERSION
     var apiKey: String = ""
     var debugMode: Boolean = false
+    var isEvervaultConfigured: Boolean = false
 
-    fun initializeWithAPIKey(key: String, debug: Boolean = false) {
+    private lateinit var applicationContext: Context
+
+    fun initializeWithAPIKey(context: Context, key: String, debug: Boolean = false) {
         apiKey = key
         debugMode = debug
+        applicationContext = context.applicationContext
+
+        SiftManager.initializeSift(apiKey)
+        configureEvervault()
+    }
+
+    fun getContext(): Context {
+        check(::applicationContext.isInitialized) { "FrameSDK must be initialized before use" }
+        return applicationContext
     }
 
     inline fun <reified T> parseResponse(data: ByteArray?): T? {
@@ -245,6 +264,19 @@ object FrameNetworking {
         data?.let {
             val jsonString = String(it)
             println(jsonString)
+        }
+    }
+
+    fun configureEvervault() {
+        val config: ConfigurationResponses.GetEvervaultConfigurationResponse? = SecureConfigurationStorage.retrieve(getContext(), "evervault")
+        if (config == null) {
+            ConfigurationAPI.getEvervaultConfiguration { configFromAPI ->
+                Evervault.shared.configure(configFromAPI?.teamId ?: "", configFromAPI?.appId ?: "")
+                isEvervaultConfigured = true
+            }
+        } else {
+            Evervault.shared.configure(config.teamId ?: "", config.appId ?: "")
+            isEvervaultConfigured = true
         }
     }
 }

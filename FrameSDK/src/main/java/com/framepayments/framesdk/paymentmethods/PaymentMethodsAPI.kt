@@ -1,4 +1,5 @@
 package com.framepayments.framesdk.paymentmethods
+import com.evervault.sdk.Evervault
 import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
@@ -36,8 +37,17 @@ object PaymentMethodsAPI {
     }
 
     suspend fun createPaymentMethod(request: PaymentMethodRequests.CreatePaymentMethodRequest, encryptData: Boolean = true): FrameObjects.PaymentMethod? {
+        if (!FrameNetworking.isEvervaultConfigured && encryptData) {
+            FrameNetworking.configureEvervault()
+        }
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
-        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+
+        var encryptedRequest = request
+        if (encryptData) {
+            encryptedRequest.cardNumber = Evervault.shared.encrypt(request.cardNumber) as String
+            encryptedRequest.cvc = Evervault.shared.encrypt(request.cvc) as String
+        }
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, encryptedRequest)
 
         if (data != null) {
             return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
@@ -113,9 +123,19 @@ object PaymentMethodsAPI {
     }
 
     fun createPaymentMethod(request: PaymentMethodRequests.CreatePaymentMethodRequest, encryptData: Boolean = true, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+        if (!FrameNetworking.isEvervaultConfigured) {
+            FrameNetworking.configureEvervault()
+        }
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
+        var encryptedRequest = request
+        if (encryptData) {
+            // Evervault does not support non-suspend fun with callbacks.
+//            encryptedRequest.cardNumber = Evervault.shared.encrypt(request.cardNumber) as String
+//            encryptedRequest.cvc = Evervault.shared.encrypt(request.cvc) as String
+        }
+
+        FrameNetworking.performDataTaskWithRequest(endpoint, encryptedRequest) { data, response, error ->
             if (data != null) {
                 completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
             } else {
