@@ -1,6 +1,8 @@
-package com.framepayments.framesdk.subscriptions
+package com.framepayments.framesdk
 
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.subscriptions.SubscriptionRequest
+import com.framepayments.framesdk.subscriptions.SubscriptionsAPI
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer

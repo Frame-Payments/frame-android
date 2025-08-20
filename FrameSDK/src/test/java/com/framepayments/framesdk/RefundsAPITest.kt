@@ -1,8 +1,8 @@
-package com.framepayments.framesdk.refunds
+package com.framepayments.framesdk
 
 import com.framepayments.framesdk.FrameNetworking
-import com.framepayments.framesdk.subscriptions.SubscriptionRequest
-import com.framepayments.framesdk.subscriptions.SubscriptionsAPI
+import com.framepayments.framesdk.refunds.RefundRequests
+import com.framepayments.framesdk.refunds.RefundsAPI
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -32,7 +32,7 @@ class RefundsAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = RefundRequests.CreateRefundRequest(amount = 100, charge = "", reason = "", chargeIntent = "1")
-        val result = RefundsAPI.createRefund(request)
+        val result = RefundsAPI.createRefund(request, forTesting = true)
 
         assertNotNull(result)
         assertEquals("ref_123", result?.id)
@@ -64,7 +64,7 @@ class RefundsAPITest {
         val responseBody = """{"id":"ref_4", "status":"refunded"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = SubscriptionsAPI.getSubscriptionWith("ref_4")
+        val result = RefundsAPI.getRefundWith("ref_4")
 
         assertNotNull(result)
         assertEquals("ref_4", result?.id)

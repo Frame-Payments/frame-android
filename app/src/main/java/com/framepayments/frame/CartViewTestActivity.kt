@@ -1,5 +1,6 @@
 package com.framepayments.frame
 
+import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.framepayments.framesdk.FrameNetworking
@@ -12,7 +13,7 @@ class CartTestActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
 
-        FrameNetworking.initializeWithAPIKey(key="") // Remove key for PR, for testing purposes only
+        FrameNetworking.initializeWithAPIKey(context = this, key="") // Remove key for PR, for testing purposes only
 
         // Build dummy data
         val items = listOf(
