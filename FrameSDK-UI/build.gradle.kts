@@ -1,7 +1,8 @@
 plugins {
     alias(libs.plugins.android.library)
     kotlin("android") version "2.2.0"
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
+    id("com.vanniktech.maven.publish")
 }
 
 android {
@@ -61,4 +62,38 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+mavenPublishing {
+    coordinates("com.framepayments", "framesdk_ui", "1.0.4")
+
+    pom {
+        name.set("FrameSDK-UI")
+        description.set("Android UI SDK for Frame Payments.")
+        url.set("https://github.com/Frame-Payments/frame-android")
+
+        licenses {
+            license {
+                name.set("Apache-2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("frame")
+                name.set("Frame Payments")
+                email.set("engineering@framepayments.com")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/Frame-Payments/frame-android")
+            connection.set("scm:git:git://github.com/Frame-Payments/frame-android.git")
+            developerConnection.set("scm:git:ssh://git@github.com/Frame-Payments/frame-android.git")
+        }
+    }
+
+    publishToMavenCentral(automaticRelease = true)
+    signAllPublications()
 }
