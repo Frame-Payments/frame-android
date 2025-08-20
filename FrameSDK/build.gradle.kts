@@ -1,4 +1,4 @@
-val sdkVersion = "1.0.1"
+val sdkVersion = "1.0.4"
 
 plugins {
     alias(libs.plugins.android.library)
@@ -57,7 +57,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates("io.github.townsendeb", "framesdk", sdkVersion)
+    coordinates("com.framepayments", "framesdk", sdkVersion)
 
     pom {
         name.set("FrameSDK")
