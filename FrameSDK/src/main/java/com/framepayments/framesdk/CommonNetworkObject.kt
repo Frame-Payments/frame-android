@@ -4,24 +4,28 @@ import com.google.gson.annotations.SerializedName
 
 object FrameObjects {
     data class BillingAddress(
-        val city: String? = null,
-        val country: String? = null,
-        val state: String? = null,
+        val city: String?,
+        val country: String?,
+        val state: String?,
         @SerializedName("postal_code") val postalCode: String,
-        @SerializedName("line_1") val addressLine1: String? = null,
-        @SerializedName("line_2") val addressLine2: String? = null
+        @SerializedName("line_1") val addressLine1: String?,
+        @SerializedName("line_2") val addressLine2: String?
     )
 
+    enum class PaymentMethodStatus {
+        active, blocked
+    }
     data class PaymentMethod(
         val id: String,
-        val customer: String? = null,
-        val billing: BillingAddress? = null,
+        val customer: String?,
+        val billing: BillingAddress?,
         val type: String,
         @SerializedName("object") val methodObject: String,
         val created: Int,
         val updated: Int,
-        @SerializedName("livemode") val liveMode: Boolean,
-        val card: PaymentCard? = null
+        val livemode: Boolean,
+        val card: PaymentCard?,
+        val status: PaymentMethodStatus?
     )
 
     data class PaymentCard(
