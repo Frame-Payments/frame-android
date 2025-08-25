@@ -47,7 +47,7 @@ class SubscriptionsAPITest {
 
         val request = SubscriptionRequest.UpdateSubscriptionRequest(
             description = null,
-            defaultPaymentMethod = null
+            defaultPaymentMethod = "method_123"
         )
         val result = SubscriptionsAPI.updateSubscription("sub_123", request)
 
