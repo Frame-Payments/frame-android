@@ -3,17 +3,19 @@ package com.framepayments.framesdk.customers
 import com.framepayments.framesdk.FrameNetworkingEndpoints
 import com.framepayments.framesdk.QueryItem
 
-sealed class CustomersEndpoints : FrameNetworkingEndpoints {
-    object CreateCustomer : CustomersEndpoints()
-    data class UpdateCustomer(val customerId: String) : CustomersEndpoints()
-    data class GetCustomers(val perPage: Int? = null, val page: Int? = null) : CustomersEndpoints()
-    data class GetCustomerWith(val customerId: String) : CustomersEndpoints()
-    object SearchCustomers  : CustomersEndpoints()
-    data class DeleteCustomer(val customerId: String) : CustomersEndpoints()
+sealed class CustomerEndpoints : FrameNetworkingEndpoints {
+    object CreateCustomer: CustomerEndpoints()
+    data class UpdateCustomer(val customerId: String): CustomerEndpoints()
+    data class GetCustomer(val perPage: Int? = null, val page: Int? = null): CustomerEndpoints()
+    data class GetCustomerWith(val customerId: String): CustomerEndpoints()
+    object SearchCustomers: CustomerEndpoints()
+    data class DeleteCustomer(val customerId: String): CustomerEndpoints()
+    data class BlockCustomerWith(val customerId: String): CustomerEndpoints()
+    data class UnblockCustomerWith(val customerId: String): CustomerEndpoints()
 
     override val endpointURL: String
         get() = when (this) {
-            is CreateCustomer, is GetCustomers ->
+            is CreateCustomer, is GetCustomer ->
                 "/v1/customers"
             is UpdateCustomer ->
                 "/v1/customers/${this.customerId}"
@@ -23,11 +25,15 @@ sealed class CustomersEndpoints : FrameNetworkingEndpoints {
                 "/v1/customers/${this.customerId}"
             is SearchCustomers ->
                 "/v1/customers/search"
+            is BlockCustomerWith ->
+                "/v1/customers/${this.customerId}/block"
+            is UnblockCustomerWith ->
+                "/v1/customers/${this.customerId}/unblock"
         }
 
     override val httpMethod: String
         get() = when (this) {
-            is CreateCustomer -> "POST"
+            is CreateCustomer, is BlockCustomerWith, is UnblockCustomerWith -> "POST"
             is UpdateCustomer -> "PATCH"
             is DeleteCustomer -> "DELETE"
             else -> "GET"
@@ -35,7 +41,7 @@ sealed class CustomersEndpoints : FrameNetworkingEndpoints {
 
     override val queryItems: List<QueryItem>?
         get() = when (this) {
-            is GetCustomers -> {
+            is GetCustomer -> {
                 val items = mutableListOf<QueryItem>()
                 perPage?.let { items.add(QueryItem("per_page", it.toString())) }
                 page?.let { items.add(QueryItem("page", it.toString())) }

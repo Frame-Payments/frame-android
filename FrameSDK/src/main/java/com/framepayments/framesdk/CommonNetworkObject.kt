@@ -1,5 +1,6 @@
 package com.framepayments.framesdk
 
+import com.framepayments.framesdk.customeridentity.CustomerIdentityStatus
 import com.google.gson.annotations.SerializedName
 
 object FrameObjects {
@@ -35,15 +36,22 @@ object FrameObjects {
         @SerializedName("last_four") val lastFourDigits: String
     )
 
+    enum class CustomerStatus {
+        active,
+        blocked
+    }
+
     data class Customer(
         val id: String,
         val created: Int,
         val updated: Int?,
         val livemode: Boolean,
         val name: String,
+        val status: CustomerStatus?,
         val phone: String?,
         val email: String?,
         val description: String?,
+        @SerializedName("date_of_birth") val dateOfBirth: String?, // YYYY-MM-DD
         @SerializedName("object") val customerObject: String?,
         @SerializedName("shipping_address") val shippingAddress: BillingAddress?,
         @SerializedName("billing_address") val billingAddress: BillingAddress?,
