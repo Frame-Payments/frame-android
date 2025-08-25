@@ -6,7 +6,7 @@ import com.framepayments.framesdk.QueryItem
 sealed class CustomerEndpoints : FrameNetworkingEndpoints {
     object CreateCustomer: CustomerEndpoints()
     data class UpdateCustomer(val customerId: String): CustomerEndpoints()
-    data class GetCustomer(val perPage: Int? = null, val page: Int? = null): CustomerEndpoints()
+    data class GetCustomers(val perPage: Int? = null, val page: Int? = null): CustomerEndpoints()
     data class GetCustomerWith(val customerId: String): CustomerEndpoints()
     object SearchCustomers: CustomerEndpoints()
     data class DeleteCustomer(val customerId: String): CustomerEndpoints()
@@ -15,7 +15,7 @@ sealed class CustomerEndpoints : FrameNetworkingEndpoints {
 
     override val endpointURL: String
         get() = when (this) {
-            is CreateCustomer, is GetCustomer ->
+            is CreateCustomer, is GetCustomers ->
                 "/v1/customers"
             is UpdateCustomer ->
                 "/v1/customers/${this.customerId}"
@@ -41,7 +41,7 @@ sealed class CustomerEndpoints : FrameNetworkingEndpoints {
 
     override val queryItems: List<QueryItem>?
         get() = when (this) {
-            is GetCustomer -> {
+            is GetCustomers -> {
                 val items = mutableListOf<QueryItem>()
                 perPage?.let { items.add(QueryItem("per_page", it.toString())) }
                 page?.let { items.add(QueryItem("page", it.toString())) }

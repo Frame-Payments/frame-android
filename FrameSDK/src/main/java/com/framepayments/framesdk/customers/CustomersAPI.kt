@@ -26,7 +26,7 @@ object CustomersAPI {
     }
 
     suspend fun getCustomers(page: Int? = null, perPage: Int? = null): List<FrameObjects.Customer>? {
-        val endpoint = CustomerEndpoints.GetCustomer(perPage = perPage, page = page)
+        val endpoint = CustomerEndpoints.GetCustomers(perPage = perPage, page = page)
         val (data, _) = FrameNetworking.performDataTask(endpoint)
 
         if (data != null) {
@@ -111,7 +111,7 @@ object CustomersAPI {
     }
 
     fun getCustomers(page: Int? = null, perPage: Int? = null, completionHandler: (List<FrameObjects.Customer>?) -> Unit) {
-        val endpoint = CustomerEndpoints.GetCustomer(perPage = perPage, page = page)
+        val endpoint = CustomerEndpoints.GetCustomers(perPage = perPage, page = page)
 
         FrameNetworking.performDataTask(endpoint) { data, response, error ->
             if (data != null) {
