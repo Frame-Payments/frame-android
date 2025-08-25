@@ -1,6 +1,5 @@
 package com.framepayments.framesdk
 
-import com.framepayments.framesdk.customeridentity.CustomerIdentityStatus
 import com.google.gson.annotations.SerializedName
 
 object FrameObjects {
