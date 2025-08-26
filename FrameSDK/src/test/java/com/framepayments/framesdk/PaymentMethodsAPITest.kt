@@ -136,4 +136,28 @@ class PaymentMethodsAPITest {
         assertEquals("method_123", result?.id)
         assertEquals("cus_111", result?.customer)
     }
+
+    @Test
+    fun testBlockPaymentMethodWithId() = runBlocking {
+        val responseBody = """{"id":"method_123", "status":"blocked"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val result = PaymentMethodsAPI.blockPaymentMethodWith("method_123")
+
+        assertNotNull(result)
+        assertEquals("method_123", result?.id)
+        assertEquals(FrameObjects.PaymentMethodStatus.blocked, result?.status)
+    }
+
+    @Test
+    fun testUnblockPaymentMethodWithId() = runBlocking {
+        val responseBody = """{"id":"method_123", "status":"active"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val result = PaymentMethodsAPI.unblockPaymentMethodWith("method_123")
+
+        assertNotNull(result)
+        assertEquals("method_123", result?.id)
+        assertEquals(FrameObjects.PaymentMethodStatus.active, result?.status)
+    }
 }

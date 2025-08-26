@@ -85,6 +85,26 @@ object PaymentMethodsAPI {
         return null
     }
 
+    suspend fun blockPaymentMethodWith(paymentMethodId: String): FrameObjects.PaymentMethod? {
+        val endpoint = PaymentMethodEndpoints.BlockPaymentMethodWith(paymentMethodId = paymentMethodId)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
+
+        if (data != null) {
+            return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
+        }
+        return null
+    }
+
+    suspend fun unblockPaymentMethodWith(paymentMethodId: String): FrameObjects.PaymentMethod? {
+        val endpoint = PaymentMethodEndpoints.UnblockPaymentMethodWith(paymentMethodId = paymentMethodId)
+        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
+
+        if (data != null) {
+            return FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data)
+        }
+        return null
+    }
+
     //MARK: Methods using callbacks
     fun getPaymentMethods(page: Int? = null, perPage: Int? = null, completionHandler: (List<FrameObjects.PaymentMethod>?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethods(perPage = perPage, page = page)
@@ -170,6 +190,30 @@ object PaymentMethodsAPI {
 
     fun detachPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.DetachPaymentMethodWith(paymentMethodId)
+
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, response, error ->
+            if (data != null) {
+                completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
+            } else {
+                completionHandler(null)
+            }
+        }
+    }
+
+    fun blockPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.BlockPaymentMethodWith(paymentMethodId)
+
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, response, error ->
+            if (data != null) {
+                completionHandler(FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data))
+            } else {
+                completionHandler(null)
+            }
+        }
+    }
+
+    fun unblockPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.UnblockPaymentMethodWith(paymentMethodId)
 
         FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, response, error ->
             if (data != null) {
