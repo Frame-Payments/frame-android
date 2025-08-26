@@ -93,13 +93,6 @@ class CustomersAPITest {
 
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val request = CustomersRequests.SearchCustomersRequest(
-            phone = null,
-            name = null,
-            email = "tester@gmail.com",
-            createdBefore = null,
-            createdAfter = null
-        )
         val result = CustomersAPI.getCustomers(0, 100)
 
         assertNotNull(result)
@@ -144,5 +137,29 @@ class CustomersAPITest {
         assertNotNull(result)
         assertEquals("cus_999", result?.id)
         assertEquals("tester3", result?.name)
+    }
+
+    @Test
+    fun testBlockCustomerWithId() = runBlocking {
+        val responseBody = """{"id":"cus_999", "name":"tester3", "phone":"1999999999", "status": "blocked"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val result = CustomersAPI.blockCustomerWith("cus_999")
+
+        assertNotNull(result)
+        assertEquals("cus_999", result?.id)
+        assertEquals(FrameObjects.CustomerStatus.blocked, result?.status)
+    }
+
+    @Test
+    fun testUnblockCustomerWithId() = runBlocking {
+        val responseBody = """{"id":"cus_999", "name":"tester3", "phone":"1999999999", "status": "active"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val result = CustomersAPI.unblockCustomerWith("cus_999")
+
+        assertNotNull(result)
+        assertEquals("cus_999", result?.id)
+        assertEquals(FrameObjects.CustomerStatus.active, result?.status)
     }
 }

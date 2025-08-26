@@ -41,6 +41,22 @@ class SubscriptionsAPITest {
     }
 
     @Test
+    fun testUpdateSubscription() = runBlocking {
+        val responseBody = """{"id":"sub_123", "default_payment_method":"method_123"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = SubscriptionRequest.UpdateSubscriptionRequest(
+            description = null,
+            defaultPaymentMethod = "method_123"
+        )
+        val result = SubscriptionsAPI.updateSubscription("sub_123", request)
+
+        assertNotNull(result)
+        assertEquals("sub_123", result?.id)
+        assertEquals("method_123", result?.defaultPaymentMethod)
+    }
+
+    @Test
     fun testGetSubscriptionWithId() = runBlocking {
         val responseBody = """{"id":"sub_456", "status":"canceled"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))

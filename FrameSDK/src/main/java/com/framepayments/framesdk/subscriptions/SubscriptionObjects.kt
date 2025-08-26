@@ -4,18 +4,18 @@ import com.google.gson.annotations.SerializedName
 data class Subscription (
     val id: String,
     val description: String,
-    val currentPeriodStart: Int,
-    val currentPeriodEnd: Int,
+    @SerializedName("current_period_start") val currentPeriodStart: Int,
+    @SerializedName("current_period_end") val currentPeriodEnd: Int,
     val livemode: Boolean,
     val plan: SubscriptionPlan?,
     val currency: String,
     val status: String,
     val quantity: Int,
     val customer: String?,
-    val defaultPaymentMethod: String,
+    @SerializedName("default_payment_method") val defaultPaymentMethod: String,
     @SerializedName("object") val subscriptionObject: String,
     val created: Int,
-    val startDate: Int
+    @SerializedName("start_date") val startDate: Int
 )
 
 data class SubscriptionPlan (
