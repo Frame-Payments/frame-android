@@ -13,8 +13,4 @@ object SubscriptionRequest {
         val description: String?,
         val defaultPaymentMethod: String?
     )
-
-    data class CancelSubscriptionRequest (
-        val description: String?
-    )
 }
