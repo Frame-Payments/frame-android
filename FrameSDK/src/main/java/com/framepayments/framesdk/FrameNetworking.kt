@@ -2,7 +2,6 @@ package com.framepayments.framesdk
 import android.content.Context
 import com.evervault.sdk.Evervault
 import com.framepayments.framesdk.configurations.ConfigurationAPI
-import com.framepayments.framesdk.configurations.ConfigurationEndpoints
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import com.framepayments.framesdk.managers.SiftManager
@@ -100,7 +99,7 @@ object FrameNetworking {
                 printDataForTesting(responseData)
             }
             if (!response.isSuccessful) {
-                Pair(null, NetworkingError.ServerError(response.code))
+                Pair(null, NetworkingError.ServerError(response.code, response.message))
             } else {
                 Pair(responseData, null)
             }
@@ -161,7 +160,7 @@ object FrameNetworking {
                 printDataForTesting(responseData)
             }
             if (!response.isSuccessful) {
-                Pair(null, NetworkingError.ServerError(response.code))
+                Pair(null, NetworkingError.ServerError(response.code, response.message))
             } else {
                 Pair(responseData, null)
             }
@@ -176,12 +175,12 @@ object FrameNetworking {
 
     fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
-        completion: (data: ByteArray?, response: Response?, error: Exception?) -> Unit
+        completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = NetworkingConstants.MAIN_API_URL
         val fullUrl = baseUrl + endpoint.endpointURL
 
-        var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, null, IllegalArgumentException("Invalid URL"))
+        var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, NetworkingError.InvalidURL)
         endpoint.queryItems?.let { queryItems ->
             val urlBuilder = httpUrl.newBuilder()
             for (item in queryItems) {
@@ -201,11 +200,15 @@ object FrameNetworking {
 
         okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                completion(null, null, e)
+                completion(null, NetworkingError.UnknownError)
             }
 
             override fun onResponse(call: Call, response: Response) {
-                completion(response.body?.bytes(), response, null)
+                var error: NetworkingError? = null
+                if (!response.isSuccessful) {
+                    error = NetworkingError.ServerError(response.code, response.message)
+                }
+                completion(response.body?.bytes(), error)
             }
         })
     }
@@ -213,12 +216,12 @@ object FrameNetworking {
     inline fun <reified T> performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: T? = null,
-        crossinline completion: (data: ByteArray?, response: Response?, error: Exception?) -> Unit
+        crossinline completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = NetworkingConstants.MAIN_API_URL
         val fullUrl = baseUrl + endpoint.endpointURL
 
-        var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, null, IllegalArgumentException("Invalid URL"))
+        var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, NetworkingError.InvalidURL)
         endpoint.queryItems?.let { queryItems ->
             val urlBuilder = httpUrl.newBuilder()
             for (item in queryItems) {
@@ -251,11 +254,15 @@ object FrameNetworking {
 
         okHttpClient.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                completion(null, null, e)
+                completion(null, NetworkingError.UnknownError)
             }
 
             override fun onResponse(call: Call, response: Response) {
-                completion(response.body?.bytes(), response, null)
+                var error: NetworkingError? = null
+                if (!response.isSuccessful) {
+                    error = NetworkingError.ServerError(response.code, response.message)
+                }
+                completion(response.body?.bytes(), error)
             }
         })
     }

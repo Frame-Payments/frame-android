@@ -1,51 +1,37 @@
 package com.framepayments.framesdk.customeridentity
 
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.paymentmethods.PaymentMethodResponses
 
 object CustomerIdentityAPI {
     //MARK: Methods using coroutines
-    suspend fun createCustomerIdentity(request: CustomerIdentityRequests.CreateCustomerIdentityRequest): CustomerIdentity? {
+    suspend fun createCustomerIdentity(request: CustomerIdentityRequests.CreateCustomerIdentityRequest): Pair<CustomerIdentity?, NetworkingError?> {
         val endpoint = CustomerIdentityEndpoints.CreateCustomerIdentity
-        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-
-        if (data != null) {
-            return FrameNetworking.parseResponse<CustomerIdentity>(data)
-        }
-        return null
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        return Pair(data?.let { FrameNetworking.parseResponse<CustomerIdentity>(it) }, error)
     }
 
-    suspend fun getCustomerIdentityWith(customerIdentityId: String): CustomerIdentity? {
+    suspend fun getCustomerIdentityWith(customerIdentityId: String): Pair<CustomerIdentity?, NetworkingError?> {
         val endpoint = CustomerIdentityEndpoints.GetCustomerIdentityWith(customerIdentityId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
-
-        if (data != null) {
-            return FrameNetworking.parseResponse<CustomerIdentity>(data)
-        }
-        return null
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        return Pair(data?.let { FrameNetworking.parseResponse<CustomerIdentity>(it) }, error)
     }
 
     //MARK: Methods using callbacks
-    fun createCustomerIdentity(request: CustomerIdentityRequests.CreateCustomerIdentityRequest, completionHandler: (CustomerIdentity?) -> Unit) {
+    fun createCustomerIdentity(request: CustomerIdentityRequests.CreateCustomerIdentityRequest, completionHandler: (CustomerIdentity?, NetworkingError?) -> Unit) {
         val endpoint = CustomerIdentityEndpoints.CreateCustomerIdentity
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
-            if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<CustomerIdentity>(data))
-            } else {
-                completionHandler(null)
-            }
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<CustomerIdentity>(it) }, error )
         }
     }
 
-    fun getCustomerIdentityWith(customerIdentityId: String, completionHandler: (CustomerIdentity?) -> Unit) {
+    fun getCustomerIdentityWith(customerIdentityId: String, completionHandler: (CustomerIdentity?, NetworkingError?) -> Unit) {
         val endpoint = CustomerIdentityEndpoints.GetCustomerIdentityWith(customerIdentityId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
-            if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<CustomerIdentity>(data))
-            } else {
-                completionHandler(null)
-            }
+        FrameNetworking.performDataTask(endpoint) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<CustomerIdentity>(it) }, error )
         }
     }
 }

@@ -1,138 +1,93 @@
 package com.framepayments.framesdk.subscriptionphases
+
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.NetworkingError
+import kotlin.Pair
 
 object SubscriptionPhasesAPI {
     //MARK: Methods using coroutines
-    suspend fun createSubscriptionPhase(subscriptionId: String, request: SubscriptionPhaseRequest.CreateSubscriptionPhaseRequest) : SubscriptionPhase? {
+    suspend fun createSubscriptionPhase(subscriptionId: String, request: SubscriptionPhaseRequest.CreateSubscriptionPhaseRequest): Pair<SubscriptionPhase?, NetworkingError?> {
         val endpoint = SubscriptionPhaseEndpoints.CreateSubscriptionPhase(subscriptionId)
-        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-
-        if (data != null) {
-            return FrameNetworking.parseResponse<SubscriptionPhase>(data)
-        }
-        return null
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
     }
 
-    suspend fun updateSubscriptionPhase(subscriptionId: String, phaseId: String, request: SubscriptionPhaseRequest.UpdateSubscriptionPhaseRequest): SubscriptionPhase? {
+    suspend fun updateSubscriptionPhase(subscriptionId: String, phaseId: String, request: SubscriptionPhaseRequest.UpdateSubscriptionPhaseRequest): Pair<SubscriptionPhase?, NetworkingError?> {
         val endpoint = SubscriptionPhaseEndpoints.UpdateSubscriptionPhase(subscriptionId, phaseId)
-        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-
-        if (data != null) {
-            return FrameNetworking.parseResponse<SubscriptionPhase>(data)
-        }
-        return null
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
     }
 
-    suspend fun getSubscriptionPhaseWith(subscriptionId: String, phaseId: String): SubscriptionPhase? {
+    suspend fun getSubscriptionPhaseWith(subscriptionId: String, phaseId: String): Pair<SubscriptionPhase?, NetworkingError?> {
         val endpoint = SubscriptionPhaseEndpoints.GetSubscriptionPhaseWith(subscriptionId, phaseId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
-
-        if (data != null) {
-            return FrameNetworking.parseResponse<SubscriptionPhase>(data)
-        }
-        return null
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
     }
 
-    suspend fun getSubscriptionPhases(subscriptionId: String): ListSubscriptionPhaseResponse? {
+    suspend fun getSubscriptionPhases(subscriptionId: String): Pair<ListSubscriptionPhaseResponse?, NetworkingError?> {
         val endpoint = SubscriptionPhaseEndpoints.GetSubscriptionPhases(subscriptionId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
-
-        if (data != null) {
-            return FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data)
-        }
-        return null
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        return Pair(FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data), error)
     }
 
-    suspend fun bulkUpdateSubscriptionPhases(subscriptionId: String, request: SubscriptionPhaseRequest.BulkUpdateSubscriptionPhaseRequest) : List<SubscriptionPhase>? {
+    suspend fun bulkUpdateSubscriptionPhases(subscriptionId: String, request: SubscriptionPhaseRequest.BulkUpdateSubscriptionPhaseRequest) : Pair<List<SubscriptionPhase>?, NetworkingError?> {
         val endpoint = SubscriptionPhaseEndpoints.BulkUpdateSubscriptionPhases(subscriptionId)
-        val (data, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-
-        if (data != null) {
-            return FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data)?.phases
-        }
-        return null
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        return Pair(FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data)?.phases, error)
     }
 
-    suspend fun deleteSubscriptionPhaseWith(subscriptionId: String, phaseId: String): SubscriptionPhase? {
+    suspend fun deleteSubscriptionPhaseWith(subscriptionId: String, phaseId: String): Pair<SubscriptionPhase?, NetworkingError?> {
         val endpoint = SubscriptionPhaseEndpoints.DeleteSubscriptionPhase(subscriptionId, phaseId)
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
-
-        if (data != null) {
-            return FrameNetworking.parseResponse<SubscriptionPhase>(data)
-        }
-        return null
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
     }
 
     //MARK: Methods using callbacks
-    fun createSubscriptionPhase(subscriptionId: String, request: SubscriptionPhaseRequest.CreateSubscriptionPhaseRequest, completionHandler: (SubscriptionPhase?) -> Unit) {
+    fun createSubscriptionPhase(subscriptionId: String, request: SubscriptionPhaseRequest.CreateSubscriptionPhaseRequest, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
         val endpoint = SubscriptionPhaseEndpoints.CreateSubscriptionPhase(subscriptionId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
-            if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<SubscriptionPhase>(data))
-            } else {
-                completionHandler(null)
-            }
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
         }
     }
 
-    fun updateSubscriptionPhase(subscriptionId: String, phaseId: String, request: SubscriptionPhaseRequest.UpdateSubscriptionPhaseRequest, completionHandler: (SubscriptionPhase?) -> Unit) {
+    fun updateSubscriptionPhase(subscriptionId: String, phaseId: String, request: SubscriptionPhaseRequest.UpdateSubscriptionPhaseRequest, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
         val endpoint = SubscriptionPhaseEndpoints.UpdateSubscriptionPhase(subscriptionId, phaseId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
-            if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<SubscriptionPhase>(data))
-            } else {
-                completionHandler(null)
-            }
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
         }
     }
 
-    fun getSubscriptionWith(subscriptionId: String, phaseId: String, completionHandler: (SubscriptionPhase?) -> Unit) {
+    fun getSubscriptionWith(subscriptionId: String, phaseId: String, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
         val endpoint = SubscriptionPhaseEndpoints.GetSubscriptionPhaseWith(subscriptionId, phaseId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
-            if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<SubscriptionPhase>(data))
-            } else {
-                completionHandler(null)
-            }
+        FrameNetworking.performDataTask(endpoint) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
         }
     }
 
-    fun getSubscriptions(subscriptionId: String, completionHandler: (ListSubscriptionPhaseResponse?) -> Unit) {
+    fun getSubscriptions(subscriptionId: String, completionHandler: (ListSubscriptionPhaseResponse?, NetworkingError?) -> Unit) {
         val endpoint = SubscriptionPhaseEndpoints.GetSubscriptionPhases(subscriptionId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
-            if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data))
-            } else {
-                completionHandler(null)
-            }
+        FrameNetworking.performDataTask(endpoint) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data) }, error)
         }
     }
 
-    fun bulkUpdateSubscriptionPhases(subscriptionId: String, request: SubscriptionPhaseRequest.BulkUpdateSubscriptionPhaseRequest, completionHandler: (List<SubscriptionPhase>?) -> Unit) {
+    fun bulkUpdateSubscriptionPhases(subscriptionId: String, request: SubscriptionPhaseRequest.BulkUpdateSubscriptionPhaseRequest, completionHandler: (List<SubscriptionPhase>?, NetworkingError?) -> Unit) {
         val endpoint = SubscriptionPhaseEndpoints.BulkUpdateSubscriptionPhases(subscriptionId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, response, error ->
-            if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data)?.phases)
-            } else {
-                completionHandler(null)
-            }
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data)?.phases }, error)
         }
     }
 
-    fun deleteSubscriptionPhaseWith(subscriptionId: String, phaseId: String, completionHandler: (SubscriptionPhase?) -> Unit) {
+    fun deleteSubscriptionPhaseWith(subscriptionId: String, phaseId: String, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
         val endpoint = SubscriptionPhaseEndpoints.DeleteSubscriptionPhase(subscriptionId, phaseId)
 
-        FrameNetworking.performDataTask(endpoint) { data, response, error ->
-            if (data != null) {
-                completionHandler(FrameNetworking.parseResponse<SubscriptionPhase>(data))
-            } else {
-                completionHandler(null)
-            }
+        FrameNetworking.performDataTask(endpoint) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
         }
     }
 }
