@@ -2,20 +2,19 @@ package com.framepayments.framesdk.customeridentity
 
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
-import com.framepayments.framesdk.paymentmethods.PaymentMethodResponses
 
 object CustomerIdentityAPI {
     //MARK: Methods using coroutines
     suspend fun createCustomerIdentity(request: CustomerIdentityRequests.CreateCustomerIdentityRequest): Pair<CustomerIdentity?, NetworkingError?> {
         val endpoint = CustomerIdentityEndpoints.CreateCustomerIdentity
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-        return Pair(data?.let { FrameNetworking.parseResponse<CustomerIdentity>(it) }, error)
+        return Pair(data?.let { FrameNetworking.parseResponse<CustomerIdentity>(data) }, error)
     }
 
     suspend fun getCustomerIdentityWith(customerIdentityId: String): Pair<CustomerIdentity?, NetworkingError?> {
         val endpoint = CustomerIdentityEndpoints.GetCustomerIdentityWith(customerIdentityId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
-        return Pair(data?.let { FrameNetworking.parseResponse<CustomerIdentity>(it) }, error)
+        return Pair(data?.let { FrameNetworking.parseResponse<CustomerIdentity>(data) }, error)
     }
 
     //MARK: Methods using callbacks
@@ -23,7 +22,7 @@ object CustomerIdentityAPI {
         val endpoint = CustomerIdentityEndpoints.CreateCustomerIdentity
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
-            completionHandler( data?.let { FrameNetworking.parseResponse<CustomerIdentity>(it) }, error )
+            completionHandler( data?.let { FrameNetworking.parseResponse<CustomerIdentity>(data) }, error )
         }
     }
 
@@ -31,7 +30,7 @@ object CustomerIdentityAPI {
         val endpoint = CustomerIdentityEndpoints.GetCustomerIdentityWith(customerIdentityId)
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
-            completionHandler( data?.let { FrameNetworking.parseResponse<CustomerIdentity>(it) }, error )
+            completionHandler( data?.let { FrameNetworking.parseResponse<CustomerIdentity>(data) }, error )
         }
     }
 }
