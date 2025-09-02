@@ -45,7 +45,7 @@ class SubscriptionPhasesAPITest {
             interval = null,
             intervalCount = null
         )
-        val result = SubscriptionPhasesAPI.createSubscriptionPhase("sub_123", request)
+        val (result, error) = SubscriptionPhasesAPI.createSubscriptionPhase("sub_123", request)
 
         assertNotNull(result)
         assertEquals("phase_123", result?.id)
@@ -68,7 +68,7 @@ class SubscriptionPhasesAPITest {
             interval = null,
             intervalCount = null
         )
-        val result = SubscriptionPhasesAPI.updateSubscriptionPhase("sub_123", "phase_123", request)
+        val (result, error) = SubscriptionPhasesAPI.updateSubscriptionPhase("sub_123", "phase_123", request)
 
         assertNotNull(result)
         assertEquals("phase_123", result?.id)
@@ -80,7 +80,7 @@ class SubscriptionPhasesAPITest {
         val responseBody = """{"id":"phase_123", "duration_type":"finite"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = SubscriptionPhasesAPI.getSubscriptionPhaseWith("sub_456", "phase_123")
+        val (result, error) = SubscriptionPhasesAPI.getSubscriptionPhaseWith("sub_456", "phase_123")
 
         assertNotNull(result)
         assertEquals("phase_123", result?.id)
@@ -99,12 +99,12 @@ class SubscriptionPhasesAPITest {
         """.trimIndent()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = SubscriptionPhasesAPI.getSubscriptionPhases("sub_123")?.phases
+        val (result, error) = SubscriptionPhasesAPI.getSubscriptionPhases("sub_123")
 
         assertNotNull(result)
-        assertEquals(2, result?.size)
-        assertEquals(PhaseDurationType.finite, result?.get(0)?.durationType)
-        assertEquals(PhasePricingType.static, result?.get(1)?.pricingType)
+        assertEquals(2, result?.phases?.size)
+        assertEquals(PhaseDurationType.finite, result?.phases?.get(0)?.durationType)
+        assertEquals(PhasePricingType.static, result?.phases?.get(1)?.pricingType)
     }
 
     @Test
@@ -139,7 +139,7 @@ class SubscriptionPhasesAPITest {
         val request = SubscriptionPhaseRequest.BulkUpdateSubscriptionPhaseRequest(
             phases = mutableListOf(phase)
         )
-        val result = SubscriptionPhasesAPI.bulkUpdateSubscriptionPhases("sub_123", request)
+        val (result, error) = SubscriptionPhasesAPI.bulkUpdateSubscriptionPhases("sub_123", request)
 
         assertNotNull(result)
         assertEquals(2, result?.size)

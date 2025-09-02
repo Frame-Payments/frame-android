@@ -45,13 +45,8 @@ class FrameCheckoutViewModel : ViewModel() {
         currentCustomerId = customerId
 
         viewModelScope.launch(Dispatchers.IO) {
-            val customer = try {
-                CustomersAPI.getCustomerWith(customerId).also {
-                    println("Customer response: $it")
-                }
-            } catch (e: Exception) {
-                println("Error loading customer: ${e.message}")
-                null
+            val (customer, error) = CustomersAPI.getCustomerWith(customerId).also {
+                println("Customer response: $it")
             }
             withContext(Dispatchers.Main) {
                 _customerPaymentOptions.value = customer?.paymentMethods
@@ -111,11 +106,7 @@ class FrameCheckoutViewModel : ViewModel() {
         )
 
         // Create and emit the intent
-        val intent = try {
-            ChargeIntentAPI.createChargeIntent(request)
-        } catch (_: Exception) {
-            null
-        }
+        val (intent, error) = ChargeIntentAPI.createChargeIntent(request)
         emit(intent)
     }
 
@@ -144,8 +135,8 @@ class FrameCheckoutViewModel : ViewModel() {
                 description = null,
                 metadata = null
             )
-            val cust = CustomersAPI.createCustomer(custReq)
-            cust?.id.takeIf { it?.isNotEmpty() == true } ?: return Pair(null, null)
+            val (customer, error) = CustomersAPI.createCustomer(custReq)
+            customer?.id.takeIf { it?.isNotEmpty() == true } ?: return Pair(null, null)
         }
 
         // 2. Create payment method
@@ -158,16 +149,12 @@ class FrameCheckoutViewModel : ViewModel() {
             customer = null,
             billing = billingAddress
         )
-        val pm = PaymentMethodsAPI.createPaymentMethod(pmReq, encryptData = false)
+        val (pm, methodError) = PaymentMethodsAPI.createPaymentMethod(pmReq, encryptData = false)
         val pmId = pm?.id ?: return Pair(null, null)
 
         // 3. Attach to customer
         val attachReq = PaymentMethodRequests.AttachPaymentMethodRequest(customer = newCustId)
-        val attached = PaymentMethodsAPI.attachPaymentMethodWith(pmId, attachReq)
+        val (attached, attachError) = PaymentMethodsAPI.attachPaymentMethodWith(pmId, attachReq)
         return Pair(attached?.id, newCustId)
-    }
-
-    private fun convertCustomerCountry(): String {
-        return "US"
     }
 }

@@ -36,7 +36,7 @@ object CustomersAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data)?.data }, error)
     }
 
-    suspend fun deleteCustomer(customerId: String): Pair<FrameObjects.Customer?, NetworkingError?>? {
+    suspend fun deleteCustomer(customerId: String): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.DeleteCustomer(customerId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)

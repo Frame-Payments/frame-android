@@ -39,7 +39,7 @@ class CustomersAPITest {
             description = null,
             metadata = null
         )
-        val result = CustomersAPI.createCustomer(request)
+        val (result, error) = CustomersAPI.createCustomer(request)
 
         assertNotNull(result)
         assertEquals("cus_123", result?.id)
@@ -60,7 +60,7 @@ class CustomersAPITest {
             description = null,
             metadata = null
         )
-        val result = CustomersAPI.updateCustomer("cus_123", request)
+        val (result, error) = CustomersAPI.updateCustomer("cus_123", request)
 
         assertNotNull(result)
         assertEquals("cus_123", result?.id)
@@ -72,7 +72,7 @@ class CustomersAPITest {
         val responseBody = """{"id":"cus_999", "name":"tester3", "phone":"1999999999"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = CustomersAPI.getCustomerWith("cus_999")
+        val (result, error) = CustomersAPI.getCustomerWith("cus_999")
 
         assertNotNull(result)
         assertEquals("cus_999", result?.id)
@@ -93,12 +93,12 @@ class CustomersAPITest {
 
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = CustomersAPI.getCustomers(0, 100)
+        val (result, error) = CustomersAPI.getCustomers(0, 100)
 
         assertNotNull(result)
-        assertEquals("cus_997", result?.get(0)?.id)
-        assertEquals("tester2@gmail.com", result?.get(1)?.email)
-        assertEquals("tester3", result?.get(2)?.name)
+        assertEquals("cus_997", result?.data?.get(0)?.id)
+        assertEquals("tester2@gmail.com", result?.data?.get(1)?.email)
+        assertEquals("tester3", result?.data?.get(2)?.name)
     }
 
     @Test
@@ -120,7 +120,7 @@ class CustomersAPITest {
             createdBefore = null,
             createdAfter = null
         )
-        val result = CustomersAPI.searchCustomers(request)
+        val (result, error) = CustomersAPI.searchCustomers(request)
 
         assertNotNull(result)
         assertEquals("cus_998", result?.get(0)?.id)
@@ -132,7 +132,7 @@ class CustomersAPITest {
         val responseBody = """{"id":"cus_999", "name":"tester3", "phone":"1999999999"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = CustomersAPI.deleteCustomer("cus_999")
+        val (result, error) = CustomersAPI.deleteCustomer("cus_999")
 
         assertNotNull(result)
         assertEquals("cus_999", result?.id)
@@ -144,7 +144,7 @@ class CustomersAPITest {
         val responseBody = """{"id":"cus_999", "name":"tester3", "phone":"1999999999", "status": "blocked"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = CustomersAPI.blockCustomerWith("cus_999")
+        val (result, error) = CustomersAPI.blockCustomerWith("cus_999")
 
         assertNotNull(result)
         assertEquals("cus_999", result?.id)
@@ -156,7 +156,7 @@ class CustomersAPITest {
         val responseBody = """{"id":"cus_999", "name":"tester3", "phone":"1999999999", "status": "active"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = CustomersAPI.unblockCustomerWith("cus_999")
+        val (result, error) = CustomersAPI.unblockCustomerWith("cus_999")
 
         assertNotNull(result)
         assertEquals("cus_999", result?.id)

@@ -33,7 +33,7 @@ class ChargeIntentAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = ChargeIntentsRequests.CreateChargeIntentRequest(amount = 100, currency = "usd", customer = null, description = null, confirm = true, paymentMethod = "1", receiptEmail = null, authorizationMode = AuthorizationMode.automatic, customerData = null, paymentMethodData = null)
-        val result = ChargeIntentAPI.createChargeIntent(request, true)
+        val (result, error) = ChargeIntentAPI.createChargeIntent(request, true)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
@@ -46,7 +46,7 @@ class ChargeIntentAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = ChargeIntentsRequests.CaptureChargeIntentRequest(amountCapturedCents = 100)
-        val result = ChargeIntentAPI.captureChargeIntent("1", request, true)
+        val (result, error) = ChargeIntentAPI.captureChargeIntent("1", request, true)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
@@ -58,7 +58,7 @@ class ChargeIntentAPITest {
         val responseBody = """{"id":"intent_123", "status":"succeeded"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = ChargeIntentAPI.confirmChargeIntent("intent_123", true)
+        val (result, error) = ChargeIntentAPI.confirmChargeIntent("intent_123", true)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
@@ -70,7 +70,7 @@ class ChargeIntentAPITest {
         val responseBody = """{"id":"intent_123", "status":"canceled"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = ChargeIntentAPI.cancelChargeIntent("intent_123")
+        val (result, error) = ChargeIntentAPI.cancelChargeIntent("intent_123")
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
@@ -90,12 +90,12 @@ class ChargeIntentAPITest {
         """.trimIndent()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = ChargeIntentAPI.getAllChargeIntents(1, perPage = 100)
+        val (result, error) = ChargeIntentAPI.getAllChargeIntents(1, perPage = 100)
 
         assertNotNull(result)
-        assertEquals(3, result?.size)
-        assertEquals("intent_2", result?.get(1)?.id)
-        assertEquals(ChargeIntentStatus.succeeded, result?.get(2)?.status)
+        assertEquals(3, result?.data?.size)
+        assertEquals("intent_2", result?.data?.get(1)?.id)
+        assertEquals(ChargeIntentStatus.succeeded, result?.data?.get(2)?.status)
     }
 
     @Test
@@ -103,7 +103,7 @@ class ChargeIntentAPITest {
         val responseBody = """{"id":"intent_123", "status":"pending"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = ChargeIntentAPI.getChargeIntent("intent_123")
+        val (result, error) = ChargeIntentAPI.getChargeIntent("intent_123")
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
@@ -116,7 +116,7 @@ class ChargeIntentAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = ChargeIntentsRequests.UpdateChargeIntentRequest(amount = 400, currency = "usd", customer = null, description = null, confirm = true, paymentMethod = null, receiptEmail = null)
-        val result = ChargeIntentAPI.updateChargeIntent("intent_123", request)
+        val (result, error) = ChargeIntentAPI.updateChargeIntent("intent_123", request)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)

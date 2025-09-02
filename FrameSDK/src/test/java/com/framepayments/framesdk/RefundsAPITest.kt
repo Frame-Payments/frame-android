@@ -32,7 +32,7 @@ class RefundsAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = RefundRequests.CreateRefundRequest(amount = 100, charge = "", reason = "", chargeIntent = "1")
-        val result = RefundsAPI.createRefund(request, forTesting = true)
+        val (result, error) = RefundsAPI.createRefund(request, forTesting = true)
 
         assertNotNull(result)
         assertEquals("ref_123", result?.id)
@@ -51,12 +51,12 @@ class RefundsAPITest {
         """.trimIndent()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = RefundsAPI.getRefunds(perPage = 10, page = 1, chargeId = "1", chargeIntentId = "2")
+        val (result, error) = RefundsAPI.getRefunds(perPage = 10, page = 1, chargeId = "1", chargeIntentId = "2")
 
         assertNotNull(result)
-        assertEquals(2, result?.size)
-        assertEquals("ref_2", result?.get(1)?.id)
-        assertEquals("processing", result?.get(1)?.status)
+        assertEquals(2, result?.data?.size)
+        assertEquals("ref_2", result?.data?.get(1)?.id)
+        assertEquals("processing", result?.data?.get(1)?.status)
     }
 
     @Test
@@ -64,7 +64,7 @@ class RefundsAPITest {
         val responseBody = """{"id":"ref_4", "status":"refunded"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = RefundsAPI.getRefundWith("ref_4")
+        val (result, error) = RefundsAPI.getRefundWith("ref_4")
 
         assertNotNull(result)
         assertEquals("ref_4", result?.id)
@@ -76,7 +76,7 @@ class RefundsAPITest {
         val responseBody = """{"id":"ref_789", "status":"canceled"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = RefundsAPI.cancelRefund("ref_789")
+        val (result, error) = RefundsAPI.cancelRefund("ref_789")
 
         assertNotNull(result)
         assertEquals("ref_789", result?.id)
