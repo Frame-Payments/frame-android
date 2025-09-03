@@ -33,7 +33,7 @@ class SubscriptionsAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = SubscriptionRequest.CreateSubscriptionRequest("123", "1", currency= "USD", defaultPaymentMethod = "1", description = "")
-        val result = SubscriptionsAPI.createSubscription(request)
+        val (result, error) = SubscriptionsAPI.createSubscription(request)
 
         assertNotNull(result)
         assertEquals("sub_123", result?.id)
@@ -49,7 +49,7 @@ class SubscriptionsAPITest {
             description = null,
             defaultPaymentMethod = "method_123"
         )
-        val result = SubscriptionsAPI.updateSubscription("sub_123", request)
+        val (result, error) = SubscriptionsAPI.updateSubscription("sub_123", request)
 
         assertNotNull(result)
         assertEquals("sub_123", result?.id)
@@ -61,7 +61,7 @@ class SubscriptionsAPITest {
         val responseBody = """{"id":"sub_456", "status":"canceled"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = SubscriptionsAPI.getSubscriptionWith("sub_456")
+        val (result, error) = SubscriptionsAPI.getSubscriptionWith("sub_456")
 
         assertNotNull(result)
         assertEquals("sub_456", result?.id)
@@ -80,11 +80,11 @@ class SubscriptionsAPITest {
         """.trimIndent()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = SubscriptionsAPI.getSubscriptions(perPage = 10, page = 1)
+        val (result, error) = SubscriptionsAPI.getSubscriptions(perPage = 10, page = 1)
 
         assertNotNull(result)
-        assertEquals(2, result?.size)
-        assertEquals("sub_1", result?.get(0)?.id)
+        assertEquals(2, result?.data?.size)
+        assertEquals("sub_1", result?.data?.get(0)?.id)
     }
 
     @Test
@@ -98,7 +98,7 @@ class SubscriptionsAPITest {
         """.trimIndent()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = SubscriptionsAPI.searchSubscriptions(status = "trialing", createdBefore = null, createdAfter = null)
+        val (result, error) = SubscriptionsAPI.searchSubscriptions(status = "trialing", createdBefore = null, createdAfter = null)
 
         assertNotNull(result)
         assertEquals(1, result?.size)
@@ -110,7 +110,7 @@ class SubscriptionsAPITest {
         val responseBody = """{"id":"sub_789", "status":"canceled"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = SubscriptionsAPI.cancelSubscriptionWith("sub_789")
+        val (result, error) = SubscriptionsAPI.cancelSubscriptionWith("sub_789")
 
         assertNotNull(result)
         assertEquals("sub_789", result?.id)

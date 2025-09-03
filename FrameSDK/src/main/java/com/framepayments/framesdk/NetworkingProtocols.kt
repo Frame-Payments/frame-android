@@ -19,7 +19,7 @@ sealed class NetworkingError : Exception() {
     data object DecodingFailed : NetworkingError() {
         private fun readResolve(): Any = DecodingFailed
     }
-    data class ServerError(val statusCode: Int) : NetworkingError()
+    data class ServerError(val statusCode: Int, val errorDescription: String) : NetworkingError()
     data object UnknownError : NetworkingError() {
         private fun readResolve(): Any = UnknownError
     }

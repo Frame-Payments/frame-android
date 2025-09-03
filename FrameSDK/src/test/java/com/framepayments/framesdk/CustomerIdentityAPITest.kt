@@ -47,7 +47,7 @@ class CustomerIdentityAPITest {
             email = "tester@gmail.com",
             ssn = "XXX-XXX-XXXX"
         )
-        val result = CustomerIdentityAPI.createCustomerIdentity(request)
+        val (result, error) = CustomerIdentityAPI.createCustomerIdentity(request)
 
         assertNotNull(result)
         assertEquals("iden_123", result?.id)
@@ -59,7 +59,7 @@ class CustomerIdentityAPITest {
         val responseBody = """{"id":"iden_124", "status":"failed"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = CustomerIdentityAPI.getCustomerIdentityWith("iden_124")
+        val (result, error) = CustomerIdentityAPI.getCustomerIdentityWith("iden_124")
 
         assertNotNull(result)
         assertEquals("iden_124", result?.id)

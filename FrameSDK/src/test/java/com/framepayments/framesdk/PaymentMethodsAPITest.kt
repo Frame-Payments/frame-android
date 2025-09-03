@@ -39,7 +39,7 @@ class PaymentMethodsAPITest {
             customer = null,
             billing = null
         )
-        val result = PaymentMethodsAPI.createPaymentMethod(request, encryptData = false)
+        val (result, error) = PaymentMethodsAPI.createPaymentMethod(request, encryptData = false)
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
@@ -51,7 +51,7 @@ class PaymentMethodsAPITest {
         val responseBody = """{"id":"method_123", "type":"card"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = PaymentMethodsAPI.getPaymentMethodWith("method_123")
+        val (result, error) = PaymentMethodsAPI.getPaymentMethodWith("method_123")
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
@@ -70,11 +70,11 @@ class PaymentMethodsAPITest {
         """.trimMargin()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = PaymentMethodsAPI.getPaymentMethods(0, 0)
+        val (result, error) = PaymentMethodsAPI.getPaymentMethods(0, 0)
 
         assertNotNull(result)
-        assertEquals("method_123", result?.get(0)?.id)
-        assertEquals("cus_123", result?.get(1)?.customer)
+        assertEquals("method_123", result?.data?.get(0)?.id)
+        assertEquals("cus_123", result?.data?.get(1)?.customer)
     }
 
     @Test
@@ -88,7 +88,7 @@ class PaymentMethodsAPITest {
         """.trimMargin()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = PaymentMethodsAPI.getPaymentMethodsWithCustomer("cus_123")
+        val (result, error) = PaymentMethodsAPI.getPaymentMethodsWithCustomer("cus_123")
 
         assertNotNull(result)
         assertEquals("method_123", result?.get(0)?.id)
@@ -105,7 +105,7 @@ class PaymentMethodsAPITest {
             expYear = "2028",
             billing = null
         )
-        val result = PaymentMethodsAPI.updatePaymentMethodWith("method_123", request)
+        val (result, error) = PaymentMethodsAPI.updatePaymentMethodWith("method_123", request)
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
@@ -118,7 +118,7 @@ class PaymentMethodsAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = PaymentMethodRequests.AttachPaymentMethodRequest(customer = "cus_111")
-        val result = PaymentMethodsAPI.attachPaymentMethodWith("method_123", request)
+        val (result, error) = PaymentMethodsAPI.attachPaymentMethodWith("method_123", request)
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
@@ -130,7 +130,7 @@ class PaymentMethodsAPITest {
         val responseBody = """{"id":"method_123", "customer":"cus_111"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = PaymentMethodsAPI.detachPaymentMethodWith("method_123")
+        val (result, error) = PaymentMethodsAPI.detachPaymentMethodWith("method_123")
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
@@ -142,7 +142,7 @@ class PaymentMethodsAPITest {
         val responseBody = """{"id":"method_123", "status":"blocked"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = PaymentMethodsAPI.blockPaymentMethodWith("method_123")
+        val (result, error) = PaymentMethodsAPI.blockPaymentMethodWith("method_123")
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
@@ -154,7 +154,7 @@ class PaymentMethodsAPITest {
         val responseBody = """{"id":"method_123", "status":"active"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val result = PaymentMethodsAPI.unblockPaymentMethodWith("method_123")
+        val (result, error) = PaymentMethodsAPI.unblockPaymentMethodWith("method_123")
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
