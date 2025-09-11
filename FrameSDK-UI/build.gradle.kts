@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.framepayments.framesdk_ui"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -65,7 +65,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates("com.framepayments", "framesdk_ui", "1.0.5")
+    coordinates("com.framepayments", "framesdk_ui", "1.1.1")
 
     pom {
         name.set("FrameSDK-UI")

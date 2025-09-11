@@ -15,16 +15,26 @@ object FrameObjects {
     enum class PaymentMethodStatus {
         active, blocked
     }
+
+    enum class PaymentMethodType {
+        card, ach
+    }
+
+    enum class PaymentAccountType {
+        checking, savings
+    }
+
     data class PaymentMethod(
         val id: String,
         val customer: String?,
         val billing: BillingAddress?,
-        val type: String,
+        val type: PaymentMethodType,
         @SerializedName("object") val methodObject: String,
         val created: Int,
         val updated: Int,
         val livemode: Boolean,
         val card: PaymentCard?,
+        val ach: BankAccount?,
         val status: PaymentMethodStatus?
     )
 
@@ -37,6 +47,14 @@ object FrameObjects {
         val segment: String? = null,
         val type: String? = null,
         @SerializedName("last_four") val lastFourDigits: String
+    )
+
+    data class BankAccount(
+        @SerializedName("account_type") val accountType: PaymentAccountType?,
+        @SerializedName("bank_name") val bankName: String?,
+        @SerializedName("account_number") val accountNumber: String?,
+        @SerializedName("routing_number") val routingNumber: String?,
+        @SerializedName("last_four") val lastFour: String?
     )
 
     enum class CustomerStatus {
