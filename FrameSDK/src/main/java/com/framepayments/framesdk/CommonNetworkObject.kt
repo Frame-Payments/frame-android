@@ -42,10 +42,10 @@ object FrameObjects {
         val brand: String,
         @SerializedName("exp_month") val expirationMonth: String,
         @SerializedName("exp_year") val expirationYear: String,
-        val issuer: String? = null,
-        val currency: String? = null,
-        val segment: String? = null,
-        val type: String? = null,
+        val issuer: String?,
+        val currency: String?,
+        val segment: String?,
+        val type: String?,
         @SerializedName("last_four") val lastFourDigits: String
     )
 
