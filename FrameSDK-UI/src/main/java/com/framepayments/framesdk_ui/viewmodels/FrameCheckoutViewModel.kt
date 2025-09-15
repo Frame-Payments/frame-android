@@ -140,21 +140,16 @@ class FrameCheckoutViewModel : ViewModel() {
         }
 
         // 2. Create payment method
-        val pmReq = PaymentMethodRequests.CreatePaymentMethodRequest(
-            type = "card",
+        val pmReq = PaymentMethodRequests.CreateCardPaymentMethodRequest(
             cardNumber = cardData.card.number,
             expMonth = cardData.card.expMonth,
             expYear = cardData.card.expYear,
             cvc = cardData.card.cvc,
-            customer = null,
+            customer = newCustId,
             billing = billingAddress
         )
-        val (pm, methodError) = PaymentMethodsAPI.createPaymentMethod(pmReq, encryptData = false)
+        val (pm, methodError) = PaymentMethodsAPI.createCardPaymentMethod(pmReq, encryptData = false)
         val pmId = pm?.id ?: return Pair(null, null)
-
-        // 3. Attach to customer
-        val attachReq = PaymentMethodRequests.AttachPaymentMethodRequest(customer = newCustId)
-        val (attached, attachError) = PaymentMethodsAPI.attachPaymentMethodWith(pmId, attachReq)
-        return Pair(attached?.id, newCustId)
+        return Pair(pmId, newCustId)
     }
 }

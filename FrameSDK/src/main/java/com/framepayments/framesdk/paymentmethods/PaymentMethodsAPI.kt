@@ -29,7 +29,7 @@ object PaymentMethodsAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
     }
 
-    suspend fun createPaymentMethod(request: PaymentMethodRequests.CreatePaymentMethodRequest, encryptData: Boolean = true): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
+    suspend fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         if (!FrameNetworking.isEvervaultConfigured && encryptData) {
             FrameNetworking.configureEvervault()
         }
@@ -41,6 +41,12 @@ object PaymentMethodsAPI {
             encryptedRequest.cvc = Evervault.shared.encrypt(request.cvc) as String
         }
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, encryptedRequest)
+        return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
+    }
+
+    suspend fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
+        val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -99,7 +105,7 @@ object PaymentMethodsAPI {
         }
     }
 
-    fun createPaymentMethod(request: PaymentMethodRequests.CreatePaymentMethodRequest, encryptData: Boolean = true, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
+    fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         if (!FrameNetworking.isEvervaultConfigured) {
             FrameNetworking.configureEvervault()
         }
@@ -116,6 +122,14 @@ object PaymentMethodsAPI {
                     completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
                 }
             }
+        }
+    }
+
+    fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
+
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
 

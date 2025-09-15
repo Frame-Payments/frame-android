@@ -26,12 +26,11 @@ class PaymentMethodsAPITest {
     }
 
     @Test
-    fun testCreatePaymentMethod() = runBlocking {
+    fun testCreateCardPaymentMethod() = runBlocking {
         val responseBody = """{"id":"method_123", "type":"card"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val request = PaymentMethodRequests.CreatePaymentMethodRequest(
-            type = "card",
+        val request = PaymentMethodRequests.CreateCardPaymentMethodRequest(
             cardNumber = "4242424242424242",
             expMonth = "08",
             expYear = "27",
@@ -39,11 +38,30 @@ class PaymentMethodsAPITest {
             customer = null,
             billing = null
         )
-        val (result, error) = PaymentMethodsAPI.createPaymentMethod(request, encryptData = false)
+        val (result, error) = PaymentMethodsAPI.createCardPaymentMethod(request, encryptData = false)
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
-        assertEquals("card", result?.type)
+        assertEquals(FrameObjects.PaymentMethodType.card, result?.type)
+    }
+
+    @Test
+    fun testCreateACHPaymentMethod() = runBlocking {
+        val responseBody = """{"id":"method_123", "type":"ach"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = PaymentMethodRequests.CreateACHPaymentMethodRequest(
+            accountType = FrameObjects.PaymentAccountType.checking,
+            accountNumber = "12341234123412",
+            routingNumber = "0000000000",
+            customer = null,
+            billing = null
+        )
+        val (result, error) = PaymentMethodsAPI.createACHPaymentMethod(request)
+
+        assertNotNull(result)
+        assertEquals("method_123", result?.id)
+        assertEquals(FrameObjects.PaymentMethodType.ach, result?.type)
     }
 
     @Test
@@ -55,7 +73,7 @@ class PaymentMethodsAPITest {
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
-        assertEquals("card", result?.type)
+        assertEquals(FrameObjects.PaymentMethodType.card, result?.type)
     }
 
     @Test
@@ -92,7 +110,7 @@ class PaymentMethodsAPITest {
 
         assertNotNull(result)
         assertEquals("method_123", result?.get(0)?.id)
-        assertEquals("card", result?.get(0)?.type)
+        assertEquals(FrameObjects.PaymentMethodType.card, result?.get(0)?.type)
     }
 
     @Test
@@ -109,7 +127,7 @@ class PaymentMethodsAPITest {
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
-        assertEquals("card", result?.type)
+        assertEquals(FrameObjects.PaymentMethodType.card, result?.type)
     }
 
     @Test

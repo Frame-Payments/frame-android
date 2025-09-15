@@ -1,4 +1,4 @@
-val sdkVersion = "1.0.5"
+val sdkVersion = "1.1.1"
 
 plugins {
     alias(libs.plugins.android.library)
@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.framepayments.framesdk"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
