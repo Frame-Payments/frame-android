@@ -3,38 +3,27 @@ package com.framepayments.framesdk.chargeintents
 import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
-import com.framepayments.framesdk.managers.SiftActivityName
-import com.framepayments.framesdk.managers.SiftManager
 
 object ChargeIntentAPI {
     //MARK: Methods using coroutines
-    suspend fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest, forTesting: Boolean = false): Pair<ChargeIntent?, NetworkingError?> {
+    suspend fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.CreateChargeIntent
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
-        if (data != null && !forTesting) {
-            SiftManager.addNewSiftEvent(SiftActivityName.sale)
-        }
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
 
-    suspend fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest, forTesting: Boolean = false): Pair<ChargeIntent?, NetworkingError?> {
+    suspend fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.CaptureChargeIntent(intentId)
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
-        if (data != null && !forTesting) {
-            SiftManager.addNewSiftEvent(SiftActivityName.capture)
-        }
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
 
-    suspend fun confirmChargeIntent(intentId: String, forTesting: Boolean = false): Pair<ChargeIntent?, NetworkingError?> {
+    suspend fun confirmChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.ConfirmChargeIntent(intentId)
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
 
-        if (data != null && !forTesting) {
-            SiftManager.addNewSiftEvent(SiftActivityName.authorize)
-        }
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
 
@@ -67,9 +56,6 @@ object ChargeIntentAPI {
         val endpoint = ChargeIntentEndpoints.CreateChargeIntent
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
-            if (data != null) {
-                SiftManager.addNewSiftEvent(SiftActivityName.sale)
-            }
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
@@ -78,10 +64,6 @@ object ChargeIntentAPI {
         val endpoint = ChargeIntentEndpoints.CaptureChargeIntent(intentId)
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
-            if (data != null) {
-                SiftManager.addNewSiftEvent(SiftActivityName.capture)
-            }
-
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
@@ -90,9 +72,6 @@ object ChargeIntentAPI {
         val endpoint = ChargeIntentEndpoints.ConfirmChargeIntent(intentId)
 
         FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
-            if (data != null) {
-                SiftManager.addNewSiftEvent(SiftActivityName.authorize)
-            }
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
