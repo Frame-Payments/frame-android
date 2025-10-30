@@ -106,7 +106,7 @@ class PaymentMethodsAPITest {
         """.trimMargin()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val (result, error) = PaymentMethodsAPI.getPaymentMethodsWithCustomer("cus_123")
+        val (result, error) = PaymentMethodsAPI.getPaymentMethodsWithCustomer("cus_123", true)
 
         assertNotNull(result)
         assertEquals("method_123", result?.get(0)?.id)
