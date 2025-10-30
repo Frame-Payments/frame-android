@@ -5,6 +5,7 @@ import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.managers.SiftManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +24,11 @@ object PaymentMethodsAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
-    suspend fun getPaymentMethodsWithCustomer(customerId: String): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
+    suspend fun getPaymentMethodsWithCustomer(customerId: String, forTesting: Boolean = false): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
+        if (!forTesting) {
+            SiftManager.collectUserLogin(customerId, "")
+        }
+
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
@@ -35,7 +40,7 @@ object PaymentMethodsAPI {
         }
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
-        var encryptedRequest = request
+        val encryptedRequest = request
         if (encryptData) {
             encryptedRequest.cardNumber = Evervault.shared.encrypt(request.cardNumber) as String
             encryptedRequest.cvc = Evervault.shared.encrypt(request.cvc) as String
@@ -98,6 +103,7 @@ object PaymentMethodsAPI {
     }
 
     fun getPaymentMethodsWithCustomer(customerId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit) {
+        SiftManager.collectUserLogin(customerId, "")
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
