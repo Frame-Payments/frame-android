@@ -32,9 +32,10 @@ object SiftManager {
     fun collectUserLogin(customerId: String, email : String) {
         if (userId == "") {
             userId = customerId
+            Sift.setUserId(customerId)
+
             val ipAddress = fetchPublicIp()
 
-            Sift.setUserId(customerId)
             Sift.open(FrameNetworking.getContext())
             Sift.collect()
             Sift.upload()
