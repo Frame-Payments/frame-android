@@ -4,12 +4,10 @@ import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
-import com.sift.api.representations.MobileEventJson
 import siftscience.android.Sift
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONObject
-
+import java.net.URL
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 object SiftManager {
     var userId: String = ""
@@ -29,29 +27,24 @@ object SiftManager {
         }
     }
 
-    fun collectUserLogin(customerId: String, email : String) {
+    suspend fun collectUserSiftDetails(customerId: String, email : String) {
         if (userId == "") {
             userId = customerId
             Sift.setUserId(customerId)
 
-            val ipAddress = fetchPublicIp()
+            val ipAddress = getPublicIp()
 
-            Sift.open(FrameNetworking.getContext())
-            Sift.collect()
-            Sift.upload()
+            // Send the information to the backend here.
         }
     }
 
-    fun fetchPublicIp(): String? {
-        val client = OkHttpClient()
-        val request = Request.Builder()
-            .url("https://api.ipify.org?format=json")
-            .build()
-        client.newCall(request).execute().use { resp ->
-            if (!resp.isSuccessful) return null
-            val body = resp.body?.string() ?: return null
-            val json = JSONObject(body)
-            return json.optString("ip", null)
+    suspend fun getPublicIp(): String? {
+        return try {
+            val url = URL("https://api.ipify.org") // simple IP echo service
+            BufferedReader(InputStreamReader(url.openStream())).use { it.readLine() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 }
