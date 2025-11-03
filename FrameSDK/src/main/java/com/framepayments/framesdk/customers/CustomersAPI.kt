@@ -13,7 +13,7 @@ object CustomersAPI {
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
         if (!forTesting) {
-            SiftManager.collectUserLogin(decodedResponse?.id ?: "", decodedResponse?.email ?: "")
+            SiftManager.uploadUserSiftDetails(decodedResponse?.id ?: "", decodedResponse?.email ?: "")
         }
         return Pair(decodedResponse, error)
     }
@@ -36,7 +36,7 @@ object CustomersAPI {
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
         if (!forTesting) {
-            SiftManager.collectUserLogin(decodedResponse?.id ?: "", decodedResponse?.email ?: "")
+            SiftManager.uploadUserSiftDetails(decodedResponse?.id ?: "", decodedResponse?.email ?: "")
         }
         return Pair(decodedResponse, error)
     }
@@ -71,7 +71,7 @@ object CustomersAPI {
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
-            SiftManager.collectUserLogin(decodedResponse?.id ?: "", decodedResponse?.email ?: "")
+            SiftManager.uploadUserSiftDetails(decodedResponse?.id ?: "", decodedResponse?.email ?: "") {}
             completionHandler(decodedResponse, error)
         }
     }
@@ -97,7 +97,7 @@ object CustomersAPI {
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
-            SiftManager.collectUserLogin(decodedResponse?.id ?: "", decodedResponse?.email ?: "")
+            SiftManager.uploadUserSiftDetails(decodedResponse?.id ?: "", decodedResponse?.email ?: "") {}
             completionHandler(decodedResponse, error)
         }
     }

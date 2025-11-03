@@ -26,7 +26,7 @@ object PaymentMethodsAPI {
 
     suspend fun getPaymentMethodsWithCustomer(customerId: String, forTesting: Boolean = false): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
         if (!forTesting) {
-            SiftManager.collectUserLogin(customerId, "")
+            SiftManager.uploadUserSiftDetails(customerId, "")
         }
 
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
@@ -103,8 +103,8 @@ object PaymentMethodsAPI {
     }
 
     fun getPaymentMethodsWithCustomer(customerId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit) {
-        SiftManager.collectUserLogin(customerId, "")
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
+        SiftManager.uploadUserSiftDetails(customerId, "") {}
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error )

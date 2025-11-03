@@ -2,6 +2,7 @@ package com.framepayments.framesdk.managers
 
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.configurations.ConfigurationAPI
+import com.framepayments.framesdk.configurations.ConfigurationRequests
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import siftscience.android.Sift
@@ -27,20 +28,38 @@ object SiftManager {
         }
     }
 
-    suspend fun collectUserSiftDetails(customerId: String, email : String) {
+    suspend fun uploadUserSiftDetails(customerId: String, email : String) {
+        // This prevents the ipAddress from being sent more than once per session.
         if (userId == "") {
             userId = customerId
             Sift.setUserId(customerId)
 
-            val ipAddress = getPublicIp()
+            val ipAddress = getPublicIp() ?: ""
 
             // Send the information to the backend here.
+            val request = ConfigurationRequests.CreateSiftDetailsRequest(email, ipAddress, customerId)
+            ConfigurationAPI.sendIPAddressForSift(request)
         }
     }
 
-    suspend fun getPublicIp(): String? {
+    fun uploadUserSiftDetails(customerId: String, email : String, completionHandler: (Boolean) -> Unit) {
+        if (userId == "") {
+            userId = customerId
+            Sift.setUserId(customerId)
+
+            val ipAddress = getPublicIp() ?: ""
+
+            // Send the information to the backend here.
+            val request = ConfigurationRequests.CreateSiftDetailsRequest(email, ipAddress, customerId)
+            ConfigurationAPI.sendIPAddressForSift(request) {
+                completionHandler(true)
+            }
+        }
+    }
+
+    fun getPublicIp(): String? {
         return try {
-            val url = URL("https://api.ipify.org") // simple IP echo service
+            val url = URL("https://api.ipify.org")
             BufferedReader(InputStreamReader(url.openStream())).use { it.readLine() }
         } catch (e: Exception) {
             e.printStackTrace()
