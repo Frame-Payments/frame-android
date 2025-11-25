@@ -1,6 +1,5 @@
 package com.framepayments.framesdk.configurations
 import com.framepayments.framesdk.FrameNetworking
-import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 
 object ConfigurationAPI {
     //MARK: Methods using coroutines
@@ -36,12 +35,6 @@ object ConfigurationAPI {
             return dataResponse
         }
         return null
-    }
-
-    suspend fun sendIPAddressForSift(request: ConfigurationRequests.CreateSiftDetailsRequest): Boolean {
-        val endpoint = ConfigurationEndpoints.SendSiftConfigurationDetails
-        val (_, _) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-        return true
     }
 
     //MARK: Methods using callbacks
@@ -80,14 +73,6 @@ object ConfigurationAPI {
             } else {
                 completionHandler(null)
             }
-        }
-    }
-
-    fun sendIPAddressForSift(request: ConfigurationRequests.CreateSiftDetailsRequest, completionHandler: (Boolean) -> Unit) {
-        val endpoint = ConfigurationEndpoints.SendSiftConfigurationDetails
-
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
-            completionHandler(true)
         }
     }
 }
