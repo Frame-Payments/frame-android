@@ -24,11 +24,7 @@ object PaymentMethodsAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
-    suspend fun getPaymentMethodsWithCustomer(customerId: String, forTesting: Boolean = false): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
-        if (!forTesting) {
-            SiftManager.uploadUserSiftDetails(customerId, "")
-        }
-
+    suspend fun getPaymentMethodsWithCustomer(customerId: String): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
@@ -104,8 +100,6 @@ object PaymentMethodsAPI {
 
     fun getPaymentMethodsWithCustomer(customerId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
-        SiftManager.uploadUserSiftDetails(customerId, "") {}
-
         FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error )
         }

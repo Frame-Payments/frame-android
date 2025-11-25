@@ -7,14 +7,11 @@ import com.framepayments.framesdk.managers.SiftManager
 
 object CustomersAPI {
     //MARK: Methods using coroutines
-    suspend fun createCustomer(request: CustomersRequests.CreateCustomerRequest, forTesting: Boolean = false): Pair<FrameObjects.Customer?, NetworkingError?> {
+    suspend fun createCustomer(request: CustomersRequests.CreateCustomerRequest): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.CreateCustomer
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
-        if (!forTesting) {
-            SiftManager.uploadUserSiftDetails(decodedResponse?.id ?: "", decodedResponse?.email ?: "")
-        }
         return Pair(decodedResponse, error)
     }
 
@@ -30,14 +27,11 @@ object CustomersAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data) }, error)
     }
 
-    suspend fun getCustomerWith(customerId: String, forTesting: Boolean = false): Pair<FrameObjects.Customer?, NetworkingError?> {
+    suspend fun getCustomerWith(customerId: String): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.GetCustomerWith(customerId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
-        if (!forTesting) {
-            SiftManager.uploadUserSiftDetails(decodedResponse?.id ?: "", decodedResponse?.email ?: "")
-        }
         return Pair(decodedResponse, error)
     }
 
@@ -71,7 +65,6 @@ object CustomersAPI {
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
-            SiftManager.uploadUserSiftDetails(decodedResponse?.id ?: "", decodedResponse?.email ?: "") {}
             completionHandler(decodedResponse, error)
         }
     }
@@ -97,7 +90,6 @@ object CustomersAPI {
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
-            SiftManager.uploadUserSiftDetails(decodedResponse?.id ?: "", decodedResponse?.email ?: "") {}
             completionHandler(decodedResponse, error)
         }
     }

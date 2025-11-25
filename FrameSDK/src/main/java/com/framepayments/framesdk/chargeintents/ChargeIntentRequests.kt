@@ -18,7 +18,7 @@ object ChargeIntentsRequests {
         @SerializedName("authorization+mode") val authorizationMode: AuthorizationMode?,
         @SerializedName("customer_data") val customerData: CustomerData?,
         @SerializedName("payment_method_data") val paymentMethodData: PaymentMethodData?,
-        @SerializedName("fraud_signals") var fraudSignals: FraudSignals?,
+        @SerializedName("fraud_signals") var fraudSignals: FraudSignals? = null,
         @SerializedName("use_frame_sdk") val useFrameSDK: Boolean = true
     )
 
