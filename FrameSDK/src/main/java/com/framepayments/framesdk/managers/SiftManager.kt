@@ -2,7 +2,6 @@ package com.framepayments.framesdk.managers
 
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.configurations.ConfigurationAPI
-import com.framepayments.framesdk.configurations.ConfigurationRequests
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import siftscience.android.Sift
@@ -24,35 +23,6 @@ object SiftManager {
                     .withBeaconKey(configFromAPI?.beaconKey)
                     .build())
                 Sift.collect()
-            }
-        }
-    }
-
-    suspend fun uploadUserSiftDetails(customerId: String, email : String) {
-        // This prevents the ipAddress from being sent more than once per session.
-        if (userId == "") {
-            userId = customerId
-            Sift.setUserId(customerId)
-
-            val ipAddress = getPublicIp() ?: ""
-
-            // Send the information to the backend here.
-            val request = ConfigurationRequests.CreateSiftDetailsRequest(email, ipAddress, customerId)
-            ConfigurationAPI.sendIPAddressForSift(request)
-        }
-    }
-
-    fun uploadUserSiftDetails(customerId: String, email : String, completionHandler: (Boolean) -> Unit) {
-        if (userId == "") {
-            userId = customerId
-            Sift.setUserId(customerId)
-
-            val ipAddress = getPublicIp() ?: ""
-
-            // Send the information to the backend here.
-            val request = ConfigurationRequests.CreateSiftDetailsRequest(email, ipAddress, customerId)
-            ConfigurationAPI.sendIPAddressForSift(request) {
-                completionHandler(true)
             }
         }
     }
