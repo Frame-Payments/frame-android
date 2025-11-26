@@ -39,7 +39,7 @@ class CustomersAPITest {
             description = null,
             metadata = null
         )
-        val (result, error) = CustomersAPI.createCustomer(request)
+        val (result, error) = CustomersAPI.createCustomer(request,)
 
         assertNotNull(result)
         assertEquals("cus_123", result?.id)

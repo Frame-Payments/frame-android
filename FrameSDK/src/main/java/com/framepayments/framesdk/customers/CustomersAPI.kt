@@ -3,13 +3,16 @@ import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.managers.SiftManager
 
 object CustomersAPI {
     //MARK: Methods using coroutines
     suspend fun createCustomer(request: CustomersRequests.CreateCustomerRequest): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.CreateCustomer
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-        return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
+
+        val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
+        return Pair(decodedResponse, error)
     }
 
     suspend fun updateCustomer(customerId: String, request: CustomersRequests.UpdateCustomerRequest): Pair<FrameObjects.Customer?, NetworkingError?> {
@@ -27,7 +30,9 @@ object CustomersAPI {
     suspend fun getCustomerWith(customerId: String): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.GetCustomerWith(customerId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
-        return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
+
+        val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
+        return Pair(decodedResponse, error)
     }
 
     suspend fun searchCustomers(request: CustomersRequests.SearchCustomersRequest): Pair<List<FrameObjects.Customer>?, NetworkingError?> {
@@ -59,7 +64,8 @@ object CustomersAPI {
         val endpoint = CustomerEndpoints.CreateCustomer
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
-            completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
+            val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
+            completionHandler(decodedResponse, error)
         }
     }
 
@@ -83,7 +89,8 @@ object CustomersAPI {
         val endpoint = CustomerEndpoints.GetCustomerWith(customerId)
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
-            completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
+            val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
+            completionHandler(decodedResponse, error)
         }
     }
 

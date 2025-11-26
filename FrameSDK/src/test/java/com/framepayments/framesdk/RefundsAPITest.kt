@@ -32,7 +32,7 @@ class RefundsAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = RefundRequests.CreateRefundRequest(amount = 100, charge = "", reason = "", chargeIntent = "1")
-        val (result, error) = RefundsAPI.createRefund(request, forTesting = true)
+        val (result, error) = RefundsAPI.createRefund(request)
 
         assertNotNull(result)
         assertEquals("ref_123", result?.id)

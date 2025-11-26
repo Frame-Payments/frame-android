@@ -2,18 +2,12 @@ package com.framepayments.framesdk.refunds
 import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
-import com.framepayments.framesdk.managers.SiftActivityName
-import com.framepayments.framesdk.managers.SiftManager
 
 object RefundsAPI {
     //MARK: Methods using coroutines
-    suspend fun createRefund(request: RefundRequests.CreateRefundRequest, forTesting: Boolean = false): Pair<Refund?, NetworkingError?> {
+    suspend fun createRefund(request: RefundRequests.CreateRefundRequest): Pair<Refund?, NetworkingError?> {
         val endpoint = RefundEndpoints.CreateRefund
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-
-        if (data != null && !forTesting) {
-            SiftManager.addNewSiftEvent(SiftActivityName.refund)
-        }
         return Pair(data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
     }
 
@@ -40,9 +34,6 @@ object RefundsAPI {
         val endpoint = RefundEndpoints.CreateRefund
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
-            if (data != null) {
-                SiftManager.addNewSiftEvent(SiftActivityName.refund)
-            }
             completionHandler( data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
         }
     }

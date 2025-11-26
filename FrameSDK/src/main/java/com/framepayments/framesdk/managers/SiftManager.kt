@@ -5,15 +5,13 @@ import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import siftscience.android.Sift
-
-enum class SiftActivityName {
-    sale,
-    authorize,
-    capture,
-    refund
-}
+import java.net.URL
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 object SiftManager {
+    var userId: String = ""
+
     fun initializeSift(userId: String) {
         Sift.setUserId(userId)
 
@@ -24,13 +22,18 @@ object SiftManager {
                     .withAccountId(configFromAPI?.accountId)
                     .withBeaconKey(configFromAPI?.beaconKey)
                     .build())
+                Sift.collect()
             }
         }
     }
 
-    fun addNewSiftEvent(activity: SiftActivityName) {
-        Sift.open(FrameNetworking.getContext(), activity.toString())
-        Sift.collect()
-        Sift.upload()
+    fun getPublicIp(): String? {
+        return try {
+            val url = URL("https://api.ipify.org")
+            BufferedReader(InputStreamReader(url.openStream())).use { it.readLine() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }
