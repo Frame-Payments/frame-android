@@ -1,9 +1,9 @@
 package com.framepayments.framesdk.customers
+
 import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
-import com.framepayments.framesdk.managers.SiftManager
 
 object CustomersAPI {
     //MARK: Methods using coroutines
