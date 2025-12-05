@@ -3,19 +3,19 @@ import com.framepayments.framesdk.FrameObjects
 import com.google.gson.annotations.SerializedName
 
 enum class AuthorizationMode {
-    automatic,
-    manual
+    @SerializedName("automatic") AUTOMATIC,
+    @SerializedName("manual") MANUAL
 }
 
 enum class ChargeIntentStatus {
-    canceled,
-    disputed,
-    failed,
-    incomplete,
-    pending,
-    refunded,
-    reversed,
-    succeeded
+    @SerializedName("canceled") CANCELED,
+    @SerializedName("disputed") DISPUTED,
+    @SerializedName("failed") FAILED,
+    @SerializedName("incomplete") INCOMPLETE,
+    @SerializedName("pending") PENDING,
+    @SerializedName("refunded") REFUNDED,
+    @SerializedName("reversed") REVERSED,
+    @SerializedName("succeeded") SUCCEEDED
 }
 
 data class ChargeIntent(

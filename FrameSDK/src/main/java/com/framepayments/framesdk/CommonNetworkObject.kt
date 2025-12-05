@@ -13,15 +13,18 @@ object FrameObjects {
     )
 
     enum class PaymentMethodStatus {
-        active, blocked
+        @SerializedName("active") ACTIVE,
+        @SerializedName("blocked") BLOCKED
     }
 
     enum class PaymentMethodType {
-        card, ach
+        @SerializedName("card") CARD,
+        @SerializedName("ach") ACH
     }
 
     enum class PaymentAccountType {
-        checking, savings
+        @SerializedName("checking") CHECKING,
+        @SerializedName("savings") SAVINGS
     }
 
     data class PaymentMethod(
@@ -58,8 +61,8 @@ object FrameObjects {
     )
 
     enum class CustomerStatus {
-        active,
-        blocked
+        @SerializedName("active") ACTIVE,
+        @SerializedName("blocked") BLOCKED
     }
 
     data class Customer(
