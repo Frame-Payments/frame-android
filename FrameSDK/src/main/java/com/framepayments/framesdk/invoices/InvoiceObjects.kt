@@ -4,34 +4,19 @@ import com.framepayments.framesdk.FrameObjects
 import com.google.gson.annotations.SerializedName
 
 enum class InvoiceCollectionMethod {
-    @SerializedName("auto_charge")
-    AUTO_CHARGE,
-    @SerializedName("request_payment")
-    REQUEST_PAYMENT
+    @SerializedName("auto_charge") AUTO_CHARGE,
+    @SerializedName("request_payment") REQUEST_PAYMENT
 }
 
 enum class InvoiceStatus {
 
-    @SerializedName("draft")
-    DRAFT,
-
-    @SerializedName("outstanding")
-    OUTSTANDING,
-
-    @SerializedName("due")
-    DUE,
-
-    @SerializedName("overdue")
-    OVERDUE,
-
-    @SerializedName("paid")
-    PAID,
-
-    @SerializedName("written_off")
-    WRITTEN_OFF,
-
-    @SerializedName("voided")
-    VOIDED;
+    @SerializedName("draft") DRAFT,
+    @SerializedName("outstanding") OUTSTANDING,
+    @SerializedName("due") DUE,
+    @SerializedName("overdue") OVERDUE,
+    @SerializedName("paid") PAID,
+    @SerializedName("written_off") WRITTEN_OFF,
+    @SerializedName("voided") VOIDED;
 }
 
 data class Invoice(
