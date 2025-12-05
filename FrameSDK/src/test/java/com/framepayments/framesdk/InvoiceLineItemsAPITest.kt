@@ -88,6 +88,7 @@ class InvoiceLineItemsAPITestAPITest {
         assertEquals("item_123", result?.data?.get(0)?.id)
         assertEquals(12, result?.data?.get(1)?.quantity)
     }
+
     @Test
     fun testDeleteInvoiceLineItemWithId() = runBlocking {
         val responseBody = """{"object":"invoice_line_item", "deleted": true}"""
