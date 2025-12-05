@@ -51,7 +51,7 @@ class CustomerIdentityAPITest {
 
         assertNotNull(result)
         assertEquals("iden_123", result?.id)
-        assertEquals(CustomerIdentityStatus.pending, result?.status)
+        assertEquals(CustomerIdentityStatus.PENDING, result?.status)
     }
 
     @Test
@@ -63,6 +63,6 @@ class CustomerIdentityAPITest {
 
         assertNotNull(result)
         assertEquals("iden_124", result?.id)
-        assertEquals(CustomerIdentityStatus.failed, result?.status)
+        assertEquals(CustomerIdentityStatus.FAILED, result?.status)
     }
 }

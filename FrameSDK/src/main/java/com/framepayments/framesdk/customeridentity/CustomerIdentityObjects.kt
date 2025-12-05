@@ -2,10 +2,10 @@ package com.framepayments.framesdk.customeridentity
 import com.google.gson.annotations.SerializedName
 
 enum class CustomerIdentityStatus {
-    incomplete,
-    pending,
-    verified,
-    failed
+    @SerializedName("incomplete") INCOMPLETE,
+    @SerializedName("pending") PENDING,
+    @SerializedName("verified") VERIFIED,
+    @SerializedName("failed") FAILED
 }
 
 data class CustomerIdentity(

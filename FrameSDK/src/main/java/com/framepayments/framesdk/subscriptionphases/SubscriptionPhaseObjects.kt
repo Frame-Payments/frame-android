@@ -20,11 +20,11 @@ data class SubscriptionPhase (
 )
 
 enum class PhasePricingType {
-    relative,
-    static
+    @SerializedName("relative") RELATIVE,
+    @SerializedName("static") STATIC
 }
 
 enum class PhaseDurationType {
-    finite,
-    infinite
+    @SerializedName("finite") FINITE,
+    @SerializedName("infinite") INFINITE
 }

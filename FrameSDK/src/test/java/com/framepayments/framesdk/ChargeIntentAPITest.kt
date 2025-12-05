@@ -32,12 +32,12 @@ class ChargeIntentAPITest {
         val responseBody = """{"id":"intent_123", "status":"pending"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val request = ChargeIntentsRequests.CreateChargeIntentRequest(amount = 100, currency = "usd", customer = null, description = null, confirm = true, paymentMethod = "1", receiptEmail = null, authorizationMode = AuthorizationMode.automatic, customerData = null, paymentMethodData = null)
+        val request = ChargeIntentsRequests.CreateChargeIntentRequest(amount = 100, currency = "usd", customer = null, description = null, confirm = true, paymentMethod = "1", receiptEmail = null, authorizationMode = AuthorizationMode.AUTOMATIC, customerData = null, paymentMethodData = null)
         val (result, error) = ChargeIntentAPI.createChargeIntent(request)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
-        assertEquals(ChargeIntentStatus.pending, result?.status)
+        assertEquals(ChargeIntentStatus.PENDING, result?.status)
     }
 
     @Test
@@ -62,7 +62,7 @@ class ChargeIntentAPITest {
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
-        assertEquals(ChargeIntentStatus.succeeded, result?.status)
+        assertEquals(ChargeIntentStatus.SUCCEEDED, result?.status)
     }
 
     @Test
@@ -74,7 +74,7 @@ class ChargeIntentAPITest {
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
-        assertEquals(ChargeIntentStatus.canceled, result?.status)
+        assertEquals(ChargeIntentStatus.CANCELED, result?.status)
     }
 
     @Test
@@ -95,7 +95,7 @@ class ChargeIntentAPITest {
         assertNotNull(result)
         assertEquals(3, result?.data?.size)
         assertEquals("intent_2", result?.data?.get(1)?.id)
-        assertEquals(ChargeIntentStatus.succeeded, result?.data?.get(2)?.status)
+        assertEquals(ChargeIntentStatus.SUCCEEDED, result?.data?.get(2)?.status)
     }
 
     @Test
@@ -107,7 +107,7 @@ class ChargeIntentAPITest {
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
-        assertEquals(ChargeIntentStatus.pending, result?.status)
+        assertEquals(ChargeIntentStatus.PENDING, result?.status)
     }
 
     @Test
