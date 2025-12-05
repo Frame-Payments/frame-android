@@ -40,7 +40,7 @@ sealed class InvoiceEndpoints : FrameNetworkingEndpoints {
                 perPage?.let { items.add(QueryItem("per_page", it.toString())) }
                 page?.let { items.add(QueryItem("page", it.toString())) }
                 customer?.let { items.add(QueryItem("customer",it.toString())) }
-                status?.let { items.add(QueryItem("status", it.value)) }
+                status?.let { items.add(QueryItem("status", it.toString())) }
                 items
             }
             else -> null

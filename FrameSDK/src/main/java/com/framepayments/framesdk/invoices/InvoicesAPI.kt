@@ -1,5 +1,6 @@
 package com.framepayments.framesdk.invoices
 
+import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 
@@ -33,15 +34,15 @@ object InvoicesAPI {
         return Pair(decodedResponse, error)
     }
 
-    suspend fun deleteInvoice(invoiceId: String): Pair<Invoice?, NetworkingError?> {
+    suspend fun deleteInvoice(invoiceId: String): Pair<InvoiceResponses.DeletedInvoiceResponse?, NetworkingError?> {
         val endpoint = InvoiceEndpoints.DeleteInvoice(invoiceId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
-        return Pair(data?.let { FrameNetworking.parseResponse<Invoice>(data) }, error)
+        return Pair(data?.let { FrameNetworking.parseResponse<InvoiceResponses.DeletedInvoiceResponse>(data) }, error)
     }
 
     suspend fun issueInvoice(invoiceId: String): Pair<Invoice?, NetworkingError?> {
         val endpoint = InvoiceEndpoints.IssueInvoice(invoiceId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<Invoice>(data) }
         return Pair(decodedResponse, error)
@@ -81,18 +82,18 @@ object InvoicesAPI {
         }
     }
 
-    fun deleteInvoice(invoiceId: String, completionHandler: (Invoice?, NetworkingError?) -> Unit) {
+    fun deleteInvoice(invoiceId: String, completionHandler: (InvoiceResponses.DeletedInvoiceResponse?, NetworkingError?) -> Unit) {
         val endpoint = InvoiceEndpoints.DeleteInvoice(invoiceId)
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
-            completionHandler(data?.let { FrameNetworking.parseResponse<Invoice>(data) }, error)
+            completionHandler(data?.let { FrameNetworking.parseResponse<InvoiceResponses.DeletedInvoiceResponse>(data) }, error)
         }
     }
 
     fun issueInvoice(invoiceId: String, completionHandler: (Invoice?, NetworkingError?) -> Unit) {
         val endpoint = InvoiceEndpoints.IssueInvoice(invoiceId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<Invoice>(data) }, error)
         }
     }
