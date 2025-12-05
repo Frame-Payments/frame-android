@@ -51,7 +51,7 @@ class InvoicesAPITest {
 
     @Test
     fun testUpdateInvoice() = runBlocking {
-        val responseBody = """{"id":"inv_123", "customer":"cus_123", "collection_method":"request_payment"}"""
+        val responseBody = """{"id":"inv_123", "collection_method":"request_payment"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = InvoiceRequests.UpdateInvoiceRequest(
