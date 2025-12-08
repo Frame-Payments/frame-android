@@ -100,7 +100,7 @@ class FrameCheckoutViewModel : ViewModel() {
             paymentMethod = paymentMethodId,
             confirm = true,
             receiptEmail = null,
-            authorizationMode = AuthorizationMode.automatic,
+            authorizationMode = AuthorizationMode.AUTOMATIC,
             customerData = null,
             paymentMethodData = null
         )

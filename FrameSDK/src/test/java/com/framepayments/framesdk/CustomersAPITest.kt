@@ -148,7 +148,7 @@ class CustomersAPITest {
 
         assertNotNull(result)
         assertEquals("cus_999", result?.id)
-        assertEquals(FrameObjects.CustomerStatus.blocked, result?.status)
+        assertEquals(FrameObjects.CustomerStatus.BLOCKED, result?.status)
     }
 
     @Test
@@ -160,6 +160,6 @@ class CustomersAPITest {
 
         assertNotNull(result)
         assertEquals("cus_999", result?.id)
-        assertEquals(FrameObjects.CustomerStatus.active, result?.status)
+        assertEquals(FrameObjects.CustomerStatus.ACTIVE, result?.status)
     }
 }

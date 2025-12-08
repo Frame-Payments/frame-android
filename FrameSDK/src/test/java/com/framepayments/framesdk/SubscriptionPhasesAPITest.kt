@@ -36,8 +36,8 @@ class SubscriptionPhasesAPITest {
 
         val request = SubscriptionPhaseRequest.CreateSubscriptionPhaseRequest(
             ordinal = 1,
-            pricingType = PhasePricingType.static,
-            durationType = PhaseDurationType.finite,
+            pricingType = PhasePricingType.STATIC,
+            durationType = PhaseDurationType.FINITE,
             name = "new_phase",
             amountCents = null,
             discountPercentage = null,
@@ -59,8 +59,8 @@ class SubscriptionPhasesAPITest {
 
         val request = SubscriptionPhaseRequest.UpdateSubscriptionPhaseRequest(
             ordinal = 12,
-            pricingType = PhasePricingType.relative,
-            durationType = PhaseDurationType.finite,
+            pricingType = PhasePricingType.RELATIVE,
+            durationType = PhaseDurationType.FINITE,
             name = "new_phase2",
             amountCents = null,
             discountPercentage = null,
@@ -84,7 +84,7 @@ class SubscriptionPhasesAPITest {
 
         assertNotNull(result)
         assertEquals("phase_123", result?.id)
-        assertEquals(PhaseDurationType.finite, result?.durationType)
+        assertEquals(PhaseDurationType.FINITE, result?.durationType)
     }
 
     @Test
@@ -103,8 +103,8 @@ class SubscriptionPhasesAPITest {
 
         assertNotNull(result)
         assertEquals(2, result?.phases?.size)
-        assertEquals(PhaseDurationType.finite, result?.phases?.get(0)?.durationType)
-        assertEquals(PhasePricingType.static, result?.phases?.get(1)?.pricingType)
+        assertEquals(PhaseDurationType.FINITE, result?.phases?.get(0)?.durationType)
+        assertEquals(PhasePricingType.STATIC, result?.phases?.get(1)?.pricingType)
     }
 
     @Test
@@ -123,8 +123,8 @@ class SubscriptionPhasesAPITest {
             id = "phase_123",
             ordinal = 2,
             name = "phase_2",
-            pricingType = PhasePricingType.static,
-            durationType = PhaseDurationType.finite,
+            pricingType = PhasePricingType.STATIC,
+            durationType = PhaseDurationType.FINITE,
             amount = 100,
             currency = "usd",
             discountPercentage = null,
@@ -143,7 +143,7 @@ class SubscriptionPhasesAPITest {
 
         assertNotNull(result)
         assertEquals(2, result?.size)
-        assertEquals(PhaseDurationType.finite, result?.get(0)?.durationType)
-        assertEquals(PhasePricingType.static, result?.get(1)?.pricingType)
+        assertEquals(PhaseDurationType.FINITE, result?.get(0)?.durationType)
+        assertEquals(PhasePricingType.STATIC, result?.get(1)?.pricingType)
     }
 }

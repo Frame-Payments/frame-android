@@ -4,7 +4,7 @@ import com.framepayments.framesdk.FrameObjects
 
 object PaymentMethodRequests {
     data class CreateCardPaymentMethodRequest(
-        val type: FrameObjects.PaymentMethodType = FrameObjects.PaymentMethodType.card,
+        val type: FrameObjects.PaymentMethodType = FrameObjects.PaymentMethodType.CARD,
         @SerializedName("card_number") var cardNumber: String,
         @SerializedName("exp_month") val expMonth: String,
         @SerializedName("exp_year") val expYear: String,
@@ -14,7 +14,7 @@ object PaymentMethodRequests {
     )
 
     data class CreateACHPaymentMethodRequest(
-        val type: FrameObjects.PaymentMethodType = FrameObjects.PaymentMethodType.ach,
+        val type: FrameObjects.PaymentMethodType = FrameObjects.PaymentMethodType.ACH,
         @SerializedName("account_type") val accountType: FrameObjects.PaymentAccountType,
         @SerializedName("account_number") val accountNumber: String,
         @SerializedName("routing_number") val routingNumber: String,
