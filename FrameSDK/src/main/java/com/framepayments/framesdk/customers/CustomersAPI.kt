@@ -37,7 +37,7 @@ object CustomersAPI {
 
     suspend fun searchCustomers(request: CustomersRequests.SearchCustomersRequest): Pair<List<FrameObjects.Customer>?, NetworkingError?> {
         val endpoint = CustomerEndpoints.SearchCustomers(request.name, request.email, request.phone, request.createdBefore, request.createdAfter)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data)?.data }, error)
     }
 
@@ -97,7 +97,7 @@ object CustomersAPI {
     suspend fun searchCustomers(request: CustomersRequests.SearchCustomersRequest, completionHandler: (List<FrameObjects.Customer>?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.SearchCustomers(request.name, request.email, request.phone, request.createdBefore, request.createdAfter)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data)?.data }, error)
         }
     }
