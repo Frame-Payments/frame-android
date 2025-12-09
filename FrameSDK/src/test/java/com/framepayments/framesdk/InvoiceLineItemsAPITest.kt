@@ -10,7 +10,7 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
-class InvoiceLineItemsAPITestAPITest {
+class InvoiceLineItemsAPITest {
     private lateinit var mockWebServer: MockWebServer
 
     @Before
