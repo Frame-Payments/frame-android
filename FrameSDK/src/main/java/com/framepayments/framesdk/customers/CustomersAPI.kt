@@ -94,7 +94,7 @@ object CustomersAPI {
         }
     }
 
-    suspend fun searchCustomers(request: CustomersRequests.SearchCustomersRequest, completionHandler: (List<FrameObjects.Customer>?, NetworkingError?) -> Unit) {
+    fun searchCustomers(request: CustomersRequests.SearchCustomersRequest, completionHandler: (List<FrameObjects.Customer>?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.SearchCustomers(request.name, request.email, request.phone, request.createdBefore, request.createdAfter)
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
