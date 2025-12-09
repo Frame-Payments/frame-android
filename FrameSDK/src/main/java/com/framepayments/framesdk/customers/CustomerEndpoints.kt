@@ -15,7 +15,7 @@ sealed class CustomerEndpoints : FrameNetworkingEndpoints {
 
     override val endpointURL: String
         get() = when (this) {
-            CreateCustomer, is GetCustomers ->
+            is CreateCustomer, is GetCustomers ->
                 "/v1/customers"
             is UpdateCustomer ->
                 "/v1/customers/${this.customerId}"
@@ -23,7 +23,7 @@ sealed class CustomerEndpoints : FrameNetworkingEndpoints {
                 "/v1/customers/${this.customerId}"
             is GetCustomerWith ->
                 "/v1/customers/${this.customerId}"
-            SearchCustomers ->
+            is SearchCustomers ->
                 "/v1/customers/search"
             is BlockCustomerWith ->
                 "/v1/customers/${this.customerId}/block"
