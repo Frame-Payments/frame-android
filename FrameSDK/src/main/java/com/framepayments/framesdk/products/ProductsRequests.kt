@@ -15,11 +15,11 @@ object ProductsRequests {
     )
 
     data class UpdateProductRequest(
-        val name: String?,
-        val description: String?,
-        @SerializedName("default_price") val defaultPrice: Int?,
-        val shippable: Boolean?,
-        val url: String?,
-        val metadata: Map<String, String>?
+        val name: String? = null,
+        val description: String? = null,
+        @SerializedName("default_price") val defaultPrice: Int? = null,
+        val shippable: Boolean? = null,
+        val url: String? = null,
+        val metadata: Map<String, String>? = null
     )
 }
