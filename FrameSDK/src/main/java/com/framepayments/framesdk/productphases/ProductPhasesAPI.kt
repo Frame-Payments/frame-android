@@ -30,10 +30,10 @@ object ProductPhasesAPI {
         return Pair(FrameNetworking.parseResponse<ListProductPhaseResponse>(data), error)
     }
 
-    suspend fun bulkUpdateProductPhases(productId: String, request: ProductPhaseRequest.BulkUpdateProductPhaseRequest) : Pair<List<SubscriptionPhase>?, NetworkingError?> {
+    suspend fun bulkUpdateProductPhases(productId: String, request: ProductPhaseRequest.BulkUpdateProductPhaseRequest) : Pair<ListProductPhaseResponse?, NetworkingError?> {
         val endpoint = ProductPhaseEndpoints.BulkUpdateProductPhases(productId)
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-        return Pair(FrameNetworking.parseResponse<ListProductPhaseResponse>(data)?.phases, error)
+        return Pair(FrameNetworking.parseResponse<ListProductPhaseResponse>(data), error)
     }
 
     suspend fun deleteProductPhaseWith(productId: String, phaseId: String): NetworkingError? {
@@ -75,11 +75,11 @@ object ProductPhasesAPI {
         }
     }
 
-    fun bulkUpdateProductPhases(productId: String, request: ProductPhaseRequest.BulkUpdateProductPhaseRequest, completionHandler: (List<SubscriptionPhase>?, NetworkingError?) -> Unit) {
+    fun bulkUpdateProductPhases(productId: String, request: ProductPhaseRequest.BulkUpdateProductPhaseRequest, completionHandler: (ListProductPhaseResponse?, NetworkingError?) -> Unit) {
         val endpoint = ProductPhaseEndpoints.BulkUpdateProductPhases(productId)
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
-            completionHandler( data?.let { FrameNetworking.parseResponse<ListProductPhaseResponse>(data)?.phases }, error)
+            completionHandler( data?.let { FrameNetworking.parseResponse<ListProductPhaseResponse>(data) }, error)
         }
     }
 

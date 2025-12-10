@@ -136,8 +136,8 @@ class ProductPhasesAPITest {
         val (result, error) = ProductPhasesAPI.bulkUpdateProductPhases("prod_123", request)
 
         assertNotNull(result)
-        assertEquals(2, result?.size)
-        assertEquals(PhaseDurationType.FINITE, result?.get(0)?.durationType)
-        assertEquals(PhasePricingType.STATIC, result?.get(1)?.pricingType)
+        assertEquals(2, result?.phases?.size)
+        assertEquals(PhaseDurationType.FINITE, result?.phases?.get(0)?.durationType)
+        assertEquals(PhasePricingType.STATIC, result?.phases?.get(1)?.pricingType)
     }
 }
