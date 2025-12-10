@@ -8,7 +8,7 @@ sealed class CustomerEndpoints : FrameNetworkingEndpoints {
     data class UpdateCustomer(val customerId: String): CustomerEndpoints()
     data class GetCustomers(val perPage: Int? = null, val page: Int? = null): CustomerEndpoints()
     data class GetCustomerWith(val customerId: String): CustomerEndpoints()
-    object SearchCustomers: CustomerEndpoints()
+    data class SearchCustomers(val name: String? = null, val email: String? = null, val phone: String? = null, val createdBefore: Int? = null, val createdAfter: Int? = null): CustomerEndpoints()
     data class DeleteCustomer(val customerId: String): CustomerEndpoints()
     data class BlockCustomerWith(val customerId: String): CustomerEndpoints()
     data class UnblockCustomerWith(val customerId: String): CustomerEndpoints()
@@ -45,6 +45,15 @@ sealed class CustomerEndpoints : FrameNetworkingEndpoints {
                 val items = mutableListOf<QueryItem>()
                 perPage?.let { items.add(QueryItem("per_page", it.toString())) }
                 page?.let { items.add(QueryItem("page", it.toString())) }
+                items
+            }
+            is SearchCustomers -> {
+                val items = mutableListOf<QueryItem>()
+                name?.let { items.add(QueryItem("name", it.toString())) }
+                email?.let { items.add(QueryItem("email", it.toString())) }
+                phone?.let { items.add(QueryItem("phone", it.toString())) }
+                createdBefore?.let { items.add(QueryItem("created_before", it.toString())) }
+                createdAfter?.let { items.add(QueryItem("created_after", it.toString())) }
                 items
             }
             else -> null

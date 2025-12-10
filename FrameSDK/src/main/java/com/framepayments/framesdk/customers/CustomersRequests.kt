@@ -24,10 +24,10 @@ object CustomersRequests {
     )
 
     data class SearchCustomersRequest(
-        val name: String?,
-        val phone: String?,
-        val email: String?,
-        @SerializedName("created_before") val createdBefore: Int?,
-        @SerializedName("created_after") val createdAfter: Int?
+        val name: String? = null,
+        val phone: String? = null,
+        val email: String? = null,
+        @SerializedName("created_before") val createdBefore: Int? = null,
+        @SerializedName("created_after") val createdAfter: Int? = null
     )
 }
