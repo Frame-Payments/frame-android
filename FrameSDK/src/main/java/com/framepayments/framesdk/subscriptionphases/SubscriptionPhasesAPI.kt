@@ -2,7 +2,6 @@ package com.framepayments.framesdk.subscriptionphases
 
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
-import kotlin.Pair
 
 object SubscriptionPhasesAPI {
     //MARK: Methods using coroutines
