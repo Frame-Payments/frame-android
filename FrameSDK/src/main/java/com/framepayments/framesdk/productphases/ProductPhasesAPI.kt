@@ -36,10 +36,10 @@ object ProductPhasesAPI {
         return Pair(FrameNetworking.parseResponse<ListProductPhaseResponse>(data)?.phases, error)
     }
 
-    suspend fun deleteProductPhaseWith(productId: String, phaseId: String): Pair<SubscriptionPhase?, NetworkingError?> {
+    suspend fun deleteProductPhaseWith(productId: String, phaseId: String): NetworkingError? {
         val endpoint = ProductPhaseEndpoints.DeleteProductPhase(productId, phaseId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
-        return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
+        return error
     }
 
     //MARK: Methods using callbacks
@@ -83,11 +83,11 @@ object ProductPhasesAPI {
         }
     }
 
-    fun deleteProductPhaseWith(productId: String, phaseId: String, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
+    fun deleteProductPhaseWith(productId: String, phaseId: String, completionHandler: (NetworkingError?) -> Unit) {
         val endpoint = ProductPhaseEndpoints.DeleteProductPhase(productId, phaseId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
-            completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
+        FrameNetworking.performDataTask(endpoint) { _, error ->
+            completionHandler(error)
         }
     }
 }
