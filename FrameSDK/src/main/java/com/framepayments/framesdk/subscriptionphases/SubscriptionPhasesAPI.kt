@@ -2,7 +2,6 @@ package com.framepayments.framesdk.subscriptionphases
 
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
-import kotlin.Pair
 
 object SubscriptionPhasesAPI {
     //MARK: Methods using coroutines
@@ -36,10 +35,10 @@ object SubscriptionPhasesAPI {
         return Pair(FrameNetworking.parseResponse<ListSubscriptionPhaseResponse>(data)?.phases, error)
     }
 
-    suspend fun deleteSubscriptionPhaseWith(subscriptionId: String, phaseId: String): Pair<SubscriptionPhase?, NetworkingError?> {
+    suspend fun deleteSubscriptionPhaseWith(subscriptionId: String, phaseId: String): NetworkingError? {
         val endpoint = SubscriptionPhaseEndpoints.DeleteSubscriptionPhase(subscriptionId, phaseId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
-        return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
+        return error
     }
 
     //MARK: Methods using callbacks
@@ -83,11 +82,11 @@ object SubscriptionPhasesAPI {
         }
     }
 
-    fun deleteSubscriptionPhaseWith(subscriptionId: String, phaseId: String, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
+    fun deleteSubscriptionPhaseWith(subscriptionId: String, phaseId: String, completionHandler: (NetworkingError?) -> Unit) {
         val endpoint = SubscriptionPhaseEndpoints.DeleteSubscriptionPhase(subscriptionId, phaseId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
-            completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
+        FrameNetworking.performDataTask(endpoint) { _, error ->
+            completionHandler(error)
         }
     }
 }
