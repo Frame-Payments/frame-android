@@ -26,3 +26,4 @@ rootProject.name = "frame"
 include(":app")
 include(":FrameSDK")
 include(":FrameSDK-UI")
+include(":FrameSDK-Onboarding")
