@@ -65,7 +65,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates("com.framepayments", "framesdk_ui", "1.1.1")
+    coordinates("com.framepayments", "framesdk_ui", "1.2.0")
 
     pom {
         name.set("FrameSDK-UI")
