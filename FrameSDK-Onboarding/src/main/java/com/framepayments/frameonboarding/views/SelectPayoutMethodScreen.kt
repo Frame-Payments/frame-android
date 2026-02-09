@@ -1,39 +1,26 @@
 package com.framepayments.frameonboarding.views
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.framepayments.frameonboarding.R
-import com.framepayments.frameonboarding.classes.PaymentMethodSummary
-import com.framepayments.frameonboarding.reusable.cardBrandIcon
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SelectPaymentMethodScreen(
-    savedMethods: List<PaymentMethodSummary>,
-    selectedId: String?,
-    onSelect: (String) -> Unit,
-    onAddCard: () -> Unit,
+internal fun SelectPayoutMethodScreen(
     onBack: () -> Unit,
     onContinue: () -> Unit
 ) {
-    // Allow continuing if a method is selected OR if user is adding a new one
-    // Allow continuing if a method is selected
-    val canContinue = selectedId != null
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Select Payment Method") },
-                navigationIcon = { 
+                title = { Text("Select Payout Method") },
+                navigationIcon = {
                     IconButton(onClick = onBack) {
                         Text("<")
                     }
@@ -50,7 +37,7 @@ internal fun SelectPaymentMethodScreen(
         ) {
             Column {
                 Text(
-                    text = "Choose a payment method for purchases.",
+                    text = "Choose a payment method for payouts.",
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -59,38 +46,19 @@ internal fun SelectPaymentMethodScreen(
                 Text("Add Payment Method", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(8.dp))
 
-                AddPaymentMethodRow(
-                    title = "Debit Card",
-                    subtitle = "Can be used for purchases and payouts",
-                    onClick = { onAddCard() }
-                )
-                
-                Spacer(Modifier.height(12.dp))
-                
-                AddPaymentMethodRow(
-                    title = "Credit Card",
-                    subtitle = "Can be used for purchases only",
-                    onClick = { onAddCard() }
-                )
-                
-                Spacer(Modifier.height(12.dp))
-                
-                AddPaymentMethodRow(
+                AddPayoutMethodRow(
                     title = "Bank Account (ACH)",
                     subtitle = "Can be used for purchases and payouts",
-                    onClick = { onAddCard() }
+                    onClick = onContinue
                 )
             }
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = canContinue,
                 onClick = onContinue,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FramePrimaryColor,
-                    contentColor = FrameOnPrimaryColor,
-                    disabledContainerColor = FramePrimaryColor.copy(alpha = 0.35f),
-                    disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
+                    contentColor = FrameOnPrimaryColor
                 )
             ) {
                 Text("Continue")
@@ -100,51 +68,7 @@ internal fun SelectPaymentMethodScreen(
 }
 
 @Composable
-private fun SavedPaymentMethodRow(
-    pm: PaymentMethodSummary,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        tonalElevation = 0.dp,
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(
-                    id = cardBrandIcon(pm.brand)
-                ),
-                contentDescription = pm.brand,
-                modifier = Modifier
-                    .size(40.dp)
-            )
-
-            Spacer(modifier = Modifier.width(20.dp))
-
-            Column(Modifier.weight(1f)) {
-                Text(text = "${pm.brand}  •••• ${pm.last4}", style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(2.dp))
-                Text(text = "Exp. ${pm.exp}", style = MaterialTheme.typography.bodySmall)
-            }
-
-            RadioButton(
-                selected = selected,
-                onClick = onClick
-            )
-        }
-    }
-}
-
-@Composable
-private fun AddPaymentMethodRow(
+private fun AddPayoutMethodRow(
     title: String,
     subtitle: String,
     onClick: () -> Unit
