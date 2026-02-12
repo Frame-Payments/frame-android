@@ -12,6 +12,17 @@ import java.io.InputStreamReader
 object SiftManager {
     var userId: String = ""
 
+    fun collectLoginEvent(customerId: String, email: String) {
+        try {
+            if (userId.isNotEmpty()) return
+            userId = customerId
+            Sift.setUserId(customerId)
+            Sift.collect()
+        } catch (e: Exception) {
+            // Sift may not be initialized in test environments
+        }
+    }
+
     fun initializeSift(userId: String) {
         Sift.setUserId(userId)
 
