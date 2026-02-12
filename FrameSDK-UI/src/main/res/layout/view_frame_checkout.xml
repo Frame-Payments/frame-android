@@ -143,8 +143,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-        <androidx.compose.ui.platform.ComposeView
-            android:id="@+id/evervaultCompose"
+        <com.framepayments.framesdk_ui.EncryptedPaymentCardInput
+            android:id="@+id/encryptedCardInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
