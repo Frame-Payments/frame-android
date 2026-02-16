@@ -18,7 +18,7 @@ sealed class DisputeEndpoints : FrameNetworkingEndpoints {
         get() = when (this) {
             is UpdateDispute -> "/v1/disputes/${disputeId}"
             is GetDispute -> "/v1/disputes/${disputeId}"
-            is GetDisputes -> "/v1/disputes/"
+            is GetDisputes -> "/v1/disputes"
             is CloseDispute -> "/v1/disputes/${disputeId}/close"
         }
 
