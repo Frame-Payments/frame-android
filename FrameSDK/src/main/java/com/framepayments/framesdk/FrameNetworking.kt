@@ -6,6 +6,7 @@ import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import com.framepayments.framesdk.managers.SiftManager
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -61,6 +62,17 @@ object FrameNetworking {
         return try {
             val jsonString = String(data, Charsets.UTF_8)
             gson.fromJson(jsonString, T::class.java)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    inline fun <reified T> parseListResponse(data: ByteArray?): List<T>? {
+        if (data == null) return null
+        return try {
+            val jsonString = String(data, Charsets.UTF_8)
+            val type = object : TypeToken<List<T>>() {}.type
+            gson.fromJson<List<T>>(jsonString, type)
         } catch (e: Exception) {
             null
         }
