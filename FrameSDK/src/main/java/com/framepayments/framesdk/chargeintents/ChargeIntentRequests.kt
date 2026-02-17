@@ -15,11 +15,12 @@ object ChargeIntentsRequests {
         val confirm: Boolean,
         @SerializedName("payment_method") val paymentMethod : String?,
         @SerializedName("receipt_email") val receiptEmail: String?,
-        @SerializedName("authorization+mode") val authorizationMode: AuthorizationMode?,
+        @SerializedName("authorization_mode") val authorizationMode: AuthorizationMode?,
         @SerializedName("customer_data") val customerData: CustomerData?,
         @SerializedName("payment_method_data") val paymentMethodData: PaymentMethodData?,
         @SerializedName("fraud_signals") var fraudSignals: FraudSignals? = null,
-        @SerializedName("use_frame_sdk") val useFrameSDK: Boolean = true
+        @SerializedName("use_frame_sdk") val useFrameSDK: Boolean = true,
+        @SerializedName("sonar_session_id") val sonarSessionId: String? = null
     )
 
     data class UpdateChargeIntentRequest (
