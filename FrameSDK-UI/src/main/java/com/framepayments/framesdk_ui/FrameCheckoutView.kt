@@ -13,10 +13,6 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.MaterialTheme
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.FragmentActivity
@@ -25,7 +21,6 @@ import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentCardBinding
-import com.evervault.sdk.input.ui.card.RowsPaymentCard
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk_ui.viewmodels.FrameCheckoutViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -86,14 +81,7 @@ class FrameCheckoutView @JvmOverloads constructor(
             showCountryPicker()
         }
 
-        findViewById<ComposeView>(R.id.evervaultCompose).setContent {
-            MaterialTheme {
-                RowsPaymentCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    onDataChange = { data -> viewModel.cardData = data }
-                )
-            }
-        }
+        binding.encryptedCardInput.onCardDataChange = { data -> viewModel.cardData = data }
     }
 
     @SuppressLint("SetTextI18n")

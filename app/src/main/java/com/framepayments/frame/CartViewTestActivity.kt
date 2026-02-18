@@ -27,14 +27,15 @@ class CartTestActivity : AppCompatActivity() {
             configure(
                 customerId = customerId,
                 items = items,
-                shippingCents = 500
-            ) { total ->
-                val intent = android.content.Intent(this@CartTestActivity, CheckoutActivity::class.java).apply {
-                    putExtra("totalCents", total)
-                    putExtra("customerId", customerId)
+                shippingCents = 500,
+                onCheckout = { total: Int ->
+                    val intent = android.content.Intent(this@CartTestActivity, CheckoutActivity::class.java).apply {
+                        putExtra("totalCents", total)
+                        putExtra("customerId", customerId)
+                    }
+                    startActivity(intent)
                 }
-                startActivity(intent)
-            }
+            )
         }
 
         setContentView(cartView)
