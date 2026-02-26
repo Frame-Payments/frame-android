@@ -18,11 +18,24 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:textStyle="bold"/>
 
+    <TextView
+        android:id="@+id/cartSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/cartTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
     <View
+        android:id="@+id/dividerAfterTitle"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:background="#E0E0E0"
-        app:layout_constraintTop_toBottomOf="@id/cartTitle"
+        app:layout_constraintTop_toBottomOf="@id/cartSubtitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
@@ -31,7 +44,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:paddingTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/cartTitle"
+        app:layout_constraintTop_toBottomOf="@id/dividerAfterTitle"
         app:layout_constraintBottom_toTopOf="@id/summaryContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
