@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.gson)
     implementation(libs.androidx.security.crypto)
+    implementation("com.fingerprint.android:pro:2.13.1")
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver)
     testImplementation(libs.robolectric)
