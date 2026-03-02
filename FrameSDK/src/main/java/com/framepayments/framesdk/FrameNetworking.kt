@@ -5,6 +5,8 @@ import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import com.framepayments.framesdk.managers.SiftManager
+import com.framepayments.framesdk.fingerprint.FingerprintManager
+import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +41,7 @@ object FrameNetworking {
     var apiKey: String = ""
     var debugMode: Boolean = false
     var isEvervaultConfigured: Boolean = false
+    private var sonarSessionManager: SonarSessionManager? = null
 
     private lateinit var applicationContext: Context
 
@@ -49,7 +52,36 @@ object FrameNetworking {
 
         SiftManager.initializeSift(apiKey)
         configureEvervault()
+
+        // Initialize Sonar session as early as possible during SDK initialization
+        // using Fingerprint visitorId when available. If we cannot obtain a
+        // Fingerprint visitorId, we skip Sonar session initialization to match
+        // the iOS behavior.
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+            val context = getContext()
+            FingerprintManager.getVisitorId(context) { fingerprintVisitorId ->
+                val visitorId = fingerprintVisitorId ?: run {
+                    if (debugMode) {
+                        println("Fingerprint visitorId is null; skipping Sonar session initialization.")
+                    }
+                    return@getVisitorId
+                }
+
+                kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+                    try {
+                        val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), visitorId)
+                        sonarSessionManager = manager
+                    } catch (e: Exception) {
+                        if (debugMode) {
+                            println("Failed to initialize Sonar session: $e")
+                        }
+                    }
+                }
+            }
+        }
     }
+
+    fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()
 
     fun getContext(): Context {
         check(::applicationContext.isInitialized) { "FrameSDK must be initialized before use" }
@@ -124,9 +156,9 @@ object FrameNetworking {
         }
     }
 
-    internal suspend inline fun <reified T> performDataTaskWithRequest(
+    suspend fun performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
-        request: T? = null
+        request: Any? = null
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl
         val fullUrl = baseUrl + endpoint.endpointURL

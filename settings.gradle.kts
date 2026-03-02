@@ -19,6 +19,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://prove.jfrog.io/artifactory/libs-public-maven/") }
+        maven { url = uri("https://maven.fpregistry.io/releases") }
     }
 }
 

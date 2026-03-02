@@ -102,7 +102,9 @@ class FrameCheckoutViewModel : ViewModel() {
             receiptEmail = null,
             authorizationMode = AuthorizationMode.AUTOMATIC,
             customerData = null,
-            paymentMethodData = null
+            paymentMethodData = null,
+            fraudSignals = null,
+            sonarSessionId = com.framepayments.framesdk.FrameNetworking.currentSonarSessionId()
         )
 
         // Create and emit the intent

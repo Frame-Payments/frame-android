@@ -38,6 +38,8 @@ class ChargeIntentAPITest {
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
         assertEquals(ChargeIntentStatus.PENDING, result?.status)
+        // sonar_session_id is optional and may be absent in responses.
+        assertNull(result?.sonarSessionId)
     }
 
     @Test
