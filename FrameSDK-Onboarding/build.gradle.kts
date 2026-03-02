@@ -62,4 +62,11 @@ dependencies {
     
     // Coil for image loading
     implementation(libs.coil)
+
+    // Prove Auth SDK (phone + DOB flow; requires INTERNET, ACCESS_NETWORK_STATE, CHANGE_NETWORK_STATE in app manifest)
+    implementation("com.prove.sdk:proveauth:6.10.3")
+
+    // Coroutines for ProveAuthService suspend API
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
