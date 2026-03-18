@@ -9,7 +9,7 @@
     <string name="card_number">Card number</string>
     <string name="country">Country or region</string>
     <string name="us">United States</string>
-    <string name="zip">ZIP</string>
+    <string name="zip">Zip Code</string>
     <string name="cvc">CVC</string>
     <string name="save_for_future">Save this card for future payments</string>
     <string name="pay_amount">Pay %s</string>

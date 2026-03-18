@@ -3,7 +3,8 @@ package com.framepayments.frame
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.framepayments.frameonboarding.viewmodels.FrameOnboarding
+import com.framepayments.frameonboarding.views.OnboardingContainerView
+import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingResult
 
@@ -12,13 +13,19 @@ class OnboardingDemoActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            FrameOnboarding(
+            OnboardingContainerView(
                 config = OnboardingConfig(
-                    customerId = "cus_123"
+                    accountId = "acc_123",
+                    requiredCapabilities = listOf(
+                        Capabilities.KYC_PREFILL,
+                        Capabilities.CARD_VERIFICATION,
+                        Capabilities.BANK_ACCOUNT_VERIFICATION,
+                        Capabilities.AGE_VERIFICATION
+                    )
                 ),
                 onResult = { result ->
                     when (result) {
-                        is OnboardingResult.Completed -> finish() // for now
+                        is OnboardingResult.Completed -> finish()
                         OnboardingResult.Cancelled -> finish()
                     }
                 }

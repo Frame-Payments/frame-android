@@ -65,7 +65,7 @@ object FingerprintManager {
      */
     fun getVisitorId(
         context: Context,
-        timeoutMillis: Long? = null,
+        timeoutMillis: Int? = null,
         completion: (visitorId: String?) -> Unit
     ) {
         val fpClient = configuredClient(context)
@@ -75,14 +75,13 @@ object FingerprintManager {
         }
 
         fpClient.getVisitorId(
-            timeoutMillis = timeoutMillis,
+            timeoutMillis = timeoutMillis ?: 0,
             listener = { response ->
                 completion(response.visitorId)
             },
-            errorListener = {
+            errorListener = { _ ->
                 completion(null)
             }
         )
     }
 }
-

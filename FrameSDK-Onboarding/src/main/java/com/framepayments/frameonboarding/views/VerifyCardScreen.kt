@@ -14,17 +14,21 @@ import com.framepayments.frameonboarding.theme.FramePrimaryColor
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun VerifyCardScreen(
-    phoneLast4: String = "3432",
+    headerTitle: String = "Verify Your Card",
+    bodyText: String = "We've sent a security code to your bank registered phone number ending in *3432.",
+    confirmButtonText: String = "Confirm",
+    digitCount: Int = 6,
     onBack: () -> Unit,
+    onResendCode: () -> Unit = {},
     onContinue: (String) -> Unit
 ) {
     var code by remember { mutableStateOf("") }
-    val canContinue = code.length == 5
+    val canContinue = code.length == digitCount
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Verify Your Card") },
+                title = { Text(headerTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Text("<")
@@ -42,18 +46,18 @@ internal fun VerifyCardScreen(
         ) {
             Column {
                 Text(
-                    text = "We've sent a security code to your bank registered phone number ending in *$phoneLast4.",
+                    text = bodyText,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
                 Spacer(Modifier.height(32.dp))
 
-                // 5-digit code input
+                // N-digit code input
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    repeat(5) { index ->
+                    repeat(digitCount) { index ->
                         OutlinedTextField(
                             value = code.getOrNull(index)?.toString() ?: "",
                             onValueChange = { value ->
@@ -86,7 +90,7 @@ internal fun VerifyCardScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                TextButton(onClick = { /* Resend code */ }) {
+                TextButton(onClick = onResendCode) {
                     Text("Resend Code")
                 }
             }
@@ -102,7 +106,7 @@ internal fun VerifyCardScreen(
                     disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
                 )
             ) {
-                Text("Confirm")
+                Text(confirmButtonText)
             }
         }
     }

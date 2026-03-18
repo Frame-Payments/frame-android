@@ -1,9 +1,27 @@
 package com.framepayments.frameonboarding.views
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.framepayments.frameonboarding.classes.*
+import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
+import com.framepayments.framesdk.threedsecure.ThreeDSecureRequests
+import com.framepayments.framesdk.threedsecure.ThreeDSecureVerificationsAPI
+import com.framepayments.frameonboarding.classes.OnboardingConfig
+import com.framepayments.frameonboarding.classes.OnboardingData
+import com.framepayments.frameonboarding.classes.OnboardingResult
+import com.framepayments.frameonboarding.classes.OnboardingState
+import com.framepayments.frameonboarding.classes.OnboardingStep
+import com.framepayments.frameonboarding.classes.PaymentMethodSummary
+import com.framepayments.frameonboarding.classes.Capabilities
+import com.framepayments.frameonboarding.classes.computeFlowSegments
+import com.framepayments.frameonboarding.classes.computeOrderedSteps
 import com.framepayments.frameonboarding.viewmodels.FrameOnboarding
 
 @Composable
@@ -12,21 +30,79 @@ fun OnboardingContainerView(
     onResult: (OnboardingResult) -> Unit
 ) {
     var onboardingData by remember { mutableStateOf(OnboardingData()) }
-    val state = remember { OnboardingState() }
-    
+    val flowSegments = remember(config.requiredCapabilities) { computeFlowSegments(config.requiredCapabilities) }
+    val orderedSteps = remember(config.requiredCapabilities) { computeOrderedSteps(config.requiredCapabilities) }
+    val state = remember(orderedSteps) { OnboardingState(orderedSteps.first()) }
+    var savedPaymentMethods by remember { mutableStateOf<List<PaymentMethodSummary>>(emptyList()) }
+    var savedPayoutMethods by remember { mutableStateOf<List<PaymentMethodSummary>>(emptyList()) }
+    var threeDSVerificationId by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(state.currentStep, onboardingData.selectedPaymentMethodId) {
+        if (
+            state.currentStep == OnboardingStep.VerifyYourCard &&
+            onboardingData.selectedPaymentMethodId != null &&
+            config.requiredCapabilities.contains(Capabilities.CARD_VERIFICATION)
+        ) {
+            val request = ThreeDSecureRequests.CreateThreeDSecureVerification(
+                paymentMethodId = onboardingData.selectedPaymentMethodId!!
+            )
+            val (verification, _, _) = ThreeDSecureVerificationsAPI.create3DSecureVerification(request)
+            threeDSVerificationId = verification?.id
+        }
+    }
+
+    val resend3DS: () -> Unit = {
+        scope.launch {
+            threeDSVerificationId?.let { id ->
+                ThreeDSecureVerificationsAPI.resend3DSecureVerification(id)
+            }
+        }
+    }
+
+    LaunchedEffect(config.accountId) {
+        val customerOrAccountId = config.accountId ?: return@LaunchedEffect
+        val (list, _) = PaymentMethodsAPI.getPaymentMethodsWithCustomer(customerOrAccountId)
+        savedPaymentMethods = list
+            ?.filter { it.card != null }
+            ?.map { pm ->
+                val c = pm.card!!
+                PaymentMethodSummary(
+                    id = pm.id,
+                    brand = c.brand.uppercase(),
+                    last4 = c.lastFourDigits,
+                    exp = "${c.expirationMonth}/${c.expirationYear.takeLast(2)}"
+                )
+            }
+            ?: emptyList()
+        savedPayoutMethods = list
+            ?.filter { it.ach != null }
+            ?.map { pm ->
+                PaymentMethodSummary(
+                    id = pm.id,
+                    brand = "BANK",
+                    last4 = pm.ach?.lastFour ?: "",
+                    exp = ""
+                )
+            }
+            ?: emptyList()
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
-        // Progress indicator always visible at top
         ProgressIndicator(
             currentStep = state.currentStep,
+            flowSegments = flowSegments,
             modifier = Modifier.fillMaxWidth()
         )
-        
-        // Screen content based on current step
         Box(modifier = Modifier.weight(1f)) {
             FrameOnboarding(
                 config = config,
                 onboardingData = onboardingData,
                 state = state,
+                orderedSteps = orderedSteps,
+                savedPaymentMethods = savedPaymentMethods,
+                savedPayoutMethods = savedPayoutMethods,
+                onResend3DS = resend3DS,
                 onUpdateData = { updatedData ->
                     onboardingData = updatedData
                 },

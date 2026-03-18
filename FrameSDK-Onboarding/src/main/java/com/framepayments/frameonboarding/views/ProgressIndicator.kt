@@ -6,33 +6,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
 import com.framepayments.frameonboarding.classes.OnboardingStep
+import com.framepayments.frameonboarding.classes.toFlowSegment
 
 @Composable
 internal fun ProgressIndicator(
     currentStep: OnboardingStep,
+    flowSegments: List<OnboardingFlowSegment>,
     modifier: Modifier = Modifier
 ) {
-    val totalSteps = 5
-    val currentStepNumber = when (currentStep) {
-        OnboardingStep.VerificationWelcome,
-        OnboardingStep.VerifyIdentification -> 1
-        OnboardingStep.SelectPaymentMethod,
-        OnboardingStep.AddPaymentMethod,
-        OnboardingStep.VerifyYourCard -> 2
-        OnboardingStep.SelectPayoutMethod,
-        OnboardingStep.AddPayoutMethod -> 3
-        OnboardingStep.UploadDocumentsList,
-        OnboardingStep.CaptureFrontPhoto,
-        OnboardingStep.ReviewFrontPhoto,
-        OnboardingStep.CaptureBackPhoto,
-        OnboardingStep.ReviewBackPhoto,
-        OnboardingStep.CaptureSelfie,
-        OnboardingStep.ReviewSelfie -> 4
-        OnboardingStep.GeolocationVerification -> 5
-    }
-    
-    val progress = currentStepNumber.toFloat() / totalSteps.toFloat()
+    val segments = if (flowSegments.isEmpty()) listOf(OnboardingFlowSegment.PERSONAL_INFORMATION) else flowSegments
+    val currentSegment = currentStep.toFlowSegment()
+    val currentIndex = segments.indexOf(currentSegment).coerceAtLeast(0) + 1
+    val progress = currentIndex.toFloat() / segments.size.toFloat()
     
     Column(modifier = modifier) {
         LinearProgressIndicator(

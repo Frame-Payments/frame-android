@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
-    kotlin("android") version "2.2.0"
+    kotlin("android") version "2.2.10"
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
@@ -62,6 +62,7 @@ dependencies {
     
     // Coil for image loading
     implementation(libs.coil)
+    implementation(libs.coil.compose)
 
     // Prove Auth SDK (phone + DOB flow; requires INTERNET, ACCESS_NETWORK_STATE, CHANGE_NETWORK_STATE in app manifest)
     implementation("com.prove.sdk:proveauth:6.10.3")

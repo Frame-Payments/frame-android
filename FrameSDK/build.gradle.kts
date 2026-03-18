@@ -2,7 +2,7 @@ val sdkVersion = "1.2.0"
 
 plugins {
     alias(libs.plugins.android.library)
-    kotlin("android") version "2.2.0"
+    kotlin("android") version "2.2.10"
     id("com.vanniktech.maven.publish")
 }
 

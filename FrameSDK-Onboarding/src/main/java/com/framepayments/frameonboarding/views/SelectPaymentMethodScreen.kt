@@ -25,14 +25,12 @@ internal fun SelectPaymentMethodScreen(
     onBack: () -> Unit,
     onContinue: () -> Unit
 ) {
-    // Allow continuing if a method is selected OR if user is adding a new one
-    // Allow continuing if a method is selected
     val canContinue = selectedId != null
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Select Payment Method") },
+                title = { Text("Select A Payment Method") },
                 navigationIcon = { 
                     IconButton(onClick = onBack) {
                         Text("<")
@@ -50,34 +48,31 @@ internal fun SelectPaymentMethodScreen(
         ) {
             Column {
                 Text(
-                    text = "Choose a payment method for purchases.",
+                    text = "Choose a saved payment method or add a new one to continue",
                     style = MaterialTheme.typography.bodyMedium
                 )
 
                 Spacer(Modifier.height(20.dp))
 
+                if (savedMethods.isNotEmpty()) {
+                    Text("Saved Payment Methods", style = MaterialTheme.typography.labelLarge)
+                    Spacer(Modifier.height(8.dp))
+                    savedMethods.forEach { pm ->
+                        SavedPaymentMethodRow(
+                            pm = pm,
+                            selected = selectedId == pm.id,
+                            onClick = { onSelect(pm.id) }
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+
                 Text("Add Payment Method", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(8.dp))
 
                 AddPaymentMethodRow(
-                    title = "Debit Card",
-                    subtitle = "Can be used for purchases and payouts",
-                    onClick = { onAddCard() }
-                )
-                
-                Spacer(Modifier.height(12.dp))
-                
-                AddPaymentMethodRow(
-                    title = "Credit Card",
-                    subtitle = "Can be used for purchases only",
-                    onClick = { onAddCard() }
-                )
-                
-                Spacer(Modifier.height(12.dp))
-                
-                AddPaymentMethodRow(
-                    title = "Bank Account (ACH)",
-                    subtitle = "Can be used for purchases and payouts",
+                    title = "Debit/Credit Card",
+                    subtitle = "Add New Payment Method",
                     onClick = { onAddCard() }
                 )
             }

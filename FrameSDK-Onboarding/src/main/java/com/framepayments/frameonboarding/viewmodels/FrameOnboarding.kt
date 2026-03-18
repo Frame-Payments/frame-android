@@ -15,49 +15,70 @@ fun FrameOnboarding(
     config: OnboardingConfig,
     onboardingData: OnboardingData,
     state: OnboardingState,
+    orderedSteps: List<OnboardingStep>,
+    savedPaymentMethods: List<PaymentMethodSummary> = emptyList(),
+    savedPayoutMethods: List<PaymentMethodSummary> = emptyList(),
+    onResend3DS: () -> Unit = {},
     onUpdateData: (OnboardingData) -> Unit,
     onResult: (OnboardingResult) -> Unit
 ) {
+    val moveNext: () -> Unit = {
+        val i = orderedSteps.indexOf(state.currentStep)
+        if (i < 0 || i >= orderedSteps.size - 1) {
+            onResult(
+                OnboardingResult.Completed(
+                    paymentMethodId = onboardingData.selectedPaymentMethodId,
+                    onboardingSessionId = "kyc_session"
+                )
+            )
+        } else {
+            state.goTo(orderedSteps[i + 1])
+        }
+    }
+    val moveBack: () -> Unit = {
+        val i = orderedSteps.indexOf(state.currentStep)
+        if (i > 0) state.goTo(orderedSteps[i - 1])
+    }
+
     when (state.currentStep) {
         OnboardingStep.VerificationWelcome -> {
             UserIdentificationView(
-                onContinue = { state.goTo(OnboardingStep.VerifyIdentification) }
+                onContinue = moveNext
             )
         }
 
         OnboardingStep.VerifyIdentification -> {
             VerifyIdFormScreen(
-                onBack = { state.goTo(OnboardingStep.VerificationWelcome) },
+                accountId = config.accountId ?: config.customerId,
+                requiresDateOfBirth = config.requiredCapabilities.contains(Capabilities.KYC_PREFILL),
+                onBack = moveBack,
                 onContinue = { country, idType ->
                     onUpdateData(onboardingData.copy(
                         issuingCountry = country,
                         idType = idType
                     ))
-                    state.goTo(OnboardingStep.SelectPaymentMethod)
+                    moveNext()
                 }
             )
         }
 
         OnboardingStep.SelectPaymentMethod -> {
             SelectPaymentMethodScreen(
-                savedMethods = listOf(
-                    PaymentMethodSummary(id = "pm_1", brand = "VISA", last4 = "2872", exp = "08/29"),
-                    PaymentMethodSummary(id = "pm_2", brand = "MASTERCARD", last4 = "3292", exp = "10/27"),
-                ),
+                savedMethods = savedPaymentMethods.ifEmpty {
+                    listOf(
+                        PaymentMethodSummary(id = "pm_1", brand = "VISA", last4 = "2872", exp = "08/29"),
+                        PaymentMethodSummary(id = "pm_2", brand = "MASTERCARD", last4 = "3292", exp = "10/27"),
+                    )
+                },
                 selectedId = onboardingData.selectedPaymentMethodId,
-                onSelect = { 
+                onSelect = {
                     onUpdateData(onboardingData.copy(selectedPaymentMethodId = it))
                 },
-                onAddCard = { 
-                    // When adding a new card, go directly to add screen
-                    // After adding, user will be taken to verify card screen
-                    state.goTo(OnboardingStep.AddPaymentMethod)
-                },
-                onBack = { state.goTo(OnboardingStep.VerifyIdentification) },
-                onContinue = { 
-                    // Continue if a method is selected or a new one was added
+                onAddCard = moveNext,
+                onBack = moveBack,
+                onContinue = {
                     if (onboardingData.selectedPaymentMethodId != null || onboardingData.newPaymentMethod != null) {
-                        state.goTo(OnboardingStep.VerifyYourCard)
+                        moveNext()
                     }
                 }
             )
@@ -65,38 +86,42 @@ fun FrameOnboarding(
 
         OnboardingStep.AddPaymentMethod -> {
             AddPaymentMethodScreen(
-                onBack = { state.goTo(OnboardingStep.SelectPaymentMethod) },
+                onBack = moveBack,
                 onContinue = { paymentDetails ->
                     onUpdateData(onboardingData.copy(newPaymentMethod = paymentDetails))
-                    state.goTo(OnboardingStep.VerifyYourCard)
+                    moveNext()
                 }
             )
         }
 
         OnboardingStep.VerifyYourCard -> {
             VerifyCardScreen(
-                phoneLast4 = "3432", // In real implementation, get from onboardingData
-                onBack = { state.goTo(OnboardingStep.SelectPaymentMethod) },
+                onBack = moveBack,
+                onResendCode = onResend3DS,
                 onContinue = { code ->
                     onUpdateData(onboardingData.copy(cardVerificationCode = code))
-                    state.goTo(OnboardingStep.SelectPayoutMethod)
+                    moveNext()
                 }
             )
         }
 
         OnboardingStep.SelectPayoutMethod -> {
             SelectPayoutMethodScreen(
-                onBack = { state.goTo(OnboardingStep.VerifyYourCard) },
-                onContinue = { state.goTo(OnboardingStep.AddPayoutMethod) }
+                savedMethods = savedPayoutMethods,
+                selectedId = onboardingData.selectedPayoutMethodId,
+                onSelect = { onUpdateData(onboardingData.copy(selectedPayoutMethodId = it)) },
+                onAddPayout = moveNext,
+                onBack = moveBack,
+                onContinue = moveNext
             )
         }
 
         OnboardingStep.AddPayoutMethod -> {
             AddPayoutMethodScreen(
-                onBack = { state.goTo(OnboardingStep.SelectPayoutMethod) },
+                onBack = moveBack,
                 onContinue = { payoutDetails ->
                     onUpdateData(onboardingData.copy(newPayoutMethod = payoutDetails))
-                    state.goTo(OnboardingStep.UploadDocumentsList)
+                    moveNext()
                 }
             )
         }
@@ -106,24 +131,21 @@ fun FrameOnboarding(
                 frontPhotoComplete = onboardingData.frontPhotoUri != null,
                 backPhotoComplete = onboardingData.backPhotoUri != null,
                 selfieComplete = onboardingData.selfieUri != null,
-                onBack = { state.goTo(OnboardingStep.AddPayoutMethod) },
+                onBack = moveBack,
                 onFrontPhotoClick = { state.goTo(OnboardingStep.CaptureFrontPhoto) },
                 onBackPhotoClick = { state.goTo(OnboardingStep.CaptureBackPhoto) },
                 onSelfieClick = { state.goTo(OnboardingStep.CaptureSelfie) },
-                onSubmit = {
-                    // All photos are complete, proceed to geolocation
-                    state.goTo(OnboardingStep.GeolocationVerification)
-                }
+                onSubmit = moveNext
             )
         }
 
         OnboardingStep.CaptureFrontPhoto -> {
             CameraCaptureScreen(
                 photoType = PhotoType.FRONT,
-                onClose = { state.goTo(OnboardingStep.UploadDocumentsList) },
+                onClose = moveBack,
                 onPhotoCaptured = { uri ->
                     onUpdateData(onboardingData.copy(frontPhotoUri = uri))
-                    state.goTo(OnboardingStep.ReviewFrontPhoto)
+                    moveNext()
                 }
             )
         }
@@ -131,17 +153,16 @@ fun FrameOnboarding(
         OnboardingStep.ReviewFrontPhoto -> {
             val photoUri = onboardingData.frontPhotoUri
             if (photoUri == null) {
-                // If no photo, go back to capture
                 state.goTo(OnboardingStep.CaptureFrontPhoto)
                 return
             }
             ReviewPhotoScreen(
                 photoUri = photoUri,
-                onBack = { state.goTo(OnboardingStep.CaptureFrontPhoto) },
-                onUsePhoto = { state.goTo(OnboardingStep.CaptureBackPhoto) },
-                onRetake = { 
+                onBack = moveBack,
+                onUsePhoto = moveNext,
+                onRetake = {
                     onUpdateData(onboardingData.copy(frontPhotoUri = null))
-                    state.goTo(OnboardingStep.CaptureFrontPhoto) 
+                    state.goTo(OnboardingStep.CaptureFrontPhoto)
                 }
             )
         }
@@ -149,10 +170,10 @@ fun FrameOnboarding(
         OnboardingStep.CaptureBackPhoto -> {
             CameraCaptureScreen(
                 photoType = PhotoType.BACK,
-                onClose = { state.goTo(OnboardingStep.UploadDocumentsList) },
+                onClose = moveBack,
                 onPhotoCaptured = { uri ->
                     onUpdateData(onboardingData.copy(backPhotoUri = uri))
-                    state.goTo(OnboardingStep.ReviewBackPhoto)
+                    moveNext()
                 }
             )
         }
@@ -165,11 +186,11 @@ fun FrameOnboarding(
             }
             ReviewPhotoScreen(
                 photoUri = photoUri,
-                onBack = { state.goTo(OnboardingStep.CaptureBackPhoto) },
-                onUsePhoto = { state.goTo(OnboardingStep.CaptureSelfie) },
-                onRetake = { 
+                onBack = moveBack,
+                onUsePhoto = moveNext,
+                onRetake = {
                     onUpdateData(onboardingData.copy(backPhotoUri = null))
-                    state.goTo(OnboardingStep.CaptureBackPhoto) 
+                    state.goTo(OnboardingStep.CaptureBackPhoto)
                 }
             )
         }
@@ -177,10 +198,10 @@ fun FrameOnboarding(
         OnboardingStep.CaptureSelfie -> {
             CameraCaptureScreen(
                 photoType = PhotoType.SELFIE,
-                onClose = { state.goTo(OnboardingStep.UploadDocumentsList) },
+                onClose = moveBack,
                 onPhotoCaptured = { uri ->
                     onUpdateData(onboardingData.copy(selfieUri = uri))
-                    state.goTo(OnboardingStep.ReviewSelfie)
+                    moveNext()
                 }
             )
         }
@@ -193,11 +214,11 @@ fun FrameOnboarding(
             }
             ReviewPhotoScreen(
                 photoUri = photoUri,
-                onBack = { state.goTo(OnboardingStep.CaptureSelfie) },
-                onUsePhoto = { state.goTo(OnboardingStep.GeolocationVerification) },
-                onRetake = { 
+                onBack = moveBack,
+                onUsePhoto = moveNext,
+                onRetake = {
                     onUpdateData(onboardingData.copy(selfieUri = null))
-                    state.goTo(OnboardingStep.CaptureSelfie) 
+                    state.goTo(OnboardingStep.CaptureSelfie)
                 }
             )
         }
@@ -206,18 +227,16 @@ fun FrameOnboarding(
             GeolocationVerificationScreen(
                 onContinue = {
                     onUpdateData(onboardingData.copy(geolocationVerified = true))
-                    onResult(
-                        OnboardingResult.Completed(
-                            paymentMethodId = onboardingData.selectedPaymentMethodId,
-                            onboardingSessionId = "kyc_session"
-                        )
-                    )
+                    moveNext()
                 },
                 onDisableVpn = {
-                    // In real implementation, guide user to disable VPN
                     onUpdateData(onboardingData.copy(vpnDetected = true))
                 }
             )
+        }
+
+        OnboardingStep.VerificationSubmitted -> {
+            VerificationSubmittedScreen(onDone = moveNext)
         }
     }
 }

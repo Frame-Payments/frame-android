@@ -38,46 +38,33 @@ class ProveAuthService(
                 flowType = "mobile"
             )
 
-            val resultDeferred = kotlinx.coroutines.CompletableDeferred<Result<ProveUserInfo, Throwable>>()
+            val resultDeferred = kotlinx.coroutines.CompletableDeferred<Result<ProveUserInfo>>()
 
-            val finishStep = object : AuthFinishStep {
-                override fun execute(authId: String) {
-                    runBlocking {
-                        try {
-                            val info = backend.verify(authId)
-                            resultDeferred.complete(Result.success(info))
-                        } catch (e: Throwable) {
-                            resultDeferred.complete(Result.failure(e))
-                        }
+            val finishStep = AuthFinishStep { authId ->
+                runBlocking {
+                    try {
+                        val info = backend.verify(authId)
+                        resultDeferred.complete(Result.success(info))
+                    } catch (e: Throwable) {
+                        resultDeferred.complete(Result.failure(e))
                     }
                 }
             }
 
-            val otpStartStep = object : OtpStartStep {
-                override fun execute(
-                    phoneNumberNeeded: Boolean,
-                    otpException: com.prove.sdk.proveauth.ProveAuthException?,
-                    callback: OtpStartStepCallback
-                ) {
-                    if (phoneNumberNeeded) {
-                        callback.onError()
-                    } else {
-                        callback.onSuccess(OtpStartInput(""))
-                    }
+            val otpStartStep = OtpStartStep { phoneNumberNeeded, _, callback ->
+                if (phoneNumberNeeded) {
+                    callback.onError()
+                } else {
+                    callback.onSuccess(OtpStartInput(""))
                 }
             }
 
-            val otpFinishStep = object : OtpFinishStep {
-                override fun execute(
-                    otpException: com.prove.sdk.proveauth.ProveAuthException?,
-                    callback: OtpFinishStepCallback
-                ) {
-                    val otp = otpProvider?.invoke()
-                    if (otp != null) {
-                        callback.onSuccess(OtpFinishInput(otp))
-                    } else {
-                        callback.onError()
-                    }
+            val otpFinishStep = OtpFinishStep { _, callback ->
+                val otp = otpProvider?.invoke()
+                if (otp != null) {
+                    callback.onSuccess(OtpFinishInput(otp))
+                } else {
+                    callback.onError()
                 }
             }
 

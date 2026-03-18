@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -87,7 +88,7 @@ internal fun AddPaymentMethodScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     OutlinedTextField(
-                        value = "$expiryMonth/$expiryYear",
+                        value = if (expiryMonth.isEmpty() && expiryYear.isEmpty()) "" else "$expiryMonth/$expiryYear",
                         onValueChange = { value ->
                             val cleaned = value.replace("/", "").replace(Regex("[^0-9]"), "")
                             if (cleaned.length <= 4) {

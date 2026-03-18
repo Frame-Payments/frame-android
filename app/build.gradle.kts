@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    kotlin("android") version "2.2.0"
+    kotlin("android") version "2.2.10"
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
@@ -57,4 +57,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
 }
