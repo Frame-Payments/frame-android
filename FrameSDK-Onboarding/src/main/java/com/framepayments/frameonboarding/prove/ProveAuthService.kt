@@ -9,9 +9,10 @@ import com.prove.sdk.proveauth.OtpStartStep
 import com.prove.sdk.proveauth.OtpStartStepCallback
 import com.prove.sdk.proveauth.OtpStartInput
 import com.prove.sdk.proveauth.ProveAuth
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.runBlocking
 
 /**
  * Standalone service that runs Prove mobile auth (phone + DOB) and returns user info.
@@ -41,7 +42,7 @@ class ProveAuthService(
             val resultDeferred = kotlinx.coroutines.CompletableDeferred<Result<ProveUserInfo>>()
 
             val finishStep = AuthFinishStep { authId ->
-                runBlocking {
+                CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val info = backend.verify(authId)
                         resultDeferred.complete(Result.success(info))

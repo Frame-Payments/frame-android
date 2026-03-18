@@ -49,6 +49,14 @@ internal fun CameraCaptureScreen(
     var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val scope = rememberCoroutineScope()
+    var captureError by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(captureError) {
+        val error = captureError ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(error)
+        captureError = null
+    }
 
     val title = when (photoType) {
         PhotoType.FRONT -> "Front Photo"
@@ -97,7 +105,7 @@ internal fun CameraCaptureScreen(
                     val photoFile = createImageFile(context, photoType)
                     val photoUri = FileProvider.getUriForFile(
                         context,
-                        "${context.packageName}.fileprovider",
+                        "${context.packageName}.frameonboarding.fileprovider",
                         photoFile
                     )
 
@@ -114,19 +122,19 @@ internal fun CameraCaptureScreen(
                             }
 
                             override fun onError(exception: ImageCaptureException) {
-                                exception.printStackTrace()
-                                // Handle error - could show a snackbar or error message
+                                captureError = "Failed to capture photo. Please try again."
                             }
                         }
                     )
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    captureError = "Failed to capture photo. Please try again."
                 }
             }
         }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(title) },
@@ -162,6 +170,9 @@ internal fun CameraCaptureScreen(
                         photoType = photoType,
                         onImageCaptureReady = { capture ->
                             imageCapture = capture
+                        },
+                        onError = { message ->
+                            captureError = message
                         }
                     )
 
@@ -324,7 +335,8 @@ private fun CameraPreview(
     cameraProviderFuture: com.google.common.util.concurrent.ListenableFuture<ProcessCameraProvider>,
     lifecycleOwner: androidx.lifecycle.LifecycleOwner,
     photoType: PhotoType,
-    onImageCaptureReady: (ImageCapture) -> Unit
+    onImageCaptureReady: (ImageCapture) -> Unit,
+    onError: (String) -> Unit
 ) {
     AndroidView(
         factory = { ctx ->
@@ -359,7 +371,7 @@ private fun CameraPreview(
                         imageCapture
                     )
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    onError("Failed to start camera. Please try again.")
                 }
             }, executor)
             

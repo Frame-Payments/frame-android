@@ -70,6 +70,7 @@ fun PlaygroundScreen(
                 when (it) {
                     is OnboardingResult.Completed -> { }
                     OnboardingResult.Cancelled -> { }
+                    is OnboardingResult.Error -> { }
                 }
             }
         )

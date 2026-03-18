@@ -160,11 +160,14 @@ sealed class OnboardingResult {
         val paymentMethodId: String?,
         val onboardingSessionId: String?
     ) : OnboardingResult()
+    data class Error(val message: String) : OnboardingResult()
 }
 
 data class OnboardingConfig(
     /** iOS-parity primary identifier for onboarding context. */
     val accountId: String? = null,
+    /** Session ID returned by the backend when creating an onboarding session. */
+    val sessionId: String? = null,
     /** When non-empty, only these capability-driven steps are shown. */
     val requiredCapabilities: List<Capabilities> = emptyList(),
     /** Backward-compat alias used by older integrations. */

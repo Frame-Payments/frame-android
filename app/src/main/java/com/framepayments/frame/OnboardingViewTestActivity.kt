@@ -27,6 +27,7 @@ class OnboardingDemoActivity : ComponentActivity() {
                     when (result) {
                         is OnboardingResult.Completed -> finish()
                         OnboardingResult.Cancelled -> finish()
+                        is OnboardingResult.Error -> finish()
                     }
                 }
             )

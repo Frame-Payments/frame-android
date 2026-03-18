@@ -9,23 +9,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.GeolocationState
+import com.framepayments.frameonboarding.networking.geocompliance.GeocomplianceAPI
+import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceBlockReason
+import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceStatus
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
-import kotlinx.coroutines.delay
 
 @Composable
 internal fun GeolocationVerificationScreen(
+    accountId: String?,
     onContinue: () -> Unit,
     onDisableVpn: () -> Unit
 ) {
     var state by remember { mutableStateOf(GeolocationState.CHECKING) }
 
-    // Simulate checking process
     LaunchedEffect(Unit) {
-        delay(2000) // Simulate 2 second check
-        // In real implementation, check actual geolocation and VPN status
-        // For now, randomly choose verified or VPN detected
-        state = GeolocationState.VERIFIED // Change to VPN_DETECTED to test that state
+        val id = accountId
+        if (id == null) {
+            state = GeolocationState.VERIFIED
+            return@LaunchedEffect
+        }
+        val (response, _) = GeocomplianceAPI.getAccountGeoComplianceStatus(id)
+        state = when {
+            response == null -> GeolocationState.VERIFIED
+            response.status == GeoComplianceStatus.CLEAR -> GeolocationState.VERIFIED
+            response.reason == GeoComplianceBlockReason.VPN_DETECTED -> GeolocationState.VPN_DETECTED
+            else -> GeolocationState.VERIFIED
+        }
     }
 
     Scaffold { padding ->

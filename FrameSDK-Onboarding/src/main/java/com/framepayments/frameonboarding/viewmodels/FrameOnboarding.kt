@@ -28,7 +28,7 @@ fun FrameOnboarding(
             onResult(
                 OnboardingResult.Completed(
                     paymentMethodId = onboardingData.selectedPaymentMethodId,
-                    onboardingSessionId = "kyc_session"
+                    onboardingSessionId = config.sessionId
                 )
             )
         } else {
@@ -225,6 +225,7 @@ fun FrameOnboarding(
 
         OnboardingStep.GeolocationVerification -> {
             GeolocationVerificationScreen(
+                accountId = config.accountId ?: config.customerId,
                 onContinue = {
                     onUpdateData(onboardingData.copy(geolocationVerified = true))
                     moveNext()

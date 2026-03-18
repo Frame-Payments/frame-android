@@ -47,7 +47,11 @@ fun OnboardingContainerView(
             val request = ThreeDSecureRequests.CreateThreeDSecureVerification(
                 paymentMethodId = onboardingData.selectedPaymentMethodId!!
             )
-            val (verification, _, _) = ThreeDSecureVerificationsAPI.create3DSecureVerification(request)
+            val (verification, networkError, _) = ThreeDSecureVerificationsAPI.create3DSecureVerification(request)
+            if (networkError != null) {
+                onResult(OnboardingResult.Error("Failed to initialize card verification. Please try again."))
+                return@LaunchedEffect
+            }
             threeDSVerificationId = verification?.id
         }
     }
@@ -64,15 +68,15 @@ fun OnboardingContainerView(
         val customerOrAccountId = config.accountId ?: return@LaunchedEffect
         val (list, _) = PaymentMethodsAPI.getPaymentMethodsWithCustomer(customerOrAccountId)
         savedPaymentMethods = list
-            ?.filter { it.card != null }
-            ?.map { pm ->
-                val c = pm.card!!
-                PaymentMethodSummary(
-                    id = pm.id,
-                    brand = c.brand.uppercase(),
-                    last4 = c.lastFourDigits,
-                    exp = "${c.expirationMonth}/${c.expirationYear.takeLast(2)}"
-                )
+            ?.mapNotNull { pm ->
+                pm.card?.let { c ->
+                    PaymentMethodSummary(
+                        id = pm.id,
+                        brand = c.brand.uppercase(),
+                        last4 = c.lastFourDigits,
+                        exp = "${c.expirationMonth}/${c.expirationYear.takeLast(2)}"
+                    )
+                }
             }
             ?: emptyList()
         savedPayoutMethods = list

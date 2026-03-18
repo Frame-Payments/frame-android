@@ -23,10 +23,10 @@ internal fun VerifyIdFormScreen(
     accountId: String?,
     requiresDateOfBirth: Boolean = false,
     onBack: () -> Unit,
-    onContinue: (issuingCountry: String, idType: IdType) -> Unit
+    onContinue: (issuingCountry: String, idType: IdType) -> Unit,
+    phoneApi: PhoneOTPVerificationAPI = PhoneOTPVerificationAPI()
 ) {
     val scope = rememberCoroutineScope()
-    val phoneApi = remember { PhoneOTPVerificationAPI() }
     var identificationStep by remember { mutableStateOf(UserIdentificationSteps.phoneAuth) }
 
     var phoneNumber by remember { mutableStateOf("") }

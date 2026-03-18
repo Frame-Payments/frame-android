@@ -1,21 +1,18 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Keep public SDK entry points
+-keep public class com.framepayments.frameonboarding.classes.** { public *; }
+-keep public class com.framepayments.frameonboarding.viewmodels.** { public *; }
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep data classes used for Gson serialization (have @SerializedName fields)
+-keep class com.framepayments.frameonboarding.networking.** { *; }
+-keepclassmembers class com.framepayments.frameonboarding.networking.** {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Gson @SerializedName enum values from being renamed
+-keepclassmembers enum com.framepayments.frameonboarding.** {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Preserve line numbers for stack traces in release builds
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

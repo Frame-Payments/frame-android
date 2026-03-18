@@ -42,10 +42,10 @@ class PhoneOTPVerificationAPI {
             throw PhoneOTPVerificationAPIError.MissingData
         }
 
-        val errorResponse = FrameNetworking.parseResponse<PhoneOTPVerificationError>(data)
-        if (errorResponse?.error != null) {
+        val createError = FrameNetworking.parseResponse<PhoneOTPVerificationError>(data)?.error
+        if (createError != null) {
             throw PhoneOTPVerificationAPIError.Server(
-                serverMessage = errorResponse.error!!.message ?: "Unknown error"
+                serverMessage = createError.message ?: "Unknown error"
             )
         }
 
@@ -80,10 +80,10 @@ class PhoneOTPVerificationAPI {
             throw PhoneOTPVerificationAPIError.MissingData
         }
 
-        val errorResponse = FrameNetworking.parseResponse<PhoneOTPVerificationError>(data)
-        if (errorResponse?.error != null) {
+        val confirmError = FrameNetworking.parseResponse<PhoneOTPVerificationError>(data)?.error
+        if (confirmError != null) {
             throw PhoneOTPVerificationAPIError.Server(
-                serverMessage = errorResponse.error!!.message ?: "Unknown error"
+                serverMessage = confirmError.message ?: "Unknown error"
             )
         }
 
