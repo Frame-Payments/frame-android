@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.IdType
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
+import com.framepayments.frameonboarding.reusable.TermsOfServiceView
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
 import kotlinx.coroutines.launch
@@ -47,6 +48,7 @@ private enum class UserIdentificationSteps {
 internal fun VerifyIdFormScreen(
     accountId: String?,
     requiresDateOfBirth: Boolean = false,
+    showTermsOfService: Boolean = false,
     onBack: () -> Unit,
     onContinue: (issuingCountry: String, idType: IdType) -> Unit
 ) {
@@ -195,6 +197,10 @@ internal fun VerifyIdFormScreen(
             }
 
             if (identificationStep != UserIdentificationSteps.verifyPhone) {
+                if (showTermsOfService && identificationStep == UserIdentificationSteps.phoneAuth) {
+                    TermsOfServiceView()
+                    Spacer(Modifier.height(12.dp))
+                }
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = when (identificationStep) {

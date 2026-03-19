@@ -51,6 +51,7 @@ fun FrameOnboarding(
             VerifyIdFormScreen(
                 accountId = config.accountId ?: config.customerId,
                 requiresDateOfBirth = config.requiredCapabilities.contains(Capabilities.KYC_PREFILL),
+                showTermsOfService = config.requiredCapabilities.contains(Capabilities.GEO_COMPLIANCE),
                 onBack = moveBack,
                 onContinue = { country, idType ->
                     onUpdateData(onboardingData.copy(
