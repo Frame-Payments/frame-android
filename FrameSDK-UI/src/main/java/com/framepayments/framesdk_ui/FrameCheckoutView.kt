@@ -147,7 +147,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         onCheckout: (ChargeIntent) -> Unit
     ) {
         checkoutCallback = onCheckout
-        viewModel.loadCustomerPaymentMethods(customerId.toString(), paymentAmount)
+        viewModel.loadCustomerPaymentMethods(customerId, paymentAmount)
         binding.payButton.text = "Pay ${CurrencyFormatter.convertCentsToCurrencyString(paymentAmount)}"
     }
 }

@@ -20,7 +20,7 @@ object ChargeIntentsRequests {
         @SerializedName("payment_method_data") val paymentMethodData: PaymentMethodData?,
         @SerializedName("fraud_signals") var fraudSignals: FraudSignals? = null,
         @SerializedName("use_frame_sdk") val useFrameSDK: Boolean = true,
-        @SerializedName("sonar_session_id") val sonarSessionId: String? = null
+        @SerializedName("sonar_session_id") var sonarSessionId: String? = null
     )
 
     data class UpdateChargeIntentRequest (

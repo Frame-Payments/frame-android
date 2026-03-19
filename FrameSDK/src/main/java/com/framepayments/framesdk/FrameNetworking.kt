@@ -5,13 +5,17 @@ import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import com.framepayments.framesdk.managers.SiftManager
+import com.framepayments.framesdk.fingerprint.FingerprintManager
+import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -35,10 +39,11 @@ object FrameNetworking {
     }
     var asyncURLSession: URLSessionProtocol = DefaultURLSession(okHttpClient)
     var mainApiUrl: String = NetworkingConstants.MAIN_API_URL
-    const val currentVersion = BuildConfig.SDK_VERSION
+    const val CURRENT_VERSION = BuildConfig.SDK_VERSION
     var apiKey: String = ""
     var debugMode: Boolean = false
     var isEvervaultConfigured: Boolean = false
+    private var sonarSessionManager: SonarSessionManager? = null
 
     private lateinit var applicationContext: Context
 
@@ -49,7 +54,37 @@ object FrameNetworking {
 
         SiftManager.initializeSift(apiKey)
         configureEvervault()
+
+        // Initialize Sonar session as early as possible during SDK initialization
+        // using Fingerprint visitorId when available. If we cannot obtain a
+        // Fingerprint visitorId, we skip Sonar session initialization to match
+        // the iOS behavior.
+        @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+            val context = getContext()
+            FingerprintManager.getVisitorId(context) { fingerprintVisitorId ->
+                val visitorId = fingerprintVisitorId ?: run {
+                    if (debugMode) {
+                        println("Fingerprint visitorId is null; skipping Sonar session initialization.")
+                    }
+                    return@getVisitorId
+                }
+
+                kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+                    try {
+                        val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), visitorId)
+                        sonarSessionManager = manager
+                    } catch (e: Exception) {
+                        if (debugMode) {
+                            println("Failed to initialize Sonar session: $e")
+                        }
+                    }
+                }
+            }
+        }
     }
+
+    fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()
 
     fun getContext(): Context {
         check(::applicationContext.isInitialized) { "FrameSDK must be initialized before use" }
@@ -62,7 +97,7 @@ object FrameNetworking {
         return try {
             val jsonString = String(data, Charsets.UTF_8)
             gson.fromJson(jsonString, T::class.java)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -73,7 +108,7 @@ object FrameNetworking {
             val jsonString = String(data, Charsets.UTF_8)
             val type = object : TypeToken<List<T>>() {}.type
             gson.fromJson<List<T>>(jsonString, type)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -97,7 +132,7 @@ object FrameNetworking {
         val requestBuilder = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$currentVersion")
+            .header("User-Agent", "Android/$CURRENT_VERSION")
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -115,18 +150,18 @@ object FrameNetworking {
             } else {
                 Pair(responseData, null)
             }
-        } catch (e: UnknownHostException) {
+        } catch (_: UnknownHostException) {
             Pair(null, NetworkingError.InvalidURL)
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             Pair(null, NetworkingError.UnknownError)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Pair(null, NetworkingError.UnknownError)
         }
     }
 
-    internal suspend inline fun <reified T> performDataTaskWithRequest(
+    suspend fun performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
-        request: T? = null
+        request: Any? = null
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -144,11 +179,11 @@ object FrameNetworking {
         val requestBuilder = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$currentVersion")
+            .header("User-Agent", "Android/$CURRENT_VERSION")
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -156,7 +191,7 @@ object FrameNetworking {
         if (method == "POST" || method == "PATCH") {
             requestBuilder.header("Content-Type", "application/json")
             val mediaType = "application/json".toMediaTypeOrNull()
-            val body = requestBody?.let { RequestBody.create(mediaType, it) }
+            val body = requestBody?.toRequestBody(mediaType)
             requestBuilder.method(method, body)
         } else {
             requestBuilder.method(method, null)
@@ -176,11 +211,11 @@ object FrameNetworking {
             } else {
                 Pair(responseData, null)
             }
-        } catch (e: UnknownHostException) {
+        } catch (_: UnknownHostException) {
             Pair(null, NetworkingError.InvalidURL)
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             Pair(null, NetworkingError.UnknownError)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Pair(null, NetworkingError.UnknownError)
         }
     }
@@ -204,7 +239,7 @@ object FrameNetworking {
         val requestBuilder = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$currentVersion")
+            .header("User-Agent", "Android/$CURRENT_VERSION")
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -245,11 +280,11 @@ object FrameNetworking {
         val requestBuilder = Request.Builder()
             .url(httpUrl)
             .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$currentVersion")
+            .header("User-Agent", "Android/$CURRENT_VERSION")
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -257,7 +292,7 @@ object FrameNetworking {
         if (method == "POST" || method == "PATCH") {
             requestBuilder.header("Content-Type", "application/json")
             val mediaType = "application/json".toMediaTypeOrNull()
-            val body = requestBody?.let { RequestBody.create(mediaType, it) }
+            val body = requestBody?.toRequestBody(mediaType)
             requestBuilder.method(method, body)
         } else {
             requestBuilder.method(method, null)

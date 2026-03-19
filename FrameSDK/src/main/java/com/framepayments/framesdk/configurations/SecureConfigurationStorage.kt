@@ -2,15 +2,28 @@ package com.framepayments.framesdk.configurations
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
+import androidx.core.content.edit
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import androidx.core.content.edit
 
 object SecureConfigurationStorage {
-    private const val PREFS_NAME = "config_store"
+    private const val PREFS_NAME = "config_store_encrypted"
 
-    fun prefs(context: Context): SharedPreferences =
-        context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun prefs(context: Context): SharedPreferences {
+        val appContext = context.applicationContext
+        val masterKey = MasterKey.Builder(appContext)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+        return EncryptedSharedPreferences.create(
+            appContext,
+            PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     fun <T> save(context: Context, key: String, value: T) {
         val json = Gson().toJson(value)
