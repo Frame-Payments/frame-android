@@ -25,16 +25,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.IdType
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
 import com.framepayments.frameonboarding.reusable.TermsOfServiceView
+import com.framepayments.framesdk.termsofservice.TermsOfServiceAPI
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
 import kotlinx.coroutines.launch
@@ -54,6 +57,14 @@ internal fun VerifyIdFormScreen(
 ) {
     val scope = rememberCoroutineScope()
     var identificationStep by remember { mutableStateOf(UserIdentificationSteps.phoneAuth) }
+    var tosToken by rememberSaveable { mutableStateOf<String?>(null) }
+
+    if (showTermsOfService && tosToken == null) {
+        LaunchedEffect(Unit) {
+            val (response, _) = TermsOfServiceAPI.createToken()
+            tosToken = response?.token
+        }
+    }
 
     var phoneNumber by remember { mutableStateOf("") }
     var dateOfBirth by remember { mutableStateOf("") }
