@@ -1,6 +1,9 @@
 package com.framepayments.frameonboarding.views
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,11 +44,11 @@ fun OnboardingContainerView(
     LaunchedEffect(state.currentStep, onboardingData.selectedPaymentMethodId) {
         if (
             state.currentStep == OnboardingStep.VerifyYourCard &&
-            onboardingData.selectedPaymentMethodId != null &&
             config.requiredCapabilities.contains(Capabilities.CARD_VERIFICATION)
         ) {
+            val paymentMethodId = onboardingData.selectedPaymentMethodId ?: return@LaunchedEffect
             val request = ThreeDSecureRequests.CreateThreeDSecureVerification(
-                paymentMethodId = onboardingData.selectedPaymentMethodId!!
+                paymentMethodId = paymentMethodId
             )
             val (verification, networkError, _) = ThreeDSecureVerificationsAPI.create3DSecureVerification(request)
             if (networkError != null) {

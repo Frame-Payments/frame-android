@@ -1,12 +1,37 @@
 package com.framepayments.frameonboarding.views
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.ExperimentalMaterial3Api
 import com.framepayments.frameonboarding.classes.IdType
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
@@ -23,8 +48,7 @@ internal fun VerifyIdFormScreen(
     accountId: String?,
     requiresDateOfBirth: Boolean = false,
     onBack: () -> Unit,
-    onContinue: (issuingCountry: String, idType: IdType) -> Unit,
-    phoneApi: PhoneOTPVerificationAPI = PhoneOTPVerificationAPI()
+    onContinue: (issuingCountry: String, idType: IdType) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     var identificationStep by remember { mutableStateOf(UserIdentificationSteps.phoneAuth) }
@@ -117,17 +141,13 @@ internal fun VerifyIdFormScreen(
                             digitCount = 6,
                             onBack = { identificationStep = UserIdentificationSteps.phoneAuth },
                             onResendCode = {
-                                val resolvedAccountId = accountId
-                                if (resolvedAccountId != null) {
-                                    scope.launch {
-                                        runCatching {
-                                            phoneApi.createVerification(
-                                                accountId = resolvedAccountId,
-                                                phoneNumber = phoneNumber,
-                                                dateOfBirth = dateOfBirth
-                                            )
-                                        }
-                                    }
+                                val resolvedAccountId = accountId ?: return@VerifyCardScreen
+                                scope.launch {
+                                    PhoneOTPVerificationAPI.createVerification(
+                                        accountId = resolvedAccountId,
+                                        phoneNumber = phoneNumber,
+                                        dateOfBirth = dateOfBirth
+                                    )
                                 }
                             },
                             onContinue = {
@@ -137,7 +157,7 @@ internal fun VerifyIdFormScreen(
                                     identificationStep = UserIdentificationSteps.information
                                 } else {
                                     scope.launch {
-                                        runCatching { phoneApi.confirmVerification(resolvedAccountId, verificationId) }
+                                        PhoneOTPVerificationAPI.confirmVerification(resolvedAccountId, verificationId)
                                         identificationStep = UserIdentificationSteps.information
                                     }
                                 }
@@ -191,14 +211,12 @@ internal fun VerifyIdFormScreen(
                                     return@Button
                                 }
                                 scope.launch {
-                                    val result = runCatching {
-                                        phoneApi.createVerification(
-                                            accountId = resolvedAccountId,
-                                            phoneNumber = phoneNumber,
-                                            dateOfBirth = dateOfBirth
-                                        )
-                                    }.getOrNull()
-                                    pendingVerificationId = result?.verificationId
+                                    val (result, _) = PhoneOTPVerificationAPI.createVerification(
+                                        accountId = resolvedAccountId,
+                                        phoneNumber = phoneNumber,
+                                        dateOfBirth = dateOfBirth
+                                    )
+                                    pendingVerificationId = result?.id
                                     identificationStep = if (pendingVerificationId != null) {
                                         UserIdentificationSteps.verifyPhone
                                     } else {
@@ -206,7 +224,11 @@ internal fun VerifyIdFormScreen(
                                     }
                                 }
                             }
-                            UserIdentificationSteps.information -> onContinue(selectedCountry!!, selectedIdType!!)
+                            UserIdentificationSteps.information -> {
+                                val country = selectedCountry ?: return@Button
+                                val idType = selectedIdType ?: return@Button
+                                onContinue(country, idType)
+                            }
                             UserIdentificationSteps.verifyPhone -> Unit
                         }
                     },
@@ -243,16 +265,17 @@ private fun DropdownField(
                 onValueChange = {},
                 readOnly = true,
                 singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     IconButton(onClick = { expanded = !expanded }) {
-                        Text("▾")
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null
+                        )
                     }
                 }
             )
 
-            // IMPORTANT: DropdownMenu must be inside the same Box to anchor properly
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
@@ -269,11 +292,11 @@ private fun DropdownField(
                 }
             }
 
-            // Make the whole field tap-open (overlay clickable)
+            // Overlay to make the full field tappable (excluding trailing icon area)
             Spacer(
                 modifier = Modifier
                     .matchParentSize()
-                    .padding(end = 48.dp) // leave room for trailing icon
+                    .padding(end = 48.dp)
                     .clickable { expanded = true }
             )
         }

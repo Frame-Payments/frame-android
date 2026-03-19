@@ -1,10 +1,35 @@
 package com.framepayments.frameonboarding.views
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -30,7 +55,7 @@ internal fun AddPaymentMethodScreen(
     var zipCode by remember { mutableStateOf("") }
     var useForPayouts by remember { mutableStateOf(false) }
 
-    val canContinue = cardNumber.length >= 16 &&
+    val canContinue = cardNumber.replace(" ", "").length >= 16 &&
             expiryMonth.isNotEmpty() && expiryYear.isNotEmpty() &&
             cvc.length >= 3 &&
             addressLine1.isNotEmpty() && city.isNotEmpty() &&
@@ -42,7 +67,10 @@ internal fun AddPaymentMethodScreen(
                 title = { Text("Add Debit Card") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Text("<")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
@@ -66,7 +94,6 @@ internal fun AddPaymentMethodScreen(
                 OutlinedTextField(
                     value = cardNumber,
                     onValueChange = { value ->
-                        // Format card number with spaces every 4 digits
                         val cleaned = value.replace(" ", "")
                         if (cleaned.length <= 16) {
                             cardNumber = cleaned.chunked(4).joinToString(" ")
@@ -75,9 +102,7 @@ internal fun AddPaymentMethodScreen(
                     label = { Text("Card Number") },
                     placeholder = { Text("4242 4242 4242 4242") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = KeyboardType.Number
-                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
                 )
 
@@ -104,9 +129,7 @@ internal fun AddPaymentMethodScreen(
                         label = { Text("MM/YY") },
                         placeholder = { Text("MM/YY") },
                         modifier = Modifier.weight(1f),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
                     )
 
@@ -120,9 +143,7 @@ internal fun AddPaymentMethodScreen(
                         label = { Text("CVC") },
                         placeholder = { Text("CVC") },
                         modifier = Modifier.weight(1f),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        ),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
                     )
                 }
@@ -192,9 +213,7 @@ internal fun AddPaymentMethodScreen(
                     label = { Text("Zip Code") },
                     placeholder = { Text("Zip Code") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = KeyboardType.Number
-                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
                 )
 

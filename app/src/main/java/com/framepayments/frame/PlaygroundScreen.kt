@@ -1,9 +1,7 @@
 package com.framepayments.frame
 
 import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +34,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.views.OnboardingContainerView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
-import com.framepayments.frameonboarding.classes.OnboardingResult
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +43,6 @@ fun PlaygroundScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showOnboarding by remember { mutableStateOf(false) }
-    var showCheckout by remember { mutableStateOf(false) }
     var showCustomers by remember { mutableStateOf(false) }
     var showPaymentMethods by remember { mutableStateOf(false) }
     var showSubscriptions by remember { mutableStateOf(false) }
@@ -65,14 +61,7 @@ fun PlaygroundScreen(
                     Capabilities.AGE_VERIFICATION
                 )
             ),
-            onResult = {
-                showOnboarding = false
-                when (it) {
-                    is OnboardingResult.Completed -> { }
-                    OnboardingResult.Cancelled -> { }
-                    is OnboardingResult.Error -> { }
-                }
-            }
+            onResult = { showOnboarding = false }
         )
         return
     }

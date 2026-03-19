@@ -1,6 +1,7 @@
 package com.framepayments.frameonboarding.views
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -20,13 +21,11 @@ internal fun ProgressIndicator(
     val currentSegment = currentStep.toFlowSegment()
     val currentIndex = segments.indexOf(currentSegment).coerceAtLeast(0) + 1
     val progress = currentIndex.toFloat() / segments.size.toFloat()
-    
-    Column(modifier = modifier) {
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-        )
-    }
+
+    LinearProgressIndicator(
+        progress = { progress },
+        modifier = modifier
+            .fillMaxWidth()
+            .height(4.dp)
+    )
 }

@@ -2,9 +2,33 @@ package com.framepayments.frameonboarding.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -31,9 +55,12 @@ internal fun SelectPaymentMethodScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Select A Payment Method") },
-                navigationIcon = { 
+                navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Text("<")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
@@ -73,7 +100,7 @@ internal fun SelectPaymentMethodScreen(
                 AddPaymentMethodRow(
                     title = "Debit/Credit Card",
                     subtitle = "Add New Payment Method",
-                    onClick = { onAddCard() }
+                    onClick = onAddCard
                 )
             }
 
@@ -114,26 +141,17 @@ private fun SavedPaymentMethodRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(
-                    id = cardBrandIcon(pm.brand)
-                ),
+                painter = painterResource(id = cardBrandIcon(pm.brand)),
                 contentDescription = pm.brand,
-                modifier = Modifier
-                    .size(40.dp)
+                modifier = Modifier.size(40.dp)
             )
-
             Spacer(modifier = Modifier.width(20.dp))
-
             Column(Modifier.weight(1f)) {
                 Text(text = "${pm.brand}  •••• ${pm.last4}", style = MaterialTheme.typography.bodyLarge)
                 Spacer(Modifier.height(2.dp))
                 Text(text = "Exp. ${pm.exp}", style = MaterialTheme.typography.bodySmall)
             }
-
-            RadioButton(
-                selected = selected,
-                onClick = onClick
-            )
+            RadioButton(selected = selected, onClick = onClick)
         }
     }
 }
@@ -157,7 +175,6 @@ private fun AddPaymentMethodRow(
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Green square with plus icon
             Surface(
                 modifier = Modifier.size(40.dp),
                 color = FramePrimaryColor,
@@ -167,10 +184,10 @@ private fun AddPaymentMethodRow(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "+",
-                        color = FrameOnPrimaryColor,
-                        style = MaterialTheme.typography.titleLarge
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = FrameOnPrimaryColor
                     )
                 }
             }
@@ -183,7 +200,10 @@ private fun AddPaymentMethodRow(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
-            Text(text = "›", style = MaterialTheme.typography.titleLarge)
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null
+            )
         }
     }
 }

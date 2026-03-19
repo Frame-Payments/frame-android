@@ -3,15 +3,47 @@ package com.framepayments.frameonboarding.views
 import android.Manifest
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.*
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -22,18 +54,22 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.framepayments.frameonboarding.classes.PhotoType
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +106,6 @@ internal fun CameraCaptureScreen(
         PhotoType.SELFIE -> "Position your face within the frame and look straight at the camera."
     }
 
-    // Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -80,15 +115,12 @@ internal fun CameraCaptureScreen(
         }
     }
 
-    // Check permission on first launch
     LaunchedEffect(Unit) {
         val permission = Manifest.permission.CAMERA
-        
         val hasPermissionAlready = ContextCompat.checkSelfPermission(
             context,
             permission
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        
         if (hasPermissionAlready) {
             hasPermission = true
         } else {
@@ -96,23 +128,17 @@ internal fun CameraCaptureScreen(
         }
     }
 
-    // Capture photo function
     val capturePhoto: () -> Unit = {
         imageCapture?.let { capture ->
             scope.launch {
                 try {
-                    // Create file for photo
                     val photoFile = createImageFile(context, photoType)
                     val photoUri = FileProvider.getUriForFile(
                         context,
                         "${context.packageName}.frameonboarding.fileprovider",
                         photoFile
                     )
-
-                    // Create output file options
                     val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-                    // Capture photo
                     capture.takePicture(
                         outputOptions,
                         ContextCompat.getMainExecutor(context),
@@ -140,7 +166,10 @@ internal fun CameraCaptureScreen(
                 title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Text("X")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Close"
+                        )
                     }
                 }
             )
@@ -153,7 +182,6 @@ internal fun CameraCaptureScreen(
         ) {
             when {
                 showPermissionRationale -> {
-                    // Permission denied - show rationale
                     PermissionDeniedView(
                         onRequestPermission = {
                             permissionLauncher.launch(Manifest.permission.CAMERA)
@@ -162,7 +190,6 @@ internal fun CameraCaptureScreen(
                     )
                 }
                 hasPermission -> {
-                    // Camera preview
                     CameraPreview(
                         modifier = Modifier.fillMaxSize(),
                         cameraProviderFuture = cameraProviderFuture,
@@ -176,7 +203,6 @@ internal fun CameraCaptureScreen(
                         }
                     )
 
-                    // Instruction text overlay
                     Surface(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
@@ -192,63 +218,38 @@ internal fun CameraCaptureScreen(
                         )
                     }
 
-                    // Overlay frame
                     when (photoType) {
-                    PhotoType.FRONT, PhotoType.BACK -> {
-                        // Rectangle frame for ID
-                        Canvas(
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            val frameWidth = size.width * 0.85f
-                            val frameHeight = size.height * 0.4f
-                            val left = (size.width - frameWidth) / 2
-                            val top = (size.height - frameHeight) / 2
-
-                            // Draw semi-transparent overlay with cutout for frame
-                            val overlayPath = Path().apply {
-                                // Outer rectangle (full screen)
-                                addRect(Rect(0f, 0f, size.width, size.height))
-                                // Inner rectangle (frame area) - subtract this
-                                addRect(Rect(left, top, left + frameWidth, top + frameHeight))
-                                fillType = PathFillType.EvenOdd
+                        PhotoType.FRONT, PhotoType.BACK -> {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                val frameWidth = size.width * 0.85f
+                                val frameHeight = size.height * 0.4f
+                                val left = (size.width - frameWidth) / 2
+                                val top = (size.height - frameHeight) / 2
+                                val overlayPath = Path().apply {
+                                    addRect(Rect(0f, 0f, size.width, size.height))
+                                    addRect(Rect(left, top, left + frameWidth, top + frameHeight))
+                                    fillType = PathFillType.EvenOdd
+                                }
+                                drawPath(path = overlayPath, color = Color.Black.copy(alpha = 0.5f))
+                                drawRect(
+                                    color = Color.White,
+                                    topLeft = Offset(left, top),
+                                    size = Size(frameWidth, frameHeight),
+                                    style = Stroke(width = 4.dp.toPx())
+                                )
                             }
-                            drawPath(
-                                path = overlayPath,
-                                color = Color.Black.copy(alpha = 0.5f)
-                            )
-
-                            // Draw white border for frame
-                            drawRect(
-                                color = Color.White,
-                                topLeft = Offset(left, top),
-                                size = Size(frameWidth, frameHeight),
-                                style = Stroke(width = 4.dp.toPx())
-                            )
                         }
-                    }
                         PhotoType.SELFIE -> {
-                            // Circular frame for selfie
-                            Canvas(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
+                            Canvas(modifier = Modifier.fillMaxSize()) {
                                 val radius = size.minDimension * 0.35f
                                 val centerX = size.width / 2
                                 val centerY = size.height / 2
-
-                                // Draw semi-transparent overlay with circular cutout
                                 val overlayPath = Path().apply {
-                                    // Outer rectangle (full screen)
                                     addRect(Rect(0f, 0f, size.width, size.height))
-                                    // Inner circle (frame area) - subtract this
                                     addOval(Rect(centerX - radius, centerY - radius, centerX + radius, centerY + radius))
                                     fillType = PathFillType.EvenOdd
                                 }
-                                drawPath(
-                                    path = overlayPath,
-                                    color = Color.Black.copy(alpha = 0.5f)
-                                )
-
-                                // Draw circular frame border
+                                drawPath(path = overlayPath, color = Color.Black.copy(alpha = 0.5f))
                                 drawCircle(
                                     color = Color.White,
                                     radius = radius,
@@ -259,7 +260,6 @@ internal fun CameraCaptureScreen(
                         }
                     }
 
-                    // Capture button
                     FloatingActionButton(
                         onClick = capturePhoto,
                         modifier = Modifier
@@ -268,12 +268,13 @@ internal fun CameraCaptureScreen(
                         containerColor = FramePrimaryColor,
                         contentColor = FrameOnPrimaryColor
                     ) {
-                        // Camera icon - using text as placeholder, replace with actual icon
-                        Text("📷", style = MaterialTheme.typography.titleLarge)
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Take photo"
+                        )
                     }
                 }
                 else -> {
-                    // Loading or checking permission
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -306,7 +307,7 @@ private fun PermissionDeniedView(
         Text(
             text = "We need access to your camera to take photos of your identity documents.",
             style = MaterialTheme.typography.bodyMedium,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(24.dp))
         Button(onClick = onRequestPermission) {
@@ -318,10 +319,9 @@ private fun PermissionDeniedView(
     }
 }
 
-// Helper to create a file for the captured image
 private fun createImageFile(context: Context, photoType: PhotoType): File {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-    val storageDir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES)
+    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
     return File.createTempFile(
         "FRAME_${photoType.name}_${timeStamp}_",
         ".jpg",
@@ -332,8 +332,8 @@ private fun createImageFile(context: Context, photoType: PhotoType): File {
 @Composable
 private fun CameraPreview(
     modifier: Modifier = Modifier,
-    cameraProviderFuture: com.google.common.util.concurrent.ListenableFuture<ProcessCameraProvider>,
-    lifecycleOwner: androidx.lifecycle.LifecycleOwner,
+    cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
+    lifecycleOwner: LifecycleOwner,
     photoType: PhotoType,
     onImageCaptureReady: (ImageCapture) -> Unit,
     onError: (String) -> Unit
@@ -342,26 +342,20 @@ private fun CameraPreview(
         factory = { ctx ->
             val previewView = PreviewView(ctx)
             val executor = ContextCompat.getMainExecutor(ctx)
-            
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()
-                
                 val preview = Preview.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
-                
                 val imageCapture = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .build()
-                
                 onImageCaptureReady(imageCapture)
-                
                 val cameraSelector = if (photoType == PhotoType.SELFIE) {
                     CameraSelector.DEFAULT_FRONT_CAMERA
                 } else {
                     CameraSelector.DEFAULT_BACK_CAMERA
                 }
-                
                 try {
                     cameraProvider.unbindAll()
                     cameraProvider.bindToLifecycle(
@@ -374,7 +368,6 @@ private fun CameraPreview(
                     onError("Failed to start camera. Please try again.")
                 }
             }, executor)
-            
             previewView
         },
         modifier = modifier
