@@ -2,5 +2,5 @@ package com.framepayments.frameonboarding.theme
 
 import androidx.compose.ui.graphics.Color
 
-val FramePrimaryColor = Color(0xFF324D52) // replace with real brand hex
-val FrameOnPrimaryColor = Color.White
+public val FramePrimaryColor = Color(0xFF324D52)
+public val FrameOnPrimaryColor = Color.White

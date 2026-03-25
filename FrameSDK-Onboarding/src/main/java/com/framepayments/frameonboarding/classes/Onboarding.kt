@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-class OnboardingState(
+internal class OnboardingState(
     startStep: OnboardingStep = OnboardingStep.VerificationWelcome
 ) {
     var currentStep by mutableStateOf(startStep)
@@ -57,7 +57,7 @@ enum class Capabilities(val apiValue: String) {
 /**
  * High-level onboarding flow segments (mirrors iOS OnboardingFlow).
  */
-enum class OnboardingFlowSegment(val order: Int) {
+internal enum class OnboardingFlowSegment(val order: Int) {
     PERSONAL_INFORMATION(0),
     CONFIRM_PAYMENT_METHOD(1),
     CONFIRM_PAYOUT_METHOD(2),
@@ -65,7 +65,7 @@ enum class OnboardingFlowSegment(val order: Int) {
     VERIFICATION_SUBMITTED(4)
 }
 
-fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
+internal fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
     Capabilities.KYC, Capabilities.KYC_PREFILL, Capabilities.PHONE_VERIFICATION, Capabilities.CREATOR_SHIELD, Capabilities.AGE_VERIFICATION,
     Capabilities.GEO_COMPLIANCE ->
         OnboardingFlowSegment.PERSONAL_INFORMATION
@@ -75,7 +75,7 @@ fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
         OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD
 }
 
-fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this) {
+internal fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this) {
     OnboardingFlowSegment.PERSONAL_INFORMATION -> listOf(
         OnboardingStep.VerificationWelcome,
         OnboardingStep.VerifyIdentification
@@ -105,7 +105,7 @@ fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this) {
  * Builds the ordered list of onboarding steps from required capabilities.
  * iOS parity: when [requiredCapabilities] is empty, use personal info + submitted only.
  */
-fun computeFlowSegments(requiredCapabilities: List<Capabilities>): List<OnboardingFlowSegment> {
+internal fun computeFlowSegments(requiredCapabilities: List<Capabilities>): List<OnboardingFlowSegment> {
     if (requiredCapabilities.isEmpty()) {
         return listOf(
             OnboardingFlowSegment.PERSONAL_INFORMATION,
@@ -116,7 +116,7 @@ fun computeFlowSegments(requiredCapabilities: List<Capabilities>): List<Onboardi
     return (segmentSet.sortedBy { it.order } + OnboardingFlowSegment.VERIFICATION_SUBMITTED).distinct()
 }
 
-fun computeOrderedSteps(requiredCapabilities: List<Capabilities>): List<OnboardingStep> {
+internal fun computeOrderedSteps(requiredCapabilities: List<Capabilities>): List<OnboardingStep> {
     val needsCardVerification = requiredCapabilities.contains(Capabilities.CARD_VERIFICATION)
     return computeFlowSegments(requiredCapabilities).flatMap { segment ->
         when (segment) {
@@ -132,7 +132,7 @@ fun computeOrderedSteps(requiredCapabilities: List<Capabilities>): List<Onboardi
     }
 }
 
-fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this) {
+internal fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this) {
     OnboardingStep.VerificationWelcome,
     OnboardingStep.VerifyIdentification -> OnboardingFlowSegment.PERSONAL_INFORMATION
     OnboardingStep.SelectPaymentMethod,
@@ -171,14 +171,14 @@ data class OnboardingConfig(
     val customerId: String? = null
 )
 
-data class PaymentMethodSummary(
+internal data class PaymentMethodSummary(
     val id: String,
     val brand: String,
     val last4: String,
     val exp: String
 )
 
-enum class PhotoType {
+internal enum class PhotoType {
     FRONT,
     BACK,
     SELFIE
@@ -208,7 +208,7 @@ data class PayoutMethodDetails(
     val zipCode: String
 )
 
-data class OnboardingData(
+internal data class OnboardingData(
     // Step 1: Payment Methods
     val selectedPaymentMethodId: String? = null,
     val newPaymentMethod: PaymentMethodDetails? = null,
@@ -241,7 +241,7 @@ data class OnboardingData(
     val resolvedAccountId: String? = null,
 )
 
-interface OnboardingCoordinator {
+internal interface OnboardingCoordinator {
     val config: OnboardingConfig
 
     /** host app calls this to start */

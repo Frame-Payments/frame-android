@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
 
 @Composable
-internal fun TermsOfServiceView(
+fun TermsOfServiceView(
     privacyPolicyUrl: String = "https://framepayments.com/privacy",
     termsOfServiceUrl: String = "https://framepayments.com/terms",
     textColor: Color = Color.Gray,

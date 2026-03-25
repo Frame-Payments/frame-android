@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
  * Note: phone number is collected separately in the PhoneAuth substep (iOS parity).
  */
 @Composable
-internal fun CustomerInformationForm(
+fun CustomerInformationForm(
     firstName: String,
     onFirstNameChange: (String) -> Unit,
     lastName: String,

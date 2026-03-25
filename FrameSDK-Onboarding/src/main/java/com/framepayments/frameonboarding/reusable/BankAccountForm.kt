@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
  * Fields: Routing Number, Account Number, Account Type (Checking/Savings).
  */
 @Composable
-internal fun BankAccountForm(
+fun BankAccountForm(
     routingNumber: String,
     onRoutingNumberChange: (String) -> Unit,
     accountNumber: String,

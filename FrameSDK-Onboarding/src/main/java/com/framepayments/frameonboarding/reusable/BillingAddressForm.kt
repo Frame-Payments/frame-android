@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
  * Layout: Address Line 1, Address Line 2, City + State (side-by-side), Zip Code.
  */
 @Composable
-internal fun BillingAddressForm(
+fun BillingAddressForm(
     addressLine1: String,
     onAddressLine1Change: (String) -> Unit,
     addressLine2: String,

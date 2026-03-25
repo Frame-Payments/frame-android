@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
  * Fields: Card Number, Expiry (MM/YY), CVC.
  */
 @Composable
-internal fun PaymentCardForm(
+fun PaymentCardForm(
     cardNumber: String,
     onCardNumberChange: (String) -> Unit,
     expiryMonth: String,
