@@ -23,6 +23,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
@@ -100,4 +101,15 @@ internal fun ReviewPhotoScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ReviewPhotoScreenPreview() {
+    ReviewPhotoScreen(
+        photoUri = Uri.EMPTY,
+        onBack = {},
+        onUsePhoto = {},
+        onRetake = {}
+    )
 }

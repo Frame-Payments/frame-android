@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
@@ -39,8 +40,9 @@ import com.framepayments.frameonboarding.theme.FramePrimaryColor
 internal fun VerifyCardScreen(
     headerTitle: String = "Verify Your Card",
     bodyText: String = "We've sent a security code to your bank registered phone number ending in *3432.",
-    confirmButtonText: String = "Confirm",
+    confirmButtonText: String = "Continue",
     digitCount: Int = 6,
+    showResendCode: Boolean = false,
     onBack: () -> Unit,
     onResendCode: () -> Unit = {},
     onContinue: (String) -> Unit
@@ -115,8 +117,10 @@ internal fun VerifyCardScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                TextButton(onClick = onResendCode) {
-                    Text("Resend Code")
+                if (showResendCode) {
+                    TextButton(onClick = onResendCode) {
+                        Text("Resend Code")
+                    }
                 }
             }
 
@@ -135,4 +139,13 @@ internal fun VerifyCardScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VerifyCardScreenPreview() {
+    VerifyCardScreen(
+        onBack = {},
+        onContinue = {}
+    )
 }

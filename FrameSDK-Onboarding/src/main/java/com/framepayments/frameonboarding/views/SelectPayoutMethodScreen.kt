@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
@@ -137,7 +138,7 @@ private fun SavedPayoutMethodRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
@@ -172,7 +173,7 @@ private fun AddPayoutMethodRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
@@ -206,4 +207,32 @@ private fun AddPayoutMethodRow(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SelectPayoutMethodScreenEmptyPreview() {
+    SelectPayoutMethodScreen(
+        savedMethods = emptyList(),
+        selectedId = null,
+        onSelect = {},
+        onAddPayout = {},
+        onBack = {},
+        onContinue = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SelectPayoutMethodScreenWithMethodsPreview() {
+    SelectPayoutMethodScreen(
+        savedMethods = listOf(
+            PaymentMethodSummary(id = "ba_1", brand = "bank", last4 = "6789", exp = ""),
+        ),
+        selectedId = "ba_1",
+        onSelect = {},
+        onAddPayout = {},
+        onBack = {},
+        onContinue = {}
+    )
 }

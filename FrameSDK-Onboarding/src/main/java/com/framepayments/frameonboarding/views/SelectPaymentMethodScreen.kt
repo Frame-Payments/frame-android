@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
@@ -137,7 +138,7 @@ private fun SavedPaymentMethodRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(3.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
@@ -172,7 +173,7 @@ private fun AddPaymentMethodRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
@@ -206,4 +207,33 @@ private fun AddPaymentMethodRow(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SelectPaymentMethodScreenEmptyPreview() {
+    SelectPaymentMethodScreen(
+        savedMethods = emptyList(),
+        selectedId = null,
+        onSelect = {},
+        onAddCard = {},
+        onBack = {},
+        onContinue = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SelectPaymentMethodScreenWithMethodsPreview() {
+    SelectPaymentMethodScreen(
+        savedMethods = listOf(
+            PaymentMethodSummary(id = "pm_1", brand = "visa", last4 = "4242", exp = "12/26"),
+            PaymentMethodSummary(id = "pm_2", brand = "mastercard", last4 = "5555", exp = "08/25")
+        ),
+        selectedId = "pm_1",
+        onSelect = {},
+        onAddCard = {},
+        onBack = {},
+        onContinue = {}
+    )
 }

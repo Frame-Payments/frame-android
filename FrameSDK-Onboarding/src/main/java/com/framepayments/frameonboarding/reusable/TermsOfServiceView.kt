@@ -19,6 +19,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
@@ -81,4 +82,16 @@ internal fun TermsOfServiceView(
                 ?.let { uriHandler.openUri(it.item) }
         }
     )
+}
+
+@Preview(showBackground = true, name = "Default")
+@Composable
+private fun TermsOfServiceViewPreview() {
+    TermsOfServiceView()
+}
+
+@Preview(showBackground = true, name = "Padded")
+@Composable
+private fun TermsOfServiceViewPaddedPreview() {
+    TermsOfServiceView(padded = true)
 }

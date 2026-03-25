@@ -30,13 +30,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.framepayments.frameonboarding.classes.GeolocationState
 import com.framepayments.frameonboarding.networking.geocompliance.GeocomplianceAPI
 import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceBlockReason
 import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceStatus
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
+
+private enum class GeolocationState {
+    CHECKING,
+    VERIFIED,
+    VPN_DETECTED
+}
 
 @Composable
 internal fun GeolocationVerificationScreen(
@@ -58,6 +64,13 @@ internal fun GeolocationVerificationScreen(
             response.status == GeoComplianceStatus.CLEAR -> GeolocationState.VERIFIED
             response.reason == GeoComplianceBlockReason.VPN_DETECTED -> GeolocationState.VPN_DETECTED
             else -> GeolocationState.VERIFIED
+        }
+    }
+
+    LaunchedEffect(state) {
+        if (state == GeolocationState.VERIFIED) {
+            kotlinx.coroutines.delay(1500)
+            onContinue()
         }
     }
 
@@ -226,6 +239,57 @@ private fun VpnDetectedView(
             onClick = onDisableVpn
         ) {
             Text("Disable VPN")
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Checking")
+@Composable
+private fun GeolocationCheckingPreview() {
+    Scaffold { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(24.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CheckingLocationView()
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Verified")
+@Composable
+private fun GeolocationVerifiedPreview() {
+    Scaffold { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(24.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            LocationVerifiedView()
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "VPN Detected")
+@Composable
+private fun GeolocationVpnDetectedPreview() {
+    Scaffold { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(24.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            VpnDetectedView(onContinue = {}, onDisableVpn = {})
         }
     }
 }

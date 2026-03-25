@@ -94,3 +94,22 @@ data class FrameMetadata(
     val url: String,
     @SerializedName("has_more") val hasMore: Boolean
 )
+
+enum class FileUploadFieldName(val value: String) {
+    FRONT("front"),
+    BACK("back"),
+    SELFIE("selfie")
+}
+
+data class FileUpload(
+    val bitmap: android.graphics.Bitmap,
+    val fieldName: FileUploadFieldName
+) {
+    val fileName: String get() = "${fieldName.value}.jpg"
+    val mimeType: String = "image/jpeg"
+    fun toByteArray(): ByteArray {
+        val stream = java.io.ByteArrayOutputStream()
+        bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 30, stream)
+        return stream.toByteArray()
+    }
+}

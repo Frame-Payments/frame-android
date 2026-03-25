@@ -11,4 +11,11 @@ object PhoneOTPVerificationRequests {
         @SerializedName("phone_number") val phoneNumber: String,
         @SerializedName("date_of_birth") val dateOfBirth: String
     )
+
+    /**
+     * Confirm OTP code (Twilio path). Omit code for Prove path (empty body).
+     */
+    data class Confirm(
+        val code: String?
+    )
 }

@@ -58,7 +58,7 @@ object ConfigurationAPI {
     }
 
     fun getSiftConfiguration(completionHandler: (ConfigurationResponses.GetSiftConfigurationResponse?) -> Unit) {
-        val endpoint = ConfigurationEndpoints.GetEvervaultConfiguration
+        val endpoint = ConfigurationEndpoints.GetSiftConfiguration
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
             if (data != null) {

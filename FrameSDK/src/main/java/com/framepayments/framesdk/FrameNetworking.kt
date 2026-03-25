@@ -16,6 +16,7 @@ import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MultipartBody
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
@@ -218,6 +219,97 @@ object FrameNetworking {
         } catch (_: Exception) {
             Pair(null, NetworkingError.UnknownError)
         }
+    }
+
+    suspend fun performMultipartDataTask(
+        endpoint: FrameNetworkingEndpoints,
+        filesToUpload: List<FileUpload>
+    ): Pair<ByteArray?, NetworkingError?> {
+        val baseUrl = mainApiUrl
+        val fullUrl = baseUrl + endpoint.endpointURL
+
+        val httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return Pair(null, NetworkingError.InvalidURL)
+
+        val multipartBuilder = MultipartBody.Builder().setType(MultipartBody.FORM)
+        for (file in filesToUpload) {
+            val bytes = file.toByteArray()
+            multipartBuilder.addFormDataPart(
+                file.fieldName.value,
+                file.fileName,
+                bytes.toRequestBody(file.mimeType.toMediaTypeOrNull())
+            )
+        }
+        val multipartBody = multipartBuilder.build()
+
+        val request = Request.Builder()
+            .url(httpUrl)
+            .header("Authorization", "Bearer $apiKey")
+            .header("User-Agent", "Android/$CURRENT_VERSION")
+            .post(multipartBody)
+            .build()
+
+        return try {
+            val response = asyncURLSession.execute(request)
+            val responseData = response.body?.bytes()
+            if (debugMode) {
+                println("API Endpoint: ${response.request.url}")
+                printDataForTesting(responseData)
+            }
+            if (!response.isSuccessful) {
+                Pair(null, NetworkingError.ServerError(response.code, response.message))
+            } else {
+                Pair(responseData, null)
+            }
+        } catch (_: java.net.UnknownHostException) {
+            Pair(null, NetworkingError.InvalidURL)
+        } catch (_: java.io.IOException) {
+            Pair(null, NetworkingError.UnknownError)
+        } catch (_: Exception) {
+            Pair(null, NetworkingError.UnknownError)
+        }
+    }
+
+    fun performMultipartDataTask(
+        endpoint: FrameNetworkingEndpoints,
+        filesToUpload: List<FileUpload>,
+        completion: (data: ByteArray?, error: NetworkingError?) -> Unit
+    ) {
+        val baseUrl = NetworkingConstants.MAIN_API_URL
+        val fullUrl = baseUrl + endpoint.endpointURL
+
+        val httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, NetworkingError.InvalidURL)
+
+        val multipartBuilder = MultipartBody.Builder().setType(MultipartBody.FORM)
+        for (file in filesToUpload) {
+            val bytes = file.toByteArray()
+            multipartBuilder.addFormDataPart(
+                file.fieldName.value,
+                file.fileName,
+                bytes.toRequestBody(file.mimeType.toMediaTypeOrNull())
+            )
+        }
+        val multipartBody = multipartBuilder.build()
+
+        val request = Request.Builder()
+            .url(httpUrl)
+            .header("Authorization", "Bearer $apiKey")
+            .header("User-Agent", "Android/$CURRENT_VERSION")
+            .post(multipartBody)
+            .build()
+
+        okHttpClient.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: java.io.IOException) {
+                completion(null, NetworkingError.UnknownError)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                var error: NetworkingError? = null
+                if (!response.isSuccessful) {
+                    error = NetworkingError.ServerError(response.code, response.message)
+                }
+                completion(response.body?.bytes(), error)
+            }
+        })
     }
 
     fun performDataTask(

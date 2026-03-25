@@ -9,7 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
+import androidx.camera.core.Preview as CameraPreviewUseCase
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -319,6 +320,12 @@ private fun PermissionDeniedView(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun PermissionDeniedViewPreview() {
+    PermissionDeniedView(onRequestPermission = {}, onClose = {})
+}
+
 private fun createImageFile(context: Context, photoType: PhotoType): File {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
     val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
@@ -344,7 +351,7 @@ private fun CameraPreview(
             val executor = ContextCompat.getMainExecutor(ctx)
             cameraProviderFuture.addListener({
                 val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().also {
+                val preview = CameraPreviewUseCase.Builder().build().also {
                     it.setSurfaceProvider(previewView.surfaceProvider)
                 }
                 val imageCapture = ImageCapture.Builder()

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,7 +20,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -32,9 +30,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.PaymentMethodDetails
+import com.framepayments.frameonboarding.reusable.BillingAddressForm
+import com.framepayments.frameonboarding.reusable.PaymentCardForm
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
 
@@ -59,12 +59,12 @@ internal fun AddPaymentMethodScreen(
             expiryMonth.isNotEmpty() && expiryYear.isNotEmpty() &&
             cvc.length >= 3 &&
             addressLine1.isNotEmpty() && city.isNotEmpty() &&
-            state.isNotEmpty() && zipCode.isNotEmpty()
+            state.isNotEmpty() && zipCode.length == 5
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Debit Card") },
+                title = { Text("Add New Payment Method") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -85,136 +85,30 @@ internal fun AddPaymentMethodScreen(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(
-                    text = "Card Details",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                PaymentCardForm(
+                    cardNumber = cardNumber,
+                    onCardNumberChange = { cardNumber = it },
+                    expiryMonth = expiryMonth,
+                    expiryYear = expiryYear,
+                    onExpiryChange = { m, y -> expiryMonth = m; expiryYear = y },
+                    cvc = cvc,
+                    onCvcChange = { cvc = it }
                 )
-
-                OutlinedTextField(
-                    value = cardNumber,
-                    onValueChange = { value ->
-                        val cleaned = value.replace(" ", "")
-                        if (cleaned.length <= 16) {
-                            cardNumber = cleaned.chunked(4).joinToString(" ")
-                        }
-                    },
-                    label = { Text("Card Number") },
-                    placeholder = { Text("4242 4242 4242 4242") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = if (expiryMonth.isEmpty() && expiryYear.isEmpty()) "" else "$expiryMonth/$expiryYear",
-                        onValueChange = { value ->
-                            val cleaned = value.replace("/", "").replace(Regex("[^0-9]"), "")
-                            if (cleaned.length <= 4) {
-                                if (cleaned.length >= 2) {
-                                    expiryMonth = cleaned.take(2)
-                                    expiryYear = cleaned.drop(2)
-                                } else {
-                                    expiryMonth = cleaned
-                                    expiryYear = ""
-                                }
-                            }
-                        },
-                        label = { Text("MM/YY") },
-                        placeholder = { Text("MM/YY") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-
-                    OutlinedTextField(
-                        value = cvc,
-                        onValueChange = { value ->
-                            if (value.length <= 4 && value.all { it.isDigit() }) {
-                                cvc = value
-                            }
-                        },
-                        label = { Text("CVC") },
-                        placeholder = { Text("CVC") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-                }
 
                 Spacer(Modifier.height(24.dp))
 
-                Text(
-                    text = "Customer Address",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                OutlinedTextField(
-                    value = addressLine1,
-                    onValueChange = { addressLine1 = it },
-                    label = { Text("Address Line 1") },
-                    placeholder = { Text("Address Line 1") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = addressLine2,
-                    onValueChange = { addressLine2 = it },
-                    label = { Text("Address Line 2") },
-                    placeholder = { Text("Address Line 2") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    OutlinedTextField(
-                        value = city,
-                        onValueChange = { city = it },
-                        label = { Text("City") },
-                        placeholder = { Text("City") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-
-                    OutlinedTextField(
-                        value = state,
-                        onValueChange = { state = it },
-                        label = { Text("State") },
-                        placeholder = { Text("State") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                }
-
-                Spacer(Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = zipCode,
-                    onValueChange = { value ->
-                        if (value.length <= 10) {
-                            zipCode = value
-                        }
-                    },
-                    label = { Text("Zip Code") },
-                    placeholder = { Text("Zip Code") },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
+                BillingAddressForm(
+                    addressLine1 = addressLine1,
+                    onAddressLine1Change = { addressLine1 = it },
+                    addressLine2 = addressLine2,
+                    onAddressLine2Change = { addressLine2 = it },
+                    city = city,
+                    onCityChange = { city = it },
+                    state = state,
+                    onStateChange = { state = it },
+                    zipCode = zipCode,
+                    onZipCodeChange = { zipCode = it },
+                    headerTitle = "Customer Address"
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -263,8 +157,14 @@ internal fun AddPaymentMethodScreen(
                     disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
                 )
             ) {
-                Text("Add Card")
+                Text("Continue")
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AddPaymentMethodScreenPreview() {
+    AddPaymentMethodScreen(onBack = {}, onContinue = {})
 }

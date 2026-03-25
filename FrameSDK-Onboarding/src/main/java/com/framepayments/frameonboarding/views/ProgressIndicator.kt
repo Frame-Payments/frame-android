@@ -6,6 +6,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
 import com.framepayments.frameonboarding.classes.OnboardingStep
@@ -27,5 +28,19 @@ internal fun ProgressIndicator(
         modifier = modifier
             .fillMaxWidth()
             .height(4.dp)
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ProgressIndicatorPreview() {
+    ProgressIndicator(
+        currentStep = OnboardingStep.SelectPaymentMethod,
+        flowSegments = listOf(
+            OnboardingFlowSegment.PERSONAL_INFORMATION,
+            OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD,
+            OnboardingFlowSegment.UPLOAD_DOCUMENTS,
+            OnboardingFlowSegment.VERIFICATION_SUBMITTED
+        )
     )
 }

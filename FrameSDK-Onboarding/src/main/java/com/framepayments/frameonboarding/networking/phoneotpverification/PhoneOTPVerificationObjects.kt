@@ -6,7 +6,7 @@ data class PhoneOTPVerificationCreateResponse(
     val id: String,
     val type: String,
     val status: String,
-    @SerializedName("prove_auth_token") val proveAuthToken: String
+    @SerializedName("prove_auth_token") val proveAuthToken: String?
 )
 
 data class PhoneOTPVerificationConfirmResponse(

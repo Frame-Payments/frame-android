@@ -17,6 +17,7 @@ object AccountObjects {
     }
 
     data class AccountTermsOfService(
+        val token: String? = null,
         @SerializedName("accepted_at") val acceptedAt: Int? = null,
         @SerializedName("ip_address") val ipAddress: String? = null,
         @SerializedName("user_agent") val userAgent: String? = null

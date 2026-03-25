@@ -31,7 +31,6 @@ sealed class OnboardingStep {
     data object ReviewBackPhoto: OnboardingStep()
     data object CaptureSelfie: OnboardingStep()
     data object ReviewSelfie: OnboardingStep()
-    data object GeolocationVerification: OnboardingStep()
     data object VerificationSubmitted: OnboardingStep()
 }
 
@@ -63,18 +62,17 @@ enum class OnboardingFlowSegment(val order: Int) {
     CONFIRM_PAYMENT_METHOD(1),
     CONFIRM_PAYOUT_METHOD(2),
     UPLOAD_DOCUMENTS(3),
-    GEOLOCATION_VERIFICATION(4),
-    VERIFICATION_SUBMITTED(5)
+    VERIFICATION_SUBMITTED(4)
 }
 
 fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
-    Capabilities.KYC, Capabilities.KYC_PREFILL, Capabilities.PHONE_VERIFICATION, Capabilities.CREATOR_SHIELD, Capabilities.AGE_VERIFICATION ->
+    Capabilities.KYC, Capabilities.KYC_PREFILL, Capabilities.PHONE_VERIFICATION, Capabilities.CREATOR_SHIELD, Capabilities.AGE_VERIFICATION,
+    Capabilities.GEO_COMPLIANCE ->
         OnboardingFlowSegment.PERSONAL_INFORMATION
     Capabilities.CARD_VERIFICATION, Capabilities.CARD_SEND, Capabilities.CARD_RECEIVE, Capabilities.ADDRESS_VERIFICATION ->
         OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD
     Capabilities.BANK_ACCOUNT_VERIFICATION, Capabilities.BANK_ACCOUNT_SEND, Capabilities.BANK_ACCOUNT_RECEIVE ->
         OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD
-    Capabilities.GEO_COMPLIANCE -> OnboardingFlowSegment.GEOLOCATION_VERIFICATION
 }
 
 fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this) {
@@ -100,7 +98,6 @@ fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this) {
         OnboardingStep.CaptureSelfie,
         OnboardingStep.ReviewSelfie
     )
-    OnboardingFlowSegment.GEOLOCATION_VERIFICATION -> listOf(OnboardingStep.GeolocationVerification)
     OnboardingFlowSegment.VERIFICATION_SUBMITTED -> listOf(OnboardingStep.VerificationSubmitted)
 }
 
@@ -150,7 +147,6 @@ fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this) {
     OnboardingStep.ReviewBackPhoto,
     OnboardingStep.CaptureSelfie,
     OnboardingStep.ReviewSelfie -> OnboardingFlowSegment.UPLOAD_DOCUMENTS
-    OnboardingStep.GeolocationVerification -> OnboardingFlowSegment.GEOLOCATION_VERIFICATION
     OnboardingStep.VerificationSubmitted -> OnboardingFlowSegment.VERIFICATION_SUBMITTED
 }
 
@@ -175,13 +171,6 @@ data class OnboardingConfig(
     val customerId: String? = null
 )
 
-enum class IdType(val displayName: String) {
-    DRIVERS_LICENSE("Driver's License"),
-    STATE_ID("State ID"),
-    MILITARY_ID("Military ID"),
-    PASSPORT("Passport")
-}
-
 data class PaymentMethodSummary(
     val id: String,
     val brand: String,
@@ -193,12 +182,6 @@ enum class PhotoType {
     FRONT,
     BACK,
     SELFIE
-}
-
-enum class GeolocationState {
-    CHECKING,
-    VERIFIED,
-    VPN_DETECTED
 }
 
 data class PaymentMethodDetails(
@@ -217,31 +200,45 @@ data class PaymentMethodDetails(
 data class PayoutMethodDetails(
     val routingNumber: String,
     val accountNumber: String,
-    val accountType: String
+    val accountType: String,
+    val addressLine1: String,
+    val addressLine2: String?,
+    val city: String,
+    val state: String,
+    val zipCode: String
 )
 
 data class OnboardingData(
-    // Step 1: Identity Verification
-    val issuingCountry: String? = null,
-    val idType: IdType? = null,
-    
-    // Step 2: Payment Methods
+    // Step 1: Payment Methods
     val selectedPaymentMethodId: String? = null,
     val newPaymentMethod: PaymentMethodDetails? = null,
     val cardVerificationCode: String? = null,
-    
+
     // Step 3: Payout Methods
     val selectedPayoutMethodId: String? = null,
     val newPayoutMethod: PayoutMethodDetails? = null,
-    
+
     // Step 4: Document Upload
     val frontPhotoUri: Uri? = null,
     val backPhotoUri: Uri? = null,
     val selfieUri: Uri? = null,
-    
-    // Step 5: Geolocation
-    val geolocationVerified: Boolean = false,
-    val vpnDetected: Boolean = false
+
+    // Personal information (collected in UserIdentificationView)
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val email: String? = null,
+    val dateOfBirth: String? = null,
+    val ssn: String? = null,
+    val addressLine1: String? = null,
+    val addressLine2: String? = null,
+    val city: String? = null,
+    val stateCode: String? = null,
+    val postalCode: String? = null,
+    val country: String? = null,
+    val phoneNumber: String? = null,
+    // IDs set after API calls
+    val customerIdentityId: String? = null,
+    val resolvedAccountId: String? = null,
 )
 
 interface OnboardingCoordinator {
