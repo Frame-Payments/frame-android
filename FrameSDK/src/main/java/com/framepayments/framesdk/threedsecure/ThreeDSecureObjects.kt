@@ -10,7 +10,7 @@ enum class VerificationStatus {
 }
 
 data class ThreeDSecureVerification(
-    val id: String? = null,
+    val id: String,
     val customer: String,
     @SerializedName("payment_method") val paymentMethod: String,
     @SerializedName("object") val verificationObject: String,
@@ -23,7 +23,7 @@ data class ThreeDSecureVerification(
 )
 
 data class ThreeDSecureVerificationError(
-    val error: VerificationError? = null
+    val error: VerificationError
 ) {
     data class VerificationError(
         val type: String,

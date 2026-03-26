@@ -35,6 +35,14 @@ internal fun OnboardingScreenRouter(
             )
         }
 
+        OnboardingStep.GeolocationVerification -> {
+            GeolocationVerificationScreen(
+                accountId = onboardingData.resolvedAccountId,
+                onContinue = { viewModel.moveNext() },
+                onDisableVpn = { viewModel.moveNext() }
+            )
+        }
+
         OnboardingStep.SelectPaymentMethod -> {
             SelectPaymentMethodScreen(
                 savedMethods = savedPaymentMethods,
@@ -43,7 +51,7 @@ internal fun OnboardingScreenRouter(
                 onAddCard = { viewModel.moveNext() },
                 onBack = { viewModel.moveBack() },
                 onContinue = {
-                    if (onboardingData.selectedPaymentMethodId != null || onboardingData.newPaymentMethod != null) {
+                    if (onboardingData.selectedPaymentMethodId != null) {
                         viewModel.moveNext()
                     }
                 }
@@ -52,8 +60,8 @@ internal fun OnboardingScreenRouter(
 
         OnboardingStep.AddPaymentMethod -> {
             AddPaymentMethodScreen(
-                onBack = { viewModel.moveBack() },
-                onContinue = { paymentDetails -> viewModel.submitNewPaymentMethod(paymentDetails) }
+                viewModel = viewModel,
+                onBack = { viewModel.moveBack() }
             )
         }
 
@@ -79,8 +87,8 @@ internal fun OnboardingScreenRouter(
 
         OnboardingStep.AddPayoutMethod -> {
             AddPayoutMethodScreen(
-                onBack = { viewModel.moveBack() },
-                onContinue = { payoutDetails -> viewModel.submitNewPayoutMethod(payoutDetails) }
+                viewModel = viewModel,
+                onBack = { viewModel.moveBack() }
             )
         }
 
@@ -93,7 +101,7 @@ internal fun OnboardingScreenRouter(
                 onFrontPhotoClick = { viewModel.navigationState.goTo(OnboardingStep.CaptureFrontPhoto) },
                 onBackPhotoClick = { viewModel.navigationState.goTo(OnboardingStep.CaptureBackPhoto) },
                 onSelfieClick = { viewModel.navigationState.goTo(OnboardingStep.CaptureSelfie) },
-                onSubmit = { viewModel.submitDocuments(context) }
+                onSubmit = { viewModel.uploadIdentificationDocumentsThenContinue(context) }
             )
         }
 

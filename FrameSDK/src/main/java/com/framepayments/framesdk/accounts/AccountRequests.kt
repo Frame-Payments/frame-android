@@ -30,7 +30,8 @@ object AccountRequests {
         @SerializedName("external_id") val externalId: String? = null,
         @SerializedName("terms_of_service") val termsOfService: AccountObjects.AccountTermsOfService? = null,
         val metadata: Map<String, String>? = null,
-        val profile: CreateAccountProfile
+        val profile: CreateAccountProfile,
+        val capabilities: List<String> = emptyList()
     )
 
     data class UpdateAccountInfo(
@@ -43,10 +44,13 @@ object AccountRequests {
     data class UpdateIndividualAccount(
         val name: UpdateAccountInfo? = null,
         val email: String? = null,
-        val phone: AccountObjects.AccountPhoneNumber? = null,
+        @SerializedName("phone_number") val phoneNumber: String? = null,
+        @SerializedName("phone_country_code") val phoneCountryCode: String? = null,
         val address: FrameObjects.BillingAddress? = null,
-        val dob: String? = null,
-        val ssn: String? = null
+        val birthdate: String? = null,
+        val ssn: String? = null,
+        @SerializedName("ssn_last4") val ssnLast4: String? = null,
+        @SerializedName("profile_url") val profileURL: String? = null
     )
 
     data class UpdateBusinessAccount(
@@ -73,6 +77,6 @@ object AccountRequests {
         @SerializedName("external_id") val externalId: String? = null,
         @SerializedName("terms_of_service") val termsOfService: AccountObjects.AccountTermsOfService? = null,
         val metadata: Map<String, String>? = null,
-        val profile: CreateAccountProfile? = null
+        val profile: UpdateAccountProfile? = null
     )
 }

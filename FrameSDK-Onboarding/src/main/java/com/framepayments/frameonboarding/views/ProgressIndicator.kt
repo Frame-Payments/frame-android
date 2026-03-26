@@ -39,7 +39,6 @@ private fun ProgressIndicatorPreview() {
         flowSegments = listOf(
             OnboardingFlowSegment.PERSONAL_INFORMATION,
             OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD,
-            OnboardingFlowSegment.UPLOAD_DOCUMENTS,
             OnboardingFlowSegment.VERIFICATION_SUBMITTED
         )
     )

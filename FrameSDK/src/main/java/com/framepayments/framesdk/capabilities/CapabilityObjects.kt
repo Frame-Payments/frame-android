@@ -15,10 +15,12 @@ object CapabilityObjects {
         val id: String,
         val `object`: String,
         val name: String,
+        @SerializedName("account_id") val accountId: String,
         val status: String,
         @SerializedName("disabled_reason") val disabledReason: String? = null,
-        val requirements: List<CapabilityRequirement>? = null,
-        @SerializedName("created_at") val createdAt: Int,
-        @SerializedName("updated_at") val updatedAt: Int
+        @SerializedName("currently_due") val currentlyDue: List<String>? = null,
+        val created: String,
+        val updated: String,
+        val disabled: Boolean? = null
     )
 }

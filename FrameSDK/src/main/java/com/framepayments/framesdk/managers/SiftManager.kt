@@ -47,4 +47,6 @@ object SiftManager {
             null
         }
     }
+
+    fun getIPAddress(): String? = getPublicIp()
 }

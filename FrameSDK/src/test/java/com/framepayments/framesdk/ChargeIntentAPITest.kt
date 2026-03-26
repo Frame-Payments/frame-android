@@ -42,16 +42,13 @@ class ChargeIntentAPITest {
             receiptEmail = null,
             authorizationMode = AuthorizationMode.AUTOMATIC,
             customerData = null,
-            paymentMethodData = null,
-            sonarSessionId = null
+            paymentMethodData = null
         )
         val (result, error) = ChargeIntentAPI.createChargeIntent(request)
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
         assertEquals(ChargeIntentStatus.PENDING, result?.status)
-        // sonar_session_id is optional and may be absent in responses.
-        assertNull(result?.sonarSessionId)
     }
 
     @Test

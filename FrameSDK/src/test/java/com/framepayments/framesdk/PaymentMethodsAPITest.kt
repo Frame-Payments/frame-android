@@ -13,6 +13,19 @@ import org.junit.Test
 class PaymentMethodsAPITest {
     private lateinit var mockWebServer: MockWebServer
 
+    private companion object {
+        /** Minimal body matching iOS `FrameObjects.PaymentMethod` decode requirements. */
+        fun paymentMethodJson(
+            id: String,
+            type: String,
+            customerId: String? = null,
+            status: String = "active"
+        ): String {
+            val extra = if (customerId != null) ",\"customer_id\":\"$customerId\"" else ""
+            return """{"id":"$id","type":"$type","object":"payment_method","created":1,"updated":1,"livemode":false,"status":"$status"$extra}"""
+        }
+    }
+
     @Before
     fun setUp() {
         mockWebServer = MockWebServer()
@@ -27,7 +40,7 @@ class PaymentMethodsAPITest {
 
     @Test
     fun testCreateCardPaymentMethod() = runBlocking {
-        val responseBody = """{"id":"method_123", "type":"card"}"""
+        val responseBody = paymentMethodJson("method_123", "card")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = PaymentMethodRequests.CreateCardPaymentMethodRequest(
@@ -47,7 +60,7 @@ class PaymentMethodsAPITest {
 
     @Test
     fun testCreateACHPaymentMethod() = runBlocking {
-        val responseBody = """{"id":"method_123", "type":"ach"}"""
+        val responseBody = paymentMethodJson("method_123", "ach")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = PaymentMethodRequests.CreateACHPaymentMethodRequest(
@@ -66,7 +79,7 @@ class PaymentMethodsAPITest {
 
     @Test
     fun testGetPaymentMethodWithId() = runBlocking {
-        val responseBody = """{"id":"method_123", "type":"card"}"""
+        val responseBody = paymentMethodJson("method_123", "card")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = PaymentMethodsAPI.getPaymentMethodWith("method_123")
@@ -81,18 +94,18 @@ class PaymentMethodsAPITest {
         val responseBody = """
             {
                 "data": [
-                    {"id":"method_123", "type":"card"},
-                    {"id":"method_124", "customer":"cus_123"}
+                    ${paymentMethodJson("method_123", "card")},
+                    ${paymentMethodJson("method_124", "card", customerId = "cus_123")}
                 ]
             }
-        """.trimMargin()
+        """.trimIndent()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = PaymentMethodsAPI.getPaymentMethods(0, 0)
 
         assertNotNull(result)
         assertEquals("method_123", result?.data?.get(0)?.id)
-        assertEquals("cus_123", result?.data?.get(1)?.customer)
+        assertEquals("cus_123", result?.data?.get(1)?.customerId)
     }
 
     @Test
@@ -100,10 +113,10 @@ class PaymentMethodsAPITest {
         val responseBody = """
             {
                 "data": [
-                    {"id":"method_123", "type":"card"}
+                    ${paymentMethodJson("method_123", "card")}
                 ]
             }
-        """.trimMargin()
+        """.trimIndent()
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = PaymentMethodsAPI.getPaymentMethodsWithCustomer("cus_123")
@@ -115,7 +128,7 @@ class PaymentMethodsAPITest {
 
     @Test
     fun testUpdatePaymentMethod() = runBlocking {
-        val responseBody = """{"id":"method_123", "type":"card"}"""
+        val responseBody = paymentMethodJson("method_123", "card")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = PaymentMethodRequests.UpdatePaymentMethodRequest(
@@ -132,7 +145,7 @@ class PaymentMethodsAPITest {
 
     @Test
     fun testAttachPaymentMethodWithId() = runBlocking {
-        val responseBody = """{"id":"method_123", "customer":"cus_111"}"""
+        val responseBody = paymentMethodJson("method_123", "card", customerId = "cus_111")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = PaymentMethodRequests.AttachPaymentMethodRequest(customer = "cus_111")
@@ -140,24 +153,24 @@ class PaymentMethodsAPITest {
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
-        assertEquals("cus_111", result?.customer)
+        assertEquals("cus_111", result?.customerId)
     }
 
     @Test
     fun testDetachPaymentMethodWithId() = runBlocking {
-        val responseBody = """{"id":"method_123", "customer":"cus_111"}"""
+        val responseBody = paymentMethodJson("method_123", "card", customerId = "cus_111")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = PaymentMethodsAPI.detachPaymentMethodWith("method_123")
 
         assertNotNull(result)
         assertEquals("method_123", result?.id)
-        assertEquals("cus_111", result?.customer)
+        assertEquals("cus_111", result?.customerId)
     }
 
     @Test
     fun testBlockPaymentMethodWithId() = runBlocking {
-        val responseBody = """{"id":"method_123", "status":"blocked"}"""
+        val responseBody = paymentMethodJson("method_123", "card", status = "blocked")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = PaymentMethodsAPI.blockPaymentMethodWith("method_123")
@@ -169,7 +182,7 @@ class PaymentMethodsAPITest {
 
     @Test
     fun testUnblockPaymentMethodWithId() = runBlocking {
-        val responseBody = """{"id":"method_123", "status":"active"}"""
+        val responseBody = paymentMethodJson("method_123", "card", status = "active")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = PaymentMethodsAPI.unblockPaymentMethodWith("method_123")

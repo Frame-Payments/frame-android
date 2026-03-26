@@ -29,7 +29,7 @@ object FrameObjects {
 
     data class PaymentMethod(
         val id: String,
-        val customer: String?,
+        @SerializedName("customer_id") val customerId: String? = null,
         val billing: BillingAddress?,
         val type: PaymentMethodType,
         @SerializedName("object") val methodObject: String,
@@ -38,7 +38,7 @@ object FrameObjects {
         val livemode: Boolean,
         val card: PaymentCard?,
         val ach: BankAccount?,
-        val status: PaymentMethodStatus?
+        val status: PaymentMethodStatus
     )
 
     data class PaymentCard(

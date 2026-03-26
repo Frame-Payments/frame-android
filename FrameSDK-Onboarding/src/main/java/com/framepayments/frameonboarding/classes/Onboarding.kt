@@ -19,6 +19,7 @@ internal class OnboardingState(
 sealed class OnboardingStep {
     data object VerificationWelcome: OnboardingStep()
     data object VerifyIdentification: OnboardingStep()
+    data object GeolocationVerification: OnboardingStep()
     data object SelectPaymentMethod: OnboardingStep()
     data object AddPaymentMethod: OnboardingStep()
     data object VerifyYourCard: OnboardingStep()
@@ -55,19 +56,18 @@ enum class Capabilities(val apiValue: String) {
 }
 
 /**
- * High-level onboarding flow segments (mirrors iOS OnboardingFlow).
  */
 internal enum class OnboardingFlowSegment(val order: Int) {
     PERSONAL_INFORMATION(0),
     CONFIRM_PAYMENT_METHOD(1),
     CONFIRM_PAYOUT_METHOD(2),
-    UPLOAD_DOCUMENTS(3),
-    VERIFICATION_SUBMITTED(4)
+    VERIFICATION_SUBMITTED(3),
+    UPLOAD_DOCUMENTS(4)
 }
 
 internal fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
-    Capabilities.KYC, Capabilities.KYC_PREFILL, Capabilities.PHONE_VERIFICATION, Capabilities.CREATOR_SHIELD, Capabilities.AGE_VERIFICATION,
-    Capabilities.GEO_COMPLIANCE ->
+    Capabilities.KYC, Capabilities.KYC_PREFILL, Capabilities.PHONE_VERIFICATION, Capabilities.CREATOR_SHIELD,
+    Capabilities.AGE_VERIFICATION, Capabilities.GEO_COMPLIANCE ->
         OnboardingFlowSegment.PERSONAL_INFORMATION
     Capabilities.CARD_VERIFICATION, Capabilities.CARD_SEND, Capabilities.CARD_RECEIVE, Capabilities.ADDRESS_VERIFICATION ->
         OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD
@@ -103,7 +103,6 @@ internal fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this)
 
 /**
  * Builds the ordered list of onboarding steps from required capabilities.
- * iOS parity: when [requiredCapabilities] is empty, use personal info + submitted only.
  */
 internal fun computeFlowSegments(requiredCapabilities: List<Capabilities>): List<OnboardingFlowSegment> {
     if (requiredCapabilities.isEmpty()) {
@@ -112,7 +111,7 @@ internal fun computeFlowSegments(requiredCapabilities: List<Capabilities>): List
             OnboardingFlowSegment.VERIFICATION_SUBMITTED
         )
     }
-    val segmentSet = requiredCapabilities.map { it.toFlowSegment() }.toSet()
+    val segmentSet = requiredCapabilities.map { it.toFlowSegment() }.toMutableSet()
     return (segmentSet.sortedBy { it.order } + OnboardingFlowSegment.VERIFICATION_SUBMITTED).distinct()
 }
 
@@ -134,7 +133,8 @@ internal fun computeOrderedSteps(requiredCapabilities: List<Capabilities>): List
 
 internal fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this) {
     OnboardingStep.VerificationWelcome,
-    OnboardingStep.VerifyIdentification -> OnboardingFlowSegment.PERSONAL_INFORMATION
+    OnboardingStep.VerifyIdentification,
+    OnboardingStep.GeolocationVerification -> OnboardingFlowSegment.PERSONAL_INFORMATION
     OnboardingStep.SelectPaymentMethod,
     OnboardingStep.AddPaymentMethod,
     OnboardingStep.VerifyYourCard -> OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD
@@ -153,22 +153,14 @@ internal fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this)
 sealed class OnboardingResult {
     data object Cancelled : OnboardingResult()
     data class Completed(
-        val paymentMethodId: String?,
-        val onboardingSessionId: String?
+        val paymentMethodId: String?
     ) : OnboardingResult()
     data class Error(val message: String) : OnboardingResult()
 }
 
 data class OnboardingConfig(
-    /** iOS-parity primary identifier for onboarding context. */
     val accountId: String? = null,
-    /** Session ID returned by the backend when creating an onboarding session. */
-    val sessionId: String? = null,
-    /** When non-empty, only these capability-driven steps are shown. */
-    val requiredCapabilities: List<Capabilities> = emptyList(),
-    /** Backward-compat alias used by older integrations. */
-    @Deprecated("Use accountId for iOS parity")
-    val customerId: String? = null
+    val requiredCapabilities: List<Capabilities> = emptyList()
 )
 
 internal data class PaymentMethodSummary(
@@ -197,6 +189,14 @@ data class PaymentMethodDetails(
     val useForPayouts: Boolean
 )
 
+data class PaymentCardDraft(
+    val cardNumber: String = "",
+    val expiryMonth: String = "",
+    val expiryYear: String = "",
+    val cvc: String = "",
+    val useForPayouts: Boolean = false
+)
+
 data class PayoutMethodDetails(
     val routingNumber: String,
     val accountNumber: String,
@@ -208,15 +208,19 @@ data class PayoutMethodDetails(
     val zipCode: String
 )
 
+data class BankAccountDraft(
+    val routingNumber: String = "",
+    val accountNumber: String = "",
+    val accountTypeLabel: String = "Checking"
+)
+
 internal data class OnboardingData(
     // Step 1: Payment Methods
     val selectedPaymentMethodId: String? = null,
-    val newPaymentMethod: PaymentMethodDetails? = null,
     val cardVerificationCode: String? = null,
 
     // Step 3: Payout Methods
     val selectedPayoutMethodId: String? = null,
-    val newPayoutMethod: PayoutMethodDetails? = null,
 
     // Step 4: Document Upload
     val frontPhotoUri: Uri? = null,

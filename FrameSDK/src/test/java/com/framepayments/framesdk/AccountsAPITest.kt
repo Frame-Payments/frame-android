@@ -29,7 +29,7 @@ class AccountsAPITest {
 
     @Test
     fun testCreateAccount() = runBlocking {
-        val responseBody = """{"id":"acc_123","object":"account","type":"individual","status":"pending","created_at":1234567890,"updated_at":1234567890,"livemode":false}"""
+        val responseBody = """{"id":"acc_123","object":"account","type":"individual","status":"pending","created":1234567890,"updated":1234567890,"livemode":false}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val profile = AccountRequests.CreateAccountProfile(
@@ -59,7 +59,7 @@ class AccountsAPITest {
 
     @Test
     fun testGetAccountWith() = runBlocking {
-        val responseBody = """{"id":"acc_123","object":"account","type":"individual","status":"active","created_at":1234567890,"updated_at":1234567890,"livemode":false}"""
+        val responseBody = """{"id":"acc_123","object":"account","type":"individual","status":"active","created":1234567890,"updated":1234567890,"livemode":false}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = AccountsAPI.getAccountWith("acc_123")
@@ -74,8 +74,8 @@ class AccountsAPITest {
         val responseBody = """
             {
                 "data": [
-                    {"id":"acc_1","object":"account","type":"individual","status":"active","created_at":1234567890,"updated_at":1234567890,"livemode":false},
-                    {"id":"acc_2","object":"account","type":"business","status":"pending","created_at":1234567890,"updated_at":1234567890,"livemode":false}
+                    {"id":"acc_1","object":"account","type":"individual","status":"active","created":1234567890,"updated":1234567890,"livemode":false},
+                    {"id":"acc_2","object":"account","type":"business","status":"pending","created":1234567890,"updated":1234567890,"livemode":false}
                 ]
             }
         """.trimIndent()
@@ -91,7 +91,7 @@ class AccountsAPITest {
 
     @Test
     fun testDeleteAccountWith() = runBlocking {
-        val responseBody = """{"id":"acc_123","object":"account","type":"individual","status":"disabled","created_at":1234567890,"updated_at":1234567890,"livemode":false}"""
+        val responseBody = """{"id":"acc_123","object":"account","type":"individual","status":"disabled","created":1234567890,"updated":1234567890,"livemode":false}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = AccountsAPI.deleteAccountWith("acc_123")

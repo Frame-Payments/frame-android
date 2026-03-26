@@ -10,6 +10,7 @@ object PaymentMethodRequests {
         @SerializedName("exp_year") val expYear: String,
         var cvc: String,
         val customer: String? = null,
+        val account: String? = null,
         val billing: FrameObjects.BillingAddress? = null
     )
 
@@ -19,6 +20,7 @@ object PaymentMethodRequests {
         @SerializedName("account_number") val accountNumber: String,
         @SerializedName("routing_number") val routingNumber: String,
         val customer: String? = null,
+        val account: String? = null,
         val billing: FrameObjects.BillingAddress? = null
     )
 

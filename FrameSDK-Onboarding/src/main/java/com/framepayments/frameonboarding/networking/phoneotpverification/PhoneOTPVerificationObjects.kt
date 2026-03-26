@@ -12,7 +12,7 @@ data class PhoneOTPVerificationCreateResponse(
 data class PhoneOTPVerificationConfirmResponse(
     val id: String,
     val status: String,
-    @SerializedName("prefill_status") val prefillStatus: String
+    @SerializedName("prefill_status") val prefillStatus: String? = null
 )
 
 data class PhoneOTPVerificationError(

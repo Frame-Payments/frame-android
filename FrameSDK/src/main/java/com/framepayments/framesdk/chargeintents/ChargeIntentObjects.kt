@@ -33,8 +33,7 @@ data class ChargeIntent(
     @SerializedName("payment_method") val paymentMethod: FrameObjects.PaymentMethod?,
     @SerializedName("authorization_mode")val authorizationMode: AuthorizationMode,
     @SerializedName("failure_description")val failureDescription: String?,
-    @SerializedName("object") val intentObject: String,
-    @SerializedName("sonar_session_id") val sonarSessionId: String? = null
+    @SerializedName("object") val intentObject: String
 )
 
 data class LatestCharge (

@@ -11,10 +11,13 @@ object ThreeDSecureVerificationsAPI {
         val endpoint = ThreeDSecureEndpoints.Create3DSecureVerification
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
         if (data != null) {
-            val verification = FrameNetworking.parseResponse<ThreeDSecureVerification>(data)
-            if (verification != null && (verification.id?.isNotEmpty() == true)) return Triple(verification, null, error)
             val verificationError = FrameNetworking.parseResponse<ThreeDSecureVerificationError>(data)
-            if (verificationError != null && (verificationError.error?.type?.isNotEmpty() == true)) return Triple(null, verificationError, error)
+            val errType = verificationError?.error?.type
+            if (!errType.isNullOrEmpty()) {
+                return Triple(null, verificationError, error)
+            }
+            val verification = FrameNetworking.parseResponse<ThreeDSecureVerification>(data)
+            if (verification != null && verification.id.isNotEmpty()) return Triple(verification, null, null)
         }
         return Triple(null, null, error)
     }
@@ -45,14 +48,15 @@ object ThreeDSecureVerificationsAPI {
         val endpoint = ThreeDSecureEndpoints.Create3DSecureVerification
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
             if (data != null) {
-                val verification = FrameNetworking.parseResponse<ThreeDSecureVerification>(data)
-                if (verification != null && (verification.id?.isNotEmpty() == true)) {
-                    completionHandler(verification, null, error)
+                val verificationError = FrameNetworking.parseResponse<ThreeDSecureVerificationError>(data)
+                val errType = verificationError?.error?.type
+                if (!errType.isNullOrEmpty()) {
+                    completionHandler(null, verificationError, error)
                     return@performDataTaskWithRequest
                 }
-                val verificationError = FrameNetworking.parseResponse<ThreeDSecureVerificationError>(data)
-                if (verificationError != null && (verificationError.error?.type?.isNotEmpty() == true)) {
-                    completionHandler(null, verificationError, error)
+                val verification = FrameNetworking.parseResponse<ThreeDSecureVerification>(data)
+                if (verification != null && verification.id.isNotEmpty()) {
+                    completionHandler(verification, null, null)
                     return@performDataTaskWithRequest
                 }
             }

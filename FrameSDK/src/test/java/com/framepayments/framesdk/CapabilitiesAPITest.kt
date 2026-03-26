@@ -1,6 +1,5 @@
 package com.framepayments.framesdk
 
-import com.framepayments.framesdk.capabilities.CapabilityObjects
 import com.framepayments.framesdk.capabilities.CapabilityRequests
 import com.framepayments.framesdk.capabilities.CapabilitiesAPI
 import kotlinx.coroutines.runBlocking
@@ -13,6 +12,20 @@ import org.junit.Test
 
 class CapabilitiesAPITest {
     private lateinit var mockWebServer: MockWebServer
+
+    private companion object {
+        fun capabilityJson(
+            id: String,
+            name: String,
+            status: String,
+            disabledReason: String? = null,
+            disabled: Boolean? = null
+        ): String {
+            val dr = if (disabledReason != null) ",\"disabled_reason\":\"$disabledReason\"" else ""
+            val dis = if (disabled != null) ",\"disabled\":$disabled" else ""
+            return """{"id":"$id","object":"capability","name":"$name","account_id":"acc_123","status":"$status","created":"1234567890","updated":"1234567890"$dr$dis}"""
+        }
+    }
 
     @Before
     fun setUp() {
@@ -31,8 +44,8 @@ class CapabilitiesAPITest {
         val responseBody = """
             {
                 "data": [
-                    {"id":"cap_1","object":"capability","name":"card_send","status":"active","created_at":1234567890,"updated_at":1234567890},
-                    {"id":"cap_2","object":"capability","name":"card_receive","status":"pending","created_at":1234567890,"updated_at":1234567890}
+                    ${capabilityJson("cap_1", "card_send", "active")},
+                    ${capabilityJson("cap_2", "card_receive", "pending")}
                 ]
             }
         """.trimIndent()
@@ -44,13 +57,14 @@ class CapabilitiesAPITest {
         assertEquals(2, result?.data?.size)
         assertEquals("card_send", result?.data?.get(0)?.name)
         assertEquals("active", result?.data?.get(0)?.status)
+        assertEquals("acc_123", result?.data?.get(0)?.accountId)
     }
 
     @Test
     fun testRequestCapabilities() = runBlocking {
         val responseBody = """
             [
-                {"id":"cap_1","object":"capability","name":"card_send","status":"pending","created_at":1234567890,"updated_at":1234567890}
+                ${capabilityJson("cap_1", "card_send", "pending")}
             ]
         """.trimIndent()
         mockWebServer.enqueue(MockResponse().setResponseCode(201).setBody(responseBody))
@@ -66,7 +80,7 @@ class CapabilitiesAPITest {
 
     @Test
     fun testGetCapabilityWith() = runBlocking {
-        val responseBody = """{"id":"cap_1","object":"capability","name":"card_send","status":"active","created_at":1234567890,"updated_at":1234567890}"""
+        val responseBody = capabilityJson("cap_1", "card_send", "active")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = CapabilitiesAPI.getCapabilityWith("acc_123", "card_send")
@@ -79,7 +93,8 @@ class CapabilitiesAPITest {
 
     @Test
     fun testDisableCapabilityWith() = runBlocking {
-        val responseBody = """{"id":"cap_1","object":"capability","name":"card_send","status":"disabled","disabled_reason":"User requested","created_at":1234567890,"updated_at":1234567890}"""
+        val responseBody =
+            capabilityJson("cap_1", "card_send", "disabled", disabledReason = "User requested", disabled = true)
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val (result, error) = CapabilitiesAPI.disableCapabilityWith("acc_123", "card_send")

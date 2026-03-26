@@ -1,6 +1,7 @@
 package com.framepayments.frame
 
 import android.content.Intent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,27 +52,32 @@ fun PlaygroundScreen(
     var showSubscriptionPhases by remember { mutableStateOf(false) }
 
     if (showOnboarding) {
-        OnboardingContainerView(
-            config = OnboardingConfig(
-                accountId = "acc_123",
-                requiredCapabilities = listOf(
-                    Capabilities.KYC_PREFILL,
-                    Capabilities.CARD_VERIFICATION,
-                    Capabilities.BANK_ACCOUNT_VERIFICATION,
-                    Capabilities.AGE_VERIFICATION
-                )
-            ),
-            onResult = { showOnboarding = false }
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            OnboardingContainerView(
+                config = OnboardingConfig(
+                    requiredCapabilities = listOf(
+                        Capabilities.KYC_PREFILL,
+                        Capabilities.CARD_VERIFICATION,
+                        Capabilities.BANK_ACCOUNT_VERIFICATION,
+                        Capabilities.AGE_VERIFICATION,
+                        Capabilities.GEO_COMPLIANCE,
+                        Capabilities.PHONE_VERIFICATION
+                    )
+                ),
+                onResult = { showOnboarding = false }
+            )
+        }
         return
     }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
+        // Do not use fillMaxSize() with verticalScroll() on the same node — it can measure
+        // unbounded height (Int.MAX_VALUE) and crash Scaffold layout.
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
@@ -142,7 +148,7 @@ fun PlaygroundScreen(
             title = "Payment Methods",
             onDismiss = { showPaymentMethods = false },
             items = uiState.paymentMethods.map { pm ->
-                "Payment Method ID: ${pm.id}\nCustomer ID: ${pm.customer ?: ""}"
+                "Payment Method ID: ${pm.id}\nCustomer ID: ${pm.customerId ?: ""}"
             }
         )
     }

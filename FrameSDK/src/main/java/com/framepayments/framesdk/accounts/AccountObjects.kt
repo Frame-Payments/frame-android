@@ -1,6 +1,7 @@
 package com.framepayments.framesdk.accounts
 
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.capabilities.CapabilityObjects
 import com.google.gson.annotations.SerializedName
 
 object AccountObjects {
@@ -18,9 +19,8 @@ object AccountObjects {
 
     data class AccountTermsOfService(
         val token: String? = null,
-        @SerializedName("accepted_at") val acceptedAt: Int? = null,
-        @SerializedName("ip_address") val ipAddress: String? = null,
-        @SerializedName("user_agent") val userAgent: String? = null
+        @SerializedName("accepted_at") val acceptedAt: String? = null,
+        @SerializedName("ip_address") val ipAddress: String? = null
     )
 
     data class AccountProfile(
@@ -43,17 +43,39 @@ object AccountObjects {
         @SerializedName("ein_last_four") val einLastFour: String? = null,
         val mcc: String? = null,
         val naics: String? = null,
-        val address: FrameObjects.BillingAddress? = null,
+        val address: AccountBillingAddress? = null,
         val phone: AccountPhoneNumber? = null
     )
 
+    data class AccountBillingAddress(
+        val city: String? = null,
+        val country: String? = null,
+        @SerializedName("state_or_province") val state: String? = null,
+        @SerializedName("postal_code") val postalCode: String,
+        @SerializedName("line_1") val addressLine1: String? = null,
+        @SerializedName("line_2") val addressLine2: String? = null
+    )
+
     data class IndividualAccount(
-        @SerializedName("first_name") val firstName: String,
+        @SerializedName("first_name") val firstName: String? = null,
         @SerializedName("middle_name") val middleName: String? = null,
-        @SerializedName("last_name") val lastName: String,
+        @SerializedName("last_name") val lastName: String? = null,
         val suffix: String? = null,
-        val email: String,
-        @SerializedName("ssn_last_four") val ssnLastFour: String? = null
+        val email: String? = null,
+        @SerializedName("ssn_last_four") val ssnLastFour: String? = null,
+        @SerializedName("phone_number") val phoneNumber: String? = null,
+        @SerializedName("phone_country_code") val phoneCountryCode: String? = null,
+        val address: AccountBillingAddress? = null,
+        val birthdate: String? = null,
+        val ssn: String? = null
+    )
+
+    data class AccountStep(
+        val key: String,
+        val status: String,
+        val label: String,
+        val fields: List<String>,
+        @SerializedName("currently_due") val currentlyDue: List<String>
     )
 
     data class Account(
@@ -64,8 +86,10 @@ object AccountObjects {
         @SerializedName("external_id") val externalId: String? = null,
         val metadata: Map<String, String>? = null,
         val profile: AccountProfile? = null,
-        @SerializedName("created_at") val createdAt: Int,
-        @SerializedName("updated_at") val updatedAt: Int,
+        val capabilities: List<CapabilityObjects.Capability>? = null,
+        val steps: List<AccountStep>? = null,
+        val created: Int,
+        val updated: Int,
         val livemode: Boolean
     )
 }

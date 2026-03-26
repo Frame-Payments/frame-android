@@ -92,12 +92,24 @@ object FrameNetworking {
         return applicationContext
     }
 
+    private fun describeServerError(response: Response, bodyBytes: ByteArray?): String {
+        val fromBody = bodyBytes?.let { String(it, Charsets.UTF_8) }?.trim()?.takeIf { it.isNotEmpty() }
+        return fromBody ?: response.message.ifEmpty { "HTTP ${response.code}" }
+    }
+
+    private fun Request.Builder.withFrameHeaders(): Request.Builder {
+        header("Authorization", "Bearer $apiKey")
+        header("User-Agent", "Android/$CURRENT_VERSION")
+        SiftManager.getIPAddress()?.let { header("ip_address", it) }
+        return this
+    }
+
     inline fun <reified T> parseResponse(data: ByteArray?): T? {
         if (data == null) return null
-
         return try {
             val jsonString = String(data, Charsets.UTF_8)
-            gson.fromJson(jsonString, T::class.java)
+            val type = object : TypeToken<T>() {}.type
+            gson.fromJson(jsonString, type)
         } catch (_: Exception) {
             null
         }
@@ -132,8 +144,7 @@ object FrameNetworking {
 
         val requestBuilder = Request.Builder()
             .url(httpUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$CURRENT_VERSION")
+            .withFrameHeaders()
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -147,7 +158,7 @@ object FrameNetworking {
                 printDataForTesting(responseData)
             }
             if (!response.isSuccessful) {
-                Pair(null, NetworkingError.ServerError(response.code, response.message))
+                Pair(responseData, NetworkingError.ServerError(response.code, describeServerError(response, responseData)))
             } else {
                 Pair(responseData, null)
             }
@@ -179,8 +190,7 @@ object FrameNetworking {
 
         val requestBuilder = Request.Builder()
             .url(httpUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$CURRENT_VERSION")
+            .withFrameHeaders()
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
@@ -208,7 +218,7 @@ object FrameNetworking {
                 printDataForTesting(responseData)
             }
             if (!response.isSuccessful) {
-                Pair(null, NetworkingError.ServerError(response.code, response.message))
+                Pair(responseData, NetworkingError.ServerError(response.code, describeServerError(response, responseData)))
             } else {
                 Pair(responseData, null)
             }
@@ -243,8 +253,7 @@ object FrameNetworking {
 
         val request = Request.Builder()
             .url(httpUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$CURRENT_VERSION")
+            .withFrameHeaders()
             .post(multipartBody)
             .build()
 
@@ -256,7 +265,7 @@ object FrameNetworking {
                 printDataForTesting(responseData)
             }
             if (!response.isSuccessful) {
-                Pair(null, NetworkingError.ServerError(response.code, response.message))
+                Pair(responseData, NetworkingError.ServerError(response.code, describeServerError(response, responseData)))
             } else {
                 Pair(responseData, null)
             }
@@ -292,8 +301,7 @@ object FrameNetworking {
 
         val request = Request.Builder()
             .url(httpUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$CURRENT_VERSION")
+            .withFrameHeaders()
             .post(multipartBody)
             .build()
 
@@ -303,11 +311,11 @@ object FrameNetworking {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                var error: NetworkingError? = null
-                if (!response.isSuccessful) {
-                    error = NetworkingError.ServerError(response.code, response.message)
-                }
-                completion(response.body?.bytes(), error)
+                val bytes = response.body?.bytes()
+                val error = if (!response.isSuccessful) {
+                    NetworkingError.ServerError(response.code, describeServerError(response, bytes))
+                } else null
+                completion(bytes, error)
             }
         })
     }
@@ -330,8 +338,7 @@ object FrameNetworking {
 
         val requestBuilder = Request.Builder()
             .url(httpUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$CURRENT_VERSION")
+            .withFrameHeaders()
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -343,19 +350,19 @@ object FrameNetworking {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                var error: NetworkingError? = null
-                if (!response.isSuccessful) {
-                    error = NetworkingError.ServerError(response.code, response.message)
-                }
-                completion(response.body?.bytes(), error)
+                val bytes = response.body?.bytes()
+                val error = if (!response.isSuccessful) {
+                    NetworkingError.ServerError(response.code, describeServerError(response, bytes))
+                } else null
+                completion(bytes, error)
             }
         })
     }
 
-    inline fun <reified T> performDataTaskWithRequest(
+    fun <T> performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: T? = null,
-        crossinline completion: (data: ByteArray?, error: NetworkingError?) -> Unit
+        completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = NetworkingConstants.MAIN_API_URL
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -371,8 +378,7 @@ object FrameNetworking {
 
         val requestBuilder = Request.Builder()
             .url(httpUrl)
-            .header("Authorization", "Bearer $apiKey")
-            .header("User-Agent", "Android/$CURRENT_VERSION")
+            .withFrameHeaders()
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
@@ -397,11 +403,11 @@ object FrameNetworking {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                var error: NetworkingError? = null
-                if (!response.isSuccessful) {
-                    error = NetworkingError.ServerError(response.code, response.message)
-                }
-                completion(response.body?.bytes(), error)
+                val bytes = response.body?.bytes()
+                val error = if (!response.isSuccessful) {
+                    NetworkingError.ServerError(response.code, describeServerError(response, bytes))
+                } else null
+                completion(bytes, error)
             }
         })
     }

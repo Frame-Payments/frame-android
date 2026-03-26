@@ -49,14 +49,15 @@ class FrameNetworkingTest {
 
     @Test
     fun performDataTaskReturnsError() = runBlocking {
-        mockWebServer.enqueue(MockResponse().setResponseCode(500))
+        mockWebServer.enqueue(MockResponse().setResponseCode(500).setBody("{\"error\":\"fail\"}"))
 
         val endpoint = TestEndpoint("GET", "test")
 
         val (data, error) = FrameNetworking.performDataTask(endpoint)
 
-        assertNull(data)
         assertTrue(error is NetworkingError.ServerError)
+        assertNotNull(data)
+        assertTrue(String(data!!).contains("error"))
     }
 
     @Test

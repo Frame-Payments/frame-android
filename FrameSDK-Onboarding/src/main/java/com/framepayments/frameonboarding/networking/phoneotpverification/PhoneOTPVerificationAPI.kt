@@ -5,6 +5,9 @@ import com.framepayments.framesdk.NetworkingError
 
 object PhoneOTPVerificationAPI {
 
+    private suspend fun confirmRequestBody(code: String?): Any =
+        if (code == null) emptyMap<String, String>() else PhoneOTPVerificationRequests.Confirm(code)
+
     // Coroutine methods
     suspend fun createVerification(
         accountId: String,
@@ -26,8 +29,7 @@ object PhoneOTPVerificationAPI {
         code: String? = null
     ): Pair<PhoneOTPVerificationConfirmResponse?, NetworkingError?> {
         val endpoint = PhoneOTPVerificationEndpoints.Confirm(accountId, verificationId)
-        val request = PhoneOTPVerificationRequests.Confirm(code = code)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, confirmRequestBody(code))
         return Pair(data?.let { FrameNetworking.parseResponse<PhoneOTPVerificationConfirmResponse>(it) }, error)
     }
 
@@ -55,8 +57,8 @@ object PhoneOTPVerificationAPI {
         completionHandler: (PhoneOTPVerificationConfirmResponse?, NetworkingError?) -> Unit
     ) {
         val endpoint = PhoneOTPVerificationEndpoints.Confirm(accountId, verificationId)
-        val request = PhoneOTPVerificationRequests.Confirm(code = code)
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        val body: Any = if (code == null) emptyMap<String, String>() else PhoneOTPVerificationRequests.Confirm(code)
+        FrameNetworking.performDataTaskWithRequest(endpoint, body) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<PhoneOTPVerificationConfirmResponse>(it) }, error)
         }
     }
