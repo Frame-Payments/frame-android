@@ -8,9 +8,6 @@
 -keep public class com.framepayments.frameonboarding.classes.OnboardingStep { public *; }
 -keep public class com.framepayments.frameonboarding.classes.OnboardingStep$* { public *; }
 -keep public enum com.framepayments.frameonboarding.classes.Capabilities { *; }
--keep public class com.framepayments.frameonboarding.classes.PaymentMethodDetails { public *; }
--keep public class com.framepayments.frameonboarding.classes.PayoutMethodDetails { public *; }
-
 # Public reusable composables
 -keep public class com.framepayments.frameonboarding.reusable.BillingAddressFormKt { public *; }
 -keep public class com.framepayments.frameonboarding.reusable.BankAccountFormKt { public *; }

@@ -7,6 +7,7 @@ sealed class PaymentMethodEndpoints : FrameNetworkingEndpoints {
     data class GetPaymentMethods(val perPage: Int? = null, val page: Int? = null) : PaymentMethodEndpoints()
     data class GetPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
     data class GetPaymentMethodsWithCustomer(val customerId: String) : PaymentMethodEndpoints()
+    data class GetPaymentMethodsWithAccount(val accountId: String) : PaymentMethodEndpoints()
     object CreatePaymentMethod : PaymentMethodEndpoints()
     data class UpdatePaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
     data class AttachPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
@@ -24,6 +25,8 @@ sealed class PaymentMethodEndpoints : FrameNetworkingEndpoints {
                 "/v1/payment_methods/${this.paymentMethodId}"
             is GetPaymentMethodsWithCustomer ->
                 "/v1/customers/${this.customerId}/payment_methods"
+            is GetPaymentMethodsWithAccount ->
+                "/v1/accounts/${this.accountId}/payment_methods"
             is AttachPaymentMethodWith ->
                 "/v1/payment_methods/${this.paymentMethodId}/attach"
             is DetachPaymentMethodWith ->

@@ -16,11 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
-/**
- * Reusable payment card form section.
- * Mirrors iOS PaymentCardDetailView.
- * Fields: Card Number, Expiry (MM/YY), CVC.
- */
 @Composable
 fun PaymentCardForm(
     cardNumber: String,

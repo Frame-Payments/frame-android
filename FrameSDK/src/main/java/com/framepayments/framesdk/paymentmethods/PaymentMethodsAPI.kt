@@ -5,7 +5,6 @@ import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
-import com.framepayments.framesdk.managers.SiftManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,18 +29,23 @@ object PaymentMethodsAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
     }
 
+    suspend fun getPaymentMethodsWithAccount(accountId: String): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
+        val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithAccount(accountId)
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
+    }
+
     suspend fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         if (!FrameNetworking.isEvervaultConfigured && encryptData) {
             FrameNetworking.configureEvervault()
         }
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
-        val encryptedRequest = request
         if (encryptData) {
-            encryptedRequest.cardNumber = Evervault.shared.encrypt(request.cardNumber) as String
-            encryptedRequest.cvc = Evervault.shared.encrypt(request.cvc) as String
+            request.cardNumber = Evervault.shared.encrypt(request.cardNumber) as String
+            request.cvc = Evervault.shared.encrypt(request.cvc) as String
         }
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, encryptedRequest)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -100,6 +104,13 @@ object PaymentMethodsAPI {
 
     fun getPaymentMethodsWithCustomer(customerId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
+        FrameNetworking.performDataTask(endpoint) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error )
+        }
+    }
+
+    fun getPaymentMethodsWithAccount(accountId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithAccount(accountId)
         FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error )
         }

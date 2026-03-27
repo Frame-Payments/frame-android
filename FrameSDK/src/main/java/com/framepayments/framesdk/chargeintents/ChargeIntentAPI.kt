@@ -4,13 +4,17 @@ import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.managers.SiftManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object ChargeIntentAPI {
     //MARK: Methods using coroutines
     suspend fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.CreateChargeIntent
         request.sonarSessionId = FrameNetworking.currentSonarSessionId()
-        request.fraudSignals = ChargeIntentsRequests.FraudSignals(clientIp = SiftManager.getPublicIp())
+        request.fraudSignals = ChargeIntentsRequests.FraudSignals(
+            clientIp = withContext(Dispatchers.IO) { SiftManager.getPublicIp() }
+        )
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
@@ -58,9 +62,11 @@ object ChargeIntentAPI {
     fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.CreateChargeIntent
         request.sonarSessionId = FrameNetworking.currentSonarSessionId()
-        request.fraudSignals = ChargeIntentsRequests.FraudSignals(clientIp = SiftManager.getPublicIp())
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
-            completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
+        FrameNetworking.okHttpClient.dispatcher.executorService.execute {
+            request.fraudSignals = ChargeIntentsRequests.FraudSignals(clientIp = SiftManager.getPublicIp())
+            FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+                completionHandler(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
+            }
         }
     }
 

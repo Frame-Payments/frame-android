@@ -35,11 +35,11 @@ class AccountsAPITest {
         val profile = AccountRequests.CreateAccountProfile(
             business = null,
             individual = AccountRequests.CreateIndividualAccount(
-                name = AccountRequests.CreateAccountInfo("John", null, "Doe", null),
+                name = AccountObjects.IndividualAccountName("John", null, "Doe", null),
                 email = "john@test.com",
                 phone = AccountObjects.AccountPhoneNumber("1234567890", "1"),
                 address = null,
-                dob = null,
+                birthdate = null,
                 ssn = null
             )
         )

@@ -160,7 +160,11 @@ sealed class OnboardingResult {
 
 data class OnboardingConfig(
     val accountId: String? = null,
-    val requiredCapabilities: List<Capabilities> = emptyList()
+    val requiredCapabilities: List<Capabilities> = emptyList(),
+    /**
+     * When true, [FrameOnboardingViewModel] skips network work in `init` (Compose Preview / design tools).
+     */
+    val skipInitNetwork: Boolean = false
 )
 
 internal data class PaymentMethodSummary(
@@ -176,36 +180,12 @@ internal enum class PhotoType {
     SELFIE
 }
 
-data class PaymentMethodDetails(
-    val cardNumber: String,
-    val expiryMonth: String,
-    val expiryYear: String,
-    val cvc: String,
-    val addressLine1: String,
-    val addressLine2: String?,
-    val city: String,
-    val state: String,
-    val zipCode: String,
-    val useForPayouts: Boolean
-)
-
 data class PaymentCardDraft(
     val cardNumber: String = "",
     val expiryMonth: String = "",
     val expiryYear: String = "",
     val cvc: String = "",
     val useForPayouts: Boolean = false
-)
-
-data class PayoutMethodDetails(
-    val routingNumber: String,
-    val accountNumber: String,
-    val accountType: String,
-    val addressLine1: String,
-    val addressLine2: String?,
-    val city: String,
-    val state: String,
-    val zipCode: String
 )
 
 data class BankAccountDraft(
@@ -232,7 +212,7 @@ internal data class OnboardingData(
     val lastName: String? = null,
     val email: String? = null,
     val dateOfBirth: String? = null,
-    val ssn: String? = null,
+    val ssnLast4: String? = null,
     val addressLine1: String? = null,
     val addressLine2: String? = null,
     val city: String? = null,

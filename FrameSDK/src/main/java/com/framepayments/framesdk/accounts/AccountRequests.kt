@@ -4,20 +4,16 @@ import com.framepayments.framesdk.FrameObjects
 import com.google.gson.annotations.SerializedName
 
 object AccountRequests {
-    data class CreateAccountInfo(
-        @SerializedName("first_name") val firstName: String,
-        @SerializedName("middle_name") val middleName: String? = null,
-        @SerializedName("last_name") val lastName: String,
-        val suffix: String? = null
-    )
 
     data class CreateIndividualAccount(
-        val name: CreateAccountInfo,
-        val email: String,
-        val phone: AccountObjects.AccountPhoneNumber,
+        val name: AccountObjects.IndividualAccountName? = null,
+        val email: String? = null, // Either email or phone number is required to create an account
+        val phone: AccountObjects.AccountPhoneNumber? = null,
         val address: FrameObjects.BillingAddress? = null,
-        val dob: String? = null,
-        val ssn: String? = null
+        val birthdate: String? = null,
+        val ssn: String? = null,
+        @SerializedName("ssn_last4") val ssnLast4: String? = null,
+        @SerializedName("profile_url") val profileURL: String? = null
     )
 
     data class CreateAccountProfile(

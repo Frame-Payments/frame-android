@@ -1,11 +1,10 @@
 package com.framepayments.frameonboarding.views
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,37 +19,31 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.framepayments.frameonboarding.classes.PayoutMethodDetails
+import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BankAccountForm
 import com.framepayments.frameonboarding.reusable.BillingAddressForm
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AddPayoutMethodScreen(
-    onBack: () -> Unit,
-    onContinue: (PayoutMethodDetails) -> Unit
+    viewModel: FrameOnboardingViewModel,
+    onBack: () -> Unit
 ) {
-    var routingNumber by remember { mutableStateOf("") }
-    var accountNumber by remember { mutableStateOf("") }
-    var accountType by remember { mutableStateOf("Checking") }
-    var addressLine1 by remember { mutableStateOf("") }
-    var addressLine2 by remember { mutableStateOf("") }
-    var city by remember { mutableStateOf("") }
-    var state by remember { mutableStateOf("") }
-    var zipCode by remember { mutableStateOf("") }
+    val bank by viewModel.bankAccountDraft.collectAsState()
+    val billing by viewModel.createdBillingAddress.collectAsState()
 
-    val canContinue = routingNumber.length >= 9 && accountNumber.isNotEmpty() &&
-            addressLine1.isNotEmpty() && city.isNotEmpty() &&
-            state.isNotEmpty() && zipCode.length == 5
+    val canContinue = remember(bank, billing) {
+        viewModel.isPayoutMethodFormComplete(bank, billing)
+    }
 
     Scaffold(
         topBar = {
@@ -71,56 +64,43 @@ internal fun AddPayoutMethodScreen(
             modifier = Modifier
                 .padding(padding)
                 .padding(24.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
         ) {
-            Column {
-                BankAccountForm(
-                    routingNumber = routingNumber,
-                    onRoutingNumberChange = { routingNumber = it },
-                    accountNumber = accountNumber,
-                    onAccountNumberChange = { accountNumber = it },
-                    accountType = accountType,
-                    onAccountTypeChange = { accountType = it }
-                )
+            BankAccountForm(
+                routingNumber = bank.routingNumber,
+                onRoutingNumberChange = { v -> viewModel.updateBankAccountDraft { it.copy(routingNumber = v) } },
+                accountNumber = bank.accountNumber,
+                onAccountNumberChange = { v -> viewModel.updateBankAccountDraft { it.copy(accountNumber = v) } },
+                accountType = bank.accountTypeLabel,
+                onAccountTypeChange = { v -> viewModel.updateBankAccountDraft { it.copy(accountTypeLabel = v) } }
+            )
 
-                Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
 
-                BillingAddressForm(
-                    addressLine1 = addressLine1,
-                    onAddressLine1Change = { addressLine1 = it },
-                    addressLine2 = addressLine2,
-                    onAddressLine2Change = { addressLine2 = it },
-                    city = city,
-                    onCityChange = { city = it },
-                    state = state,
-                    onStateChange = { state = it },
-                    zipCode = zipCode,
-                    onZipCodeChange = { zipCode = it },
-                    headerTitle = "Account Holder Address"
-                )
-            }
+            BillingAddressForm(
+                addressLine1 = billing.addressLine1.orEmpty(),
+                onAddressLine1Change = { v -> viewModel.updateCreatedBillingAddress { it.copy(addressLine1 = v) } },
+                addressLine2 = billing.addressLine2.orEmpty(),
+                onAddressLine2Change = { v ->
+                    viewModel.updateCreatedBillingAddress { it.copy(addressLine2 = v.ifBlank { null }) }
+                },
+                city = billing.city.orEmpty(),
+                onCityChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(city = v) } },
+                state = billing.state.orEmpty(),
+                onStateChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(state = v) } },
+                zipCode = billing.postalCode,
+                onZipCodeChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(postalCode = v) } },
+                headerTitle = "Billing Address"
+            )
 
             Spacer(Modifier.height(24.dp))
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = canContinue,
-                onClick = {
-                    onContinue(
-                        PayoutMethodDetails(
-                            routingNumber = routingNumber,
-                            accountNumber = accountNumber,
-                            accountType = accountType,
-                            addressLine1 = addressLine1,
-                            addressLine2 = if (addressLine2.isNotEmpty()) addressLine2 else null,
-                            city = city,
-                            state = state,
-                            zipCode = zipCode
-                        )
-                    )
-                },
+                onClick = { viewModel.submitNewPayoutMethod() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FramePrimaryColor,
                     contentColor = FrameOnPrimaryColor,
@@ -137,5 +117,8 @@ internal fun AddPayoutMethodScreen(
 @Preview(showBackground = true)
 @Composable
 private fun AddPayoutMethodScreenPreview() {
-    AddPayoutMethodScreen(onBack = {}, onContinue = {})
+    AddPayoutMethodScreen(
+        viewModel = FrameOnboardingViewModel(OnboardingConfig()),
+        onBack = {}
+    )
 }
