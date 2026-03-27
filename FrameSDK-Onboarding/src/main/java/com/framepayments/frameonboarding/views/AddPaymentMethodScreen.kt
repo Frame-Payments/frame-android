@@ -1,12 +1,13 @@
 package com.framepayments.frameonboarding.views
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,42 +26,63 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.framepayments.frameonboarding.classes.PaymentMethodDetails
+import androidx.compose.ui.viewinterop.AndroidView
+import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BillingAddressForm
 import com.framepayments.frameonboarding.reusable.PaymentCardForm
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
+import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk_ui.EncryptedPaymentCardInput
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AddPaymentMethodScreen(
-    onBack: () -> Unit,
-    onContinue: (PaymentMethodDetails) -> Unit
+    viewModel: FrameOnboardingViewModel,
+    onBack: () -> Unit
 ) {
-    var cardNumber by remember { mutableStateOf("") }
-    var expiryMonth by remember { mutableStateOf("") }
-    var expiryYear by remember { mutableStateOf("") }
-    var cvc by remember { mutableStateOf("") }
-    var addressLine1 by remember { mutableStateOf("") }
-    var addressLine2 by remember { mutableStateOf("") }
-    var city by remember { mutableStateOf("") }
-    var state by remember { mutableStateOf("") }
-    var zipCode by remember { mutableStateOf("") }
-    var useForPayouts by remember { mutableStateOf(false) }
+    val paymentCard by viewModel.paymentCardData.collectAsState()
+    val card by viewModel.paymentCardDraft.collectAsState()
+    val billing by viewModel.createdBillingAddress.collectAsState()
 
-    val canContinue = cardNumber.replace(" ", "").length >= 16 &&
-            expiryMonth.isNotEmpty() && expiryYear.isNotEmpty() &&
-            cvc.length >= 3 &&
-            addressLine1.isNotEmpty() && city.isNotEmpty() &&
-            state.isNotEmpty() && zipCode.length == 5
+    val isPreview = LocalInspectionMode.current
+
+    var evervaultReady by remember(isPreview) {
+        mutableStateOf<Boolean?>(if (isPreview) false else null)
+    }
+
+    LaunchedEffect(isPreview) {
+        if (isPreview) {
+            viewModel.setAddPaymentUsesEvervaultCardUi(false)
+        } else {
+            val ok = FrameNetworking.ensureEvervaultReadyForCardInputs()
+            evervaultReady = ok
+            viewModel.setAddPaymentUsesEvervaultCardUi(ok)
+        }
+    }
+
+    val canContinue = remember(paymentCard, card, billing, evervaultReady) {
+        if (evervaultReady == null) return@remember false
+        viewModel.isPaymentMethodFormComplete(
+            paymentCard,
+            card,
+            billing,
+            onlyAddress = false,
+            useEvervaultCardInput = evervaultReady == true
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -80,53 +103,92 @@ internal fun AddPaymentMethodScreen(
             modifier = Modifier
                 .padding(padding)
                 .padding(24.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
         ) {
-            Column {
-                PaymentCardForm(
-                    cardNumber = cardNumber,
-                    onCardNumberChange = { cardNumber = it },
-                    expiryMonth = expiryMonth,
-                    expiryYear = expiryYear,
-                    onExpiryChange = { m, y -> expiryMonth = m; expiryYear = y },
-                    cvc = cvc,
-                    onCvcChange = { cvc = it }
-                )
-
-                Spacer(Modifier.height(24.dp))
-
-                BillingAddressForm(
-                    addressLine1 = addressLine1,
-                    onAddressLine1Change = { addressLine1 = it },
-                    addressLine2 = addressLine2,
-                    onAddressLine2Change = { addressLine2 = it },
-                    city = city,
-                    onCityChange = { city = it },
-                    state = state,
-                    onStateChange = { state = it },
-                    zipCode = zipCode,
-                    onZipCodeChange = { zipCode = it },
-                    headerTitle = "Customer Address"
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+            Text(
+                text = "Card Details",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            if (isPreview) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 160.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Checkbox(
-                        checked = useForPayouts,
-                        onCheckedChange = { useForPayouts = it }
-                    )
-                    Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "Use this card for payouts if eligible",
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "EncryptedPaymentCardInput (preview placeholder)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            } else {
+                when (evervaultReady) {
+                    null -> Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 160.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                    true -> AndroidView(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 160.dp),
+                        factory = { EncryptedPaymentCardInput(it) },
+                        update = { view ->
+                            view.onCardDataChange = { viewModel.onPaymentCardDataChange(it) }
+                        }
+                    )
+                    false -> PaymentCardForm(
+                        cardNumber = card.cardNumber,
+                        onCardNumberChange = { n -> viewModel.updatePaymentCardDraft { it.copy(cardNumber = n) } },
+                        expiryMonth = card.expiryMonth,
+                        expiryYear = card.expiryYear,
+                        onExpiryChange = { m, y -> viewModel.updatePaymentCardDraft { it.copy(expiryMonth = m, expiryYear = y) } },
+                        cvc = card.cvc,
+                        onCvcChange = { c -> viewModel.updatePaymentCardDraft { it.copy(cvc = c) } }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            BillingAddressForm(
+                addressLine1 = billing.addressLine1.orEmpty(),
+                onAddressLine1Change = { v -> viewModel.updateCreatedBillingAddress { it.copy(addressLine1 = v) } },
+                addressLine2 = billing.addressLine2.orEmpty(),
+                onAddressLine2Change = { v ->
+                    viewModel.updateCreatedBillingAddress { it.copy(addressLine2 = v.ifBlank { null }) }
+                },
+                city = billing.city.orEmpty(),
+                onCityChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(city = v) } },
+                state = billing.state.orEmpty(),
+                onStateChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(state = v) } },
+                zipCode = billing.postalCode,
+                onZipCodeChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(postalCode = v) } },
+                headerTitle = "Customer Address"
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = card.useForPayouts,
+                    onCheckedChange = { checked -> viewModel.updatePaymentCardDraft { it.copy(useForPayouts = checked) } }
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = "Use this card for payouts if eligible",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -134,22 +196,7 @@ internal fun AddPaymentMethodScreen(
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = canContinue,
-                onClick = {
-                    onContinue(
-                        PaymentMethodDetails(
-                            cardNumber = cardNumber.replace(" ", ""),
-                            expiryMonth = expiryMonth,
-                            expiryYear = expiryYear,
-                            cvc = cvc,
-                            addressLine1 = addressLine1,
-                            addressLine2 = if (addressLine2.isNotEmpty()) addressLine2 else null,
-                            city = city,
-                            state = state,
-                            zipCode = zipCode,
-                            useForPayouts = useForPayouts
-                        )
-                    )
-                },
+                onClick = { viewModel.submitNewPaymentMethod() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FramePrimaryColor,
                     contentColor = FrameOnPrimaryColor,
@@ -166,5 +213,12 @@ internal fun AddPaymentMethodScreen(
 @Preview(showBackground = true)
 @Composable
 private fun AddPaymentMethodScreenPreview() {
-    AddPaymentMethodScreen(onBack = {}, onContinue = {})
+    MaterialTheme {
+        AddPaymentMethodScreen(
+            viewModel = FrameOnboardingViewModel(
+                OnboardingConfig(skipInitNetwork = true)
+            ),
+            onBack = {}
+        )
+    }
 }

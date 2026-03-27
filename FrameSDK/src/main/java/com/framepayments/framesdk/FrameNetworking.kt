@@ -56,6 +56,11 @@ object FrameNetworking {
         SiftManager.initializeSift(apiKey)
         configureEvervault()
 
+        @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+            SiftManager.getPublicIp()
+        }
+
         // Initialize Sonar session as early as possible during SDK initialization
         // using Fingerprint visitorId when available. If we cannot obtain a
         // Fingerprint visitorId, we skip Sonar session initialization to match
@@ -97,11 +102,22 @@ object FrameNetworking {
         return fromBody ?: response.message.ifEmpty { "HTTP ${response.code}" }
     }
 
-    private fun Request.Builder.withFrameHeaders(): Request.Builder {
+    private fun Request.Builder.applyFrameHeaders(ip: String?): Request.Builder {
         header("Authorization", "Bearer $apiKey")
         header("User-Agent", "Android/$CURRENT_VERSION")
-        SiftManager.getIPAddress()?.let { header("ip_address", it) }
+        ip?.let { header("ip_address", it) }
         return this
+    }
+
+    /** Resolves IP on IO; safe when this suspend runs from the main thread. */
+    private suspend fun Request.Builder.withFrameHeaders(): Request.Builder {
+        val ip = withContext(Dispatchers.IO) { SiftManager.getIPAddress() }
+        return applyFrameHeaders(ip)
+    }
+
+    /** Call only from a background thread (e.g. OkHttp’s executor). Performs blocking IP fetch if uncached. */
+    private fun Request.Builder.withFrameHeadersOnWorkerThread(): Request.Builder {
+        return applyFrameHeaders(SiftManager.getIPAddress())
     }
 
     inline fun <reified T> parseResponse(data: ByteArray?): T? {
@@ -299,25 +315,27 @@ object FrameNetworking {
         }
         val multipartBody = multipartBuilder.build()
 
-        val request = Request.Builder()
-            .url(httpUrl)
-            .withFrameHeaders()
-            .post(multipartBody)
-            .build()
+        okHttpClient.dispatcher.executorService.execute {
+            val request = Request.Builder()
+                .url(httpUrl)
+                .withFrameHeadersOnWorkerThread()
+                .post(multipartBody)
+                .build()
 
-        okHttpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: java.io.IOException) {
-                completion(null, NetworkingError.UnknownError)
-            }
+            okHttpClient.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: java.io.IOException) {
+                    completion(null, NetworkingError.UnknownError)
+                }
 
-            override fun onResponse(call: Call, response: Response) {
-                val bytes = response.body?.bytes()
-                val error = if (!response.isSuccessful) {
-                    NetworkingError.ServerError(response.code, describeServerError(response, bytes))
-                } else null
-                completion(bytes, error)
-            }
-        })
+                override fun onResponse(call: Call, response: Response) {
+                    val bytes = response.body?.bytes()
+                    val error = if (!response.isSuccessful) {
+                        NetworkingError.ServerError(response.code, describeServerError(response, bytes))
+                    } else null
+                    completion(bytes, error)
+                }
+            })
+        }
     }
 
     fun performDataTask(
@@ -336,27 +354,29 @@ object FrameNetworking {
             httpUrl = urlBuilder.build()
         }
 
-        val requestBuilder = Request.Builder()
-            .url(httpUrl)
-            .withFrameHeaders()
+        okHttpClient.dispatcher.executorService.execute {
+            val requestBuilder = Request.Builder()
+                .url(httpUrl)
+                .withFrameHeadersOnWorkerThread()
 
-        val method = endpoint.httpMethod.uppercase()
-        requestBuilder.method(method, null)
-        val request = requestBuilder.build()
+            val method = endpoint.httpMethod.uppercase()
+            requestBuilder.method(method, null)
+            val request = requestBuilder.build()
 
-        okHttpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                completion(null, NetworkingError.UnknownError)
-            }
+            okHttpClient.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    completion(null, NetworkingError.UnknownError)
+                }
 
-            override fun onResponse(call: Call, response: Response) {
-                val bytes = response.body?.bytes()
-                val error = if (!response.isSuccessful) {
-                    NetworkingError.ServerError(response.code, describeServerError(response, bytes))
-                } else null
-                completion(bytes, error)
-            }
-        })
+                override fun onResponse(call: Call, response: Response) {
+                    val bytes = response.body?.bytes()
+                    val error = if (!response.isSuccessful) {
+                        NetworkingError.ServerError(response.code, describeServerError(response, bytes))
+                    } else null
+                    completion(bytes, error)
+                }
+            })
+        }
     }
 
     fun <T> performDataTaskWithRequest(
@@ -376,40 +396,42 @@ object FrameNetworking {
             httpUrl = urlBuilder.build()
         }
 
-        val requestBuilder = Request.Builder()
-            .url(httpUrl)
-            .withFrameHeaders()
-
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
         } catch (_: Exception) {
             null
         }
 
-        val method = endpoint.httpMethod.uppercase()
-        if (method == "POST" || method == "PATCH") {
-            requestBuilder.header("Content-Type", "application/json")
-            val mediaType = "application/json".toMediaTypeOrNull()
-            val body = requestBody?.toRequestBody(mediaType)
-            requestBuilder.method(method, body)
-        } else {
-            requestBuilder.method(method, null)
+        okHttpClient.dispatcher.executorService.execute {
+            val requestBuilder = Request.Builder()
+                .url(httpUrl)
+                .withFrameHeadersOnWorkerThread()
+
+            val method = endpoint.httpMethod.uppercase()
+            if (method == "POST" || method == "PATCH") {
+                requestBuilder.header("Content-Type", "application/json")
+                val mediaType = "application/json".toMediaTypeOrNull()
+                val body = requestBody?.toRequestBody(mediaType)
+                requestBuilder.method(method, body)
+            } else {
+                requestBuilder.method(method, null)
+            }
+            val builtRequest = requestBuilder.build()
+
+            okHttpClient.newCall(builtRequest).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    completion(null, NetworkingError.UnknownError)
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    val bytes = response.body?.bytes()
+                    val error = if (!response.isSuccessful) {
+                        NetworkingError.ServerError(response.code, describeServerError(response, bytes))
+                    } else null
+                    completion(bytes, error)
+                }
+            })
         }
-        val request = requestBuilder.build()
-
-        okHttpClient.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                completion(null, NetworkingError.UnknownError)
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                val bytes = response.body?.bytes()
-                val error = if (!response.isSuccessful) {
-                    NetworkingError.ServerError(response.code, describeServerError(response, bytes))
-                } else null
-                completion(bytes, error)
-            }
-        })
     }
 
     private fun printDataForTesting(data: ByteArray?) {
@@ -419,16 +441,53 @@ object FrameNetworking {
         }
     }
 
-    fun configureEvervault() {
-        val config: ConfigurationResponses.GetEvervaultConfigurationResponse? = SecureConfigurationStorage.retrieve(getContext(), "evervault")
-        if (config == null) {
-            ConfigurationAPI.getEvervaultConfiguration { configFromAPI ->
-                Evervault.shared.configure(configFromAPI?.teamId ?: "", configFromAPI?.appId ?: "")
-                isEvervaultConfigured = true
+    private fun isUsableEvervaultConfig(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean {
+        val team = config?.teamId?.trim().orEmpty()
+        val app = config?.appId?.trim().orEmpty()
+        return team.isNotEmpty() && app.isNotEmpty()
+    }
+
+    /**
+     * Applies Evervault credentials when both team id and app id are present.
+     * Returns false if config is missing or invalid (do not use Evervault card inputs until this returns true).
+     */
+    fun applyEvervaultConfiguration(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean {
+        if (!isUsableEvervaultConfig(config)) {
+            isEvervaultConfigured = false
+            if (debugMode) {
+                println("FrameSDK: Evervault not configured (need non-empty team_id and app_id from Frame API).")
             }
-        } else {
-            Evervault.shared.configure(config.teamId ?: "", config.appId ?: "")
-            isEvervaultConfigured = true
+            return false
         }
+        val team = config!!.teamId!!.trim()
+        val app = config.appId!!.trim()
+        Evervault.shared.configure(team, app)
+        isEvervaultConfigured = true
+        return true
+    }
+
+    fun configureEvervault() {
+        val config: ConfigurationResponses.GetEvervaultConfigurationResponse? =
+            SecureConfigurationStorage.retrieve(getContext(), "evervault")
+        if (config != null) {
+            applyEvervaultConfiguration(config)
+            return
+        }
+        ConfigurationAPI.getEvervaultConfiguration { configFromAPI ->
+            applyEvervaultConfiguration(configFromAPI)
+        }
+    }
+
+    /**
+     * Loads Evervault config from secure storage or the Frame API, then applies it.
+     * Call from a coroutine before showing Evervault [RowsPaymentCard] / [EncryptedPaymentCardInput].
+     */
+    suspend fun ensureEvervaultReadyForCardInputs(): Boolean = withContext(Dispatchers.IO) {
+        var cfg: ConfigurationResponses.GetEvervaultConfigurationResponse? =
+            SecureConfigurationStorage.retrieve(getContext(), "evervault")
+        if (!isUsableEvervaultConfig(cfg)) {
+            cfg = ConfigurationAPI.getEvervaultConfiguration()
+        }
+        applyEvervaultConfiguration(cfg)
     }
 }

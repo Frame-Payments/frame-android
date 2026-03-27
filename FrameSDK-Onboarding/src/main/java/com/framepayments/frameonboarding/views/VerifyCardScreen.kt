@@ -2,14 +2,16 @@ package com.framepayments.frameonboarding.views
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -29,9 +31,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
 
@@ -43,31 +50,32 @@ internal fun VerifyCardScreen(
     confirmButtonText: String = "Continue",
     digitCount: Int = 6,
     showResendCode: Boolean = false,
+    embedInParentScaffold: Boolean = false,
     onBack: () -> Unit,
     onResendCode: () -> Unit = {},
     onContinue: (String) -> Unit
 ) {
     var code by remember { mutableStateOf("") }
+    val focusRequesters = remember(digitCount) { List(digitCount) { FocusRequester() } }
     val canContinue = code.length == digitCount
+    val digitTextStyle = MaterialTheme.typography.headlineSmall.copy(
+        textAlign = TextAlign.Center,
+        lineHeight = 40.sp,
+        lineHeightStyle = LineHeightStyle(
+            alignment = LineHeightStyle.Alignment.Center,
+            trim = LineHeightStyle.Trim.None
+        )
+    )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(headerTitle) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
+    @Composable
+    fun VerifyCardBody(scaffoldContentPadding: PaddingValues) {
+        LaunchedEffect(Unit) {
+            focusRequesters[0].requestFocus()
         }
-    ) { padding ->
+
         Column(
             modifier = Modifier
-                .padding(padding)
+                .padding(scaffoldContentPadding)
                 .padding(24.dp)
                 .fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
@@ -87,27 +95,35 @@ internal fun VerifyCardScreen(
                     repeat(digitCount) { index ->
                         OutlinedTextField(
                             value = code.getOrNull(index)?.toString() ?: "",
-                            onValueChange = { value ->
-                                if (value.length <= 1 && value.all { it.isDigit() }) {
+                            onValueChange = { newValue ->
+                                if (newValue.length <= 1 && newValue.all { it.isDigit() }) {
                                     val newCode = code.toMutableList()
-                                    if (value.isEmpty()) {
+                                    if (newValue.isEmpty()) {
                                         if (index < newCode.size) {
                                             newCode.removeAt(index)
                                         }
+                                        code = newCode.joinToString("")
+                                        if (index > 0) {
+                                            focusRequesters[index - 1].requestFocus()
+                                        }
                                     } else {
                                         if (index < newCode.size) {
-                                            newCode[index] = value[0]
+                                            newCode[index] = newValue[0]
                                         } else {
-                                            newCode.add(value[0])
+                                            newCode.add(newValue[0])
+                                        }
+                                        code = newCode.joinToString("")
+                                        if (index < digitCount - 1) {
+                                            focusRequesters[index + 1].requestFocus()
                                         }
                                     }
-                                    code = newCode.joinToString("")
                                 }
                             },
                             modifier = Modifier
                                 .weight(1f)
-                                .aspectRatio(1f),
-                            textStyle = MaterialTheme.typography.headlineSmall,
+                                .heightIn(min = 72.dp)
+                                .focusRequester(focusRequesters[index]),
+                            textStyle = digitTextStyle,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             maxLines = 1
@@ -137,6 +153,28 @@ internal fun VerifyCardScreen(
             ) {
                 Text(confirmButtonText)
             }
+        }
+    }
+
+    if (embedInParentScaffold) {
+        VerifyCardBody(PaddingValues(0.dp))
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(headerTitle) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            VerifyCardBody(padding)
         }
     }
 }

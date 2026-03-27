@@ -15,7 +15,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.framepayments.frameonboarding.classes.Capabilities
+import com.framepayments.frameonboarding.classes.OnboardingConfig
+import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
+import com.framepayments.frameonboarding.views.UserIdentificationView
 
 /**
  * Reusable customer identity form section.
@@ -31,7 +36,7 @@ fun CustomerInformationForm(
     onLastNameChange: (String) -> Unit,
     email: String,
     onEmailChange: (String) -> Unit,
-    ssn: String,
+    ssnLastFour: String,
     onSsnChange: (String) -> Unit,
     headerTitle: String = "Customer Information",
     showHeader: Boolean = true
@@ -80,7 +85,7 @@ fun CustomerInformationForm(
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = ssn,
+            value = ssnLastFour,
             onValueChange = { value ->
                 if (value.length <= 4 && value.all { it.isDigit() }) {
                     onSsnChange(value)

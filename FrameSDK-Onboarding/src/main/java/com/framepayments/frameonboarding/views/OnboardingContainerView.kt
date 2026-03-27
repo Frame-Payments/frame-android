@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,14 +28,32 @@ fun OnboardingContainerView(
     onResult: (OnboardingResult) -> Unit
 ) {
     val viewModel = remember { FrameOnboardingViewModel(config) }
+    val snackbarHostState = remember { SnackbarHostState() }
     val result by viewModel.result.collectAsState()
+    val userError by viewModel.userErrorMessage.collectAsState()
     val onboardingData by viewModel.onboardingData.collectAsState()
     val savedPaymentMethods by viewModel.savedPaymentMethods.collectAsState()
     val savedPayoutMethods by viewModel.savedPayoutMethods.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(result) {
-        result?.let { onResult(it) }
+        when (val r = result) {
+            is OnboardingResult.Completed -> onResult(r)
+            is OnboardingResult.Cancelled -> onResult(r)
+            else -> Unit
+        }
+    }
+
+    LaunchedEffect(userError) {
+        val msg = userError ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(msg)
+        viewModel.clearUserErrorMessage()
+    }
+
+    LaunchedEffect(config.accountId) {
+        if (config.accountId != null) {
+            viewModel.launchCheckExistingAccount(updateCapabilities = true)
+        }
     }
 
     LaunchedEffect(viewModel.navigationState.currentStep, onboardingData.selectedPaymentMethodId) {
@@ -39,25 +61,32 @@ fun OnboardingContainerView(
             viewModel.navigationState.currentStep == OnboardingStep.VerifyYourCard &&
             config.requiredCapabilities.contains(Capabilities.CARD_VERIFICATION)
         ) {
-            viewModel.initialize3DS()
+            // TODO: Re-enable 3DS when card verification flow is ready.
+            // viewModel.initialize3DS()
+            viewModel.moveNext()
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        ProgressIndicator(
-            currentStep = viewModel.navigationState.currentStep,
-            flowSegments = viewModel.flowSegments,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Box(modifier = Modifier.weight(1f)) {
-            OnboardingScreenRouter(
-                viewModel = viewModel,
-                config = config,
-                savedPaymentMethods = savedPaymentMethods,
-                savedPayoutMethods = savedPayoutMethods,
-                onboardingData = onboardingData,
-                context = context
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            ProgressIndicator(
+                currentStep = viewModel.navigationState.currentStep,
+                flowSegments = viewModel.flowSegments,
+                modifier = Modifier.fillMaxWidth()
             )
+            Box(modifier = Modifier.weight(1f)) {
+                OnboardingScreenRouter(
+                    viewModel = viewModel,
+                    config = config,
+                    savedPaymentMethods = savedPaymentMethods,
+                    savedPayoutMethods = savedPayoutMethods,
+                    onboardingData = onboardingData,
+                    context = context
+                )
+            }
         }
     }
 }

@@ -56,11 +56,14 @@ object AccountObjects {
         @SerializedName("line_2") val addressLine2: String? = null
     )
 
-    data class IndividualAccount(
+    data class IndividualAccountName(
         @SerializedName("first_name") val firstName: String? = null,
         @SerializedName("middle_name") val middleName: String? = null,
         @SerializedName("last_name") val lastName: String? = null,
-        val suffix: String? = null,
+        val suffix: String? = null
+    )
+    data class IndividualAccount(
+        val name: IndividualAccountName? = null,
         val email: String? = null,
         @SerializedName("ssn_last_four") val ssnLastFour: String? = null,
         @SerializedName("phone_number") val phoneNumber: String? = null,
