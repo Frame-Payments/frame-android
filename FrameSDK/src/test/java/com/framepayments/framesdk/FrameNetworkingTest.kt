@@ -38,7 +38,7 @@ class FrameNetworkingTest {
         val body = """{"message": "success"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(body))
 
-        val endpoint = TestEndpoint("GET", "test")
+        val endpoint = TestEndpoint("GET", "/test")
 
         val (data, error) = FrameNetworking.performDataTask(endpoint)
 
@@ -51,7 +51,7 @@ class FrameNetworkingTest {
     fun performDataTaskReturnsError() = runBlocking {
         mockWebServer.enqueue(MockResponse().setResponseCode(500).setBody("{\"error\":\"fail\"}"))
 
-        val endpoint = TestEndpoint("GET", "test")
+        val endpoint = TestEndpoint("GET", "/test")
 
         val (data, error) = FrameNetworking.performDataTask(endpoint)
 
@@ -65,7 +65,7 @@ class FrameNetworkingTest {
         val body = """{"status": "ok"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(body))
 
-        val endpoint = TestEndpoint("POST", "submit")
+        val endpoint = TestEndpoint("POST", "/submit")
         val requestObj = mapOf("key" to "value")
 
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, requestObj)

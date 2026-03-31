@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     kotlin("android") version "2.2.10"
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.vanniktech.maven.publish")
 }
 
 android {
@@ -73,4 +74,38 @@ dependencies {
     // Coroutines for ProveAuthService suspend API
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+}
+
+mavenPublishing {
+    coordinates("com.framepayments", "framesdk_onboarding", "2.0.0")
+
+    pom {
+        name.set("FrameSDK-Onboarding")
+        description.set("Android Onboarding SDK for Frame Payments.")
+        url.set("https://github.com/Frame-Payments/frame-android")
+
+        licenses {
+            license {
+                name.set("Apache-2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("frame")
+                name.set("Frame Payments")
+                email.set("engineering@framepayments.com")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/Frame-Payments/frame-android")
+            connection.set("scm:git:git://github.com/Frame-Payments/frame-android.git")
+            developerConnection.set("scm:git:ssh://git@github.com/Frame-Payments/frame-android.git")
+        }
+    }
+
+    publishToMavenCentral(automaticRelease = true)
+    signAllPublications()
 }

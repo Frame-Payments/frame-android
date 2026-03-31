@@ -148,7 +148,7 @@ object FrameNetworking {
     suspend fun performDataTask(
         endpoint: FrameNetworkingEndpoints
     ): Pair<ByteArray?, NetworkingError?> {
-        val baseUrl = mainApiUrl
+        val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
 
         var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return Pair(null, NetworkingError.InvalidURL)
@@ -194,7 +194,7 @@ object FrameNetworking {
         endpoint: FrameNetworkingEndpoints,
         request: Any? = null
     ): Pair<ByteArray?, NetworkingError?> {
-        val baseUrl = mainApiUrl
+        val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
 
         var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return Pair(null, NetworkingError.InvalidURL)
@@ -254,7 +254,7 @@ object FrameNetworking {
         endpoint: FrameNetworkingEndpoints,
         filesToUpload: List<FileUpload>
     ): Pair<ByteArray?, NetworkingError?> {
-        val baseUrl = mainApiUrl
+        val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
 
         val httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return Pair(null, NetworkingError.InvalidURL)
