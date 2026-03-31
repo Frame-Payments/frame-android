@@ -3,9 +3,8 @@ import com.google.gson.annotations.SerializedName
 
 object RefundRequests {
     data class CreateRefundRequest(
-        val amount: Int,
-        val charge: String,
-        val reason: String,
         @SerializedName("charge_intent") val chargeIntent: String,
+        val amount: Int? = null,
+        val reason: String? = null
     )
 }

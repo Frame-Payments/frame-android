@@ -722,9 +722,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             )
             upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
                 ?: return@launch
-            if (!createCustomerIdentityForPersonalInfo(firstName, lastName, dob, email, ssnLastFour, billingAddress)) {
-                return@launch
-            }
+//            if (!createCustomerIdentityForPersonalInfo(firstName, lastName, dob, email, ssnLastFour, billingAddress)) {
+//                return@launch
+//            }
             moveNext()
         }
     }
@@ -1071,14 +1071,16 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             return false
         }
 
-        val (updated, err) = CustomerIdentityAPI.uploadIdentityDocuments(
-            identityId,
-            listOf(
-                FileUpload(frontBitmap, FileUploadFieldName.FRONT),
-                FileUpload(backBitmap, FileUploadFieldName.BACK),
-                FileUpload(selfieBitmap, FileUploadFieldName.SELFIE)
-            )
+        val uploads = listOf(
+            FileUpload(frontBitmap, FileUploadFieldName.FRONT),
+            FileUpload(backBitmap, FileUploadFieldName.BACK),
+            FileUpload(selfieBitmap, FileUploadFieldName.SELFIE)
         )
+        frontBitmap.recycle()
+        backBitmap.recycle()
+        selfieBitmap.recycle()
+
+        val (updated, err) = CustomerIdentityAPI.uploadIdentityDocuments(identityId, uploads)
         if (updated != null) {
             _customerIdentity.value = updated
             return true

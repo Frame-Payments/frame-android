@@ -12,20 +12,17 @@ sealed class DisputeEndpoints : FrameNetworkingEndpoints {
         val perPage: Int?,
         val page: Int?
     ) : DisputeEndpoints()
-    data class CloseDispute(val disputeId: String) : DisputeEndpoints()
 
     override val endpointURL: String
         get() = when (this) {
             is UpdateDispute -> "/v1/disputes/${disputeId}"
             is GetDispute -> "/v1/disputes/${disputeId}"
             is GetDisputes -> "/v1/disputes"
-            is CloseDispute -> "/v1/disputes/${disputeId}/close"
         }
 
     override val httpMethod: String
         get() = when (this) {
             is UpdateDispute -> "PATCH"
-            is CloseDispute -> "POST"
             else -> "GET"
         }
 

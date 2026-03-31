@@ -28,7 +28,7 @@ class InvoicesAPITest {
     }
 
     @Test
-    fun testCreateInvoice() = runBlocking {
+    fun testCreateInvoiceWithCustomer() = runBlocking {
         val responseBody = """{"net_terms":14, "description":"new invoice"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
@@ -42,11 +42,33 @@ class InvoicesAPITest {
             memo = null,
             metadata = null
         )
-        val (result, error) = InvoicesAPI.createInvoice(request,)
+        val (result, error) = InvoicesAPI.createInvoice(request)
 
         assertNotNull(result)
         assertEquals(14, result?.netTerms)
         assertEquals("new invoice", result?.invoiceDescription)
+    }
+
+    @Test
+    fun testCreateInvoiceWithAccount() = runBlocking {
+        val responseBody = """{"net_terms":30, "description":"account invoice"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = InvoiceRequests.CreateInvoiceRequest(
+            collectionMethod = InvoiceCollectionMethod.REQUEST_PAYMENT,
+            netTerms = 30,
+            lineItems = null,
+            account = "acc_123",
+            dueDate = "2026-04-30",
+            number = null,
+            description = "account invoice",
+            memo = null,
+            metadata = null
+        )
+        val (result, error) = InvoicesAPI.createInvoice(request)
+
+        assertNotNull(result)
+        assertEquals(30, result?.netTerms)
     }
 
     @Test
@@ -56,12 +78,7 @@ class InvoicesAPITest {
 
         val request = InvoiceRequests.UpdateInvoiceRequest(
             collectionMethod = InvoiceCollectionMethod.REQUEST_PAYMENT,
-            netTerms = null,
-            lineItems = null,
-            number = null,
-            description = "updated invoice",
-            memo = null,
-            metadata = null,
+            description = "updated invoice"
         )
         val (result, error) = InvoicesAPI.updateInvoice("inv_123", request)
 
@@ -94,11 +111,32 @@ class InvoicesAPITest {
 
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val (result, error) = InvoicesAPI.getInvoices(0, 100)
+        val (result, error) = InvoicesAPI.getInvoices(page = 0, perPage = 100)
 
         assertNotNull(result)
         assertEquals("inv_123", result?.data?.get(0)?.id)
         assertEquals("updated invoice", result?.data?.get(1)?.invoiceDescription)
+    }
+
+    @Test
+    fun testGetInvoicesFilteredByAccount() = runBlocking {
+        val responseBody = """
+            {
+                "data": [
+                    {"id":"inv_300", "net_terms":7, "description":"account invoice"}
+                ]
+            }
+        """.trimIndent()
+
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val (result, error) = InvoicesAPI.getInvoices(account = "acc_123")
+
+        assertNotNull(result)
+        assertEquals("inv_300", result?.data?.get(0)?.id)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("acc_123", recorded.requestUrl?.queryParameter("account"))
     }
 
     @Test

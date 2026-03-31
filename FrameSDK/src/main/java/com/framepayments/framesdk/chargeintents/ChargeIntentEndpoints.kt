@@ -10,11 +10,12 @@ sealed class ChargeIntentEndpoints : FrameNetworkingEndpoints {
     data class CaptureChargeIntent(val intentId: String) : ChargeIntentEndpoints()
     data class ConfirmChargeIntent(val intentId: String) : ChargeIntentEndpoints()
     data class CancelChargeIntent(val intentId: String) : ChargeIntentEndpoints()
+    data class VoidRemainingChargeIntent(val intentId: String) : ChargeIntentEndpoints()
 
     override val endpointURL: String
         get() = when (this) {
             is CreateChargeIntent, is GetAllChargeIntents ->
-                "/v1/charge_intents/"
+                "/v1/charge_intents"
             is GetChargeIntent ->
                 "/v1/charge_intents/${this.intentId}"
             is UpdateChargeIntent ->
@@ -25,11 +26,14 @@ sealed class ChargeIntentEndpoints : FrameNetworkingEndpoints {
                 "/v1/charge_intents/${this.intentId}/confirm"
             is CancelChargeIntent ->
                 "/v1/charge_intents/${this.intentId}/cancel"
+            is VoidRemainingChargeIntent ->
+                "/v1/charge_intents/${this.intentId}/void_remaining"
         }
 
     override val httpMethod: String
         get() = when (this) {
-            is CreateChargeIntent, is CancelChargeIntent, is CaptureChargeIntent, is ConfirmChargeIntent -> "POST"
+            is CreateChargeIntent, is CancelChargeIntent, is CaptureChargeIntent,
+            is ConfirmChargeIntent, is VoidRemainingChargeIntent -> "POST"
             is UpdateChargeIntent -> "PATCH"
             else -> "GET"
         }

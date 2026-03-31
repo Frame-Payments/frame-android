@@ -10,11 +10,13 @@ object ConfigurationAPI {
         if (data != null) {
             val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetEvervaultConfigurationResponse>(data)
 
-            SecureConfigurationStorage.save(
-                context = FrameNetworking.getContext(),
-                key = "evervault",
-                value = dataResponse
-            )
+            if (dataResponse != null) {
+                SecureConfigurationStorage.save(
+                    context = FrameNetworking.getContext(),
+                    key = "evervault",
+                    value = dataResponse
+                )
+            }
             return dataResponse
         }
         return null
@@ -27,11 +29,13 @@ object ConfigurationAPI {
         if (data != null) {
             val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetSiftConfigurationResponse>(data)
 
-            SecureConfigurationStorage.save(
-                context = FrameNetworking.getContext(),
-                key = "sift",
-                value = dataResponse
-            )
+            if (dataResponse != null) {
+                SecureConfigurationStorage.save(
+                    context = FrameNetworking.getContext(),
+                    key = "sift",
+                    value = dataResponse
+                )
+            }
             return dataResponse
         }
         return null
@@ -45,11 +49,13 @@ object ConfigurationAPI {
             if (data != null) {
                 val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetEvervaultConfigurationResponse>(data)
 
-                SecureConfigurationStorage.save(
-                    context = FrameNetworking.getContext(),
-                    key = "evervault",
-                    value = dataResponse
-                )
+                if (dataResponse != null) {
+                    SecureConfigurationStorage.save(
+                        context = FrameNetworking.getContext(),
+                        key = "evervault",
+                        value = dataResponse
+                    )
+                }
                 completionHandler(dataResponse)
             } else {
                 completionHandler(null)
@@ -64,11 +70,13 @@ object ConfigurationAPI {
             if (data != null) {
                 val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetSiftConfigurationResponse>(data)
 
-                SecureConfigurationStorage.save(
-                    context = FrameNetworking.getContext(),
-                    key = "sift",
-                    value = dataResponse
-                )
+                if (dataResponse != null) {
+                    SecureConfigurationStorage.save(
+                        context = FrameNetworking.getContext(),
+                        key = "sift",
+                        value = dataResponse
+                    )
+                }
                 completionHandler(dataResponse)
             } else {
                 completionHandler(null)

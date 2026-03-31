@@ -31,6 +31,7 @@ object PaymentMethodRequests {
     )
 
     data class AttachPaymentMethodRequest(
-        val customer: String
+        val customer: String? = null,
+        val account: String? = null
     )
 }

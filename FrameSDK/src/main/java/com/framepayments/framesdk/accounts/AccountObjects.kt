@@ -95,4 +95,14 @@ object AccountObjects {
         val updated: Int,
         val livemode: Boolean
     )
+
+    data class PhoneVerification(
+        val id: String,
+        @SerializedName("object") val verificationObject: String,
+        @SerializedName("account_id") val accountId: String,
+        val status: String,
+        val created: Int,
+        val updated: Int,
+        val livemode: Boolean
+    )
 }

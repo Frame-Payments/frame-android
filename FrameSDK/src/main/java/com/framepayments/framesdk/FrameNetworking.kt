@@ -9,7 +9,9 @@ import com.framepayments.framesdk.fingerprint.FingerprintManager
 import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -45,6 +47,7 @@ object FrameNetworking {
     var debugMode: Boolean = false
     var isEvervaultConfigured: Boolean = false
     private var sonarSessionManager: SonarSessionManager? = null
+    private val sdkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private lateinit var applicationContext: Context
 
@@ -56,8 +59,7 @@ object FrameNetworking {
         SiftManager.initializeSift(apiKey)
         configureEvervault()
 
-        @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
-        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+        sdkScope.launch {
             SiftManager.getPublicIp()
         }
 
@@ -65,8 +67,7 @@ object FrameNetworking {
         // using Fingerprint visitorId when available. If we cannot obtain a
         // Fingerprint visitorId, we skip Sonar session initialization to match
         // the iOS behavior.
-        @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
-        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+        sdkScope.launch {
             val context = getContext()
             FingerprintManager.getVisitorId(context) { fingerprintVisitorId ->
                 val visitorId = fingerprintVisitorId ?: run {
@@ -76,7 +77,7 @@ object FrameNetworking {
                     return@getVisitorId
                 }
 
-                kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+                sdkScope.launch {
                     try {
                         val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), visitorId)
                         sonarSessionManager = manager
@@ -126,7 +127,8 @@ object FrameNetworking {
             val jsonString = String(data, Charsets.UTF_8)
             val type = object : TypeToken<T>() {}.type
             gson.fromJson(jsonString, type)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (debugMode) println("parseResponse failed for ${T::class.simpleName}: $e")
             null
         }
     }
@@ -137,7 +139,8 @@ object FrameNetworking {
             val jsonString = String(data, Charsets.UTF_8)
             val type = object : TypeToken<List<T>>() {}.type
             gson.fromJson<List<T>>(jsonString, type)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (debugMode) println("parseListResponse failed for ${T::class.simpleName}: $e")
             null
         }
     }

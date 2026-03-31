@@ -58,6 +58,12 @@ object ChargeIntentAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
 
+    suspend fun voidRemainingChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?> {
+        val endpoint = ChargeIntentEndpoints.VoidRemainingChargeIntent(intentId)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
+        return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
+    }
+
     //MARK: Methods using callbacks
     fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.CreateChargeIntent
@@ -114,6 +120,14 @@ object ChargeIntentAPI {
         val endpoint = ChargeIntentEndpoints.UpdateChargeIntent(intentId)
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
+        }
+    }
+
+    fun voidRemainingChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit) {
+        val endpoint = ChargeIntentEndpoints.VoidRemainingChargeIntent(intentId)
+
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }

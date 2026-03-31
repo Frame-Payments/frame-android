@@ -1,6 +1,5 @@
 package com.framepayments.framesdk
 
-import com.framepayments.framesdk.disputes.DisputeEvidence
 import com.framepayments.framesdk.disputes.DisputeReason
 import com.framepayments.framesdk.disputes.DisputeRequests
 import com.framepayments.framesdk.disputes.DisputeStatus
@@ -11,6 +10,8 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 
@@ -48,11 +49,10 @@ class DisputesAPITest {
         """.trimIndent().replace("\n", "")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val evidence = DisputeEvidence(
-            evidenceProductDescription = "Widget",
-            evidenceShippingTrackingNumber = "1Z999AA10123456784"
+        val request = DisputeRequests.UpdateDisputeRequest(
+            shippingTrackingNumber = "1Z999AA10123456784",
+            supportDescription = "Customer received the item"
         )
-        val request = DisputeRequests.UpdateDisputeRequest(evidence = evidence, submit = true)
         val (result, error) = DisputesAPI.updateDispute("dp_123", request)
 
         assertNotNull(result)
@@ -60,6 +60,43 @@ class DisputesAPITest {
         assertEquals(1000, result?.amount)
         assertEquals(DisputeReason.PRODUCT_NOT_RECEIVED, result?.reason)
         assertEquals(DisputeStatus.UNDER_REVIEW, result?.status)
+
+        val recorded = mockWebServer.takeRequest()
+        val body = recorded.body.readUtf8()
+        assertTrue(body.contains("shipping_tracking_number"))
+        assertTrue(body.contains("support_description"))
+        assertFalse(body.contains("\"evidence\""))
+        assertFalse(body.contains("\"submit\""))
+    }
+
+    @Test
+    fun testUpdateDisputeWithFlatFields() = runBlocking {
+        val responseBody = """
+            {
+                "id": "dp_999",
+                "amount": 2000,
+                "currency": "usd",
+                "reason": "fraudulent",
+                "status": "needs_response",
+                "object": "dispute",
+                "livemode": false,
+                "created": 1234567890,
+                "updated": 1234567891
+            }
+        """.trimIndent().replace("\n", "")
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = DisputeRequests.UpdateDisputeRequest(
+            shippingCarrier = "UPS",
+            shippingDate = "2026-03-01",
+            customerPurchaseIpAddress = "192.168.1.1",
+            refundRefusalExplanation = "Item was delivered",
+            accessActivityLog = "Customer logged in on 2026-02-28"
+        )
+        val (result, error) = DisputesAPI.updateDispute("dp_999", request)
+
+        assertNotNull(result)
+        assertEquals("dp_999", result?.id)
     }
 
     @Test
@@ -133,29 +170,5 @@ class DisputesAPITest {
         assertEquals(DisputeStatus.UNDER_REVIEW, result?.data?.get(0)?.status)
         assertEquals("dp_2", result?.data?.get(1)?.id)
         assertEquals(DisputeStatus.WON, result?.data?.get(1)?.status)
-    }
-
-    @Test
-    fun testCloseDispute() = runBlocking {
-        val responseBody = """
-            {
-                "id": "dp_789",
-                "amount": 1500,
-                "currency": "usd",
-                "reason": "customer_initiated",
-                "status": "lost",
-                "object": "dispute",
-                "livemode": false,
-                "created": 1234567890,
-                "updated": 1234567892
-            }
-        """.trimIndent().replace("\n", "")
-        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
-
-        val (result, error) = DisputesAPI.closeDispute("dp_789")
-
-        assertNotNull(result)
-        assertEquals("dp_789", result?.id)
-        assertEquals(DisputeStatus.LOST, result?.status)
     }
 }

@@ -20,8 +20,8 @@ object InvoicesAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<Invoice>(data) }, error)
     }
 
-    suspend fun getInvoices(page: Int? = null, perPage: Int? = null): Pair<InvoiceResponses.ListInvoicesResponse?, NetworkingError?> {
-        val endpoint = InvoiceEndpoints.GetInvoices(perPage = perPage, page = page)
+    suspend fun getInvoices(page: Int? = null, perPage: Int? = null, customer: String? = null, account: String? = null, status: InvoiceStatus? = null): Pair<InvoiceResponses.ListInvoicesResponse?, NetworkingError?> {
+        val endpoint = InvoiceEndpoints.GetInvoices(perPage = perPage, page = page, customer = customer, account = account, status = status)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<InvoiceResponses.ListInvoicesResponse>(data) }, error)
     }
@@ -66,8 +66,8 @@ object InvoicesAPI {
         }
     }
 
-    fun getInvoices(page: Int? = null, perPage: Int? = null, completionHandler: (InvoiceResponses.ListInvoicesResponse?, NetworkingError?) -> Unit) {
-        val endpoint = InvoiceEndpoints.GetInvoices(perPage = perPage, page = page)
+    fun getInvoices(page: Int? = null, perPage: Int? = null, customer: String? = null, account: String? = null, status: InvoiceStatus? = null, completionHandler: (InvoiceResponses.ListInvoicesResponse?, NetworkingError?) -> Unit) {
+        val endpoint = InvoiceEndpoints.GetInvoices(perPage = perPage, page = page, customer = customer, account = account, status = status)
 
         FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<InvoiceResponses.ListInvoicesResponse>(data) }, error)

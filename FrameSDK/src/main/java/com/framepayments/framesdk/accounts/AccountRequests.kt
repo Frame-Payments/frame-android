@@ -75,4 +75,8 @@ object AccountRequests {
         val metadata: Map<String, String>? = null,
         val profile: UpdateAccountProfile? = null
     )
+
+    data class ConfirmPhoneVerificationRequest(
+        val code: String
+    )
 }

@@ -133,4 +133,20 @@ class ChargeIntentAPITest {
         assertEquals("intent_123", result?.id)
         assertEquals(400, result?.amount)
     }
+
+    @Test
+    fun testVoidRemainingChargeIntent() = runBlocking {
+        val responseBody = """{"id":"intent_123", "status":"succeeded"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val (result, error) = ChargeIntentAPI.voidRemainingChargeIntent("intent_123")
+
+        assertNotNull(result)
+        assertEquals("intent_123", result?.id)
+        assertEquals(ChargeIntentStatus.SUCCEEDED, result?.status)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("POST", recorded.method)
+        assertTrue(recorded.requestUrl?.encodedPath?.endsWith("/void_remaining") == true)
+    }
 }

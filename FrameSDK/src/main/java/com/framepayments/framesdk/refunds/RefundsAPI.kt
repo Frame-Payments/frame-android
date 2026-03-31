@@ -1,5 +1,4 @@
 package com.framepayments.framesdk.refunds
-import com.framepayments.framesdk.EmptyRequest
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 
@@ -20,12 +19,6 @@ object RefundsAPI {
     suspend fun getRefundWith(refundId: String): Pair<Refund?, NetworkingError?> {
         val endpoint = RefundEndpoints.GetRefundWith(refundId)
         val (data, error) = FrameNetworking.performDataTask(endpoint)
-        return Pair(data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
-    }
-
-    suspend fun cancelRefund(refundId: String): Pair<Refund?, NetworkingError?> {
-        val endpoint = RefundEndpoints.CancelRefund(refundId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
         return Pair(data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
     }
 
@@ -54,11 +47,4 @@ object RefundsAPI {
         }
     }
 
-    fun cancelRefund(refundId: String, completionHandler: (Refund?, NetworkingError?) -> Unit) {
-        val endpoint = RefundEndpoints.CancelRefund(refundId)
-
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, error ->
-            completionHandler( data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
-        }
-    }
 }

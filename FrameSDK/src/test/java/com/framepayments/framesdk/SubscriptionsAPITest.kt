@@ -32,12 +32,17 @@ class SubscriptionsAPITest {
         val responseBody = """{"id":"sub_123", "status":"active"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val request = SubscriptionRequest.CreateSubscriptionRequest("123", "1", currency= "USD", defaultPaymentMethod = "1", description = "")
+        val request = SubscriptionRequest.CreateSubscriptionRequest("123", "1", currency= "USD", defaultPaymentMethod = "pm_1", description = "")
         val (result, error) = SubscriptionsAPI.createSubscription(request)
 
         assertNotNull(result)
         assertEquals("sub_123", result?.id)
         assertEquals("active", result?.status)
+
+        val recorded = mockWebServer.takeRequest()
+        val body = recorded.body.readUtf8()
+        assertTrue(body.contains("\"default_payment_method\""))
+        assertFalse(body.contains("\"defaultPaymentMethod\""))
     }
 
     @Test

@@ -114,10 +114,8 @@ class CustomersAPITest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         val request = CustomersRequests.SearchCustomersRequest(
-            phone = null,
-            name = null,
+            q = null,
             email = "tester@gmail.com",
-            createdBefore = null,
             createdAfter = null
         )
         val (result, error) = CustomersAPI.searchCustomers(request)
@@ -125,6 +123,27 @@ class CustomersAPITest {
         assertNotNull(result)
         assertEquals("cus_998", result?.get(0)?.id)
         assertEquals("tester@gmail.com", result?.get(0)?.email)
+    }
+
+    @Test
+    fun testSearchCustomersWithQParam() = runBlocking {
+        val responseBody = """
+            {
+                "data": [
+                    {"id":"cus_001", "name":"John Doe", "email":"john@example.com"}
+                ]
+            }
+        """.trimIndent()
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = CustomersRequests.SearchCustomersRequest(q = "John")
+        val (result, error) = CustomersAPI.searchCustomers(request)
+
+        assertNotNull(result)
+        assertEquals("cus_001", result?.get(0)?.id)
+
+        val recorded = mockWebServer.takeRequest()
+        assertTrue(recorded.requestUrl?.queryParameter("q") == "John")
     }
 
     @Test

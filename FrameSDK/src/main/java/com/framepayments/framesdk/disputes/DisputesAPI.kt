@@ -38,15 +38,6 @@ object DisputesAPI {
         )
     }
 
-    suspend fun closeDispute(disputeId: String): Pair<Dispute?, NetworkingError?> {
-        val endpoint = DisputeEndpoints.CloseDispute(disputeId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(
-            endpoint,
-            com.framepayments.framesdk.EmptyRequest(description = null)
-        )
-        return Pair(data?.let { FrameNetworking.parseResponse<Dispute>(data) }, error)
-    }
-
     fun updateDispute(
         disputeId: String,
         request: DisputeRequests.UpdateDisputeRequest,
@@ -86,13 +77,4 @@ object DisputesAPI {
         }
     }
 
-    fun closeDispute(disputeId: String, completionHandler: (Dispute?, NetworkingError?) -> Unit) {
-        val endpoint = DisputeEndpoints.CloseDispute(disputeId)
-        FrameNetworking.performDataTaskWithRequest(
-            endpoint,
-            com.framepayments.framesdk.EmptyRequest(description = null)
-        ) { data, error ->
-            completionHandler(data?.let { FrameNetworking.parseResponse<Dispute>(data) }, error)
-        }
-    }
 }

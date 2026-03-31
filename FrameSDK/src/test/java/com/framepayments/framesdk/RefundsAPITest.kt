@@ -1,6 +1,5 @@
 package com.framepayments.framesdk
 
-import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.refunds.RefundRequests
 import com.framepayments.framesdk.refunds.RefundsAPI
 import kotlinx.coroutines.runBlocking
@@ -27,16 +26,34 @@ class RefundsAPITest {
     }
 
     @Test
-    fun testCreateRefund() = runBlocking {
+    fun testCreateRefundWithRequiredFieldOnly() = runBlocking {
         val responseBody = """{"id":"ref_123", "status":"refunded"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val request = RefundRequests.CreateRefundRequest(amount = 100, charge = "", reason = "", chargeIntent = "1")
+        val request = RefundRequests.CreateRefundRequest(chargeIntent = "ci_123")
         val (result, error) = RefundsAPI.createRefund(request)
 
         assertNotNull(result)
         assertEquals("ref_123", result?.id)
         assertEquals("refunded", result?.status)
+
+        val recorded = mockWebServer.takeRequest()
+        val body = recorded.body.readUtf8()
+        assertTrue(body.contains("charge_intent"))
+        assertFalse(body.contains("\"amount\""))
+        assertFalse(body.contains("\"reason\""))
+    }
+
+    @Test
+    fun testCreateRefundWithOptionalFields() = runBlocking {
+        val responseBody = """{"id":"ref_456", "status":"refunded"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = RefundRequests.CreateRefundRequest(chargeIntent = "ci_456", amount = 500, reason = "duplicate")
+        val (result, error) = RefundsAPI.createRefund(request)
+
+        assertNotNull(result)
+        assertEquals("ref_456", result?.id)
     }
 
     @Test
@@ -69,17 +86,5 @@ class RefundsAPITest {
         assertNotNull(result)
         assertEquals("ref_4", result?.id)
         assertEquals("refunded", result?.status)
-    }
-
-    @Test
-    fun testCancelRefund() = runBlocking {
-        val responseBody = """{"id":"ref_789", "status":"canceled"}"""
-        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
-
-        val (result, error) = RefundsAPI.cancelRefund("ref_789")
-
-        assertNotNull(result)
-        assertEquals("ref_789", result?.id)
-        assertEquals("canceled", result?.status)
     }
 }

@@ -7,4 +7,9 @@ object AccountResponses {
         val meta: FrameMetadata? = null,
         val data: List<AccountObjects.Account>? = null
     )
+
+    data class SearchAccountsResponse(
+        val meta: FrameMetadata? = null,
+        val data: List<AccountObjects.Account>? = null
+    )
 }

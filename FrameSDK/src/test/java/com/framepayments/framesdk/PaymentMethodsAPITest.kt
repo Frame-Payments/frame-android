@@ -144,7 +144,7 @@ class PaymentMethodsAPITest {
     }
 
     @Test
-    fun testAttachPaymentMethodWithId() = runBlocking {
+    fun testAttachPaymentMethodWithCustomer() = runBlocking {
         val responseBody = paymentMethodJson("method_123", "card", customerId = "cus_111")
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
@@ -154,6 +154,18 @@ class PaymentMethodsAPITest {
         assertNotNull(result)
         assertEquals("method_123", result?.id)
         assertEquals("cus_111", result?.customerId)
+    }
+
+    @Test
+    fun testAttachPaymentMethodWithAccount() = runBlocking {
+        val responseBody = paymentMethodJson("method_123", "card")
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = PaymentMethodRequests.AttachPaymentMethodRequest(account = "acc_123")
+        val (result, error) = PaymentMethodsAPI.attachPaymentMethodWith("method_123", request)
+
+        assertNotNull(result)
+        assertEquals("method_123", result?.id)
     }
 
     @Test
