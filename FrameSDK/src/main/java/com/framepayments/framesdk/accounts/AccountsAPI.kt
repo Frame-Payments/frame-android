@@ -103,6 +103,13 @@ object AccountsAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.PhoneVerification>(it) }, error)
     }
 
+    suspend fun getPlaidLinkToken(accountId: String): Pair<AccountResponses.PlaidLinkTokenResponse?, NetworkingError?> {
+        if (accountId.isEmpty()) return Pair(null, null)
+        val endpoint = AccountEndpoints.GetPlaidLinkToken(accountId)
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        return Pair(data?.let { FrameNetworking.parseResponse<AccountResponses.PlaidLinkTokenResponse>(it) }, error)
+    }
+
     // MARK: Methods using callbacks
     fun createAccount(request: AccountRequests.CreateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit) {
         val endpoint = AccountEndpoints.CreateAccount
@@ -207,6 +214,14 @@ object AccountsAPI {
         val endpoint = AccountEndpoints.ConfirmPhoneVerification(accountId, verificationId)
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountObjects.PhoneVerification>(it) }, error)
+        }
+    }
+
+    fun getPlaidLinkToken(accountId: String, completionHandler: (AccountResponses.PlaidLinkTokenResponse?, NetworkingError?) -> Unit) {
+        if (accountId.isEmpty()) return completionHandler(null, null)
+        val endpoint = AccountEndpoints.GetPlaidLinkToken(accountId)
+        FrameNetworking.performDataTask(endpoint) { data, error ->
+            completionHandler(data?.let { FrameNetworking.parseResponse<AccountResponses.PlaidLinkTokenResponse>(it) }, error)
         }
     }
 }

@@ -34,4 +34,12 @@ object PaymentMethodRequests {
         val customer: String? = null,
         val account: String? = null
     )
+
+    data class ConnectPlaidBankAccountRequest(
+        val account: String,
+        @SerializedName("public_token") val publicToken: String,
+        @SerializedName("account_id") val accountId: String,
+        @SerializedName("institution_name") val institutionName: String? = null,
+        val subtype: String? = null
+    )
 }
