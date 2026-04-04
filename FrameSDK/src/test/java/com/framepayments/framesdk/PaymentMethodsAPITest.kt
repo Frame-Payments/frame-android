@@ -203,4 +203,49 @@ class PaymentMethodsAPITest {
         assertEquals("method_123", result?.id)
         assertEquals(FrameObjects.PaymentMethodStatus.ACTIVE, result?.status)
     }
+
+    @Test
+    fun testConnectPlaidBankAccount() = runBlocking {
+        val responseBody = paymentMethodJson("pm_123", "ach")
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = com.framepayments.framesdk.paymentmethods.PaymentMethodRequests.ConnectPlaidBankAccountRequest(
+            account = "acc_123",
+            publicToken = "public-sandbox-abc123",
+            accountId = "plaid-account-xyz",
+            institutionName = "Chase",
+            subtype = "checking"
+        )
+        val (result, error) = PaymentMethodsAPI.connectPlaidBankAccount(request)
+
+        assertNotNull(result)
+        assertNull(error)
+        assertEquals("pm_123", result?.id)
+        assertEquals(FrameObjects.PaymentMethodType.ACH, result?.type)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("POST", recorded.method)
+        assertTrue(recorded.requestUrl?.encodedPath?.endsWith("/connect_plaid") == true)
+        val body = recorded.body.readUtf8()
+        assertTrue(body.contains("\"public_token\""))
+        assertTrue(body.contains("\"account_id\""))
+        assertTrue(body.contains("\"institution_name\""))
+    }
+
+    @Test
+    fun testConnectPlaidBankAccountNetworkError() = runBlocking {
+        mockWebServer.enqueue(MockResponse().setResponseCode(500))
+
+        val request = com.framepayments.framesdk.paymentmethods.PaymentMethodRequests.ConnectPlaidBankAccountRequest(
+            account = "acc_123",
+            publicToken = "public-sandbox-abc123",
+            accountId = "plaid-account-xyz",
+            institutionName = null,
+            subtype = null
+        )
+        val (result, error) = PaymentMethodsAPI.connectPlaidBankAccount(request)
+
+        assertNull(result)
+        assertNotNull(error)
+    }
 }

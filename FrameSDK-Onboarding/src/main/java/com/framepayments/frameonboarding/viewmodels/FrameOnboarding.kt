@@ -102,6 +102,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private val _savedPayoutMethods = MutableStateFlow<List<PaymentMethodSummary>>(emptyList())
     val savedPayoutMethods: StateFlow<List<PaymentMethodSummary>> = _savedPayoutMethods.asStateFlow()
 
+    private val _plaidLinkToken = MutableStateFlow<String?>(null)
+    val plaidLinkToken: StateFlow<String?> = _plaidLinkToken.asStateFlow()
+
+    private val _isConnectingPlaidBank = MutableStateFlow(false)
+    val isConnectingPlaidBank: StateFlow<Boolean> = _isConnectingPlaidBank.asStateFlow()
+
     // Result to emit to the host (Completed / Cancelled only — errors stay in-flow via [userErrorMessage])
     private val _result = MutableStateFlow<OnboardingResult?>(null)
     val result: StateFlow<OnboardingResult?> = _result.asStateFlow()
@@ -961,6 +967,54 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 moveNext()
             } else {
                 reportUserError(userMessageForNetworkError(achErr))
+            }
+        }
+    }
+
+    fun clearPlaidLinkToken() {
+        _plaidLinkToken.value = null
+    }
+
+    fun fetchPlaidLinkToken() {
+        val accountId = _resolvedAccountId.value ?: return
+        if (_isConnectingPlaidBank.value || _plaidLinkToken.value != null) return
+        _isConnectingPlaidBank.value = true
+        viewModelScope.launch {
+            val (response, err) = AccountsAPI.getPlaidLinkToken(accountId)
+            if (response?.linkToken != null) {
+                _plaidLinkToken.value = response.linkToken
+            } else {
+                _isConnectingPlaidBank.value = false
+                reportUserError(userMessageForNetworkError(err))
+            }
+        }
+    }
+
+    fun handlePlaidSuccess(publicToken: String, plaidAccountId: String, institutionName: String?, subtype: String?) {
+        val accountId = _resolvedAccountId.value ?: return
+        viewModelScope.launch {
+            _isConnectingPlaidBank.value = true
+            val request = com.framepayments.framesdk.paymentmethods.PaymentMethodRequests.ConnectPlaidBankAccountRequest(
+                account = accountId,
+                publicToken = publicToken,
+                accountId = plaidAccountId,
+                institutionName = institutionName,
+                subtype = subtype
+            )
+            val (payoutMethod, err) = PaymentMethodsAPI.connectPlaidBankAccount(request)
+            _isConnectingPlaidBank.value = false
+            if (payoutMethod != null && payoutMethod.ach != null) {
+                _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethod.id) }
+                _savedPayoutMethods.value += PaymentMethodSummary(
+                    id = payoutMethod.id,
+                    brand = "BANK",
+                    last4 = payoutMethod.ach.lastFour ?: "",
+                    exp = ""
+                )
+                clearAccountDetails()
+                moveNext()
+            } else {
+                reportUserError(userMessageForNetworkError(err))
             }
         }
     }
