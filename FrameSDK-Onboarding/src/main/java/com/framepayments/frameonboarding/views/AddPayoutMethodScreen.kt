@@ -40,7 +40,6 @@ import com.framepayments.frameonboarding.theme.FramePrimaryColor
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.plaid.link.OpenPlaidLink
 import com.plaid.link.configuration.LinkTokenConfiguration
-import com.plaid.link.result.LinkCancellation
 import com.plaid.link.result.LinkExit
 import com.plaid.link.result.LinkSuccess
 
@@ -69,20 +68,20 @@ internal fun AddPayoutMethodScreen(
                     publicToken = result.publicToken,
                     plaidAccountId = account?.id ?: "",
                     institutionName = result.metadata.institution?.name,
-                    subtype = account?.subtype?.value
+                    subtype = account?.subtype?.json
                 )
             }
             is LinkExit -> {
                 result.error?.let { android.util.Log.w("Plaid", "Plaid exited: ${it.displayMessage}") }
             }
-            is LinkCancellation -> { /* no-op */ }
+            else -> { /* no-op */ }
         }
         viewModel.clearPlaidLinkToken()
     }
 
     LaunchedEffect(plaidToken) {
         plaidToken?.let { token ->
-            plaidLauncher.launch(LinkTokenConfiguration(token = token, noLoadingState = false))
+            plaidLauncher.launch(LinkTokenConfiguration.Builder().token(token).build())
         }
     }
 

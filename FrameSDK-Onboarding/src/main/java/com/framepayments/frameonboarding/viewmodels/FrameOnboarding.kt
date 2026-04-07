@@ -1003,12 +1003,13 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             )
             val (payoutMethod, err) = PaymentMethodsAPI.connectPlaidBankAccount(request)
             _isConnectingPlaidBank.value = false
-            if (payoutMethod != null && payoutMethod.ach != null) {
+            val ach = payoutMethod?.ach
+            if (payoutMethod != null && ach != null) {
                 _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethod.id) }
                 _savedPayoutMethods.value += PaymentMethodSummary(
                     id = payoutMethod.id,
                     brand = "BANK",
-                    last4 = payoutMethod.ach.lastFour ?: "",
+                    last4 = ach.lastFour ?: "",
                     exp = ""
                 )
                 clearAccountDetails()
