@@ -2,6 +2,7 @@ package com.framepayments.framesdk_ui.viewmodels
 
 import androidx.lifecycle.*
 import com.evervault.sdk.input.model.card.PaymentCardData
+import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.AuthorizationMode
 import com.framepayments.framesdk.chargeintents.ChargeIntent
@@ -11,15 +12,27 @@ import com.framepayments.framesdk.customers.CustomersAPI
 import com.framepayments.framesdk.customers.CustomersRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class FrameCheckoutViewModel : ViewModel() {
 
+    companion object {
+        private val gson = Gson()
+    }
+
     // Observable customer payment options
     private val _customerPaymentOptions = MutableLiveData<List<FrameObjects.PaymentMethod>?>(null)
     val customerPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _customerPaymentOptions
+
+    private val _isGooglePayReady = MutableLiveData(false)
+    val isGooglePayReady: LiveData<Boolean> = _isGooglePayReady
+
+    private val _googlePayChargeIntent = MutableLiveData<ChargeIntent?>(null)
+    val googlePayChargeIntent: LiveData<ChargeIntent?> = _googlePayChargeIntent
 
     // Customer fields
     val customerName = MutableLiveData("")
@@ -37,7 +50,7 @@ class FrameCheckoutViewModel : ViewModel() {
 
     // Internal tracking
     private var currentCustomerId: String? = null
-    private var amount: Int = 0
+    internal var amount: Int = 0
 
     fun loadCustomerPaymentMethods(customerId: String?, amount: Int) {
         this.amount = amount
@@ -57,12 +70,66 @@ class FrameCheckoutViewModel : ViewModel() {
         }
     }
 
+    fun setGooglePayReadiness(isReady: Boolean) {
+        _isGooglePayReady.value = isReady
+    }
+
     fun payWithApplePay() {
         // TODO: implement Apple Pay flow
     }
 
-    fun payWithGooglePay() {
-        // TODO: implement Google Pay flow
+    fun payWithGooglePay(googlePayToken: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val type = object : TypeToken<Map<String, Any>>() {}.type
+            val paymentDataMap: Map<String, Any> = gson.fromJson(googlePayToken, type)
+
+            val email = paymentDataMap["email"] as? String
+            val apiVersion = (paymentDataMap["apiVersion"] as? Double)?.toInt() ?: 2
+            val apiVersionMinor = (paymentDataMap["apiVersionMinor"] as? Double)?.toInt() ?: 0
+            @Suppress("UNCHECKED_CAST")
+            val paymentMethodData = paymentDataMap["paymentMethodData"] as? Map<String, Any>
+                ?: run {
+                    withContext(Dispatchers.Main) { _googlePayChargeIntent.value = null }
+                    return@launch
+                }
+
+            val walletData = PaymentMethodRequests.GooglePayWalletData(
+                apiVersion = apiVersion,
+                apiVersionMinor = apiVersionMinor,
+                email = email,
+                paymentMethodData = paymentMethodData
+            )
+            val request = PaymentMethodRequests.CreateGooglePayPaymentMethodRequest(
+                wallet = PaymentMethodRequests.GooglePayWallet(googlePay = walletData),
+                customer = currentCustomerId
+            )
+
+            val (pm, _) = PaymentMethodsAPI.createGooglePayPaymentMethod(request)
+            val pmId = pm?.id ?: run {
+                withContext(Dispatchers.Main) { _googlePayChargeIntent.value = null }
+                return@launch
+            }
+
+            val ciRequest = ChargeIntentsRequests.CreateChargeIntentRequest(
+                amount = amount,
+                currency = "usd",
+                customer = currentCustomerId,
+                description = "",
+                paymentMethod = pmId,
+                confirm = true,
+                receiptEmail = null,
+                authorizationMode = AuthorizationMode.AUTOMATIC,
+                customerData = null,
+                paymentMethodData = null,
+                fraudSignals = null,
+                sonarSessionId = FrameNetworking.currentSonarSessionId()
+            )
+            val (intent, _) = ChargeIntentAPI.createChargeIntent(ciRequest)
+
+            withContext(Dispatchers.Main) {
+                _googlePayChargeIntent.value = intent
+            }
+        }
     }
 
     fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean): LiveData<ChargeIntent?> = liveData(Dispatchers.IO) {
@@ -104,7 +171,7 @@ class FrameCheckoutViewModel : ViewModel() {
             customerData = null,
             paymentMethodData = null,
             fraudSignals = null,
-            sonarSessionId = com.framepayments.framesdk.FrameNetworking.currentSonarSessionId()
+            sonarSessionId = FrameNetworking.currentSonarSessionId()
         )
 
         // Create and emit the intent

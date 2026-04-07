@@ -34,4 +34,23 @@ object PaymentMethodRequests {
         val customer: String? = null,
         val account: String? = null
     )
+
+    data class GooglePayWalletData(
+        val apiVersion: Int,
+        val apiVersionMinor: Int,
+        val email: String?,
+        val paymentMethodData: Any
+    )
+
+    data class GooglePayWallet(
+        val type: String = "google_pay",
+        @SerializedName("google_pay") val googlePay: GooglePayWalletData
+    )
+
+    data class CreateGooglePayPaymentMethodRequest(
+        val type: String = "card",
+        @SerializedName("_wallet") val wallet: GooglePayWallet,
+        val customer: String? = null,
+        val account: String? = null
+    )
 }
