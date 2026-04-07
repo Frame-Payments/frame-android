@@ -12,38 +12,19 @@ import android.widget.FrameLayout
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
-import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.ChargeIntent
-import com.framepayments.framesdk.wallet.WalletAPI
+import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentCardBinding
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk_ui.viewmodels.FrameCheckoutViewModel
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.ResolvableApiException
-import com.google.android.gms.wallet.PaymentData
-import com.google.android.gms.wallet.PaymentDataRequest
-import com.google.android.gms.wallet.IsReadyToPayRequest
-import com.google.android.gms.wallet.PaymentsClient
-import com.google.android.gms.wallet.Wallet
-import com.google.android.gms.wallet.WalletConstants
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import org.json.JSONArray
-import org.json.JSONObject
 
 class FrameCheckoutView @JvmOverloads constructor(
     context: Context,
@@ -59,21 +40,12 @@ class FrameCheckoutView @JvmOverloads constructor(
 
     var checkoutCallback: ((ChargeIntent) -> Unit)? = null
 
-    private lateinit var paymentsClient: PaymentsClient
-    private lateinit var googlePayLauncher: ActivityResultLauncher<IntentSenderRequest>
-    private var googlePayMerchantId: String? = null
-    private var googlePayGateway: String = ""
-    private var googlePayGatewayMerchantId: String = ""
-    private val viewScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
     init {
         val activity = (context as? AppCompatActivity)
             ?: throw IllegalArgumentException("FrameCheckoutView must be used in an AppCompatActivity")
         viewModel = ViewModelProvider(activity)[FrameCheckoutViewModel::class.java]
 
         binding.closeButton.setOnClickListener { (context as Activity).finish() }
-//        binding.applePayBtn.setOnClickListener { viewModel.payWithApplePay() }
-        binding.googlePayBtn.setOnClickListener { requestGooglePay() }
 
         binding.payButton.setOnClickListener {
             binding.checkoutProgressBar.visibility = View.VISIBLE
@@ -109,34 +81,6 @@ class FrameCheckoutView @JvmOverloads constructor(
         }
 
         binding.encryptedCardInput.onCardDataChange = { data -> viewModel.cardData = data }
-
-        val walletEnv = if (FrameNetworking.debugMode)
-            WalletConstants.ENVIRONMENT_TEST
-        else
-            WalletConstants.ENVIRONMENT_PRODUCTION
-        paymentsClient = Wallet.getPaymentsClient(
-            activity,
-            Wallet.WalletOptions.Builder().setEnvironment(walletEnv).build()
-        )
-
-        googlePayLauncher = activity.registerForActivityResult(
-            ActivityResultContracts.StartIntentSenderForResult()
-        ) { result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.let { intent ->
-                    PaymentData.getFromIntent(intent)?.let { handleGooglePaySuccess(it) }
-                }
-            }
-        }
-
-        viewModel.isGooglePayReady.observe(activity) { isReady ->
-            binding.googlePayBtn.visibility = if (isReady) View.VISIBLE else View.GONE
-            binding.googlePayDivider.visibility = if (isReady) View.VISIBLE else View.GONE
-        }
-
-        viewModel.googlePayChargeIntent.observe(activity) { intent ->
-            intent?.let { checkoutCallback?.invoke(it) }
-        }
     }
 
     @SuppressLint("SetTextI18n")
@@ -203,105 +147,22 @@ class FrameCheckoutView @JvmOverloads constructor(
         onCheckout: (ChargeIntent) -> Unit
     ) {
         checkoutCallback = onCheckout
-        this.googlePayMerchantId = googlePayMerchantId
         viewModel.loadCustomerPaymentMethods(customerId, paymentAmount)
         binding.payButton.text = "Pay ${CurrencyFormatter.convertCentsToCurrencyString(paymentAmount)}"
-        checkGooglePayReadiness()
-    }
 
-    private fun checkGooglePayReadiness() {
-        viewScope.launch {
-            val (config, error) = WalletAPI.getGooglePayConfiguration()
-            if (config == null || error != null) {
-                viewModel.setGooglePayReadiness(false)
-                return@launch
-            }
-            val isProduction = config.environment.uppercase() == "PRODUCTION"
-            googlePayGateway = if (isProduction) config.processor else "example"
-            googlePayGatewayMerchantId = if (isProduction) config.processorKey else "exampleGatewayMerchantId"
-
-            val request = IsReadyToPayRequest.fromJson(buildIsReadyToPayRequest().toString()) ?: return@launch
-            paymentsClient.isReadyToPay(request).addOnCompleteListener { task ->
-                try {
-                    viewModel.setGooglePayReadiness(task.getResult(ApiException::class.java))
-                } catch (e: ApiException) {
-                    viewModel.setGooglePayReadiness(false)
+        binding.googlePayBtn.configure(
+            amountCents = paymentAmount,
+            customerId = customerId,
+            googlePayMerchantId = googlePayMerchantId,
+            onResult = { result ->
+                when (result) {
+                    is FrameGooglePayButton.Result.Success -> checkoutCallback?.invoke(result.chargeIntent)
+                    else -> {}
                 }
+            },
+            onReadinessChanged = { isReady ->
+                binding.googlePayDivider.visibility = if (isReady) View.VISIBLE else View.GONE
             }
-        }
-    }
-
-    private fun requestGooglePay() {
-        val request = PaymentDataRequest.fromJson(buildPaymentDataRequest()?.toString() ?: return)
-        paymentsClient.loadPaymentData(request).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                task.result?.let { handleGooglePaySuccess(it) }
-            } else {
-                val exception = task.exception
-                if (exception is ResolvableApiException) {
-                    googlePayLauncher.launch(
-                        IntentSenderRequest.Builder(exception.resolution).build()
-                    )
-                }
-            }
-        }
-    }
-
-    private fun handleGooglePaySuccess(paymentData: PaymentData) {
-        viewModel.payWithGooglePay(paymentData.toJson())
-    }
-
-    private fun buildIsReadyToPayRequest(): JSONObject {
-        return JSONObject().apply {
-            put("apiVersion", 2)
-            put("apiVersionMinor", 0)
-            put("allowedPaymentMethods", JSONArray().apply {
-                put(JSONObject().apply {
-                    put("type", "CARD")
-                    put("parameters", JSONObject().apply {
-                        put("allowedAuthMethods", JSONArray(listOf("PAN_ONLY", "CRYPTOGRAM_3DS")))
-                        put("allowedCardNetworks", JSONArray(listOf("AMEX", "DISCOVER", "MASTERCARD", "VISA")))
-                    })
-                })
-            })
-        }
-    }
-
-    private fun buildPaymentDataRequest(): JSONObject? {
-        if (googlePayGateway.isEmpty() || googlePayGatewayMerchantId.isEmpty()) return null
-        return JSONObject().apply {
-            put("apiVersion", 2)
-            put("apiVersionMinor", 0)
-            put("allowedPaymentMethods", JSONArray().apply {
-                put(JSONObject().apply {
-                    put("type", "CARD")
-                    put("parameters", JSONObject().apply {
-                        put("allowedAuthMethods", JSONArray(listOf("PAN_ONLY", "CRYPTOGRAM_3DS")))
-                        put("allowedCardNetworks", JSONArray(listOf("AMEX", "DISCOVER", "MASTERCARD", "VISA")))
-                        put("billingAddressRequired", true)
-                        put("billingAddressParameters", JSONObject().apply {
-                            put("format", "FULL")
-                        })
-                    })
-                    put("tokenizationSpecification", JSONObject().apply {
-                        put("type", "PAYMENT_GATEWAY")
-                        put("parameters", JSONObject().apply {
-                            put("gateway", googlePayGateway)
-                            put("gatewayMerchantId", googlePayGatewayMerchantId)
-                        })
-                    })
-                })
-            })
-            put("transactionInfo", JSONObject().apply {
-                put("totalPriceStatus", "FINAL")
-                put("totalPrice", String.format("%.2f", viewModel.amount / 100.0))
-                put("currencyCode", "USD")
-            })
-            put("merchantInfo", JSONObject().apply {
-                googlePayMerchantId?.let { put("merchantId", it) }
-                put("merchantName", "Frame Payments")
-            })
-            put("emailRequired", true)
-        }
+        )
     }
 }

@@ -50,7 +50,7 @@
 <!--            android:layout_marginTop="18dp"-->
 <!--            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>-->
 
-        <com.framepayments.framesdk_ui.buttons.GooglePayButton
+        <com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
             android:id="@+id/googlePayBtn"
             android:layout_marginTop="8dp"
             android:layout_width="match_parent"

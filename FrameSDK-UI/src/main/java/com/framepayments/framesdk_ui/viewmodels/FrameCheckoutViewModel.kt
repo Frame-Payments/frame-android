@@ -12,27 +12,15 @@ import com.framepayments.framesdk.customers.CustomersAPI
 import com.framepayments.framesdk.customers.CustomersRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class FrameCheckoutViewModel : ViewModel() {
 
-    companion object {
-        private val gson = Gson()
-    }
-
     // Observable customer payment options
     private val _customerPaymentOptions = MutableLiveData<List<FrameObjects.PaymentMethod>?>(null)
     val customerPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _customerPaymentOptions
-
-    private val _isGooglePayReady = MutableLiveData(false)
-    val isGooglePayReady: LiveData<Boolean> = _isGooglePayReady
-
-    private val _googlePayChargeIntent = MutableLiveData<ChargeIntent?>(null)
-    val googlePayChargeIntent: LiveData<ChargeIntent?> = _googlePayChargeIntent
 
     // Customer fields
     val customerName = MutableLiveData("")
@@ -66,68 +54,6 @@ class FrameCheckoutViewModel : ViewModel() {
                 customerName.value = customer?.name ?: ""
                 customerEmail.value = customer?.email ?: ""
 
-            }
-        }
-    }
-
-    fun setGooglePayReadiness(isReady: Boolean) {
-        _isGooglePayReady.value = isReady
-    }
-
-    fun payWithApplePay() {
-        // TODO: implement Apple Pay flow
-    }
-
-    fun payWithGooglePay(googlePayToken: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val type = object : TypeToken<Map<String, Any>>() {}.type
-            val paymentDataMap: Map<String, Any> = gson.fromJson(googlePayToken, type)
-
-            val email = paymentDataMap["email"] as? String
-            val apiVersion = (paymentDataMap["apiVersion"] as? Double)?.toInt() ?: 2
-            val apiVersionMinor = (paymentDataMap["apiVersionMinor"] as? Double)?.toInt() ?: 0
-            @Suppress("UNCHECKED_CAST")
-            val paymentMethodData = paymentDataMap["paymentMethodData"] as? Map<String, Any>
-                ?: run {
-                    withContext(Dispatchers.Main) { _googlePayChargeIntent.value = null }
-                    return@launch
-                }
-
-            val walletData = PaymentMethodRequests.GooglePayWalletData(
-                apiVersion = apiVersion,
-                apiVersionMinor = apiVersionMinor,
-                email = email,
-                paymentMethodData = paymentMethodData
-            )
-            val request = PaymentMethodRequests.CreateGooglePayPaymentMethodRequest(
-                wallet = PaymentMethodRequests.GooglePayWallet(googlePay = walletData),
-                customer = currentCustomerId
-            )
-
-            val (pm, _) = PaymentMethodsAPI.createGooglePayPaymentMethod(request)
-            val pmId = pm?.id ?: run {
-                withContext(Dispatchers.Main) { _googlePayChargeIntent.value = null }
-                return@launch
-            }
-
-            val ciRequest = ChargeIntentsRequests.CreateChargeIntentRequest(
-                amount = amount,
-                currency = "usd",
-                customer = currentCustomerId,
-                description = "",
-                paymentMethod = pmId,
-                confirm = true,
-                receiptEmail = null,
-                authorizationMode = AuthorizationMode.AUTOMATIC,
-                customerData = null,
-                paymentMethodData = null,
-                fraudSignals = null,
-                sonarSessionId = FrameNetworking.currentSonarSessionId()
-            )
-            val (intent, _) = ChargeIntentAPI.createChargeIntent(ciRequest)
-
-            withContext(Dispatchers.Main) {
-                _googlePayChargeIntent.value = intent
             }
         }
     }
