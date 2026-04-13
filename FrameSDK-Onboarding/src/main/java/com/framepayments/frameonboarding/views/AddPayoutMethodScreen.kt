@@ -72,15 +72,18 @@ internal fun AddPayoutMethodScreen(
                 )
             }
             is LinkExit -> {
+                viewModel.onPlaidDismissed()
                 result.error?.let { android.util.Log.w("Plaid", "Plaid exited: ${it.displayMessage}") }
             }
-            else -> { /* no-op */ }
+            else -> {
+                viewModel.onPlaidDismissed()
+            }
         }
-        viewModel.clearPlaidLinkToken()
     }
 
     LaunchedEffect(plaidToken) {
         plaidToken?.let { token ->
+            viewModel.clearPlaidLinkToken()
             plaidLauncher.launch(LinkTokenConfiguration.Builder().token(token).build())
         }
     }

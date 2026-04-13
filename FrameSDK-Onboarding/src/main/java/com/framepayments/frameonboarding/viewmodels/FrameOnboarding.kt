@@ -975,6 +975,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         _plaidLinkToken.value = null
     }
 
+    fun onPlaidDismissed() {
+        _isConnectingPlaidBank.value = false
+    }
+
     fun fetchPlaidLinkToken() {
         val accountId = _resolvedAccountId.value ?: return
         if (_isConnectingPlaidBank.value || _plaidLinkToken.value != null) return
