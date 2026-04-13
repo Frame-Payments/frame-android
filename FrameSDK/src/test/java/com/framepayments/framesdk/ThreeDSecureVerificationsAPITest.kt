@@ -22,7 +22,7 @@ class ThreeDSecureVerificationsAPITest {
         mockWebServer = MockWebServer()
         mockWebServer.start()
         FrameNetworking.mainApiUrl = mockWebServer.url("/").toString()
-        FrameNetworking.apiKey = "test_key"
+        FrameNetworking.apiSecretKey = "test_key"
     }
 
     @After

@@ -15,6 +15,7 @@ class MainActivity : ComponentActivity() {
         FrameNetworking.initializeWithAPIKey(
             context = applicationContext,
             key = "INSERT_SANDBOX_KEY_HERE",
+            publishableKey = "pk_sandbox_WD88KqgcVPkwoFpSB5uH9F6x",
             debug = true
         )
         setContent {
