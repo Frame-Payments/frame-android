@@ -4,6 +4,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+configurations.all {
+    exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")
+}
+
 android {
     namespace = "com.framepayments.frame"
     compileSdk = 36
