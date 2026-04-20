@@ -14,11 +14,12 @@ sealed class PaymentMethodEndpoints : FrameNetworkingEndpoints {
     data class DetachPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
     data class BlockPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
     data class UnblockPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
+    object ConnectPlaidBankAccount : PaymentMethodEndpoints()
 
     override val endpointURL: String
         get() = when (this) {
-            is GetPaymentMethods, is CreatePaymentMethod ->
-                "/v1/payment_methods"
+            is GetPaymentMethods, is CreatePaymentMethod -> "/v1/payment_methods"
+            is ConnectPlaidBankAccount -> "/v1/payment_methods/connect_plaid"
             is GetPaymentMethodWith ->
                 "/v1/payment_methods/${this.paymentMethodId}"
             is UpdatePaymentMethodWith ->
@@ -39,7 +40,7 @@ sealed class PaymentMethodEndpoints : FrameNetworkingEndpoints {
 
     override val httpMethod: String
         get() = when (this) {
-            is CreatePaymentMethod, is AttachPaymentMethodWith, is DetachPaymentMethodWith, is BlockPaymentMethodWith, is UnblockPaymentMethodWith -> "POST"
+            is CreatePaymentMethod, is AttachPaymentMethodWith, is DetachPaymentMethodWith, is BlockPaymentMethodWith, is UnblockPaymentMethodWith, is ConnectPlaidBankAccount -> "POST"
             is UpdatePaymentMethodWith -> "PATCH"
             else -> "GET"
         }

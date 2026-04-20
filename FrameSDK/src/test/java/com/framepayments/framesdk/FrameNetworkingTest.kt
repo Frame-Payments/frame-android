@@ -24,7 +24,7 @@ class FrameNetworkingTest {
         FrameNetworking.asyncURLSession = DefaultURLSession(testClient)
 
         FrameNetworking.mainApiUrl = mockWebServer.url("/").toString()
-        FrameNetworking.apiKey = "test_api_key"
+        FrameNetworking.apiSecretKey = "test_api_key"
         FrameNetworking.debugMode = true
     }
 

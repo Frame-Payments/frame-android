@@ -187,4 +187,39 @@ class AccountsAPITest {
         assertEquals("POST", recorded.method)
         assertTrue(recorded.requestUrl?.encodedPath?.endsWith("/confirm") == true)
     }
+
+    @Test
+    fun testGetPlaidLinkToken() = runBlocking {
+        val responseBody = """{"link_token":"link-sandbox-abc123"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val (result, error) = AccountsAPI.getPlaidLinkToken("acc_123")
+
+        assertNotNull(result)
+        assertNull(error)
+        assertEquals("link-sandbox-abc123", result?.linkToken)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("GET", recorded.method)
+        assertTrue(recorded.requestUrl?.encodedPath?.endsWith("/plaid_link_token") == true)
+        assertTrue(recorded.requestUrl?.queryParameter("android_package_name") != null)
+    }
+
+    @Test
+    fun testGetPlaidLinkTokenEmptyId() = runBlocking {
+        val (result, error) = AccountsAPI.getPlaidLinkToken("")
+
+        assertNull(result)
+        assertNull(error)
+    }
+
+    @Test
+    fun testGetPlaidLinkTokenNetworkError() = runBlocking {
+        mockWebServer.enqueue(MockResponse().setResponseCode(500))
+
+        val (result, error) = AccountsAPI.getPlaidLinkToken("acc_123")
+
+        assertNull(result)
+        assertNotNull(error)
+    }
 }

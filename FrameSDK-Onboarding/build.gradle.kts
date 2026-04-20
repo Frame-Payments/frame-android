@@ -68,6 +68,9 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.coil.compose)
 
+    // Plaid Link SDK
+    implementation(libs.plaid.link)
+
     // Prove Auth SDK
     implementation(libs.proveauth)
 

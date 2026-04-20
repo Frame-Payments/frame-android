@@ -1,6 +1,8 @@
 package com.framepayments.frame
 
+import android.app.Application
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -18,14 +21,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +39,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.views.OnboardingContainerView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
+import com.plaid.link.FastOpenPlaidLink
+import com.plaid.link.Plaid
+import com.plaid.link.PlaidHandler
+import com.plaid.link.configuration.LinkTokenConfiguration
+import com.plaid.link.result.LinkExit
+import com.plaid.link.result.LinkSuccess
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +52,16 @@ fun PlaygroundScreen(
     viewModel: ContentViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val plaidService by viewModel.plaidService.collectAsState()
+    val plaidMessage by viewModel.plaidMessage.collectAsState()
+    val plaidToken by remember(plaidService) {
+        plaidService?.linkToken ?: kotlinx.coroutines.flow.MutableStateFlow(null)
+    }.collectAsState()
+    val isConnectingPlaid by remember(plaidService) {
+        plaidService?.isConnecting ?: kotlinx.coroutines.flow.MutableStateFlow(false)
+    }.collectAsState()
     val context = LocalContext.current
+    val application = context.applicationContext as Application
     var showOnboarding by remember { mutableStateOf(false) }
     var showCustomers by remember { mutableStateOf(false) }
     var showPaymentMethods by remember { mutableStateOf(false) }
@@ -50,6 +69,41 @@ fun PlaygroundScreen(
     var showChargeIntents by remember { mutableStateOf(false) }
     var showRefunds by remember { mutableStateOf(false) }
     var showSubscriptionPhases by remember { mutableStateOf(false) }
+
+    val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
+        when (result) {
+            is LinkSuccess -> {
+                val plaidAccount = result.metadata.accounts.firstOrNull()
+                viewModel.handlePlaidSuccess(
+                    publicToken = result.publicToken,
+                    plaidAccountId = plaidAccount?.id ?: "",
+                    institutionName = result.metadata.institution?.name,
+                    subtype = plaidAccount?.subtype?.json
+                )
+            }
+            is LinkExit -> {
+                result.error?.let { err ->
+                    android.util.Log.w(
+                        "Plaid",
+                        "Exit error: code=${err.errorCode}, message='${err.displayMessage}'"
+                    )
+                }
+                viewModel.onPlaidDismissed()
+            }
+            else -> viewModel.onPlaidDismissed()
+        }
+    }
+
+    LaunchedEffect(plaidToken) {
+        plaidToken?.let { token ->
+            plaidService?.clearLinkToken()
+            val configuration = LinkTokenConfiguration.Builder()
+                .token(token)
+                .build()
+            val handler: PlaidHandler = Plaid.create(application, configuration)
+            plaidLauncher.launch(handler)
+        }
+    }
 
     if (showOnboarding) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -97,6 +151,11 @@ fun PlaygroundScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             PlaygroundButton(text = "Show Onboarding Flow") { showOnboarding = true }
+            PlaygroundButton(
+                text = if (isConnectingPlaid) "Connecting to Plaid…" else "Test Plaid Link",
+                enabled = !isConnectingPlaid,
+                onClick = { viewModel.startPlaidLink() }
+            )
             PlaygroundButton(text = "Checkout") {
                 val intent = Intent(context, CartTestActivity::class.java)
                 context.startActivity(intent)
@@ -132,6 +191,17 @@ fun PlaygroundScreen(
                 onClick = { showSubscriptionPhases = true }
             )
         }
+    }
+
+    plaidMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { viewModel.clearPlaidMessage() },
+            title = { Text(message.title) },
+            text = { Text(message.body) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.clearPlaidMessage() }) { Text("OK") }
+            }
+        )
     }
 
     if (showCustomers) {

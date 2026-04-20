@@ -13,7 +13,7 @@ class CartTestActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
 
-        FrameNetworking.initializeWithAPIKey(context = this, key="") // Remove key for PR, for testing purposes only
+        FrameNetworking.initializeWithAPIKey(context = this, secretKey = "", publishableKey = "") // Remove key for PR, for testing purposes only
 
         // Build dummy data
         val items = listOf(

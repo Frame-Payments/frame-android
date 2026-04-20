@@ -14,7 +14,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         FrameNetworking.initializeWithAPIKey(
             context = applicationContext,
-            key = "INSERT_SANDBOX_KEY_HERE",
+            secretKey = "INSERT_SANDBOX_KEY_HERE",
+            publishableKey = "INSERT_PUBLISHABLE_KEY_HERE",
             debug = true
         )
         setContent {
