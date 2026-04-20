@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.views
 
+import android.app.Application
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.OnboardingConfig
@@ -38,7 +40,9 @@ import com.framepayments.frameonboarding.reusable.BillingAddressForm
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
-import com.plaid.link.OpenPlaidLink
+import com.plaid.link.FastOpenPlaidLink
+import com.plaid.link.Plaid
+import com.plaid.link.PlaidHandler
 import com.plaid.link.configuration.LinkTokenConfiguration
 import com.plaid.link.result.LinkExit
 import com.plaid.link.result.LinkSuccess
@@ -60,7 +64,9 @@ internal fun AddPayoutMethodScreen(
         viewModel.isPayoutMethodFormComplete(bank, billing)
     }
 
-    val plaidLauncher = rememberLauncherForActivityResult(OpenPlaidLink()) { result ->
+    val application = LocalContext.current.applicationContext as Application
+
+    val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
             is LinkSuccess -> {
                 val account = result.metadata.accounts.firstOrNull()
@@ -84,7 +90,9 @@ internal fun AddPayoutMethodScreen(
     LaunchedEffect(plaidToken) {
         plaidToken?.let { token ->
             viewModel.clearPlaidLinkToken()
-            plaidLauncher.launch(LinkTokenConfiguration.Builder().token(token).build())
+            val configuration = LinkTokenConfiguration.Builder().token(token).build()
+            val handler: PlaidHandler = Plaid.create(application, configuration)
+            plaidLauncher.launch(handler)
         }
     }
 

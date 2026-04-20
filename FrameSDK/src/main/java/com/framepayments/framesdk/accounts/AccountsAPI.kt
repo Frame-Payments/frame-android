@@ -105,7 +105,7 @@ object AccountsAPI {
 
     suspend fun getPlaidLinkToken(accountId: String): Pair<AccountResponses.PlaidLinkTokenResponse?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
-        val endpoint = AccountEndpoints.GetPlaidLinkToken(accountId)
+        val endpoint = AccountEndpoints.GetPlaidLinkToken(accountId, androidPackageName = "com.framepayments.frame")
         val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountResponses.PlaidLinkTokenResponse>(it) }, error)
     }
@@ -219,7 +219,7 @@ object AccountsAPI {
 
     fun getPlaidLinkToken(accountId: String, completionHandler: (AccountResponses.PlaidLinkTokenResponse?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
-        val endpoint = AccountEndpoints.GetPlaidLinkToken(accountId)
+        val endpoint = AccountEndpoints.GetPlaidLinkToken(accountId, androidPackageName = "com.framepayments.frame")
         FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountResponses.PlaidLinkTokenResponse>(it) }, error)
         }

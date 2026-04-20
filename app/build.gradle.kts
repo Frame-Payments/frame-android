@@ -4,10 +4,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-configurations.all {
-    exclude(group = "org.bouncycastle", module = "bcprov-jdk15on")
-}
-
 android {
     namespace = "com.framepayments.frame"
     compileSdk = 36
@@ -63,4 +59,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
+    implementation(libs.plaid.link)
 }

@@ -202,6 +202,7 @@ class AccountsAPITest {
         val recorded = mockWebServer.takeRequest()
         assertEquals("GET", recorded.method)
         assertTrue(recorded.requestUrl?.encodedPath?.endsWith("/plaid_link_token") == true)
+        assertTrue(recorded.requestUrl?.queryParameter("android_package_name") != null)
     }
 
     @Test

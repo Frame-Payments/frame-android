@@ -19,6 +19,8 @@ import com.framepayments.frameonboarding.classes.computeFlowSegments
 import com.framepayments.frameonboarding.classes.computeOrderedSteps
 import com.framepayments.frameonboarding.classes.toFlowSegment
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
+import com.framepayments.frameonboarding.plaid.PlaidLinkResult
+import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
 import com.framepayments.framesdk.FileUpload
 import com.framepayments.framesdk.FileUploadFieldName
@@ -107,6 +109,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     private val _isConnectingPlaidBank = MutableStateFlow(false)
     val isConnectingPlaidBank: StateFlow<Boolean> = _isConnectingPlaidBank.asStateFlow()
+
+    private fun buildPlaidService(accountId: String) = PlaidLinkService(accountId)
 
     // Result to emit to the host (Completed / Cancelled only — errors stay in-flow via [userErrorMessage])
     private val _result = MutableStateFlow<OnboardingResult?>(null)
@@ -984,11 +988,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         if (_isConnectingPlaidBank.value || _plaidLinkToken.value != null) return
         _isConnectingPlaidBank.value = true
         viewModelScope.launch {
-            val (response, err) = AccountsAPI.getPlaidLinkToken(accountId)
-            if (response?.linkToken != null) {
-                _plaidLinkToken.value = response.linkToken
+            val service = buildPlaidService(accountId)
+            service.fetchLinkToken()
+            val token = service.linkToken.value
+            if (token != null) {
+                _plaidLinkToken.value = token
             } else {
                 _isConnectingPlaidBank.value = false
+                val err = (service.result.value as? PlaidLinkResult.Failure)?.error
                 reportUserError(userMessageForNetworkError(err))
             }
         }
@@ -998,28 +1005,29 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         val accountId = _resolvedAccountId.value ?: return
         viewModelScope.launch {
             _isConnectingPlaidBank.value = true
-            val request = com.framepayments.framesdk.paymentmethods.PaymentMethodRequests.ConnectPlaidBankAccountRequest(
-                account = accountId,
-                publicToken = publicToken,
-                accountId = plaidAccountId,
-                institutionName = institutionName,
-                subtype = subtype
-            )
-            val (payoutMethod, err) = PaymentMethodsAPI.connectPlaidBankAccount(request)
+            val service = buildPlaidService(accountId)
+            service.connectBankAccount(publicToken, plaidAccountId, institutionName, subtype)
             _isConnectingPlaidBank.value = false
-            val ach = payoutMethod?.ach
-            if (payoutMethod != null && ach != null) {
-                _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethod.id) }
-                _savedPayoutMethods.value += PaymentMethodSummary(
-                    id = payoutMethod.id,
-                    brand = "BANK",
-                    last4 = ach.lastFour ?: "",
-                    exp = ""
-                )
-                clearAccountDetails()
-                moveNext()
-            } else {
-                reportUserError(userMessageForNetworkError(err))
+            when (val outcome = service.result.value) {
+                is PlaidLinkResult.Success -> {
+                    val payoutMethod = outcome.paymentMethod
+                    val ach = payoutMethod.ach
+                    if (ach != null) {
+                        _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethod.id) }
+                        _savedPayoutMethods.value += PaymentMethodSummary(
+                            id = payoutMethod.id,
+                            brand = "BANK",
+                            last4 = ach.lastFour ?: "",
+                            exp = ""
+                        )
+                        clearAccountDetails()
+                        moveNext()
+                    } else {
+                        reportUserError(userMessageForNetworkError(null))
+                    }
+                }
+                is PlaidLinkResult.Failure -> reportUserError(userMessageForNetworkError(outcome.error))
+                else -> {}
             }
         }
     }
