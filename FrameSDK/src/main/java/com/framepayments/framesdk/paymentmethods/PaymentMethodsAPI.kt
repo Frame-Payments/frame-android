@@ -90,6 +90,12 @@ object PaymentMethodsAPI {
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
+    
+    suspend fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
+        val endpoint = PaymentMethodEndpoints.ConnectPlaidBankAccount
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(it) }, error)
+    }
 
     //MARK: Methods using callbacks
     fun getPaymentMethods(page: Int? = null, perPage: Int? = null, completionHandler: (PaymentMethodResponses.ListPaymentMethodsResponse?, NetworkingError?) -> Unit) {
@@ -195,6 +201,13 @@ object PaymentMethodsAPI {
 
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
+        }
+    }
+    
+    fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.ConnectPlaidBankAccount
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+            completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(it) }, error)
         }
     }
 }

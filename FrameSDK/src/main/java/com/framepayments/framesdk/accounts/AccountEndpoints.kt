@@ -26,6 +26,7 @@ sealed class AccountEndpoints : FrameNetworkingEndpoints {
     ) : AccountEndpoints()
     data class RestrictAccount(val accountId: String) : AccountEndpoints()
     data class UnrestrictAccount(val accountId: String) : AccountEndpoints()
+    data class GetPlaidLinkToken(val accountId: String, val androidPackageName: String) : AccountEndpoints()
     data class CreatePhoneVerification(val accountId: String) : AccountEndpoints()
     data class ConfirmPhoneVerification(val accountId: String, val verificationId: String) : AccountEndpoints()
 
@@ -38,6 +39,7 @@ sealed class AccountEndpoints : FrameNetworkingEndpoints {
             is SearchAccounts -> "/v1/accounts/search"
             is RestrictAccount -> "/v1/accounts/${this.accountId}/restrict"
             is UnrestrictAccount -> "/v1/accounts/${this.accountId}/unrestrict"
+            is GetPlaidLinkToken -> "/v1/accounts/${this.accountId}/plaid_link_token"
             is CreatePhoneVerification -> "/v1/accounts/${this.accountId}/phone_verifications"
             is ConfirmPhoneVerification -> "/v1/accounts/${this.accountId}/phone_verifications/${this.verificationId}/confirm"
         }
@@ -73,6 +75,7 @@ sealed class AccountEndpoints : FrameNetworkingEndpoints {
                 createdAfter?.let { items.add(QueryItem("created_after", it)) }
                 items
             }
+            is GetPlaidLinkToken -> listOf(QueryItem("android_package_name", androidPackageName))
             else -> null
         }
 }

@@ -19,6 +19,8 @@ import com.framepayments.frameonboarding.classes.computeFlowSegments
 import com.framepayments.frameonboarding.classes.computeOrderedSteps
 import com.framepayments.frameonboarding.classes.toFlowSegment
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
+import com.framepayments.frameonboarding.plaid.PlaidLinkResult
+import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
 import com.framepayments.framesdk.FileUpload
 import com.framepayments.framesdk.FileUploadFieldName
@@ -101,6 +103,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     private val _savedPayoutMethods = MutableStateFlow<List<PaymentMethodSummary>>(emptyList())
     val savedPayoutMethods: StateFlow<List<PaymentMethodSummary>> = _savedPayoutMethods.asStateFlow()
+
+    private val _plaidLinkToken = MutableStateFlow<String?>(null)
+    val plaidLinkToken: StateFlow<String?> = _plaidLinkToken.asStateFlow()
+
+    private val _isConnectingPlaidBank = MutableStateFlow(false)
+    val isConnectingPlaidBank: StateFlow<Boolean> = _isConnectingPlaidBank.asStateFlow()
+
+    private fun buildPlaidService(accountId: String) = PlaidLinkService(accountId)
 
     // Result to emit to the host (Completed / Cancelled only — errors stay in-flow via [userErrorMessage])
     private val _result = MutableStateFlow<OnboardingResult?>(null)
@@ -961,6 +971,63 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 moveNext()
             } else {
                 reportUserError(userMessageForNetworkError(achErr))
+            }
+        }
+    }
+
+    fun clearPlaidLinkToken() {
+        _plaidLinkToken.value = null
+    }
+
+    fun onPlaidDismissed() {
+        _isConnectingPlaidBank.value = false
+    }
+
+    fun fetchPlaidLinkToken() {
+        val accountId = _resolvedAccountId.value ?: return
+        if (_isConnectingPlaidBank.value || _plaidLinkToken.value != null) return
+        _isConnectingPlaidBank.value = true
+        viewModelScope.launch {
+            val service = buildPlaidService(accountId)
+            service.fetchLinkToken()
+            val token = service.linkToken.value
+            if (token != null) {
+                _plaidLinkToken.value = token
+            } else {
+                _isConnectingPlaidBank.value = false
+                val err = (service.result.value as? PlaidLinkResult.Failure)?.error
+                reportUserError(userMessageForNetworkError(err))
+            }
+        }
+    }
+
+    fun handlePlaidSuccess(publicToken: String, plaidAccountId: String, institutionName: String?, subtype: String?) {
+        val accountId = _resolvedAccountId.value ?: return
+        viewModelScope.launch {
+            _isConnectingPlaidBank.value = true
+            val service = buildPlaidService(accountId)
+            service.connectBankAccount(publicToken, plaidAccountId, institutionName, subtype)
+            _isConnectingPlaidBank.value = false
+            when (val outcome = service.result.value) {
+                is PlaidLinkResult.Success -> {
+                    val payoutMethod = outcome.paymentMethod
+                    val ach = payoutMethod.ach
+                    if (ach != null) {
+                        _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethod.id) }
+                        _savedPayoutMethods.value += PaymentMethodSummary(
+                            id = payoutMethod.id,
+                            brand = "BANK",
+                            last4 = ach.lastFour ?: "",
+                            exp = ""
+                        )
+                        clearAccountDetails()
+                        moveNext()
+                    } else {
+                        reportUserError(userMessageForNetworkError(null))
+                    }
+                }
+                is PlaidLinkResult.Failure -> reportUserError(userMessageForNetworkError(outcome.error))
+                else -> {}
             }
         }
     }

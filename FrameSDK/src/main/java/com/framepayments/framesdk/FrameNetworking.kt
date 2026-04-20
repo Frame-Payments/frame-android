@@ -43,7 +43,8 @@ object FrameNetworking {
     var asyncURLSession: URLSessionProtocol = DefaultURLSession(okHttpClient)
     var mainApiUrl: String = NetworkingConstants.MAIN_API_URL
     const val CURRENT_VERSION = BuildConfig.SDK_VERSION
-    var apiKey: String = ""
+    var apiSecretKey: String = ""
+    var apiPublishableKey: String = ""
     var debugMode: Boolean = false
     var isEvervaultConfigured: Boolean = false
     private var sonarSessionManager: SonarSessionManager? = null
@@ -51,12 +52,13 @@ object FrameNetworking {
 
     private lateinit var applicationContext: Context
 
-    fun initializeWithAPIKey(context: Context, key: String, debug: Boolean = false) {
-        apiKey = key
+    fun initializeWithAPIKey(context: Context, secretKey: String, publishableKey: String, debug: Boolean = false) {
+        apiSecretKey = secretKey
+        apiPublishableKey = publishableKey
         debugMode = debug
         applicationContext = context.applicationContext
 
-        SiftManager.initializeSift(apiKey)
+        SiftManager.initializeSift(apiSecretKey)
         configureEvervault()
 
         sdkScope.launch {
@@ -103,22 +105,23 @@ object FrameNetworking {
         return fromBody ?: response.message.ifEmpty { "HTTP ${response.code}" }
     }
 
-    private fun Request.Builder.applyFrameHeaders(ip: String?): Request.Builder {
-        header("Authorization", "Bearer $apiKey")
+    private fun Request.Builder.applyFrameHeaders(ip: String?, usePublishableKey: Boolean = false): Request.Builder {
+        val authKey = if (usePublishableKey && apiPublishableKey.isNotEmpty()) apiPublishableKey else apiSecretKey
+        header("Authorization", "Bearer $authKey")
         header("User-Agent", "Android/$CURRENT_VERSION")
         ip?.let { header("ip_address", it) }
         return this
     }
 
     /** Resolves IP on IO; safe when this suspend runs from the main thread. */
-    private suspend fun Request.Builder.withFrameHeaders(): Request.Builder {
+    private suspend fun Request.Builder.withFrameHeaders(usePublishableKey: Boolean = false): Request.Builder {
         val ip = withContext(Dispatchers.IO) { SiftManager.getIPAddress() }
-        return applyFrameHeaders(ip)
+        return applyFrameHeaders(ip, usePublishableKey)
     }
 
     /** Call only from a background thread (e.g. OkHttp’s executor). Performs blocking IP fetch if uncached. */
-    private fun Request.Builder.withFrameHeadersOnWorkerThread(): Request.Builder {
-        return applyFrameHeaders(SiftManager.getIPAddress())
+    private fun Request.Builder.withFrameHeadersOnWorkerThread(usePublishableKey: Boolean = false): Request.Builder {
+        return applyFrameHeaders(SiftManager.getIPAddress(), usePublishableKey)
     }
 
     inline fun <reified T> parseResponse(data: ByteArray?): T? {
@@ -146,7 +149,8 @@ object FrameNetworking {
     }
 
     suspend fun performDataTask(
-        endpoint: FrameNetworkingEndpoints
+        endpoint: FrameNetworkingEndpoints,
+        usePublishableKey: Boolean = false
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -163,7 +167,7 @@ object FrameNetworking {
 
         val requestBuilder = Request.Builder()
             .url(httpUrl)
-            .withFrameHeaders()
+            .withFrameHeaders(usePublishableKey)
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -192,7 +196,8 @@ object FrameNetworking {
 
     suspend fun performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
-        request: Any? = null
+        request: Any? = null,
+        usePublishableKey: Boolean = false
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -209,7 +214,7 @@ object FrameNetworking {
 
         val requestBuilder = Request.Builder()
             .url(httpUrl)
-            .withFrameHeaders()
+            .withFrameHeaders(usePublishableKey)
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
@@ -252,7 +257,8 @@ object FrameNetworking {
 
     suspend fun performMultipartDataTask(
         endpoint: FrameNetworkingEndpoints,
-        filesToUpload: List<FileUpload>
+        filesToUpload: List<FileUpload>,
+        usePublishableKey: Boolean = false
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -272,7 +278,7 @@ object FrameNetworking {
 
         val request = Request.Builder()
             .url(httpUrl)
-            .withFrameHeaders()
+            .withFrameHeaders(usePublishableKey)
             .post(multipartBody)
             .build()
 
@@ -300,6 +306,7 @@ object FrameNetworking {
     fun performMultipartDataTask(
         endpoint: FrameNetworkingEndpoints,
         filesToUpload: List<FileUpload>,
+        usePublishableKey: Boolean = false,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = NetworkingConstants.MAIN_API_URL
@@ -321,7 +328,7 @@ object FrameNetworking {
         okHttpClient.dispatcher.executorService.execute {
             val request = Request.Builder()
                 .url(httpUrl)
-                .withFrameHeadersOnWorkerThread()
+                .withFrameHeadersOnWorkerThread(usePublishableKey)
                 .post(multipartBody)
                 .build()
 
@@ -343,6 +350,7 @@ object FrameNetworking {
 
     fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
+        usePublishableKey: Boolean = false,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = NetworkingConstants.MAIN_API_URL
@@ -360,7 +368,7 @@ object FrameNetworking {
         okHttpClient.dispatcher.executorService.execute {
             val requestBuilder = Request.Builder()
                 .url(httpUrl)
-                .withFrameHeadersOnWorkerThread()
+                .withFrameHeadersOnWorkerThread(usePublishableKey)
 
             val method = endpoint.httpMethod.uppercase()
             requestBuilder.method(method, null)
@@ -385,6 +393,7 @@ object FrameNetworking {
     fun <T> performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: T? = null,
+        usePublishableKey: Boolean = false,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = NetworkingConstants.MAIN_API_URL
@@ -408,7 +417,7 @@ object FrameNetworking {
         okHttpClient.dispatcher.executorService.execute {
             val requestBuilder = Request.Builder()
                 .url(httpUrl)
-                .withFrameHeadersOnWorkerThread()
+                .withFrameHeadersOnWorkerThread(usePublishableKey)
 
             val method = endpoint.httpMethod.uppercase()
             if (method == "POST" || method == "PATCH") {
