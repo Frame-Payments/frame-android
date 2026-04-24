@@ -7,7 +7,7 @@ object WalletAPI {
     //MARK: Methods using coroutines
     suspend fun getGooglePayConfiguration(): Pair<WalletResponses.GetGooglePayConfigurationResponse?, NetworkingError?> {
         val endpoint = WalletEndpoints.GetGooglePayConfiguration
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, usePublishableKey = true)
         return Pair(data?.let { FrameNetworking.parseResponse<WalletResponses.GetGooglePayConfigurationResponse>(data) }, error)
     }
 
@@ -15,7 +15,7 @@ object WalletAPI {
     fun getGooglePayConfiguration(completionHandler: (WalletResponses.GetGooglePayConfigurationResponse?, NetworkingError?) -> Unit) {
         val endpoint = WalletEndpoints.GetGooglePayConfiguration
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, usePublishableKey = true) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<WalletResponses.GetGooglePayConfigurationResponse>(data) }, error)
         }
     }

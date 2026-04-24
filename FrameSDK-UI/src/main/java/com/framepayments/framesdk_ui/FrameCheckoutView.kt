@@ -70,7 +70,6 @@ class FrameCheckoutView @JvmOverloads constructor(
         // Bindings for customer information
         binding.customerName.doAfterTextChanged { viewModel.customerName.value = it.toString() }
         binding.customerEmail.doAfterTextChanged { viewModel.customerEmail.value = it.toString() }
-        binding.customerName.doAfterTextChanged { viewModel.customerName.value = it.toString() }
         binding.address1.doAfterTextChanged { viewModel.customerAddressLine1.value = it.toString() }
         binding.address2.doAfterTextChanged { viewModel.customerAddressLine2.value = it.toString() }
         binding.city.doAfterTextChanged { viewModel.customerCity.value = it.toString() }
@@ -79,6 +78,16 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.countryInput.setOnClickListener {
             showCountryPicker()
         }
+
+        // Prefill fields when the viewmodel loads customer data
+        viewModel.customerName.observe(activity) { binding.customerName.setTextIfDifferent(it) }
+        viewModel.customerEmail.observe(activity) { binding.customerEmail.setTextIfDifferent(it) }
+        viewModel.customerAddressLine1.observe(activity) { binding.address1.setTextIfDifferent(it) }
+        viewModel.customerAddressLine2.observe(activity) { binding.address2.setTextIfDifferent(it) }
+        viewModel.customerCity.observe(activity) { binding.city.setTextIfDifferent(it) }
+        viewModel.customerState.observe(activity) { binding.state.setTextIfDifferent(it) }
+        viewModel.customerZipCode.observe(activity) { binding.zip.setTextIfDifferent(it) }
+        binding.countryInput.setText(viewModel.customerCountry.displayName)
 
         binding.encryptedCardInput.onCardDataChange = { data -> viewModel.cardData = data }
     }
@@ -147,7 +156,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         onCheckout: (ChargeIntent) -> Unit
     ) {
         checkoutCallback = onCheckout
-        viewModel.loadCustomerPaymentMethods(customerId, paymentAmount)
+        viewModel.loadCustomer(customerId, paymentAmount)
         binding.payButton.text = "Pay ${CurrencyFormatter.convertCentsToCurrencyString(paymentAmount)}"
 
         binding.googlePayBtn.configure(
@@ -165,4 +174,9 @@ class FrameCheckoutView @JvmOverloads constructor(
             }
         )
     }
+}
+
+private fun com.google.android.material.textfield.TextInputEditText.setTextIfDifferent(value: String?) {
+    val newText = value.orEmpty()
+    if (text?.toString() != newText) setText(newText)
 }

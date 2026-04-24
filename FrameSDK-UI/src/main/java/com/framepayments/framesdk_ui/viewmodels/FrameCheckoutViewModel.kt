@@ -40,20 +40,32 @@ class FrameCheckoutViewModel : ViewModel() {
     private var currentCustomerId: String? = null
     internal var amount: Int = 0
 
-    fun loadCustomerPaymentMethods(customerId: String?, amount: Int) {
+    fun loadCustomer(customerId: String?, amount: Int) {
         this.amount = amount
         if (customerId == null) return
         currentCustomerId = customerId
 
         viewModelScope.launch(Dispatchers.IO) {
-            val (customer, error) = CustomersAPI.getCustomerWith(customerId).also {
-                println("Customer response: $it")
-            }
-            withContext(Dispatchers.Main) {
-                _customerPaymentOptions.value = customer?.paymentMethods
-                customerName.value = customer?.name ?: ""
-                customerEmail.value = customer?.email ?: ""
+            val (customer, _) = CustomersAPI.getCustomerWith(customerId)
+            customer ?: return@launch
 
+            withContext(Dispatchers.Main) {
+                _customerPaymentOptions.value = customer.paymentMethods
+                customerName.value = customer.name
+                customerEmail.value = customer.email.orEmpty()
+
+                customer.billingAddress?.let { address ->
+                    customerAddressLine1.value = address.addressLine1.orEmpty()
+                    customerAddressLine2.value = address.addressLine2.orEmpty()
+                    customerCity.value = address.city.orEmpty()
+                    customerState.value = address.state.orEmpty()
+                    customerZipCode.value = address.postalCode
+                    address.country?.let { code ->
+                        AvailableCountries.allCountries.firstOrNull {
+                            it.alpha2Code.equals(code, ignoreCase = true)
+                        }?.let { customerCountry = it }
+                    }
+                }
             }
         }
     }
