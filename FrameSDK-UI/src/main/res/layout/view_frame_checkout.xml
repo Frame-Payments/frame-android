@@ -42,7 +42,7 @@
             android:background="#DDDDDD"/>
 -
 
-        <!-- Hiding the Apple Pay and Google Pay buttons until implementation on the API side is complete.-->
+        <!-- Hiding the Apple Pay button until implementation on the API side is complete.-->
 <!--        <com.framepayments.framesdk_ui.buttons.ApplePayButton-->
 <!--            android:id="@+id/applePayBtn"-->
 <!--            android:layout_width="match_parent"-->
@@ -50,31 +50,34 @@
 <!--            android:layout_marginTop="18dp"-->
 <!--            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>-->
 
-<!--        <com.framepayments.framesdk_ui.buttons.GooglePayButton-->
-<!--            android:id="@+id/googlePayBtn"-->
-<!--            android:layout_marginTop="8dp"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="60dp"-->
-<!--            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>-->
+        <com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
+            android:id="@+id/googlePayBtn"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:visibility="gone"
+            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>
 
-<!--        <LinearLayout-->
-<!--            android:orientation="horizontal"-->
-<!--            android:layout_marginTop="16dp"-->
-<!--            android:gravity="center"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content">-->
-<!--            <View android:layout_width="0dp"-->
-<!--                android:layout_height="1dp"-->
-<!--                android:layout_weight="1"-->
-<!--                android:background="#DDDDDD"/>-->
-<!--            <TextView android:text="@string/or"-->
-<!--                android:layout_height="20dp"-->
-<!--                android:layout_width="15dp"/>-->
-<!--            <View android:layout_width="0dp"-->
-<!--                android:layout_height="1dp"-->
-<!--                android:layout_weight="1"-->
-<!--                android:background="#DDDDDD"/>-->
-<!--        </LinearLayout>-->
+        <LinearLayout
+            android:id="@+id/googlePayDivider"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <View android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="#DDDDDD"/>
+            <TextView android:text="@string/or"
+                android:layout_height="20dp"
+                android:layout_width="15dp"/>
+            <View android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="#DDDDDD"/>
+        </LinearLayout>
 
         <HorizontalScrollView
             android:id="@+id/existingPaymentOptionsScrollView"
@@ -108,6 +111,7 @@
         android:background="@drawable/border_background">
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/customerNameLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <com.google.android.material.textfield.TextInputEditText
@@ -121,6 +125,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/customerEmailLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:boxBackgroundMode="outline">
@@ -149,6 +154,21 @@
             android:layout_height="wrap_content"/>
 
         <TextView
+            android:id="@+id/cardErrorText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="?attr/colorError"
+            android:layout_marginTop="2dp"
+            android:visibility="gone"/>
+
+        <LinearLayout
+            android:id="@+id/customerAddressContainer"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <TextView
             android:id="@+id/country_region"
             android:text="@string/customer_address"
             android:textStyle="normal"
@@ -166,6 +186,7 @@
         android:background="@drawable/border_background">
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/address1Layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <com.google.android.material.textfield.TextInputEditText
@@ -178,6 +199,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/address2Layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <com.google.android.material.textfield.TextInputEditText
@@ -196,6 +218,7 @@
         android:layout_height="wrap_content">
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/cityLayout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" >
@@ -209,6 +232,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/stateLayout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1">
@@ -242,6 +266,7 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/zipLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:boxBackgroundMode="outline">
@@ -255,6 +280,7 @@
                 />
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
+        </LinearLayout>
         <CheckBox
             android:id="@+id/saveCard"
             android:text="@string/save_for_future"
