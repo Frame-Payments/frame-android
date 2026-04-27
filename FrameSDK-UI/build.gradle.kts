@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.coil)
     implementation(libs.play.services.wallet)
     testImplementation(libs.junit)
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
