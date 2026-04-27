@@ -6,7 +6,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.Spinner
@@ -19,8 +18,12 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.ChargeIntent
+import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentCardBinding
+import com.framepayments.framesdk_ui.validation.FieldKey
+import com.framepayments.framesdk_ui.validation.ValidationError
+import com.framepayments.framesdk_ui.validation.Validators
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk_ui.viewmodels.FrameCheckoutViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -45,8 +48,15 @@ class FrameCheckoutView @JvmOverloads constructor(
         viewModel = ViewModelProvider(activity)[FrameCheckoutViewModel::class.java]
 
         binding.closeButton.setOnClickListener { (context as Activity).finish() }
-//        binding.applePayBtn.setOnClickListener { viewModel.payWithApplePay() }
-//        binding.googlePayBtn.setOnClickListener { viewModel.payWithGooglePay() }
+
+        // Pay button is disabled until the user either selects a saved payment method
+        // or enters new card details that pass potential-validity.
+        binding.payButton.isEnabled = false
+        binding.payButton.alpha = 0.4f
+        viewModel.hasUsablePaymentInput.observe(activity) { canPay ->
+            binding.payButton.isEnabled = canPay
+            binding.payButton.alpha = if (canPay) 1f else 0.4f
+        }
 
         binding.payButton.setOnClickListener {
             binding.checkoutProgressBar.visibility = View.VISIBLE
@@ -54,7 +64,7 @@ class FrameCheckoutView @JvmOverloads constructor(
             viewModel.checkoutWithSelectedPaymentMethod(binding.saveCard.isChecked)
                 .observe(activity) { intent ->
                     binding.checkoutProgressBar.visibility = View.GONE
-                    binding.payButton.isEnabled = true
+                    binding.payButton.isEnabled = viewModel.hasUsablePaymentInput.value == true
                     intent?.let { checkoutCallback?.invoke(it) }
                 }
         }
@@ -68,20 +78,106 @@ class FrameCheckoutView @JvmOverloads constructor(
             }
         }
 
-        // Bindings for customer information
-        binding.customerName.doAfterTextChanged { viewModel.customerName.value = it.toString() }
-        binding.customerEmail.doAfterTextChanged { viewModel.customerEmail.value = it.toString() }
-        binding.customerName.doAfterTextChanged { viewModel.customerName.value = it.toString() }
-        binding.address1.doAfterTextChanged { viewModel.customerAddressLine1.value = it.toString() }
-        binding.address2.doAfterTextChanged { viewModel.customerAddressLine2.value = it.toString() }
-        binding.city.doAfterTextChanged { viewModel.customerCity.value = it.toString() }
-        binding.state.doAfterTextChanged { viewModel.customerState.value = it.toString() }
-        binding.zip.doAfterTextChanged { viewModel.customerZipCode.value = it.toString() }
+        // Bindings for customer information — also clear errors as the user edits.
+        wireField(
+            edit = binding.customerName,
+            liveData = viewModel.customerName,
+            field = FieldKey.NAME,
+            validate = { Validators.validateName(it) },
+            activity = activity
+        )
+        wireField(
+            edit = binding.customerEmail,
+            liveData = viewModel.customerEmail,
+            field = FieldKey.EMAIL,
+            validate = { Validators.validateEmail(it) },
+            activity = activity
+        )
+        wireField(
+            edit = binding.address1,
+            liveData = viewModel.customerAddressLine1,
+            field = FieldKey.ADDRESS_LINE_1,
+            validate = { Validators.validateAddressLine1(it) },
+            activity = activity
+        )
+        wireField(
+            edit = binding.address2,
+            liveData = viewModel.customerAddressLine2,
+            field = null,
+            validate = null,
+            activity = activity
+        )
+        wireField(
+            edit = binding.city,
+            liveData = viewModel.customerCity,
+            field = FieldKey.CITY,
+            validate = { Validators.validateCity(it) },
+            activity = activity
+        )
+        wireField(
+            edit = binding.state,
+            liveData = viewModel.customerState,
+            field = FieldKey.STATE,
+            validate = { Validators.validateState(it) },
+            activity = activity
+        )
+        wireField(
+            edit = binding.zip,
+            liveData = viewModel.customerZipCode,
+            field = FieldKey.ZIP,
+            validate = { Validators.validateZip(it) },
+            activity = activity
+        )
         binding.countryInput.setOnClickListener {
             showCountryPicker()
         }
 
-        binding.encryptedCardInput.onCardDataChange = { data -> viewModel.cardData = data }
+        binding.countryInput.setText(viewModel.customerCountry.displayName)
+
+        binding.encryptedCardInput.onCardDataChange = { data ->
+            viewModel.cardData = data
+            viewModel.setError(FieldKey.CARD, Validators.validateCard(data))
+        }
+
+        viewModel.fieldErrors.observe(activity) { errors ->
+            binding.customerNameLayout.error = errors[FieldKey.NAME]?.let { context.getString(it.messageRes) }
+            binding.customerEmailLayout.error = errors[FieldKey.EMAIL]?.let { context.getString(it.messageRes) }
+            binding.address1Layout.error = errors[FieldKey.ADDRESS_LINE_1]?.let { context.getString(it.messageRes) }
+            binding.cityLayout.error = errors[FieldKey.CITY]?.let { context.getString(it.messageRes) }
+            binding.stateLayout.error = errors[FieldKey.STATE]?.let { context.getString(it.messageRes) }
+            binding.zipLayout.error = errors[FieldKey.ZIP]?.let { context.getString(it.messageRes) }
+            binding.countryInputLayout.error = errors[FieldKey.COUNTRY]?.let { context.getString(it.messageRes) }
+            val cardErr = errors[FieldKey.CARD]
+            if (cardErr == null) {
+                binding.cardErrorText.visibility = View.GONE
+                binding.cardErrorText.text = ""
+            } else {
+                binding.cardErrorText.visibility = View.VISIBLE
+                binding.cardErrorText.text = context.getString(cardErr.messageRes)
+            }
+        }
+    }
+
+    private fun wireField(
+        edit: com.google.android.material.textfield.TextInputEditText,
+        liveData: androidx.lifecycle.MutableLiveData<String>,
+        field: FieldKey?,
+        validate: ((String?) -> ValidationError?)?,
+        activity: AppCompatActivity
+    ) {
+        edit.doAfterTextChanged {
+            val value = it.toString()
+            liveData.value = value
+            field?.let { key -> viewModel.clearError(key) }
+        }
+        liveData.observe(activity) { edit.setTextIfDifferent(it) }
+        if (field != null && validate != null) {
+            edit.setOnFocusChangeListener { _, hasFocus ->
+                if (!hasFocus) {
+                    viewModel.setError(field, validate(edit.text?.toString()))
+                }
+            }
+        }
     }
 
     @SuppressLint("SetTextI18n")
@@ -133,6 +229,7 @@ class FrameCheckoutView @JvmOverloads constructor(
             val selectedIndex = spinner.selectedItemPosition
             viewModel.customerCountry = countries[selectedIndex]
             binding.countryInput.setText(viewModel.customerCountry.displayName)
+            viewModel.setError(FieldKey.COUNTRY, Validators.validateCountry(viewModel.customerCountry.alpha2Code))
             Toast.makeText(activity, "Selected: ${viewModel.customerCountry.displayName}", Toast.LENGTH_SHORT).show()
             bottomSheetDialog.dismiss()
         }
@@ -140,14 +237,40 @@ class FrameCheckoutView @JvmOverloads constructor(
         bottomSheetDialog.show()
     }
 
+    @JvmOverloads
     @SuppressLint("SetTextI18n")
     fun configure(
         customerId: String?,
         paymentAmount: Int,
+        googlePayMerchantId: String? = null,
+        addressMode: AddressMode = AddressMode.REQUIRED,
         onCheckout: (ChargeIntent) -> Unit
     ) {
         checkoutCallback = onCheckout
-        viewModel.loadCustomerPaymentMethods(customerId, paymentAmount)
+        viewModel.addressMode = addressMode
+        binding.customerAddressContainer.visibility =
+            if (addressMode == AddressMode.HIDDEN) View.GONE else View.VISIBLE
+        viewModel.loadCustomer(customerId, paymentAmount)
         binding.payButton.text = "Pay ${CurrencyFormatter.convertCentsToCurrencyString(paymentAmount)}"
+
+        binding.googlePayBtn.configure(
+            amountCents = paymentAmount,
+            customerId = customerId,
+            googlePayMerchantId = googlePayMerchantId,
+            onResult = { result ->
+                when (result) {
+                    is FrameGooglePayButton.Result.Success -> checkoutCallback?.invoke(result.chargeIntent)
+                    else -> {}
+                }
+            },
+            onReadinessChanged = { isReady ->
+                binding.googlePayDivider.visibility = if (isReady) View.VISIBLE else View.GONE
+            }
+        )
     }
+}
+
+private fun com.google.android.material.textfield.TextInputEditText.setTextIfDifferent(value: String?) {
+    val newText = value.orEmpty()
+    if (text?.toString() != newText) setText(newText)
 }

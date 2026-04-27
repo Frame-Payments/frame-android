@@ -24,4 +24,12 @@
     <string name="customer_email">Customer Email</string>
     <string name="customer_name">Customer Name</string>
     <string name="done">Done</string>
+    <string name="error_name_required">Enter first and last name</string>
+    <string name="error_email_invalid">Enter a valid email address</string>
+    <string name="error_address_required">Address line 1 is required</string>
+    <string name="error_city_required">City is required</string>
+    <string name="error_state_required">State is required</string>
+    <string name="error_zip_invalid">Enter a 5-digit zip code</string>
+    <string name="error_country_required">Select a country</string>
+    <string name="error_card_invalid">Enter valid card details</string>
 </resources>

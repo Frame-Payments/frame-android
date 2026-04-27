@@ -2,10 +2,9 @@ package com.framepayments.frame
 
 import android.os.Bundle
 import android.widget.FrameLayout
-import androidx.appcompat.app.AppCompatActivity
 import com.framepayments.framesdk_ui.FrameCheckoutView
 
-class CheckoutActivity : AppCompatActivity() {
+class CheckoutActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +26,8 @@ class CheckoutActivity : AppCompatActivity() {
                 paymentAmount = totalCents
             ) { intent ->
                 println("Checkout Completed: $intent")
+                setResult(RESULT_OK)
+                finish()
             }
         }
 

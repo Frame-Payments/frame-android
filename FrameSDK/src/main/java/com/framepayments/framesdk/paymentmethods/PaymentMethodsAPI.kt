@@ -85,6 +85,12 @@ object PaymentMethodsAPI {
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
+    suspend fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
+        val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, usePublishableKey = true)
+        return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
+    }
+    
     suspend fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.ConnectPlaidBankAccount
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
@@ -190,6 +196,14 @@ object PaymentMethodsAPI {
         }
     }
 
+    fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
+        val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
+
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, usePublishableKey = true) { data, error ->
+            completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
+        }
+    }
+    
     fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.ConnectPlaidBankAccount
         FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->

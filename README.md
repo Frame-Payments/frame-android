@@ -71,6 +71,25 @@ val (refund, error) = RefundsAPI.createRefund(request: {
 )
 ```
 
+## 💳 Google Pay
+
+The Frame Android SDK supports Google Pay as a payment method for merchants using FluidPay or Coinflow as their processor.
+
+### Obtaining a Google Pay Merchant ID
+
+To accept Google Pay payments, you need a Google Pay Merchant ID:
+
+1. Sign up for a [Google Pay & Wallet Console](https://pay.google.com/business/console/) account
+2. Complete the business profile and agree to the Google Pay API Terms of Service
+3. Your **Merchant ID** is displayed on the Business Console home page once approved
+4. Provide this Merchant ID when configuring Google Pay through the [Frame Payments Dashboard](https://framepayments.com)
+
+### How It Works
+
+- The SDK automatically detects mobile requests and bypasses domain verification required for web integrations
+- In development/test mode, Google Pay runs in `TEST` environment with example gateway credentials
+- In production, live processor credentials are used automatically based on your merchant configuration
+
 ## 🔒 Privacy & Security
 
 - Frame **never stores raw card details** on-device or in your app.  
