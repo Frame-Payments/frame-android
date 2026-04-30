@@ -80,7 +80,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates("com.framepayments", "framesdk_onboarding", "2.0.0")
+    coordinates("com.framepayments", "framesdk_onboarding", "2.0.2")
 
     pom {
         name.set("FrameSDK-Onboarding")
