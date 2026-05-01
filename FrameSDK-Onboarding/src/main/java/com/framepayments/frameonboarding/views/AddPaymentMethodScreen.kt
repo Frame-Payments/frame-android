@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,10 +41,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
-import com.framepayments.frameonboarding.reusable.BillingAddressForm
+import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
 import com.framepayments.frameonboarding.reusable.PaymentCardForm
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.frameonboarding.validation.OnboardingValidators
+import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
+import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk_ui.EncryptedPaymentCardInput
@@ -74,15 +78,28 @@ internal fun AddPaymentMethodScreen(
         }
     }
 
-    val canContinue = remember(paymentCard, card, billing, evervaultReady) {
-        if (evervaultReady == null) return@remember false
-        viewModel.isPaymentMethodFormComplete(
-            paymentCard,
-            card,
-            billing,
-            onlyAddress = false,
-            useEvervaultCardInput = evervaultReady == true
-        )
+    val billingVM = rememberSaveable(
+        saver = BillingAddressFieldVM.Saver(BillingAddressMode.US_ONLY)
+    ) { BillingAddressFieldVM(billing, BillingAddressMode.US_ONLY) }
+    var cardError by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // Auto-clear card error when the user changes card details (iOS .onChange(of: cardData)).
+    LaunchedEffect(paymentCard, card) {
+        if (cardError != null) cardError = null
+    }
+
+    // Merge async billing prefill (e.g. from Plaid metadata, account profile) into the
+    // per-screen VM without clobbering user-typed values.
+    LaunchedEffect(billing) {
+        billingVM.updateAddress { current ->
+            current.copy(
+                addressLine1 = current.addressLine1?.takeIf { it.isNotBlank() } ?: billing.addressLine1,
+                addressLine2 = current.addressLine2 ?: billing.addressLine2,
+                city = current.city?.takeIf { it.isNotBlank() } ?: billing.city,
+                state = current.state?.takeIf { it.isNotBlank() } ?: billing.state,
+                postalCode = current.postalCode.ifBlank { billing.postalCode }
+            )
+        }
     }
 
     Scaffold(
@@ -158,21 +175,20 @@ internal fun AddPaymentMethodScreen(
                 }
             }
 
-            Spacer(Modifier.height(0.dp))
+            cardError?.let { msg ->
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = msg,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(start = 16.dp)
+                )
+            }
 
-            BillingAddressForm(
-                addressLine1 = billing.addressLine1.orEmpty(),
-                onAddressLine1Change = { v -> viewModel.updateCreatedBillingAddress { it.copy(addressLine1 = v) } },
-                addressLine2 = billing.addressLine2.orEmpty(),
-                onAddressLine2Change = { v ->
-                    viewModel.updateCreatedBillingAddress { it.copy(addressLine2 = v.ifBlank { null }) }
-                },
-                city = billing.city.orEmpty(),
-                onCityChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(city = v) } },
-                state = billing.state.orEmpty(),
-                onStateChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(state = v) } },
-                zipCode = billing.postalCode,
-                onZipCodeChange = { v -> viewModel.updateCreatedBillingAddress { it.copy(postalCode = v) } },
+            Spacer(Modifier.height(16.dp))
+
+            BillingAddressDetailView(
+                viewModel = billingVM,
                 headerTitle = "Billing Address"
             )
 
@@ -197,8 +213,28 @@ internal fun AddPaymentMethodScreen(
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = canContinue,
-                onClick = { viewModel.submitNewPaymentMethod() },
+                enabled = evervaultReady != null,
+                onClick = {
+                    val addressOK = billingVM.validate()
+                    val cardOK = if (evervaultReady == true) {
+                        OnboardingValidators.validateCard(paymentCard).also { cardError = it } == null
+                    } else {
+                        // Manual fallback form: validate via the existing form-completeness check.
+                        val ok = viewModel.isPaymentMethodFormComplete(
+                            paymentCard,
+                            card,
+                            billingVM.address.value,
+                            onlyAddress = false,
+                            useEvervaultCardInput = false
+                        )
+                        if (!ok) cardError = "Enter valid card details"
+                        ok
+                    }
+                    if (addressOK && cardOK) {
+                        viewModel.updateCreatedBillingAddress { billingVM.address.value }
+                        viewModel.submitNewPaymentMethod()
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FramePrimaryColor,
                     contentColor = FrameOnPrimaryColor,

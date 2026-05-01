@@ -12,7 +12,7 @@ class AvailableCountries {
 
         val allCountries: List<AvailableCountry> by lazy {
             Locale.getISOCountries().map { code ->
-                val locale = Locale("", code)
+                val locale = Locale.Builder().setRegion(code).build()
                 AvailableCountry(code, locale.displayCountry)
             }.sortedBy { it.displayName }
         }

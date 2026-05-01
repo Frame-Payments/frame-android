@@ -8,6 +8,8 @@ import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.BankAccountDraft
 import com.framepayments.frameonboarding.classes.OnboardingData
+import com.framepayments.frameonboarding.classes.PhoneCountrySelection
+import com.framepayments.frameonboarding.validation.OnboardingValidators
 import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingState
@@ -57,6 +59,18 @@ import kotlinx.coroutines.CancellationException
 import java.time.Instant
 
 internal enum class VerifyIdSubStep { PhoneAuth, VerifyPhone, InformationForm }
+
+internal enum class OnboardingFieldGroup { PHONE_AUTH, DOCS }
+
+internal enum class OnboardingField(val group: OnboardingFieldGroup) {
+    AUTH_PHONE(OnboardingFieldGroup.PHONE_AUTH),
+    AUTH_BIRTH_MONTH(OnboardingFieldGroup.PHONE_AUTH),
+    AUTH_BIRTH_DAY(OnboardingFieldGroup.PHONE_AUTH),
+    AUTH_BIRTH_YEAR(OnboardingFieldGroup.PHONE_AUTH),
+    DOC_FRONT(OnboardingFieldGroup.DOCS),
+    DOC_BACK(OnboardingFieldGroup.DOCS),
+    DOC_SELFIE(OnboardingFieldGroup.DOCS),
+}
 
 /** UI state for the phone verification step (Prove vs manual Frame confirm). */
 internal sealed class VerifyPhoneUi {
@@ -251,6 +265,66 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     val dobComplete: Boolean
         get() = _dobMonth.value.length == 2 && _dobDay.value.length == 2 && _dobYear.value.length == 4
 
+    // region Form validation (1:1 with iOS OnboardingContainerViewModel partitioned errors)
+
+    private val _phoneCountry = MutableStateFlow(PhoneCountrySelection.default)
+    val phoneCountry: StateFlow<PhoneCountrySelection> = _phoneCountry.asStateFlow()
+
+    fun onPhoneCountryChanged(selection: PhoneCountrySelection) {
+        _phoneCountry.value = selection
+    }
+
+    private val _fieldErrors = MutableStateFlow<Map<OnboardingField, String>>(emptyMap())
+    val fieldErrors: StateFlow<Map<OnboardingField, String>> = _fieldErrors.asStateFlow()
+
+    fun errorFor(field: OnboardingField): String? = _fieldErrors.value[field]
+
+    fun clearError(field: OnboardingField) {
+        if (_fieldErrors.value.containsKey(field)) {
+            _fieldErrors.value = _fieldErrors.value - field
+        }
+    }
+
+    private fun applyValidation(
+        group: OnboardingFieldGroup,
+        errors: Map<OnboardingField, String>
+    ): Boolean {
+        val preserved = _fieldErrors.value.filterKeys { it.group != group }
+        _fieldErrors.value = preserved + errors
+        return errors.isEmpty()
+    }
+
+    /** Validate the phone-auth screen. Errors in the [OnboardingFieldGroup.PHONE_AUTH] group only. */
+    fun validateAllPhoneAuth(): Boolean {
+        val errors = mutableMapOf<OnboardingField, String>()
+        OnboardingValidators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
+            ?.let { errors[OnboardingField.AUTH_PHONE] = it }
+        if (_requiredCapabilities.value.contains(Capabilities.KYC_PREFILL)) {
+            OnboardingValidators.validateDateOfBirth(
+                year = _dobYear.value,
+                month = _dobMonth.value,
+                day = _dobDay.value
+            )?.let { err ->
+                errors[OnboardingField.AUTH_BIRTH_MONTH] = err
+                errors[OnboardingField.AUTH_BIRTH_DAY] = err
+                errors[OnboardingField.AUTH_BIRTH_YEAR] = err
+            }
+        }
+        return applyValidation(OnboardingFieldGroup.PHONE_AUTH, errors)
+    }
+
+    /** Validate the documents-upload screen. Errors in the [OnboardingFieldGroup.DOCS] group only. */
+    fun validateAllDocs(): Boolean {
+        val errors = mutableMapOf<OnboardingField, String>()
+        val data = _onboardingData.value
+        if (data.frontPhotoUri == null) errors[OnboardingField.DOC_FRONT] = "Front of ID is required"
+        if (data.backPhotoUri == null) errors[OnboardingField.DOC_BACK] = "Back of ID is required"
+        if (data.selfieUri == null) errors[OnboardingField.DOC_SELFIE] = "Selfie is required"
+        return applyValidation(OnboardingFieldGroup.DOCS, errors)
+    }
+
+    // endregion
+
     init {
         if (_tosTokenDeferred != null) {
             viewModelScope.launch {
@@ -357,7 +431,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     // region Phone + DOB inputs
 
     fun onPhoneNumberChanged(value: String) {
-        _phoneNumber.value = value.filter(Char::isDigit).take(10)
+        // Store the value as-is; PhoneNumberTextField applies AsYouTypeFormatter
+        // formatting. Stripping non-digits here would clobber the formatter.
+        _phoneNumber.value = value
     }
 
     fun onDobMonthChanged(value: String) {
@@ -444,7 +520,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                         individual = AccountRequests.CreateIndividualAccount(
                             phone = AccountObjects.AccountPhoneNumber(
                                 number = _phoneNumber.value,
-                                countryCode = "+1"
+                                countryCode = _phoneCountry.value.dialCode
                             ),
                             birthdate = dateOfBirth.ifEmpty { null }
                         )
@@ -613,7 +689,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 ),
                 email = email,
                 phoneNumber = _phoneNumber.value,
-                phoneCountryCode = "+1",
+                phoneCountryCode = _phoneCountry.value.dialCode,
                 address = billingAddress,
                 birthdate = dob,
                 ssnLast4 = ssnLastFour.ifEmpty { null }
@@ -643,7 +719,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                         email = email,
                         phone = AccountObjects.AccountPhoneNumber(
                             number = _phoneNumber.value,
-                            countryCode = "+1"
+                            countryCode = _phoneCountry.value.dialCode
                         ),
                         address = billingAddress,
                         birthdate = dob.ifEmpty { null },
@@ -732,9 +808,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             )
             upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
                 ?: return@launch
-//            if (!createCustomerIdentityForPersonalInfo(firstName, lastName, dob, email, ssnLastFour, billingAddress)) {
-//                return@launch
-//            }
+            // Customer identity creation is deferred — handled by createCustomerIdentity()
+            // separately in the flow once the account is established.
             moveNext()
         }
     }
@@ -765,7 +840,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                         email = d.email ?: return@launch,
                         phone = AccountObjects.AccountPhoneNumber(
                             number = _phoneNumber.value,
-                            countryCode = "+1"
+                            countryCode = _phoneCountry.value.dialCode
                         ),
                         address = billingAddress,
                         birthdate = dob.ifEmpty { null },
@@ -806,7 +881,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 ),
                 email = d.email ?: return@launch,
                 phoneNumber = _phoneNumber.value,
-                phoneCountryCode = "+1",
+                phoneCountryCode = _phoneCountry.value.dialCode,
                 address = billingAddress,
                 birthdate = dob,
                 ssnLast4 = d.ssnLast4?.ifEmpty { null }
@@ -1244,7 +1319,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                             id = pm.id,
                             brand = c.brand.uppercase(),
                             last4 = c.lastFourDigits,
-                            exp = "${c.expirationMonth}/${c.expirationYear.takeLast(2)}"
+                            exp = "${c.expirationMonth.orEmpty()}/${c.expirationYear?.takeLast(2).orEmpty()}"
                         )
                     }
                 }
