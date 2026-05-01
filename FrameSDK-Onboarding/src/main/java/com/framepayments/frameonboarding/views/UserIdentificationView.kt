@@ -1,5 +1,7 @@
 package com.framepayments.frameonboarding.views
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,14 +13,16 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,14 +40,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
-import com.framepayments.frameonboarding.reusable.BillingAddressForm
-import com.framepayments.frameonboarding.reusable.CustomerInformationForm
+import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
+import com.framepayments.frameonboarding.reusable.CustomerInformationView
+import com.framepayments.frameonboarding.reusable.PhoneCountryPickerSheet
+import com.framepayments.frameonboarding.reusable.PhoneNumberTextField
 import com.framepayments.frameonboarding.reusable.TermsOfServiceView
+import com.framepayments.frameonboarding.reusable.ValidatedTextField
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
+import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
+import com.framepayments.frameonboarding.viewmodels.CustomerInformationFieldVM
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
+import com.framepayments.frameonboarding.viewmodels.OnboardingField
 import com.framepayments.frameonboarding.viewmodels.VerifyIdSubStep
 import com.framepayments.frameonboarding.viewmodels.VerifyPhoneUi
 
@@ -60,6 +73,7 @@ internal fun UserIdentificationView(
     val dobMonth by viewModel.dobMonth.collectAsState()
     val dobDay by viewModel.dobDay.collectAsState()
     val dobYear by viewModel.dobYear.collectAsState()
+    val phoneCountry by viewModel.phoneCountry.collectAsState()
     val proveAuthToken by viewModel.pendingProveAuthToken.collectAsState()
     val verifyPhoneUi by viewModel.verifyPhoneUi.collectAsState()
     val pendingPhoneVerificationId by viewModel.pendingPhoneVerificationId.collectAsState()
@@ -73,38 +87,30 @@ internal fun UserIdentificationView(
         }
     }
 
-    // Information step local state (pure UI, submitted to VM on continue)
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var ssnLastFour by remember { mutableStateOf("") }
-    var addressLine1 by remember { mutableStateOf("") }
-    var addressLine2 by remember { mutableStateOf("") }
-    var city by remember { mutableStateOf("") }
-    var state by remember { mutableStateOf("") }
-    var postalCode by remember { mutableStateOf("") }
-    var country by remember { mutableStateOf("United States") }
+    var showPhoneCountryPicker by remember { mutableStateOf(false) }
 
-    LaunchedEffect(subStep) {
-        if (subStep != VerifyIdSubStep.InformationForm) return@LaunchedEffect
-        val d = viewModel.onboardingData.value
-        d.firstName?.takeIf { it.isNotBlank() }?.let { firstName = it }
-        d.lastName?.takeIf { it.isNotBlank() }?.let { lastName = it }
-        d.email?.takeIf { it.isNotBlank() }?.let { email = it }
-        d.ssnLast4?.takeIf { it.isNotBlank() }?.let { ssnLastFour = it }
-        d.addressLine1?.takeIf { it.isNotBlank() }?.let { addressLine1 = it }
-        d.addressLine2?.takeIf { it.isNotBlank() }?.let { addressLine2 = it }
-        d.city?.takeIf { it.isNotBlank() }?.let { city = it }
-        d.stateCode?.takeIf { it.isNotBlank() }?.let { state = it }
-        d.postalCode?.takeIf { it.isNotBlank() }?.let { postalCode = it }
-        d.country?.takeIf { it.isNotBlank() }?.let { country = it }
+    // Per-screen view models for the InformationForm step (iOS @StateObject parity).
+    val customerInfoVM = remember {
+        CustomerInformationFieldVM(
+            initialIdentity = identityFromOnboarding(viewModel),
+            initialPhoneCountry = viewModel.phoneCountry.value
+        )
+    }
+    val personalAddressVM = remember {
+        BillingAddressFieldVM(
+            initial = addressFromOnboarding(viewModel),
+            mode = BillingAddressMode.INTERNATIONAL
+        )
     }
 
-    val dobComplete = dobMonth.length == 2 && dobDay.length == 2 && dobYear.length == 4
-    val canContinuePhone = phoneNumber.length >= 10 && (!requiresDateOfBirth || dobComplete)
-    val canContinueInfo = firstName.isNotEmpty() && lastName.isNotEmpty() && email.isNotEmpty() &&
-        addressLine1.isNotEmpty() && city.isNotEmpty() && ssnLastFour.isNotEmpty() &&
-        state.isNotEmpty() && postalCode.length > 4
+    // Hydrate the per-screen VMs when the InformationForm substep activates and async
+    // account-profile data has populated viewModel.onboardingData.
+    LaunchedEffect(subStep) {
+        if (subStep != VerifyIdSubStep.InformationForm) return@LaunchedEffect
+        customerInfoVM.updateIdentity { identityFromOnboarding(viewModel) }
+        personalAddressVM.updateAddress { addressFromOnboarding(viewModel) }
+        customerInfoVM.setPhoneCountry(viewModel.phoneCountry.value)
+    }
 
     Scaffold(
         topBar = {
@@ -192,77 +198,124 @@ internal fun UserIdentificationView(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Spacer(Modifier.height(20.dp))
-                            OutlinedTextField(
-                                value = phoneNumber,
-                                onValueChange = { viewModel.onPhoneNumberChanged(it) },
-                                label = { Text("Phone Number") },
-                                placeholder = { Text("Enter your phone number") },
+
+                            // Phone number header row with error
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Phone Number", style = MaterialTheme.typography.labelMedium)
+                                viewModel.errorFor(OnboardingField.AUTH_PHONE)?.let { msg ->
+                                    Text(
+                                        text = msg,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                            )
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                OutlinedButton(
+                                    onClick = { showPhoneCountryPicker = true },
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                    modifier = Modifier
+                                        .height(64.dp)
+                                        .width(120.dp)
+                                ) {
+                                    Text(phoneCountry.flag)
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(phoneCountry.dialCode, style = MaterialTheme.typography.bodyMedium)
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Pick country"
+                                    )
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                PhoneNumberTextField(
+                                    value = phoneNumber,
+                                    onValueChange = { viewModel.onPhoneNumberChanged(it) },
+                                    prompt = "Enter your phone number",
+                                    regionCode = phoneCountry.alpha2,
+                                    error = viewModel.errorFor(OnboardingField.AUTH_PHONE),
+                                    compactError = true,
+                                    onClearError = { viewModel.clearError(OnboardingField.AUTH_PHONE) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+
                             if (requiresDateOfBirth) {
                                 Spacer(Modifier.height(16.dp))
-                                Text(text = "Date of Birth", style = MaterialTheme.typography.labelMedium)
-                                Spacer(Modifier.height(8.dp))
-                                Row(modifier = Modifier.fillMaxWidth()) {
-                                    OutlinedTextField(
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Date of Birth", style = MaterialTheme.typography.labelMedium)
+                                    firstAuthDobError(viewModel)?.let { msg ->
+                                        Text(
+                                            text = msg,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    ValidatedTextField(
                                         value = dobMonth,
                                         onValueChange = { viewModel.onDobMonthChanged(it) },
-                                        label = { Text("MM") },
-                                        modifier = Modifier.weight(1f),
-                                        singleLine = true,
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                        prompt = "MM",
+                                        error = viewModel.errorFor(OnboardingField.AUTH_BIRTH_MONTH),
+                                        keyboardType = KeyboardType.Number,
+                                        characterLimit = 2,
+                                        compactError = true,
+                                        onClearError = { clearAuthDobErrors(viewModel) },
+                                        modifier = Modifier.weight(1f)
                                     )
-                                    Spacer(Modifier.width(8.dp))
-                                    OutlinedTextField(
+                                    ValidatedTextField(
                                         value = dobDay,
                                         onValueChange = { viewModel.onDobDayChanged(it) },
-                                        label = { Text("DD") },
-                                        modifier = Modifier.weight(1f),
-                                        singleLine = true,
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                        prompt = "DD",
+                                        error = viewModel.errorFor(OnboardingField.AUTH_BIRTH_DAY),
+                                        keyboardType = KeyboardType.Number,
+                                        characterLimit = 2,
+                                        compactError = true,
+                                        onClearError = { clearAuthDobErrors(viewModel) },
+                                        modifier = Modifier.weight(1f)
                                     )
-                                    Spacer(Modifier.width(8.dp))
-                                    OutlinedTextField(
+                                    ValidatedTextField(
                                         value = dobYear,
                                         onValueChange = { viewModel.onDobYearChanged(it) },
-                                        label = { Text("YYYY") },
-                                        modifier = Modifier.weight(2f),
-                                        singleLine = true,
-                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                        prompt = "YYYY",
+                                        error = viewModel.errorFor(OnboardingField.AUTH_BIRTH_YEAR),
+                                        keyboardType = KeyboardType.Number,
+                                        characterLimit = 4,
+                                        compactError = true,
+                                        onClearError = { clearAuthDobErrors(viewModel) },
+                                        modifier = Modifier.weight(2f)
                                     )
                                 }
                             }
                         }
 
                         VerifyIdSubStep.InformationForm -> {
-                            CustomerInformationForm(
-                                firstName = firstName,
-                                onFirstNameChange = { firstName = it },
-                                lastName = lastName,
-                                onLastNameChange = { lastName = it },
-                                email = email,
-                                onEmailChange = { email = it },
-                                ssnLastFour = ssnLastFour,
-                                onSsnChange = { ssnLastFour = it },
+                            CustomerInformationView(
+                                viewModel = customerInfoVM,
                                 showHeader = false
                             )
 
                             Spacer(Modifier.height(24.dp))
 
-                            BillingAddressForm(
-                                addressLine1 = addressLine1,
-                                onAddressLine1Change = { addressLine1 = it },
-                                addressLine2 = addressLine2,
-                                onAddressLine2Change = { addressLine2 = it },
-                                city = city,
-                                onCityChange = { city = it },
-                                state = state,
-                                onStateChange = { state = it },
-                                zipCode = postalCode,
-                                onZipCodeChange = { postalCode = it },
-                                showHeader = false
+                            BillingAddressDetailView(
+                                viewModel = personalAddressVM,
+                                headerTitle = "Current Address"
                             )
                         }
 
@@ -276,27 +329,35 @@ internal fun UserIdentificationView(
                     Spacer(Modifier.height(24.dp))
                     Button(
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = when (subStep) {
-                            VerifyIdSubStep.PhoneAuth -> canContinuePhone
-                            else -> canContinueInfo
-                        },
+                        enabled = true,
                         onClick = {
                             when (subStep) {
-                                VerifyIdSubStep.PhoneAuth -> viewModel.submitPhoneAuth(requiresDateOfBirth)
+                                VerifyIdSubStep.PhoneAuth -> {
+                                    if (viewModel.validateAllPhoneAuth()) {
+                                        viewModel.submitPhoneAuth(requiresDateOfBirth)
+                                    }
+                                }
                                 else -> {
-                                    viewModel.submitPersonalInfo(
-                                        firstName = firstName,
-                                        lastName = lastName,
-                                        email = email,
-                                        dobOverride = null,
-                                        ssnLastFour = ssnLastFour,
-                                        addressLine1 = addressLine1,
-                                        addressLine2 = addressLine2.ifEmpty { null },
-                                        city = city,
-                                        stateCode = state,
-                                        postalCode = postalCode,
-                                        country = country
-                                    )
+                                    val infoOK = customerInfoVM.validate()
+                                    val addressOK = personalAddressVM.validate()
+                                    if (infoOK && addressOK) {
+                                        val id = customerInfoVM.identity.value
+                                        val addr = personalAddressVM.address.value
+                                        viewModel.onPhoneCountryChanged(customerInfoVM.phoneCountry.value)
+                                        viewModel.submitPersonalInfo(
+                                            firstName = id.firstName,
+                                            lastName = id.lastName,
+                                            email = id.email,
+                                            dobOverride = id.dateOfBirth.takeIf { it.isNotBlank() },
+                                            ssnLastFour = id.ssn,
+                                            addressLine1 = addr.addressLine1.orEmpty(),
+                                            addressLine2 = addr.addressLine2,
+                                            city = addr.city.orEmpty(),
+                                            stateCode = addr.state.orEmpty(),
+                                            postalCode = addr.postalCode,
+                                            country = addr.country ?: "US"
+                                        )
+                                    }
                                 }
                             }
                         },
@@ -313,11 +374,60 @@ internal fun UserIdentificationView(
             }
         }
     }
+
+    if (showPhoneCountryPicker) {
+        PhoneCountryPickerSheet(
+            selected = phoneCountry,
+            onSelected = { sel ->
+                viewModel.onPhoneCountryChanged(sel)
+                showPhoneCountryPicker = false
+            },
+            onDismiss = { showPhoneCountryPicker = false }
+        )
+    }
+}
+
+private fun firstAuthDobError(vm: FrameOnboardingViewModel): String? =
+    vm.errorFor(OnboardingField.AUTH_BIRTH_MONTH)
+        ?: vm.errorFor(OnboardingField.AUTH_BIRTH_DAY)
+        ?: vm.errorFor(OnboardingField.AUTH_BIRTH_YEAR)
+
+private fun clearAuthDobErrors(vm: FrameOnboardingViewModel) {
+    vm.clearError(OnboardingField.AUTH_BIRTH_MONTH)
+    vm.clearError(OnboardingField.AUTH_BIRTH_DAY)
+    vm.clearError(OnboardingField.AUTH_BIRTH_YEAR)
+}
+
+private fun identityFromOnboarding(
+    vm: FrameOnboardingViewModel
+): CustomerIdentityRequests.CreateCustomerIdentityRequest {
+    val d = vm.onboardingData.value
+    return CustomerIdentityRequests.CreateCustomerIdentityRequest(
+        address = addressFromOnboarding(vm),
+        firstName = d.firstName.orEmpty(),
+        lastName = d.lastName.orEmpty(),
+        dateOfBirth = d.dateOfBirth.orEmpty(),
+        phoneNumber = d.phoneNumber.orEmpty(),
+        email = d.email.orEmpty(),
+        ssn = d.ssnLast4.orEmpty()
+    )
+}
+
+private fun addressFromOnboarding(vm: FrameOnboardingViewModel): FrameObjects.BillingAddress {
+    val d = vm.onboardingData.value
+    return FrameObjects.BillingAddress(
+        city = d.city,
+        country = d.country ?: "US",
+        state = d.stateCode,
+        postalCode = d.postalCode.orEmpty(),
+        addressLine1 = d.addressLine1,
+        addressLine2 = d.addressLine2
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun OnboardingContainerViewPreview() {
+private fun UserIdentificationViewPreview() {
     UserIdentificationView(
         viewModel = FrameOnboardingViewModel(
             config = OnboardingConfig(requiredCapabilities = listOf(
