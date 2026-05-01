@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.frameonboarding.classes.AddressFormat
+import com.framepayments.frameonboarding.classes.PhoneCountrySelection
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 
@@ -191,8 +192,13 @@ fun BillingAddressDetailView(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
+                val pickableCountries = remember {
+                    AvailableCountries.allCountries.filter {
+                        it.alpha2Code.uppercase() !in PhoneCountrySelection.OFAC_RESTRICTED
+                    }
+                }
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    items(AvailableCountries.allCountries, key = { it.alpha2Code }) { country ->
+                    items(pickableCountries, key = { it.alpha2Code }) { country ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

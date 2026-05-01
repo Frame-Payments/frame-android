@@ -29,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -61,10 +62,39 @@ internal fun AddPayoutMethodScreen(
     val plaidToken by viewModel.plaidLinkToken.collectAsState()
     val isConnecting by viewModel.isConnectingPlaidBank.collectAsState()
 
-    var showManualForm by remember { mutableStateOf(false) }
+    var showManualForm by rememberSaveable { mutableStateOf(false) }
 
-    val bankVM = remember { BankAccountFieldVM(bank) }
-    val billingVM = remember { BillingAddressFieldVM(billing, BillingAddressMode.US_ONLY) }
+    val bankVM = rememberSaveable(saver = BankAccountFieldVM.Saver) {
+        BankAccountFieldVM(bank)
+    }
+    val billingVM = rememberSaveable(
+        saver = BillingAddressFieldVM.Saver(BillingAddressMode.US_ONLY)
+    ) { BillingAddressFieldVM(billing, BillingAddressMode.US_ONLY) }
+
+    // Merge async backend updates (e.g. Plaid metadata populates accountTypeLabel /
+    // billing address) into the per-screen VMs without clobbering user-typed values.
+    LaunchedEffect(bank) {
+        bankVM.updateDraft { current ->
+            current.copy(
+                routingNumber = current.routingNumber.ifBlank { bank.routingNumber },
+                accountNumber = current.accountNumber.ifBlank { bank.accountNumber },
+                accountTypeLabel = if (current.accountTypeLabel.isBlank() ||
+                    current.accountTypeLabel == "Checking"
+                ) bank.accountTypeLabel else current.accountTypeLabel
+            )
+        }
+    }
+    LaunchedEffect(billing) {
+        billingVM.updateAddress { current ->
+            current.copy(
+                addressLine1 = current.addressLine1?.takeIf { it.isNotBlank() } ?: billing.addressLine1,
+                addressLine2 = current.addressLine2 ?: billing.addressLine2,
+                city = current.city?.takeIf { it.isNotBlank() } ?: billing.city,
+                state = current.state?.takeIf { it.isNotBlank() } ?: billing.state,
+                postalCode = current.postalCode.ifBlank { billing.postalCode }
+            )
+        }
+    }
 
     val application = LocalContext.current.applicationContext as Application
 

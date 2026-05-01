@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,12 +78,28 @@ internal fun AddPaymentMethodScreen(
         }
     }
 
-    val billingVM = remember { BillingAddressFieldVM(billing, BillingAddressMode.US_ONLY) }
-    var cardError by remember { mutableStateOf<String?>(null) }
+    val billingVM = rememberSaveable(
+        saver = BillingAddressFieldVM.Saver(BillingAddressMode.US_ONLY)
+    ) { BillingAddressFieldVM(billing, BillingAddressMode.US_ONLY) }
+    var cardError by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Auto-clear card error when the user changes card details (iOS .onChange(of: cardData)).
     LaunchedEffect(paymentCard, card) {
         if (cardError != null) cardError = null
+    }
+
+    // Merge async billing prefill (e.g. from Plaid metadata, account profile) into the
+    // per-screen VM without clobbering user-typed values.
+    LaunchedEffect(billing) {
+        billingVM.updateAddress { current ->
+            current.copy(
+                addressLine1 = current.addressLine1?.takeIf { it.isNotBlank() } ?: billing.addressLine1,
+                addressLine2 = current.addressLine2 ?: billing.addressLine2,
+                city = current.city?.takeIf { it.isNotBlank() } ?: billing.city,
+                state = current.state?.takeIf { it.isNotBlank() } ?: billing.state,
+                postalCode = current.postalCode.ifBlank { billing.postalCode }
+            )
+        }
     }
 
     Scaffold(

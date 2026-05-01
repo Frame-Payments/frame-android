@@ -60,9 +60,9 @@ import java.time.Instant
 
 internal enum class VerifyIdSubStep { PhoneAuth, VerifyPhone, InformationForm }
 
-enum class OnboardingFieldGroup { PHONE_AUTH, DOCS }
+internal enum class OnboardingFieldGroup { PHONE_AUTH, DOCS }
 
-enum class OnboardingField(val group: OnboardingFieldGroup) {
+internal enum class OnboardingField(val group: OnboardingFieldGroup) {
     AUTH_PHONE(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_MONTH(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_DAY(OnboardingFieldGroup.PHONE_AUTH),
@@ -431,7 +431,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     // region Phone + DOB inputs
 
     fun onPhoneNumberChanged(value: String) {
-        _phoneNumber.value = value.filter(Char::isDigit).take(10)
+        // Store the value as-is; PhoneNumberTextField applies AsYouTypeFormatter
+        // formatting. Stripping non-digits here would clobber the formatter.
+        _phoneNumber.value = value
     }
 
     fun onDobMonthChanged(value: String) {
@@ -806,9 +808,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             )
             upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
                 ?: return@launch
-//            if (!createCustomerIdentityForPersonalInfo(firstName, lastName, dob, email, ssnLastFour, billingAddress)) {
-//                return@launch
-//            }
+            // Customer identity creation is deferred — handled by createCustomerIdentity()
+            // separately in the flow once the account is established.
             moveNext()
         }
     }

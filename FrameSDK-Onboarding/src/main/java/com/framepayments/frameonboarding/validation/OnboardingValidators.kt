@@ -40,8 +40,13 @@ object OnboardingValidators {
         return if (isValid) null else "Enter a 5-digit zip code"
     }
 
-    fun validateCard(data: PaymentCardData?): String? =
-        if (data != null && data.isPotentiallyValid) null else "Enter valid card details"
+    fun validateCard(data: PaymentCardData?): String? {
+        // Evervault's isPotentiallyValid returns true for an empty card; require a
+        // non-empty PAN as well (matches FrameCheckoutViewModel.isCardValid).
+        if (data == null) return "Enter valid card details"
+        if (data.card.number.isEmpty()) return "Enter valid card details"
+        return if (data.isPotentiallyValid) null else "Enter valid card details"
+    }
 
     fun validateCardExpiry(month: String, year: String): String? {
         val m = month.toIntOrNull() ?: return "Invalid expiration month"
@@ -144,7 +149,10 @@ object OnboardingValidators {
         if (trimmed.isEmpty()) return "Phone number is required"
         return try {
             val parsed = phoneUtil.parse(trimmed, regionCode.uppercase())
-            if (phoneUtil.isValidNumber(parsed)) null else "Enter a valid phone number"
+            // Match iOS PhoneNumberKit.parse semantics: accept anything libphonenumber
+            // considers a "possible" number for the region. isValidNumber is too strict —
+            // it rejects newly assigned mobile prefixes that iOS accepts.
+            if (phoneUtil.isPossibleNumber(parsed)) null else "Enter a valid phone number"
         } catch (_: NumberParseException) {
             "Enter a valid phone number"
         }

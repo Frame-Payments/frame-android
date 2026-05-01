@@ -1,5 +1,7 @@
 package com.framepayments.frameonboarding.viewmodels
 
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.frameonboarding.classes.PhoneCountrySelection
@@ -7,11 +9,6 @@ import com.framepayments.frameonboarding.validation.OnboardingValidators
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.update
 
 /**
@@ -30,8 +27,6 @@ class CustomerInformationFieldVM(
         FIRST_NAME, LAST_NAME, EMAIL, PHONE, BIRTH_MONTH, BIRTH_DAY, BIRTH_YEAR, SSN
     }
 
-    private val scope = CoroutineScope(SupervisorJob())
-
     private val _identity = MutableStateFlow(initialIdentity)
     val identity: StateFlow<CustomerIdentityRequests.CreateCustomerIdentityRequest> =
         _identity.asStateFlow()
@@ -42,12 +37,15 @@ class CustomerInformationFieldVM(
     private val _errors = MutableStateFlow<Map<Field, String>>(emptyMap())
     val errors: StateFlow<Map<Field, String>> = _errors.asStateFlow()
 
-    /** First non-null DOB error, in month → day → year order. Used for compact-mode header summary. */
-    val firstDateOfBirthError: StateFlow<String?> = _errors
-        .map { errs ->
-            errs[Field.BIRTH_MONTH] ?: errs[Field.BIRTH_DAY] ?: errs[Field.BIRTH_YEAR]
-        }
-        .stateIn(scope, SharingStarted.Eagerly, null)
+    /**
+     * First non-null DOB error, in month → day → year order. Computed from the current
+     * errors snapshot — call from a `derivedStateOf` in the composable so reads recompose
+     * when [errors] changes.
+     */
+    fun firstDateOfBirthError(): String? {
+        val errs = _errors.value
+        return errs[Field.BIRTH_MONTH] ?: errs[Field.BIRTH_DAY] ?: errs[Field.BIRTH_YEAR]
+    }
 
     fun updateIdentity(
         transform: (CustomerIdentityRequests.CreateCustomerIdentityRequest) -> CustomerIdentityRequests.CreateCustomerIdentityRequest
@@ -110,5 +108,48 @@ class CustomerInformationFieldVM(
 
         _errors.value = next
         return next.isEmpty()
+    }
+
+    companion object {
+        /** Saver so user typing survives config change (rotation, dark-mode toggle, etc.). */
+        val Saver: Saver<CustomerInformationFieldVM, Any> = listSaver(
+            save = { vm ->
+                val id = vm._identity.value
+                val a = id.address
+                listOf(
+                    id.firstName, id.lastName, id.email, id.phoneNumber,
+                    id.dateOfBirth, id.ssn,
+                    a.addressLine1.orEmpty(), a.addressLine2.orEmpty(),
+                    a.city.orEmpty(), a.state.orEmpty(),
+                    a.postalCode, a.country.orEmpty(),
+                    vm._phoneCountry.value.alpha2, vm._phoneCountry.value.dialCode
+                )
+            },
+            restore = { saved ->
+                val identity = CustomerIdentityRequests.CreateCustomerIdentityRequest(
+                    address = FrameObjects.BillingAddress(
+                        addressLine1 = (saved[6] as String).ifBlank { null },
+                        addressLine2 = (saved[7] as String).ifBlank { null },
+                        city = (saved[8] as String).ifBlank { null },
+                        state = (saved[9] as String).ifBlank { null },
+                        postalCode = saved[10] as String,
+                        country = (saved[11] as String).ifBlank { null }
+                    ),
+                    firstName = saved[0] as String,
+                    lastName = saved[1] as String,
+                    email = saved[2] as String,
+                    phoneNumber = saved[3] as String,
+                    dateOfBirth = saved[4] as String,
+                    ssn = saved[5] as String
+                )
+                CustomerInformationFieldVM(
+                    initialIdentity = identity,
+                    initialPhoneCountry = PhoneCountrySelection(
+                        alpha2 = saved[12] as String,
+                        dialCode = saved[13] as String
+                    )
+                )
+            }
+        )
     }
 }

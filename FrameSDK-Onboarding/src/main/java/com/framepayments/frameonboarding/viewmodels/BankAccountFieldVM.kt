@@ -1,5 +1,7 @@
 package com.framepayments.frameonboarding.viewmodels
 
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import com.framepayments.frameonboarding.classes.BankAccountDraft
 import com.framepayments.frameonboarding.validation.OnboardingValidators
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,5 +47,23 @@ class BankAccountFieldVM(initial: BankAccountDraft = BankAccountDraft()) {
             ?.let { next[Field.ACCOUNT] = it }
         _errors.value = next
         return next.isEmpty()
+    }
+
+    companion object {
+        val Saver: Saver<BankAccountFieldVM, Any> = listSaver(
+            save = { vm ->
+                val d = vm._draft.value
+                listOf(d.routingNumber, d.accountNumber, d.accountTypeLabel)
+            },
+            restore = { saved ->
+                BankAccountFieldVM(
+                    BankAccountDraft(
+                        routingNumber = saved[0] as String,
+                        accountNumber = saved[1] as String,
+                        accountTypeLabel = saved[2] as String
+                    )
+                )
+            }
+        )
     }
 }

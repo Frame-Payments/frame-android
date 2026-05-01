@@ -12,10 +12,13 @@ data class PhoneCountrySelection(
 ) {
     val flag: String get() = flagFor(alpha2)
     val displayName: String
-        get() = Locale("", alpha2).getDisplayCountry(Locale.getDefault()).ifEmpty { alpha2 }
+        get() = Locale.Builder().setRegion(alpha2).build()
+            .getDisplayCountry(Locale.getDefault())
+            .ifEmpty { alpha2 }
 
     companion object {
-        private val OFAC_RESTRICTED = setOf(
+        /** Countries excluded from address & phone pickers per OFAC compliance. Mirrors iOS. */
+        val OFAC_RESTRICTED: Set<String> = setOf(
             "IR", "RU", "KP", "SY", "CU", "CD", "IQ", "LY", "ML", "NI", "SD", "VE", "YE"
         )
 

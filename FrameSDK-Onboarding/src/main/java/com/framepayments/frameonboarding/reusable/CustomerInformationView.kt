@@ -12,9 +12,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,12 +42,19 @@ fun CustomerInformationView(
     val identity by viewModel.identity.collectAsState()
     val phoneCountry by viewModel.phoneCountry.collectAsState()
     val errors by viewModel.errors.collectAsState()
-    val firstDobError by viewModel.firstDateOfBirthError.collectAsState()
+    val firstDobError by remember {
+        derivedStateOf {
+            errors[CustomerInformationFieldVM.Field.BIRTH_MONTH]
+                ?: errors[CustomerInformationFieldVM.Field.BIRTH_DAY]
+                ?: errors[CustomerInformationFieldVM.Field.BIRTH_YEAR]
+        }
+    }
 
     // Three local DOB components, synced bidirectionally to identity.dateOfBirth.
-    var birthMonth by remember { mutableStateOf("") }
-    var birthDay by remember { mutableStateOf("") }
-    var birthYear by remember { mutableStateOf("") }
+    // Saveable so rotation/process restore preserves typing in progress.
+    var birthMonth by rememberSaveable { mutableStateOf("") }
+    var birthDay by rememberSaveable { mutableStateOf("") }
+    var birthYear by rememberSaveable { mutableStateOf("") }
 
     // Hydrate from stored ISO when it changes externally (e.g. async account profile fetch).
     LaunchedEffect(identity.dateOfBirth) {

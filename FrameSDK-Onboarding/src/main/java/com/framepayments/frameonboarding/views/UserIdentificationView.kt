@@ -33,6 +33,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,6 +80,7 @@ internal fun UserIdentificationView(
     val pendingPhoneVerificationId by viewModel.pendingPhoneVerificationId.collectAsState()
     val awaitingAccountRefresh by viewModel.awaitingAccountProfileRefresh.collectAsState()
     val termsToken by viewModel.termsOfServiceToken.collectAsState()
+    val onboardingData by viewModel.onboardingData.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(showTermsOfService, termsToken) {
@@ -87,29 +89,54 @@ internal fun UserIdentificationView(
         }
     }
 
-    var showPhoneCountryPicker by remember { mutableStateOf(false) }
+    var showPhoneCountryPicker by rememberSaveable { mutableStateOf(false) }
 
     // Per-screen view models for the InformationForm step (iOS @StateObject parity).
-    val customerInfoVM = remember {
+    // rememberSaveable so typed values survive rotation / process recreation.
+    val customerInfoVM = rememberSaveable(saver = CustomerInformationFieldVM.Saver) {
         CustomerInformationFieldVM(
             initialIdentity = identityFromOnboarding(viewModel),
             initialPhoneCountry = viewModel.phoneCountry.value
         )
     }
-    val personalAddressVM = remember {
+    val personalAddressVM = rememberSaveable(
+        saver = BillingAddressFieldVM.Saver(BillingAddressMode.INTERNATIONAL)
+    ) {
         BillingAddressFieldVM(
             initial = addressFromOnboarding(viewModel),
             mode = BillingAddressMode.INTERNATIONAL
         )
     }
 
-    // Hydrate the per-screen VMs when the InformationForm substep activates and async
-    // account-profile data has populated viewModel.onboardingData.
-    LaunchedEffect(subStep) {
-        if (subStep != VerifyIdSubStep.InformationForm) return@LaunchedEffect
-        customerInfoVM.updateIdentity { identityFromOnboarding(viewModel) }
-        personalAddressVM.updateAddress { addressFromOnboarding(viewModel) }
-        customerInfoVM.setPhoneCountry(viewModel.phoneCountry.value)
+    // Merge async account-profile data into the per-screen VMs without clobbering
+    // anything the user has already typed. Keyed on onboardingData so prefill arriving
+    // mid-screen still propagates; iOS uses .onChange(of: createdCustomerIdentity).
+    LaunchedEffect(onboardingData) {
+        customerInfoVM.updateIdentity { current ->
+            current.copy(
+                firstName = current.firstName.ifBlank { onboardingData.firstName.orEmpty() },
+                lastName = current.lastName.ifBlank { onboardingData.lastName.orEmpty() },
+                email = current.email.ifBlank { onboardingData.email.orEmpty() },
+                phoneNumber = current.phoneNumber.ifBlank { onboardingData.phoneNumber.orEmpty() },
+                dateOfBirth = current.dateOfBirth.ifBlank { onboardingData.dateOfBirth.orEmpty() },
+                ssn = current.ssn.ifBlank { onboardingData.ssnLast4.orEmpty() }
+            )
+        }
+        personalAddressVM.updateAddress { current ->
+            current.copy(
+                addressLine1 = current.addressLine1?.takeIf { it.isNotBlank() } ?: onboardingData.addressLine1,
+                addressLine2 = current.addressLine2 ?: onboardingData.addressLine2,
+                city = current.city?.takeIf { it.isNotBlank() } ?: onboardingData.city,
+                state = current.state?.takeIf { it.isNotBlank() } ?: onboardingData.stateCode,
+                postalCode = current.postalCode.ifBlank { onboardingData.postalCode.orEmpty() },
+                country = current.country?.takeIf { it.isNotBlank() }
+                    ?: onboardingData.country
+                    ?: "US"
+            )
+        }
+        if (customerInfoVM.phoneCountry.value.alpha2 != viewModel.phoneCountry.value.alpha2) {
+            customerInfoVM.setPhoneCountry(viewModel.phoneCountry.value)
+        }
     }
 
     Scaffold(

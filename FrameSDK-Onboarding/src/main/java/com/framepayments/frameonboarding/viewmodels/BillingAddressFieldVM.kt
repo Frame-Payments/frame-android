@@ -1,5 +1,7 @@
 package com.framepayments.frameonboarding.viewmodels
 
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.frameonboarding.classes.AddressFormat
 import com.framepayments.frameonboarding.validation.OnboardingValidators
@@ -67,6 +69,37 @@ class BillingAddressFieldVM(
                 else current + (Field.POSTAL to updated)
             }
         }
+    }
+
+    companion object {
+        /** Saver for use with `rememberSaveable` so user typing survives config change. */
+        fun Saver(mode: BillingAddressMode): Saver<BillingAddressFieldVM, Any> =
+            listSaver(
+                save = { vm ->
+                    val a = vm._address.value
+                    listOf(
+                        a.addressLine1.orEmpty(),
+                        a.addressLine2.orEmpty(),
+                        a.city.orEmpty(),
+                        a.state.orEmpty(),
+                        a.postalCode,
+                        a.country.orEmpty()
+                    )
+                },
+                restore = { saved ->
+                    BillingAddressFieldVM(
+                        initial = FrameObjects.BillingAddress(
+                            addressLine1 = (saved[0] as String).ifBlank { null },
+                            addressLine2 = (saved[1] as String).ifBlank { null },
+                            city = (saved[2] as String).ifBlank { null },
+                            state = (saved[3] as String).ifBlank { null },
+                            postalCode = saved[4] as String,
+                            country = (saved[5] as String).ifBlank { null }
+                        ),
+                        mode = mode
+                    )
+                }
+            )
     }
 
     fun validate(): Boolean {
