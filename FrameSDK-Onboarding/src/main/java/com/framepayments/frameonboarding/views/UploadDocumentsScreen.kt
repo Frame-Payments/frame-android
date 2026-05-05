@@ -16,8 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.framepayments.frameonboarding.reusable.ContinueButton
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
 
@@ -43,6 +42,7 @@ internal fun UploadDocumentsScreen(
     frontError: String? = null,
     backError: String? = null,
     selfieError: String? = null,
+    isSubmitting: Boolean = false,
     onBack: () -> Unit,
     onFrontPhotoClick: () -> Unit,
     onBackPhotoClick: () -> Unit,
@@ -117,19 +117,11 @@ internal fun UploadDocumentsScreen(
                 DocumentError(selfieError)
             }
 
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                enabled = true,
-                onClick = onSubmit,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = FramePrimaryColor,
-                    contentColor = FrameOnPrimaryColor,
-                    disabledContainerColor = FramePrimaryColor.copy(alpha = 0.35f),
-                    disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
-                )
-            ) {
-                Text("Submit Photos")
-            }
+            ContinueButton(
+                text = "Submit Photos",
+                isLoading = isSubmitting,
+                onClick = onSubmit
+            )
         }
     }
 }

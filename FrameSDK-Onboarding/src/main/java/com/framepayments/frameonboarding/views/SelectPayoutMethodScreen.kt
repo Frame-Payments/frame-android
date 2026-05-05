@@ -17,8 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
+import com.framepayments.frameonboarding.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.cardBrandIcon
 import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
 import com.framepayments.frameonboarding.theme.FramePrimaryColor
@@ -105,19 +104,10 @@ internal fun SelectPayoutMethodScreen(
                 )
             }
 
-            Button(
-                modifier = Modifier.fillMaxWidth(),
+            ContinueButton(
                 enabled = canContinue,
-                onClick = onContinue,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = FramePrimaryColor,
-                    contentColor = FrameOnPrimaryColor,
-                    disabledContainerColor = FramePrimaryColor.copy(alpha = 0.35f),
-                    disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
-                )
-            ) {
-                Text("Continue")
-            }
+                onClick = onContinue
+            )
         }
     }
 }

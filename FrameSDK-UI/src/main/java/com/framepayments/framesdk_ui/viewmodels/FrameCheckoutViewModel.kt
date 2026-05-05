@@ -71,6 +71,11 @@ class FrameCheckoutViewModel : ViewModel() {
     private var currentCustomerId: String? = null
     internal var amount: Int = 0
 
+    /// True while the checkout submit is in flight. Drives the pay button's disabled state and
+    /// the in-button progress indicator. Re-entrant submit calls bail out immediately.
+    private val _isPerformingAction = MutableLiveData(false)
+    val isPerformingAction: LiveData<Boolean> = _isPerformingAction
+
     fun loadCustomer(customerId: String?, amount: Int) {
         this.amount = amount
         if (customerId == null) return
@@ -156,52 +161,60 @@ class FrameCheckoutViewModel : ViewModel() {
             emit(null)
             return@liveData
         }
-
-        val usingSavedCard = selectedCustomerPaymentOption != null
-        val errors = validateAll(forSavedCard = usingSavedCard)
-        if (errors.isNotEmpty()) {
-            _fieldErrors.postValue(errors)
+        if (_isPerformingAction.value == true) {
             emit(null)
             return@liveData
         }
-        // Clear any prior errors on success.
-        _fieldErrors.postValue(emptyMap())
-
-        // Determine or create payment method
-        val paymentMethodId = selectedCustomerPaymentOption?.id ?: run {
-            val (newPmId, newCustId) = try {
-                createPaymentMethod(currentCustomerId)
-            } catch (_: Exception) {
-                Pair<String?, String?>(null, null)
+        _isPerformingAction.postValue(true)
+        try {
+            val usingSavedCard = selectedCustomerPaymentOption != null
+            val errors = validateAll(forSavedCard = usingSavedCard)
+            if (errors.isNotEmpty()) {
+                _fieldErrors.postValue(errors)
+                emit(null)
+                return@liveData
             }
-            currentCustomerId = newCustId
-            newPmId
+            // Clear any prior errors on success.
+            _fieldErrors.postValue(emptyMap())
+
+            // Determine or create payment method
+            val paymentMethodId = selectedCustomerPaymentOption?.id ?: run {
+                val (newPmId, newCustId) = try {
+                    createPaymentMethod(currentCustomerId)
+                } catch (_: Exception) {
+                    Pair<String?, String?>(null, null)
+                }
+                currentCustomerId = newCustId
+                newPmId
+            }
+
+            if (paymentMethodId == null) {
+                emit(null)
+                return@liveData
+            }
+
+            // Build the charge intent request
+            val request = ChargeIntentsRequests.CreateChargeIntentRequest(
+                amount = amount,
+                currency = "usd",
+                customer = currentCustomerId,
+                description = "",
+                paymentMethod = paymentMethodId,
+                confirm = true,
+                receiptEmail = null,
+                authorizationMode = AuthorizationMode.AUTOMATIC,
+                customerData = null,
+                paymentMethodData = null,
+                fraudSignals = null,
+                sonarSessionId = FrameNetworking.currentSonarSessionId()
+            )
+
+            // Create and emit the intent
+            val (intent, _) = ChargeIntentAPI.createChargeIntent(request)
+            emit(intent)
+        } finally {
+            _isPerformingAction.postValue(false)
         }
-
-        if (paymentMethodId == null) {
-            emit(null)
-            return@liveData
-        }
-
-        // Build the charge intent request
-        val request = ChargeIntentsRequests.CreateChargeIntentRequest(
-            amount = amount,
-            currency = "usd",
-            customer = currentCustomerId,
-            description = "",
-            paymentMethod = paymentMethodId,
-            confirm = true,
-            receiptEmail = null,
-            authorizationMode = AuthorizationMode.AUTOMATIC,
-            customerData = null,
-            paymentMethodData = null,
-            fraudSignals = null,
-            sonarSessionId = FrameNetworking.currentSonarSessionId()
-        )
-
-        // Create and emit the intent
-        val (intent, _) = ChargeIntentAPI.createChargeIntent(request)
-        emit(intent)
     }
 
     private suspend fun createPaymentMethod(customerId: String? = null): Pair<String?, String?> {

@@ -97,6 +97,7 @@ internal fun OnboardingScreenRouter(
 
         OnboardingStep.UploadDocumentsList -> {
             val fieldErrors by viewModel.fieldErrors.collectAsState()
+            val isPerformingAction by viewModel.isPerformingAction.collectAsState()
             UploadDocumentsScreen(
                 frontPhotoComplete = onboardingData.frontPhotoUri != null,
                 backPhotoComplete = onboardingData.backPhotoUri != null,
@@ -104,6 +105,7 @@ internal fun OnboardingScreenRouter(
                 frontError = fieldErrors[OnboardingField.DOC_FRONT],
                 backError = fieldErrors[OnboardingField.DOC_BACK],
                 selfieError = fieldErrors[OnboardingField.DOC_SELFIE],
+                isSubmitting = isPerformingAction,
                 onBack = { viewModel.moveBack() },
                 onFrontPhotoClick = { viewModel.navigationState.goTo(OnboardingStep.CaptureFrontPhoto) },
                 onBackPhotoClick = { viewModel.navigationState.goTo(OnboardingStep.CaptureBackPhoto) },
