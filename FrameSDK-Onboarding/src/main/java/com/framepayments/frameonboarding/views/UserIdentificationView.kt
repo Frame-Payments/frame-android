@@ -14,15 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -81,6 +82,7 @@ internal fun UserIdentificationView(
     val awaitingAccountRefresh by viewModel.awaitingAccountProfileRefresh.collectAsState()
     val termsToken by viewModel.termsOfServiceToken.collectAsState()
     val onboardingData by viewModel.onboardingData.collectAsState()
+    val fieldErrors by viewModel.fieldErrors.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(showTermsOfService, termsToken) {
@@ -234,7 +236,7 @@ internal fun UserIdentificationView(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("Phone Number", style = MaterialTheme.typography.labelMedium)
-                                viewModel.errorFor(OnboardingField.AUTH_PHONE)?.let { msg ->
+                                fieldErrors[OnboardingField.AUTH_PHONE]?.let { msg ->
                                     Text(
                                         text = msg,
                                         style = MaterialTheme.typography.labelSmall,
@@ -244,10 +246,11 @@ internal fun UserIdentificationView(
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.Top
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 OutlinedButton(
                                     onClick = { showPhoneCountryPicker = true },
+                                    shape = RoundedCornerShape(4.dp),
                                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                                     modifier = Modifier
                                         .height(64.dp)
@@ -267,7 +270,7 @@ internal fun UserIdentificationView(
                                     onValueChange = { viewModel.onPhoneNumberChanged(it) },
                                     prompt = "Enter your phone number",
                                     regionCode = phoneCountry.alpha2,
-                                    error = viewModel.errorFor(OnboardingField.AUTH_PHONE),
+                                    error = fieldErrors[OnboardingField.AUTH_PHONE],
                                     compactError = true,
                                     onClearError = { viewModel.clearError(OnboardingField.AUTH_PHONE) },
                                     modifier = Modifier.weight(1f)
@@ -283,7 +286,10 @@ internal fun UserIdentificationView(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text("Date of Birth", style = MaterialTheme.typography.labelMedium)
-                                    firstAuthDobError(viewModel)?.let { msg ->
+                                    val firstDobError = fieldErrors[OnboardingField.AUTH_BIRTH_MONTH]
+                                        ?: fieldErrors[OnboardingField.AUTH_BIRTH_DAY]
+                                        ?: fieldErrors[OnboardingField.AUTH_BIRTH_YEAR]
+                                    firstDobError?.let { msg ->
                                         Text(
                                             text = msg,
                                             style = MaterialTheme.typography.labelSmall,
@@ -299,7 +305,7 @@ internal fun UserIdentificationView(
                                         value = dobMonth,
                                         onValueChange = { viewModel.onDobMonthChanged(it) },
                                         prompt = "MM",
-                                        error = viewModel.errorFor(OnboardingField.AUTH_BIRTH_MONTH),
+                                        error = fieldErrors[OnboardingField.AUTH_BIRTH_MONTH],
                                         keyboardType = KeyboardType.Number,
                                         characterLimit = 2,
                                         compactError = true,
@@ -310,7 +316,7 @@ internal fun UserIdentificationView(
                                         value = dobDay,
                                         onValueChange = { viewModel.onDobDayChanged(it) },
                                         prompt = "DD",
-                                        error = viewModel.errorFor(OnboardingField.AUTH_BIRTH_DAY),
+                                        error = fieldErrors[OnboardingField.AUTH_BIRTH_DAY],
                                         keyboardType = KeyboardType.Number,
                                         characterLimit = 2,
                                         compactError = true,
@@ -321,7 +327,7 @@ internal fun UserIdentificationView(
                                         value = dobYear,
                                         onValueChange = { viewModel.onDobYearChanged(it) },
                                         prompt = "YYYY",
-                                        error = viewModel.errorFor(OnboardingField.AUTH_BIRTH_YEAR),
+                                        error = fieldErrors[OnboardingField.AUTH_BIRTH_YEAR],
                                         keyboardType = KeyboardType.Number,
                                         characterLimit = 4,
                                         compactError = true,
@@ -413,11 +419,6 @@ internal fun UserIdentificationView(
         )
     }
 }
-
-private fun firstAuthDobError(vm: FrameOnboardingViewModel): String? =
-    vm.errorFor(OnboardingField.AUTH_BIRTH_MONTH)
-        ?: vm.errorFor(OnboardingField.AUTH_BIRTH_DAY)
-        ?: vm.errorFor(OnboardingField.AUTH_BIRTH_YEAR)
 
 private fun clearAuthDobErrors(vm: FrameOnboardingViewModel) {
     vm.clearError(OnboardingField.AUTH_BIRTH_MONTH)

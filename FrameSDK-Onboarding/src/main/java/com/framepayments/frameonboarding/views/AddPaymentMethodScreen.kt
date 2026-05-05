@@ -1,6 +1,7 @@
 package com.framepayments.frameonboarding.views
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -125,11 +126,25 @@ internal fun AddPaymentMethodScreen(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            Text(
-                text = "Card Details",
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Card Details",
+                    style = MaterialTheme.typography.labelLarge
+                )
+                cardError?.let { msg ->
+                    Text(
+                        text = msg,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
             if (isPreview) {
                 Box(
                     modifier = Modifier
@@ -173,16 +188,6 @@ internal fun AddPaymentMethodScreen(
                         onCvcChange = { c -> viewModel.updatePaymentCardDraft { it.copy(cvc = c) } }
                     )
                 }
-            }
-
-            cardError?.let { msg ->
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = msg,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
             }
 
             Spacer(Modifier.height(16.dp))
