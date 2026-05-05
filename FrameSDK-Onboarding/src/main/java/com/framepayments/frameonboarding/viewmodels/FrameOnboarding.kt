@@ -278,11 +278,16 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     val dateOfBirth: String
         get() {
             val m = _dobMonth.value; val d = _dobDay.value; val y = _dobYear.value
-            return if (y.length == 4 && m.length == 2 && d.length == 2) "$y-$m-$d" else ""
+            // Pad single-digit month/day so a user typing "5" for May still produces a
+            // well-formed `YYYY-MM-DD` ISO string for the backend. `OnboardingValidators`
+            // is responsible for rejecting out-of-range values before this is read.
+            return if (y.length == 4 && m.isNotEmpty() && d.isNotEmpty()) {
+                "$y-${m.padStart(2, '0')}-${d.padStart(2, '0')}"
+            } else ""
         }
 
     val dobComplete: Boolean
-        get() = _dobMonth.value.length == 2 && _dobDay.value.length == 2 && _dobYear.value.length == 4
+        get() = _dobMonth.value.isNotEmpty() && _dobDay.value.isNotEmpty() && _dobYear.value.length == 4
 
     /// E.164-shaped phone number for OTP / verification endpoints: dial code prefix + the
     /// user-typed digits with all formatter spaces/punctuation stripped. Mirrors iOS

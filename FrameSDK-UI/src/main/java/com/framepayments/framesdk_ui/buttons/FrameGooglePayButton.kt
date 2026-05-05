@@ -2,14 +2,15 @@ package com.framepayments.framesdk_ui.buttons
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
+import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.AuthorizationMode
@@ -30,6 +31,7 @@ import com.google.android.gms.wallet.WalletConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -85,8 +87,8 @@ class FrameGooglePayButton @JvmOverloads constructor(
         data class AddToOwner(val customerId: String?, val accountId: String?) : Mode()
     }
 
-    private val activity: AppCompatActivity = (context as? AppCompatActivity)
-        ?: throw IllegalArgumentException("FrameGooglePayButton must be used in an AppCompatActivity")
+    private val activity: ComponentActivity = context.findComponentActivity()
+        ?: throw IllegalArgumentException("FrameGooglePayButton must be hosted by a ComponentActivity (e.g. AppCompatActivity, ComposeActivity)")
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -117,7 +119,15 @@ class FrameGooglePayButton @JvmOverloads constructor(
             Wallet.WalletOptions.Builder().setEnvironment(walletEnv).build()
         )
 
-        googlePayLauncher = activity.registerForActivityResult(
+        // `ActivityResultRegistry.register(key, ...)` is the lifecycle-free overload —
+        // safe to call after the activity has reached RESUMED, which happens when this
+        // View is constructed lazily inside a Compose `AndroidView` factory.
+        // (`activity.registerForActivityResult(...)` enforces a pre-STARTED registration
+        // and crashes here.) Each instance gets a unique key so multiple buttons hosted
+        // by the same activity don't collide on the same launcher slot.
+        val registryKey = "FrameGooglePayButton#${System.identityHashCode(this)}"
+        googlePayLauncher = activity.activityResultRegistry.register(
+            registryKey,
             ActivityResultContracts.StartIntentSenderForResult()
         ) { result: ActivityResult ->
             when (result.resultCode) {
@@ -130,6 +140,15 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 else -> onResult?.invoke(Result.Failure("Google Pay failed with code ${result.resultCode}"))
             }
         }
+    }
+
+    override fun onDetachedFromWindow() {
+        // The lifecycle-free `register(...)` overload doesn't auto-unregister on
+        // activity destroy. Clean up the launcher slot when this View leaves the tree
+        // so we don't leak the registry entry across recomposition / navigation.
+        googlePayLauncher.unregister()
+        scope.cancel()
+        super.onDetachedFromWindow()
     }
 
     /**
@@ -404,4 +423,17 @@ class FrameGooglePayButton @JvmOverloads constructor(
             put("emailRequired", true)
         }
     }
+}
+
+/// Walks the [ContextWrapper] chain to find the host [ComponentActivity]. Compose's
+/// `LocalContext.current` (and therefore the context handed to `AndroidView` factories)
+/// is typically a themed wrapper rather than the activity itself, so a direct
+/// `context as ComponentActivity` cast crashes on otherwise-valid hosts.
+private fun Context.findComponentActivity(): ComponentActivity? {
+    var ctx: Context? = this
+    while (ctx is ContextWrapper) {
+        if (ctx is ComponentActivity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
 }
