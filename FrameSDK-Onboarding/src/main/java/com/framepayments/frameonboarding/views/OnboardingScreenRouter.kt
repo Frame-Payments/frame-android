@@ -9,6 +9,9 @@ import com.framepayments.frameonboarding.classes.OnboardingData
 import com.framepayments.frameonboarding.classes.OnboardingStep
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
+import com.framepayments.frameonboarding.viewmodels.OnboardingField
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 @Composable
 internal fun OnboardingScreenRouter(
@@ -93,15 +96,23 @@ internal fun OnboardingScreenRouter(
         }
 
         OnboardingStep.UploadDocumentsList -> {
+            val fieldErrors by viewModel.fieldErrors.collectAsState()
             UploadDocumentsScreen(
                 frontPhotoComplete = onboardingData.frontPhotoUri != null,
                 backPhotoComplete = onboardingData.backPhotoUri != null,
                 selfieComplete = onboardingData.selfieUri != null,
+                frontError = fieldErrors[OnboardingField.DOC_FRONT],
+                backError = fieldErrors[OnboardingField.DOC_BACK],
+                selfieError = fieldErrors[OnboardingField.DOC_SELFIE],
                 onBack = { viewModel.moveBack() },
                 onFrontPhotoClick = { viewModel.navigationState.goTo(OnboardingStep.CaptureFrontPhoto) },
                 onBackPhotoClick = { viewModel.navigationState.goTo(OnboardingStep.CaptureBackPhoto) },
                 onSelfieClick = { viewModel.navigationState.goTo(OnboardingStep.CaptureSelfie) },
-                onSubmit = { viewModel.uploadIdentificationDocumentsThenContinue(context) }
+                onSubmit = {
+                    if (viewModel.validateAllDocs()) {
+                        viewModel.uploadIdentificationDocumentsThenContinue(context)
+                    }
+                }
             )
         }
 

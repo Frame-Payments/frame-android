@@ -43,13 +43,24 @@ object FrameObjects {
 
     data class PaymentCard(
         val brand: String,
-        @SerializedName("exp_month") val expirationMonth: String,
-        @SerializedName("exp_year") val expirationYear: String,
+        @SerializedName("exp_month") val expirationMonth: String?,
+        @SerializedName("exp_year") val expirationYear: String?,
         val issuer: String?,
         val currency: String?,
         val segment: String?,
         val type: String?,
-        @SerializedName("last_four") val lastFourDigits: String
+        @SerializedName("last_four") val lastFourDigits: String,
+        val wallet: Wallet? = null
+    )
+
+    enum class WalletType {
+        @SerializedName("apple_pay") APPLE_PAY,
+        @SerializedName("google_pay") GOOGLE_PAY
+    }
+
+    data class Wallet(
+        val type: WalletType,
+        @SerializedName("dynamic_last4") val dynamicLast4: String?
     )
 
     data class BankAccount(

@@ -77,6 +77,9 @@ dependencies {
     // Coroutines for ProveAuthService suspend API
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+
+    // libphonenumber for E.164 validation and AsYouTypeFormatter
+    implementation(libs.libphonenumber)
 }
 
 mavenPublishing {

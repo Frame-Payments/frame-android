@@ -40,14 +40,15 @@ internal fun UploadDocumentsScreen(
     frontPhotoComplete: Boolean = false,
     backPhotoComplete: Boolean = false,
     selfieComplete: Boolean = false,
+    frontError: String? = null,
+    backError: String? = null,
+    selfieError: String? = null,
     onBack: () -> Unit,
     onFrontPhotoClick: () -> Unit,
     onBackPhotoClick: () -> Unit,
     onSelfieClick: () -> Unit,
     onSubmit: () -> Unit
 ) {
-    val allComplete = frontPhotoComplete && backPhotoComplete && selfieComplete
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -89,6 +90,7 @@ internal fun UploadDocumentsScreen(
                     isComplete = frontPhotoComplete,
                     onClick = onFrontPhotoClick
                 )
+                DocumentError(frontError)
 
                 Spacer(Modifier.height(12.dp))
 
@@ -97,6 +99,7 @@ internal fun UploadDocumentsScreen(
                     isComplete = backPhotoComplete,
                     onClick = onBackPhotoClick
                 )
+                DocumentError(backError)
 
                 Spacer(Modifier.height(24.dp))
 
@@ -111,11 +114,12 @@ internal fun UploadDocumentsScreen(
                     isComplete = selfieComplete,
                     onClick = onSelfieClick
                 )
+                DocumentError(selfieError)
             }
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
-                enabled = allComplete,
+                enabled = true,
                 onClick = onSubmit,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FramePrimaryColor,
@@ -127,6 +131,19 @@ internal fun UploadDocumentsScreen(
                 Text("Submit Photos")
             }
         }
+    }
+}
+
+@Composable
+private fun DocumentError(message: String?) {
+    if (message != null) {
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.padding(horizontal = 14.dp)
+        )
     }
 }
 

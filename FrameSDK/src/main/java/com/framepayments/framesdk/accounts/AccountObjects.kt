@@ -50,7 +50,7 @@ object AccountObjects {
     data class AccountBillingAddress(
         val city: String? = null,
         val country: String? = null,
-        @SerializedName("state_or_province") val state: String? = null,
+        val state: String? = null,
         @SerializedName("postal_code") val postalCode: String,
         @SerializedName("line_1") val addressLine1: String? = null,
         @SerializedName("line_2") val addressLine2: String? = null
