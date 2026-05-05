@@ -161,6 +161,7 @@ sealed class OnboardingResult {
 data class OnboardingConfig(
     val accountId: String? = null,
     val requiredCapabilities: List<Capabilities> = emptyList(),
+    val googlePayMerchantId: String? = null,
     /**
      * When true, [FrameOnboardingViewModel] skips network work in `init` (Compose Preview / design tools).
      */
