@@ -10,9 +10,9 @@ object ProductsResponses {
     )
 
     data class DeleteProductsResponse(
-        val id: String,
-        @SerializedName("object") val productObject: String,
-        val deleted: Boolean
+        val id: String?,
+        @SerializedName("object") val productObject: String?,
+        val deleted: Boolean?
 
     )
 }

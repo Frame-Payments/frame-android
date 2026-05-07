@@ -208,9 +208,9 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 setReady(false)
                 return@launch
             }
-            val isProduction = config.environment.uppercase() == "PRODUCTION"
-            googlePayGateway = if (isProduction) config.processor else "example"
-            googlePayGatewayMerchantId = if (isProduction) config.processorKey else "exampleGatewayMerchantId"
+            val isProduction = config.environment?.uppercase() == "PRODUCTION"
+            googlePayGateway = if (isProduction) config.processor ?: "example" else "example"
+            googlePayGatewayMerchantId = if (isProduction) config.processorKey ?: "exampleGatewayMerchantId" else "exampleGatewayMerchantId"
 
             val request = IsReadyToPayRequest.fromJson(buildIsReadyToPayRequest().toString()) ?: run {
                 setReady(false)

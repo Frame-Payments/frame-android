@@ -84,14 +84,15 @@ class ContentViewModel : ViewModel() {
         viewModelScope.launch {
             val (accountsResponse, accountsErr) = AccountsAPI.getAccounts(perPage = 1, page = 1)
             val account = accountsResponse?.data?.firstOrNull()
-            if (account == null) {
+            val accountId = account?.id
+            if (account == null || accountId == null) {
                 _plaidMessage.value = PlaidMessage(
                     title = "Plaid",
                     body = "No accounts found (${accountsErr ?: "empty list"})"
                 )
                 return@launch
             }
-            val service = PlaidLinkService(account.id)
+            val service = PlaidLinkService(accountId)
             _plaidService.value = service
             service.fetchLinkToken()
             if (service.linkToken.value == null) {
@@ -160,7 +161,8 @@ class ContentViewModel : ViewModel() {
     private suspend fun loadSubscriptionPhases() {
         val (subResponse, _) = SubscriptionsAPI.getSubscriptions(perPage = 1, page = 1)
         val firstSub = subResponse?.data?.firstOrNull() ?: return
-        val (phaseResponse, _) = SubscriptionPhasesAPI.getSubscriptionPhases(firstSub.id)
+        val firstSubId = firstSub.id ?: return
+        val (phaseResponse, _) = SubscriptionPhasesAPI.getSubscriptionPhases(firstSubId)
         _uiState.value = _uiState.value.copy(subscriptionPhases = phaseResponse?.phases ?: emptyList())
     }
 }

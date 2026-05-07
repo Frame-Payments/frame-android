@@ -9,6 +9,6 @@ data class ListProductPhaseResponse(
 )
 
 data class MetaProductPhaseResponse(
-    @SerializedName("product_id") val productId: String,
-    @SerializedName("updated_count") val updatedCount: Int
+    @SerializedName("product_id") val productId: String?,
+    @SerializedName("updated_count") val updatedCount: Int?
 )

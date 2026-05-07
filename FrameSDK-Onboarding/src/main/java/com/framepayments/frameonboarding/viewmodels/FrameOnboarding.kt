@@ -1202,11 +1202,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 val (verification, verificationError, networkError) =
                     ThreeDSecureVerificationsAPI.create3DSecureVerification(request)
                 when {
-                    verification != null && verification.id.isNotEmpty() -> {
+                    verification != null && !verification.id.isNullOrEmpty() -> {
                         _paymentMethodVerification.value = verification
                     }
                     verificationError?.error?.existingIntentId != null -> {
-                        val intentId = verificationError.error.existingIntentId ?: return@launch
+                        val intentId = verificationError.error?.existingIntentId ?: return@launch
                         retrieve3DSChallengeInternal(intentId)
                     }
                     networkError != null ->
@@ -1222,7 +1222,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     private suspend fun retrieve3DSChallengeInternal(verificationId: String) {
         val (retrieved, _) = ThreeDSecureVerificationsAPI.retrieve3DSecureVerification(verificationId)
-        if (retrieved != null && retrieved.id.isNotEmpty()) {
+        if (retrieved != null && !retrieved.id.isNullOrEmpty()) {
             _paymentMethodVerification.value = retrieved
         }
     }
@@ -1244,7 +1244,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             try {
                 val id = _paymentMethodVerification.value?.id ?: return@launch
                 val (verification, _) = ThreeDSecureVerificationsAPI.resend3DSecureVerification(id)
-                if (verification != null && verification.id.isNotEmpty()) {
+                if (verification != null && !verification.id.isNullOrEmpty()) {
                     _paymentMethodVerification.value = verification
                 }
             } finally {
@@ -1362,9 +1362,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     /// Append a wallet-created payment method (Google Pay) to the in-memory list and select it.
     /// Used by `AddPaymentMethodScreen` after a successful `FrameGooglePayButton` AddToOwner flow.
     fun appendNewlyAddedPaymentMethod(paymentMethod: FrameObjects.PaymentMethod) {
-        _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = paymentMethod.id)
+        val paymentMethodId = paymentMethod.id ?: return
+        _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = paymentMethodId)
         _savedPaymentMethods.value += PaymentMethodSummary(
-            id = paymentMethod.id,
+            id = paymentMethodId,
             brand = paymentMethod.card?.brand?.uppercase() ?: "WALLET",
             last4 = paymentMethod.card?.lastFourDigits ?: "",
             exp = "${paymentMethod.card?.expirationMonth ?: ""}/${paymentMethod.card?.expirationYear?.takeLast(2) ?: ""}"
@@ -1401,7 +1402,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         useEvervaultCardInput: Boolean = true
     ): Boolean {
         val addrOk = !billing.addressLine1.isNullOrBlank() && !billing.city.isNullOrBlank() &&
-            !billing.state.isNullOrBlank() && billing.postalCode.length > 4
+            !billing.state.isNullOrBlank() && (billing.postalCode?.length ?: 0) > 4
         if (!addrOk) return false
         if (onlyAddress) return true
         if (useEvervaultCardInput) return paymentCard.isValid
@@ -1426,7 +1427,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         billing: FrameObjects.BillingAddress
     ): Boolean {
         val addrOk = !billing.addressLine1.isNullOrBlank() && !billing.city.isNullOrBlank() &&
-            !billing.state.isNullOrBlank() && billing.postalCode.length == 5
+            !billing.state.isNullOrBlank() && billing.postalCode?.length == 5
         if (!addrOk) return false
         return bank.routingNumber.length >= 9 && bank.accountNumber.isNotEmpty() && bank.accountTypeLabel.isNotEmpty()
     }
@@ -1447,11 +1448,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             val (list, _) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
             _savedPaymentMethods.value = list
                 ?.mapNotNull { pm ->
+                    val pmId = pm.id ?: return@mapNotNull null
                     pm.card?.let { c ->
                         PaymentMethodSummary(
-                            id = pm.id,
-                            brand = c.brand.uppercase(),
-                            last4 = c.lastFourDigits,
+                            id = pmId,
+                            brand = c.brand?.uppercase().orEmpty(),
+                            last4 = c.lastFourDigits.orEmpty(),
                             exp = "${c.expirationMonth.orEmpty()}/${c.expirationYear?.takeLast(2).orEmpty()}"
                         )
                     }
@@ -1459,9 +1461,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 ?: emptyList()
             _savedPayoutMethods.value = list
                 ?.filter { it.ach != null }
-                ?.map { pm ->
+                ?.mapNotNull { pm ->
+                    val pmId = pm.id ?: return@mapNotNull null
                     PaymentMethodSummary(
-                        id = pm.id,
+                        id = pmId,
                         brand = "BANK",
                         last4 = pm.ach?.lastFour ?: "",
                         exp = ""

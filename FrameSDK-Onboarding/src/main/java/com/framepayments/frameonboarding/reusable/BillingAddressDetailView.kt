@@ -126,7 +126,7 @@ fun BillingAddressDetailView(
 
         val postalLimit = if (viewModel.mode == BillingAddressMode.US_ONLY) 5 else null
         ValidatedTextField(
-            value = address.postalCode,
+            value = address.postalCode.orEmpty(),
             onValueChange = { v ->
                 val filtered = if (postalLimit != null) v.filter(Char::isDigit) else v
                 val limited = postalLimit?.let { filtered.take(it) } ?: filtered

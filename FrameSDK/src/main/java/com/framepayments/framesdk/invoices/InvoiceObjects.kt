@@ -39,6 +39,6 @@ data class Invoice(
 )
 
 data class LineItem(
-    val product: String,
-    val quantity: Int
+    val product: String?,
+    val quantity: Int?
 )

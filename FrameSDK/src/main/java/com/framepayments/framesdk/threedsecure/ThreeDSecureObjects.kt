@@ -10,24 +10,24 @@ enum class VerificationStatus {
 }
 
 data class ThreeDSecureVerification(
-    val id: String,
-    val customer: String,
-    @SerializedName("payment_method") val paymentMethod: String,
-    @SerializedName("object") val verificationObject: String,
-    val livemode: Boolean,
+    val id: String?,
+    val customer: String?,
+    @SerializedName("payment_method") val paymentMethod: String?,
+    @SerializedName("object") val verificationObject: String?,
+    val livemode: Boolean?,
     val status: VerificationStatus?,
-    @SerializedName("challenge_url") val challengeUrl: String,
+    @SerializedName("challenge_url") val challengeUrl: String?,
     val completed: Int?,
-    val created: Int,
-    val updated: Int
+    val created: Int?,
+    val updated: Int?
 )
 
 data class ThreeDSecureVerificationError(
-    val error: VerificationError
+    val error: VerificationError?
 ) {
     data class VerificationError(
-        val type: String,
-        val message: String,
+        val type: String?,
+        val message: String?,
         @SerializedName("existing_intent_id") val existingIntentId: String?
     )
 }

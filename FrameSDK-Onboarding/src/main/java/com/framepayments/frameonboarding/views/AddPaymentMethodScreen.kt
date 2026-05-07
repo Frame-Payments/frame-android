@@ -97,7 +97,7 @@ internal fun AddPaymentMethodScreen(
                 addressLine2 = current.addressLine2 ?: billing.addressLine2,
                 city = current.city?.takeIf { it.isNotBlank() } ?: billing.city,
                 state = current.state?.takeIf { it.isNotBlank() } ?: billing.state,
-                postalCode = current.postalCode.ifBlank { billing.postalCode }
+                postalCode = current.postalCode?.takeIf { it.isNotBlank() } ?: billing.postalCode
             )
         }
     }

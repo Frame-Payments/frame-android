@@ -129,7 +129,7 @@ internal fun UserIdentificationView(
                 addressLine2 = current.addressLine2 ?: onboardingData.addressLine2,
                 city = current.city?.takeIf { it.isNotBlank() } ?: onboardingData.city,
                 state = current.state?.takeIf { it.isNotBlank() } ?: onboardingData.stateCode,
-                postalCode = current.postalCode.ifBlank { onboardingData.postalCode.orEmpty() },
+                postalCode = current.postalCode?.takeIf { it.isNotBlank() } ?: onboardingData.postalCode,
                 country = current.country?.takeIf { it.isNotBlank() }
                     ?: onboardingData.country
                     ?: "US"
@@ -386,7 +386,7 @@ internal fun UserIdentificationView(
                                             addressLine2 = addr.addressLine2,
                                             city = addr.city.orEmpty(),
                                             stateCode = addr.state.orEmpty(),
-                                            postalCode = addr.postalCode,
+                                            postalCode = addr.postalCode.orEmpty(),
                                             country = addr.country ?: "US"
                                         )
                                     }
