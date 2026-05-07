@@ -30,18 +30,18 @@ enum class DisputeStatus {
 }
 
 data class Dispute(
-    val id: String,
-    val amount: Int,
+    val id: String?,
+    val amount: Int?,
     val charge: String?,
-    val currency: String,
+    val currency: String?,
     val evidence: DisputeEvidence?,
     @SerializedName("charge_intent") val chargeIntent: String?,
-    val reason: DisputeReason,
-    val status: DisputeStatus,
-    @SerializedName("object") val disputeObject: String,
-    val livemode: Boolean,
-    val created: Int,
-    val updated: Int
+    val reason: DisputeReason?,
+    val status: DisputeStatus?,
+    @SerializedName("object") val disputeObject: String?,
+    val livemode: Boolean?,
+    val created: Int?,
+    val updated: Int?
 )
 
 data class DisputeEvidence(

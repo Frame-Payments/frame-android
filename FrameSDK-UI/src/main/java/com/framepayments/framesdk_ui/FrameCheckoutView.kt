@@ -50,21 +50,27 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.closeButton.setOnClickListener { (context as Activity).finish() }
 
         // Pay button is disabled until the user either selects a saved payment method
-        // or enters new card details that pass potential-validity.
+        // or enters new card details that pass potential-validity. It's also force-disabled
+        // while a checkout submit is in flight (driven by viewModel.isPerformingAction).
         binding.payButton.isEnabled = false
         binding.payButton.alpha = 0.4f
-        viewModel.hasUsablePaymentInput.observe(activity) { canPay ->
-            binding.payButton.isEnabled = canPay
-            binding.payButton.alpha = if (canPay) 1f else 0.4f
+
+        fun refreshPayButtonState() {
+            val canPay = viewModel.hasUsablePaymentInput.value == true
+            val loading = viewModel.isPerformingAction.value == true
+            binding.payButton.isEnabled = canPay && !loading
+            binding.payButton.alpha = if (canPay && !loading) 1f else 0.4f
+        }
+
+        viewModel.hasUsablePaymentInput.observe(activity) { refreshPayButtonState() }
+        viewModel.isPerformingAction.observe(activity) { loading ->
+            binding.checkoutProgressBar.visibility = if (loading == true) View.VISIBLE else View.GONE
+            refreshPayButtonState()
         }
 
         binding.payButton.setOnClickListener {
-            binding.checkoutProgressBar.visibility = View.VISIBLE
-            binding.payButton.isEnabled = false
             viewModel.checkoutWithSelectedPaymentMethod(binding.saveCard.isChecked)
                 .observe(activity) { intent ->
-                    binding.checkoutProgressBar.visibility = View.GONE
-                    binding.payButton.isEnabled = viewModel.hasUsablePaymentInput.value == true
                     intent?.let { checkoutCallback?.invoke(it) }
                 }
         }

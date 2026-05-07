@@ -15,9 +15,9 @@ enum class VerificationCheckStatus {
 }
 
 data class IdentificationDocuments(
-    @SerializedName("front_document_attached") val frontDocumentAttached: Boolean,
-    @SerializedName("back_document_attached") val backDocumentAttached: Boolean,
-    @SerializedName("selfie_attached") val selfieAttached: Boolean
+    @SerializedName("front_document_attached") val frontDocumentAttached: Boolean?,
+    @SerializedName("back_document_attached") val backDocumentAttached: Boolean?,
+    @SerializedName("selfie_attached") val selfieAttached: Boolean?
 )
 
 data class IdentificationData(
@@ -32,17 +32,17 @@ data class IdentificationData(
 )
 
 data class VerificationChecks(
-    @SerializedName("id_photo_face_match") val idPhotoFaceMatch: VerificationCheckStatus,
-    @SerializedName("id_age_over_18") val idAgeOver18: VerificationCheckStatus,
-    @SerializedName("id_not_expired") val idNotExpired: VerificationCheckStatus,
-    @SerializedName("id_tamper_detection") val idTamperDetection: VerificationCheckStatus
+    @SerializedName("id_photo_face_match") val idPhotoFaceMatch: VerificationCheckStatus?,
+    @SerializedName("id_age_over_18") val idAgeOver18: VerificationCheckStatus?,
+    @SerializedName("id_not_expired") val idNotExpired: VerificationCheckStatus?,
+    @SerializedName("id_tamper_detection") val idTamperDetection: VerificationCheckStatus?
 )
 
 data class CustomerIdentity(
-    val id: String,
-    val status: CustomerIdentityStatus,
-    val created: Int,
-    val updated: Int,
+    val id: String?,
+    val status: CustomerIdentityStatus?,
+    val created: Int?,
+    val updated: Int?,
     val pending: Int?,
     val verified: Int?,
     val failed: Int?,

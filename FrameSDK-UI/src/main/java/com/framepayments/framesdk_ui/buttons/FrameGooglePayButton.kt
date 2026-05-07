@@ -2,15 +2,17 @@ package com.framepayments.framesdk_ui.buttons
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
+import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.AuthorizationMode
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
@@ -29,6 +31,7 @@ import com.google.android.gms.wallet.WalletConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -65,13 +68,27 @@ class FrameGooglePayButton @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     sealed class Result {
+        /** Charge mode: payment authorized and a confirmed ChargeIntent was created. */
         data class Success(val chargeIntent: ChargeIntent) : Result()
+        /** AddToOwner mode: wallet card was attached to the customer/account as a PaymentMethod. */
+        data class PaymentMethodCreated(val paymentMethod: FrameObjects.PaymentMethod) : Result()
         data class Failure(val message: String) : Result()
         data object Cancelled : Result()
     }
 
-    private val activity: AppCompatActivity = (context as? AppCompatActivity)
-        ?: throw IllegalArgumentException("FrameGooglePayButton must be used in an AppCompatActivity")
+    /// Drives whether the Google Pay sheet completes by creating a charge intent (`Charge`) or
+    /// only attaches the wallet card to the customer/account (`AddToOwner`).
+    sealed class Mode {
+        data class Charge(
+            val amountCents: Int,
+            val currencyCode: String = "USD",
+            val customerId: String? = null
+        ) : Mode()
+        data class AddToOwner(val customerId: String?, val accountId: String?) : Mode()
+    }
+
+    private val activity: ComponentActivity = context.findComponentActivity()
+        ?: throw IllegalArgumentException("FrameGooglePayButton must be hosted by a ComponentActivity (e.g. AppCompatActivity, ComposeActivity)")
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -82,9 +99,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
     private var googlePayGateway: String = ""
     private var googlePayGatewayMerchantId: String = ""
     private var googlePayMerchantId: String? = null
-    private var amountCents: Int = 0
-    private var customerId: String? = null
-    private var currencyCode: String = "USD"
+    private var mode: Mode = Mode.Charge(amountCents = 0)
 
     private var onResult: ((Result) -> Unit)? = null
     private var onReadinessChanged: ((Boolean) -> Unit)? = null
@@ -104,7 +119,15 @@ class FrameGooglePayButton @JvmOverloads constructor(
             Wallet.WalletOptions.Builder().setEnvironment(walletEnv).build()
         )
 
-        googlePayLauncher = activity.registerForActivityResult(
+        // `ActivityResultRegistry.register(key, ...)` is the lifecycle-free overload —
+        // safe to call after the activity has reached RESUMED, which happens when this
+        // View is constructed lazily inside a Compose `AndroidView` factory.
+        // (`activity.registerForActivityResult(...)` enforces a pre-STARTED registration
+        // and crashes here.) Each instance gets a unique key so multiple buttons hosted
+        // by the same activity don't collide on the same launcher slot.
+        val registryKey = "FrameGooglePayButton#${System.identityHashCode(this)}"
+        googlePayLauncher = activity.activityResultRegistry.register(
+            registryKey,
             ActivityResultContracts.StartIntentSenderForResult()
         ) { result: ActivityResult ->
             when (result.resultCode) {
@@ -117,6 +140,15 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 else -> onResult?.invoke(Result.Failure("Google Pay failed with code ${result.resultCode}"))
             }
         }
+    }
+
+    override fun onDetachedFromWindow() {
+        // The lifecycle-free `register(...)` overload doesn't auto-unregister on
+        // activity destroy. Clean up the launcher slot when this View leaves the tree
+        // so we don't leak the registry entry across recomposition / navigation.
+        googlePayLauncher.unregister()
+        scope.cancel()
+        super.onDetachedFromWindow()
     }
 
     /**
@@ -139,9 +171,24 @@ class FrameGooglePayButton @JvmOverloads constructor(
         onResult: (Result) -> Unit,
         onReadinessChanged: ((Boolean) -> Unit)? = null
     ) {
-        this.amountCents = amountCents
-        this.customerId = customerId
-        this.currencyCode = currencyCode
+        configure(
+            mode = Mode.Charge(amountCents = amountCents, currencyCode = currencyCode, customerId = customerId),
+            googlePayMerchantId = googlePayMerchantId,
+            onResult = onResult,
+            onReadinessChanged = onReadinessChanged
+        )
+    }
+
+    /// Mode-aware configure. Use `Mode.Charge` for the existing checkout flow or
+    /// `Mode.AddToOwner` to attach a Google Pay wallet card to a customer/account without
+    /// creating a charge intent.
+    fun configure(
+        mode: Mode,
+        googlePayMerchantId: String? = null,
+        onResult: (Result) -> Unit,
+        onReadinessChanged: ((Boolean) -> Unit)? = null
+    ) {
+        this.mode = mode
         this.googlePayMerchantId = googlePayMerchantId
         this.onResult = onResult
         this.onReadinessChanged = onReadinessChanged
@@ -161,9 +208,9 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 setReady(false)
                 return@launch
             }
-            val isProduction = config.environment.uppercase() == "PRODUCTION"
-            googlePayGateway = if (isProduction) config.processor else "example"
-            googlePayGatewayMerchantId = if (isProduction) config.processorKey else "exampleGatewayMerchantId"
+            val isProduction = config.environment?.uppercase() == "PRODUCTION"
+            googlePayGateway = if (isProduction) config.processor ?: "example" else "example"
+            googlePayGatewayMerchantId = if (isProduction) config.processorKey ?: "exampleGatewayMerchantId" else "exampleGatewayMerchantId"
 
             val request = IsReadyToPayRequest.fromJson(buildIsReadyToPayRequest().toString()) ?: run {
                 setReady(false)
@@ -223,40 +270,61 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 email = email,
                 paymentMethodData = paymentMethodData
             )
+
+            val ownerCustomer: String? = when (val m = mode) {
+                is Mode.Charge -> m.customerId
+                is Mode.AddToOwner -> m.customerId
+            }
+            val ownerAccount: String? = when (val m = mode) {
+                is Mode.Charge -> null
+                is Mode.AddToOwner -> m.accountId
+            }
+
             val pmRequest = PaymentMethodRequests.CreateGooglePayPaymentMethodRequest(
                 wallet = PaymentMethodRequests.GooglePayWallet(googlePay = walletData),
-                customer = customerId
+                customer = ownerCustomer,
+                account = ownerAccount
             )
 
             val (pm, pmError) = PaymentMethodsAPI.createGooglePayPaymentMethod(pmRequest)
-            val pmId = pm?.id ?: run {
+            val resolvedPaymentMethod = pm ?: run {
                 withContext(Dispatchers.Main) {
                     onResult?.invoke(Result.Failure(pmError?.message ?: "Failed to create payment method"))
                 }
                 return@launch
             }
 
-            val ciRequest = ChargeIntentsRequests.CreateChargeIntentRequest(
-                amount = amountCents,
-                currency = currencyCode.lowercase(),
-                customer = customerId,
-                description = "",
-                paymentMethod = pmId,
-                confirm = true,
-                receiptEmail = null,
-                authorizationMode = AuthorizationMode.AUTOMATIC,
-                customerData = null,
-                paymentMethodData = null,
-                fraudSignals = null,
-                sonarSessionId = FrameNetworking.currentSonarSessionId()
-            )
-            val (intent, ciError) = ChargeIntentAPI.createChargeIntent(ciRequest)
+            when (val m = mode) {
+                is Mode.AddToOwner -> {
+                    withContext(Dispatchers.Main) {
+                        onResult?.invoke(Result.PaymentMethodCreated(resolvedPaymentMethod))
+                    }
+                    return@launch
+                }
+                is Mode.Charge -> {
+                    val ciRequest = ChargeIntentsRequests.CreateChargeIntentRequest(
+                        amount = m.amountCents,
+                        currency = m.currencyCode.lowercase(),
+                        customer = m.customerId,
+                        description = "",
+                        paymentMethod = resolvedPaymentMethod.id,
+                        confirm = true,
+                        receiptEmail = null,
+                        authorizationMode = AuthorizationMode.AUTOMATIC,
+                        customerData = null,
+                        paymentMethodData = null,
+                        fraudSignals = null,
+                        sonarSessionId = FrameNetworking.currentSonarSessionId()
+                    )
+                    val (intent, ciError) = ChargeIntentAPI.createChargeIntent(ciRequest)
 
-            withContext(Dispatchers.Main) {
-                if (intent != null) {
-                    onResult?.invoke(Result.Success(intent))
-                } else {
-                    onResult?.invoke(Result.Failure(ciError?.message ?: "Failed to create charge"))
+                    withContext(Dispatchers.Main) {
+                        if (intent != null) {
+                            onResult?.invoke(Result.Success(intent))
+                        } else {
+                            onResult?.invoke(Result.Failure(ciError?.message ?: "Failed to create charge"))
+                        }
+                    }
                 }
             }
         }
@@ -334,9 +402,19 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 })
             })
             put("transactionInfo", JSONObject().apply {
-                put("totalPriceStatus", "FINAL")
-                put("totalPrice", String.format("%.2f", amountCents / 100.0))
-                put("currencyCode", currencyCode)
+                when (val m = mode) {
+                    is Mode.Charge -> {
+                        put("totalPriceStatus", "FINAL")
+                        put("totalPrice", String.format("%.2f", m.amountCents / 100.0))
+                        put("currencyCode", m.currencyCode)
+                    }
+                    is Mode.AddToOwner -> {
+                        // Wallet-only: no charge happens, but Google Pay still requires
+                        // transactionInfo. NOT_CURRENTLY_KNOWN omits the price from the sheet.
+                        put("totalPriceStatus", "NOT_CURRENTLY_KNOWN")
+                        put("currencyCode", "USD")
+                    }
+                }
             })
             put("merchantInfo", JSONObject().apply {
                 googlePayMerchantId?.let { put("merchantId", it) }
@@ -345,4 +423,17 @@ class FrameGooglePayButton @JvmOverloads constructor(
             put("emailRequired", true)
         }
     }
+}
+
+/// Walks the [ContextWrapper] chain to find the host [ComponentActivity]. Compose's
+/// `LocalContext.current` (and therefore the context handed to `AndroidView` factories)
+/// is typically a themed wrapper rather than the activity itself, so a direct
+/// `context as ComponentActivity` cast crashes on otherwise-valid hosts.
+private fun Context.findComponentActivity(): ComponentActivity? {
+    var ctx: Context? = this
+    while (ctx is ContextWrapper) {
+        if (ctx is ComponentActivity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
 }

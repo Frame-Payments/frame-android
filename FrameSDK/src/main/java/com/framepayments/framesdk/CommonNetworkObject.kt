@@ -7,7 +7,7 @@ object FrameObjects {
         val city: String?,
         val country: String?,
         val state: String?,
-        @SerializedName("postal_code") val postalCode: String,
+        @SerializedName("postal_code") val postalCode: String?,
         @SerializedName("line_1") val addressLine1: String?,
         @SerializedName("line_2") val addressLine2: String?
     )
@@ -28,28 +28,28 @@ object FrameObjects {
     }
 
     data class PaymentMethod(
-        val id: String,
+        val id: String?,
         @SerializedName("customer_id") val customerId: String? = null,
         val billing: BillingAddress?,
-        val type: PaymentMethodType,
-        @SerializedName("object") val methodObject: String,
-        val created: Int,
-        val updated: Int,
-        val livemode: Boolean,
+        val type: PaymentMethodType?,
+        @SerializedName("object") val methodObject: String?,
+        val created: Int?,
+        val updated: Int?,
+        val livemode: Boolean?,
         val card: PaymentCard?,
         val ach: BankAccount?,
-        val status: PaymentMethodStatus
+        val status: PaymentMethodStatus?
     )
 
     data class PaymentCard(
-        val brand: String,
+        val brand: String?,
         @SerializedName("exp_month") val expirationMonth: String?,
         @SerializedName("exp_year") val expirationYear: String?,
         val issuer: String?,
         val currency: String?,
         val segment: String?,
         val type: String?,
-        @SerializedName("last_four") val lastFourDigits: String,
+        @SerializedName("last_four") val lastFourDigits: String?,
         val wallet: Wallet? = null
     )
 
@@ -59,7 +59,7 @@ object FrameObjects {
     }
 
     data class Wallet(
-        val type: WalletType,
+        val type: WalletType?,
         @SerializedName("dynamic_last4") val dynamicLast4: String?
     )
 
@@ -77,11 +77,11 @@ object FrameObjects {
     }
 
     data class Customer(
-        val id: String,
-        val created: Int,
+        val id: String?,
+        val created: Int?,
         val updated: Int?,
-        val livemode: Boolean,
-        val name: String,
+        val livemode: Boolean?,
+        val name: String?,
         val status: CustomerStatus?,
         val phone: String?,
         val email: String?,
@@ -101,9 +101,9 @@ data class EmptyRequest (
 data class QueryItem(val name: String, val value: String?)
 
 data class FrameMetadata(
-    val page: Int,
-    val url: String,
-    @SerializedName("has_more") val hasMore: Boolean
+    val page: Int?,
+    val url: String?,
+    @SerializedName("has_more") val hasMore: Boolean?
 )
 
 enum class FileUploadFieldName(val value: String) {

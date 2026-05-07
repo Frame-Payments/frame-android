@@ -8,7 +8,7 @@ object InvoiceLineItemResponses {
     )
 
     data class DeletedInvoiceLineItemResponse (
-        @SerializedName("object") val deletedObject: String,
-        val deleted: Boolean
+        @SerializedName("object") val deletedObject: String?,
+        val deleted: Boolean?
     )
 }

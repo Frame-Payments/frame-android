@@ -16,8 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,15 +41,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
+import com.framepayments.frameonboarding.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.PaymentCardForm
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.frameonboarding.reusable.PaymentDivider
 import com.framepayments.frameonboarding.validation.OnboardingValidators
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk_ui.EncryptedPaymentCardInput
+import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +97,7 @@ internal fun AddPaymentMethodScreen(
                 addressLine2 = current.addressLine2 ?: billing.addressLine2,
                 city = current.city?.takeIf { it.isNotBlank() } ?: billing.city,
                 state = current.state?.takeIf { it.isNotBlank() } ?: billing.state,
-                postalCode = current.postalCode.ifBlank { billing.postalCode }
+                postalCode = current.postalCode?.takeIf { it.isNotBlank() } ?: billing.postalCode
             )
         }
     }
@@ -118,6 +117,9 @@ internal fun AddPaymentMethodScreen(
             )
         }
     ) { padding ->
+        var googlePayReady by remember { mutableStateOf(false) }
+        val resolvedAccountId by viewModel.resolvedAccountId.collectAsState()
+
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -126,6 +128,45 @@ internal fun AddPaymentMethodScreen(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
+            // Google Pay wallet attach button. Only surfaced when the host app provides a
+            // merchant ID via `OnboardingConfig.googlePayMerchantId` — this is the integrator's
+            // explicit opt-in to the wallet flow. The button still gates its own visibility
+            // internally via Google's `isReadyToPay` check + Frame's wallet config.
+            val googlePayMerchantId = viewModel.googlePayMerchantId
+            if (!isPreview && !googlePayMerchantId.isNullOrBlank()) {
+                AndroidView(
+                    modifier = Modifier.fillMaxWidth(),
+                    factory = { ctx -> FrameGooglePayButton(ctx) },
+                    update = { btn ->
+                        btn.configure(
+                            mode = FrameGooglePayButton.Mode.AddToOwner(
+                                customerId = null,
+                                accountId = resolvedAccountId
+                            ),
+                            googlePayMerchantId = googlePayMerchantId,
+                            onResult = { result ->
+                                when (result) {
+                                    is FrameGooglePayButton.Result.PaymentMethodCreated -> {
+                                        viewModel.appendNewlyAddedPaymentMethod(result.paymentMethod)
+                                        onBack()
+                                    }
+                                    is FrameGooglePayButton.Result.Failure -> {
+                                        // Surface failure message via the existing user-error channel.
+                                        // Reuse cardError? slot for visibility — alternatively the VM
+                                        // error flow handles inline display.
+                                    }
+                                    else -> Unit
+                                }
+                            },
+                            onReadinessChanged = { isReady -> googlePayReady = isReady }
+                        )
+                    }
+                )
+                if (googlePayReady) {
+                    PaymentDivider()
+                }
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -216,9 +257,10 @@ internal fun AddPaymentMethodScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            Button(
-                modifier = Modifier.fillMaxWidth(),
+            val isPerformingAction by viewModel.isPerformingAction.collectAsState()
+            ContinueButton(
                 enabled = evervaultReady != null,
+                isLoading = isPerformingAction,
                 onClick = {
                     val addressOK = billingVM.validate()
                     val cardOK = if (evervaultReady == true) {
@@ -239,16 +281,8 @@ internal fun AddPaymentMethodScreen(
                         viewModel.updateCreatedBillingAddress { billingVM.address.value }
                         viewModel.submitNewPaymentMethod()
                     }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = FramePrimaryColor,
-                    contentColor = FrameOnPrimaryColor,
-                    disabledContainerColor = FramePrimaryColor.copy(alpha = 0.35f),
-                    disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
-                )
-            ) {
-                Text("Continue")
-            }
+                }
+            )
         }
     }
 }

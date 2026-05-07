@@ -13,9 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,8 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BankAccountDetailView
 import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.frameonboarding.reusable.ContinueButton
 import com.framepayments.frameonboarding.viewmodels.BankAccountFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
@@ -91,7 +87,7 @@ internal fun AddPayoutMethodScreen(
                 addressLine2 = current.addressLine2 ?: billing.addressLine2,
                 city = current.city?.takeIf { it.isNotBlank() } ?: billing.city,
                 state = current.state?.takeIf { it.isNotBlank() } ?: billing.state,
-                postalCode = current.postalCode.ifBlank { billing.postalCode }
+                postalCode = current.postalCode?.takeIf { it.isNotBlank() } ?: billing.postalCode
             )
         }
     }
@@ -151,25 +147,11 @@ internal fun AddPayoutMethodScreen(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isConnecting,
-                onClick = { viewModel.fetchPlaidLinkToken() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = FramePrimaryColor,
-                    contentColor = FrameOnPrimaryColor,
-                    disabledContainerColor = FramePrimaryColor.copy(alpha = 0.35f),
-                    disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
-                )
-            ) {
-                if (isConnecting) {
-                    CircularProgressIndicator(
-                        color = FrameOnPrimaryColor,
-                        modifier = Modifier.height(20.dp).padding(end = 8.dp)
-                    )
-                }
-                Text("Connect Bank Account")
-            }
+            ContinueButton(
+                text = "Connect Bank Account",
+                isLoading = isConnecting,
+                onClick = { viewModel.fetchPlaidLinkToken() }
+            )
 
             Spacer(Modifier.height(8.dp))
 
@@ -195,9 +177,9 @@ internal fun AddPayoutMethodScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = true,
+                    ContinueButton(
+                        text = "Add Bank Account",
+                        isLoading = isConnecting,
                         onClick = {
                             val bankOK = bankVM.validate()
                             val addressOK = billingVM.validate()
@@ -206,16 +188,8 @@ internal fun AddPayoutMethodScreen(
                                 viewModel.updateCreatedBillingAddress { billingVM.address.value }
                                 viewModel.submitNewPayoutMethod()
                             }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = FramePrimaryColor,
-                            contentColor = FrameOnPrimaryColor,
-                            disabledContainerColor = FramePrimaryColor.copy(alpha = 0.35f),
-                            disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
-                        )
-                    ) {
-                        Text("Add Bank Account")
-                    }
+                        }
+                    )
                 }
             }
         }

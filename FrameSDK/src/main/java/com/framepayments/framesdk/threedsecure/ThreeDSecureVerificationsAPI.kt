@@ -17,7 +17,7 @@ object ThreeDSecureVerificationsAPI {
                 return Triple(null, verificationError, error)
             }
             val verification = FrameNetworking.parseResponse<ThreeDSecureVerification>(data)
-            if (verification != null && verification.id.isNotEmpty()) return Triple(verification, null, null)
+            if (verification != null && !verification.id.isNullOrEmpty()) return Triple(verification, null, null)
         }
         return Triple(null, null, error)
     }
@@ -55,7 +55,7 @@ object ThreeDSecureVerificationsAPI {
                     return@performDataTaskWithRequest
                 }
                 val verification = FrameNetworking.parseResponse<ThreeDSecureVerification>(data)
-                if (verification != null && verification.id.isNotEmpty()) {
+                if (verification != null && !verification.id.isNullOrEmpty()) {
                     completionHandler(verification, null, null)
                     return@performDataTaskWithRequest
                 }

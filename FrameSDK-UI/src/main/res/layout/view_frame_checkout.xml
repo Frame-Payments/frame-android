@@ -42,14 +42,6 @@
             android:background="#DDDDDD"/>
 -
 
-        <!-- Hiding the Apple Pay button until implementation on the API side is complete.-->
-<!--        <com.framepayments.framesdk_ui.buttons.ApplePayButton-->
-<!--            android:id="@+id/applePayBtn"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="60dp"-->
-<!--            android:layout_marginTop="18dp"-->
-<!--            tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"/>-->
-
         <com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
             android:id="@+id/googlePayBtn"
             android:layout_marginTop="8dp"

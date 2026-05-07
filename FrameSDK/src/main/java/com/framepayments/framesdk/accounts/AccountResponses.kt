@@ -15,6 +15,6 @@ object AccountResponses {
     )
 
     data class PlaidLinkTokenResponse(
-        @SerializedName("link_token") val linkToken: String
+        @SerializedName("link_token") val linkToken: String?
     )
 }

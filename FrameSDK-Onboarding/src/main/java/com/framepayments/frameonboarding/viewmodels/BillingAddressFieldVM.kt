@@ -61,7 +61,7 @@ class BillingAddressFieldVM(
         _address.update { it.copy(country = alpha2.uppercase()) }
         if (_errors.value.containsKey(Field.POSTAL) && mode == BillingAddressMode.INTERNATIONAL) {
             val updated = OnboardingValidators.validatePostalCode(
-                _address.value.postalCode,
+                _address.value.postalCode.orEmpty(),
                 alpha2.uppercase()
             )
             _errors.update { current ->
@@ -82,7 +82,7 @@ class BillingAddressFieldVM(
                         a.addressLine2.orEmpty(),
                         a.city.orEmpty(),
                         a.state.orEmpty(),
-                        a.postalCode,
+                        a.postalCode.orEmpty(),
                         a.country.orEmpty()
                     )
                 },
@@ -93,7 +93,7 @@ class BillingAddressFieldVM(
                             addressLine2 = (saved[1] as String).ifBlank { null },
                             city = (saved[2] as String).ifBlank { null },
                             state = (saved[3] as String).ifBlank { null },
-                            postalCode = saved[4] as String,
+                            postalCode = (saved[4] as String).ifBlank { null },
                             country = (saved[5] as String).ifBlank { null }
                         ),
                         mode = mode
@@ -118,10 +118,10 @@ class BillingAddressFieldVM(
 
         when (mode) {
             BillingAddressMode.US_ONLY ->
-                OnboardingValidators.validateZipUS(addr.postalCode)
+                OnboardingValidators.validateZipUS(addr.postalCode.orEmpty())
                     ?.let { next[Field.POSTAL] = it }
             BillingAddressMode.INTERNATIONAL ->
-                OnboardingValidators.validatePostalCode(addr.postalCode, countryCode)
+                OnboardingValidators.validatePostalCode(addr.postalCode.orEmpty(), countryCode)
                     ?.let { next[Field.POSTAL] = it }
         }
 

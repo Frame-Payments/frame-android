@@ -8,5 +8,5 @@ data class ListSubscriptionPhaseResponse(
 )
 
 data class MetaSubscriptionPhaseResponse(
-    @SerializedName("subscription_id") val subscriptionId: String
+    @SerializedName("subscription_id") val subscriptionId: String?
 )

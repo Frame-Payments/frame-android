@@ -121,8 +121,27 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private val _plaidLinkToken = MutableStateFlow<String?>(null)
     val plaidLinkToken: StateFlow<String?> = _plaidLinkToken.asStateFlow()
 
-    private val _isConnectingPlaidBank = MutableStateFlow(false)
-    val isConnectingPlaidBank: StateFlow<Boolean> = _isConnectingPlaidBank.asStateFlow()
+    /// Single re-entrancy + loading flag for any user-initiated network action. Drives the
+    /// in-button spinner across every onboarding screen and prevents double-submits.
+    private val _isPerformingAction = MutableStateFlow(false)
+    val isPerformingAction: StateFlow<Boolean> = _isPerformingAction.asStateFlow()
+
+    /// Backwards-compatible alias used by `AddPayoutMethodScreen` to drive the Plaid
+    /// "Connect Bank Account" button. Now backed by the unified action flag.
+    val isConnectingPlaidBank: StateFlow<Boolean> = _isPerformingAction.asStateFlow()
+
+    /// Try to acquire the action guard. Returns true if the caller should proceed with the
+    /// action (and is responsible for calling [endAction] when done). Returns false if another
+    /// action is already in flight, in which case the caller should bail out immediately.
+    private fun beginAction(): Boolean {
+        if (_isPerformingAction.value) return false
+        _isPerformingAction.value = true
+        return true
+    }
+
+    private fun endAction() {
+        _isPerformingAction.value = false
+    }
 
     private fun buildPlaidService(accountId: String) = PlaidLinkService(accountId)
 
@@ -259,11 +278,22 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     val dateOfBirth: String
         get() {
             val m = _dobMonth.value; val d = _dobDay.value; val y = _dobYear.value
-            return if (y.length == 4 && m.length == 2 && d.length == 2) "$y-$m-$d" else ""
+            // Pad single-digit month/day so a user typing "5" for May still produces a
+            // well-formed `YYYY-MM-DD` ISO string for the backend. `OnboardingValidators`
+            // is responsible for rejecting out-of-range values before this is read.
+            return if (y.length == 4 && m.isNotEmpty() && d.isNotEmpty()) {
+                "$y-${m.padStart(2, '0')}-${d.padStart(2, '0')}"
+            } else ""
         }
 
     val dobComplete: Boolean
-        get() = _dobMonth.value.length == 2 && _dobDay.value.length == 2 && _dobYear.value.length == 4
+        get() = _dobMonth.value.isNotEmpty() && _dobDay.value.isNotEmpty() && _dobYear.value.length == 4
+
+    /// E.164-shaped phone number for OTP / verification endpoints: dial code prefix + the
+    /// user-typed digits with all formatter spaces/punctuation stripped. Mirrors iOS
+    /// `OnboardingContainerViewModel.sendOTPVerification` which builds the same shape.
+    private val phoneNumberForVerification: String
+        get() = _phoneCountry.value.dialCode + _phoneNumber.value.filter(Char::isDigit)
 
     // region Form validation (1:1 with iOS OnboardingContainerViewModel partitioned errors)
 
@@ -511,64 +541,74 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     // region Phone OTP flow
 
     fun submitPhoneAuth(requiresDateOfBirth: Boolean) {
+        if (!beginAction()) return
         viewModelScope.launch {
-            val acctId = _resolvedAccountId.value ?: run {
-                val accountRequest = AccountRequests.CreateAccountRequest(
-                    type = AccountObjects.AccountType.INDIVIDUAL,
-                    termsOfService = termsOfServiceForCreate(),
-                    profile = AccountRequests.CreateAccountProfile(
-                        individual = AccountRequests.CreateIndividualAccount(
-                            phone = AccountObjects.AccountPhoneNumber(
-                                number = _phoneNumber.value,
-                                countryCode = _phoneCountry.value.dialCode
-                            ),
-                            birthdate = dateOfBirth.ifEmpty { null }
-                        )
-                    ),
-                    capabilities = requiredCapabilityApiStrings()
-                )
-                val (account, err) = AccountsAPI.createAccount(accountRequest)
-                val id = account?.id
-                if (id == null) {
-                    reportUserError(userMessageForNetworkError(err))
-                    null
-                } else {
-                    _resolvedAccountId.value = id
-                    _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = id)
-                    id
-                }
-            } ?: return@launch
+            try {
+                val acctId = _resolvedAccountId.value ?: run {
+                    val accountRequest = AccountRequests.CreateAccountRequest(
+                        type = AccountObjects.AccountType.INDIVIDUAL,
+                        termsOfService = termsOfServiceForCreate(),
+                        profile = AccountRequests.CreateAccountProfile(
+                            individual = AccountRequests.CreateIndividualAccount(
+                                phone = AccountObjects.AccountPhoneNumber(
+                                    number = _phoneNumber.value,
+                                    countryCode = _phoneCountry.value.dialCode
+                                ),
+                                birthdate = dateOfBirth.ifEmpty { null }
+                            )
+                        ),
+                        capabilities = requiredCapabilityApiStrings()
+                    )
+                    val (account, err) = AccountsAPI.createAccount(accountRequest)
+                    val id = account?.id
+                    if (id == null) {
+                        reportUserError(userMessageForNetworkError(err))
+                        null
+                    } else {
+                        _resolvedAccountId.value = id
+                        _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = id)
+                        id
+                    }
+                } ?: return@launch
 
-            val (result, verifyErr) = PhoneOTPVerificationAPI.createVerification(
-                accountId = acctId,
-                phoneNumber = _phoneNumber.value,
-                dateOfBirth = dateOfBirth
-            )
-            _pendingVerificationId.value = result?.id
-            _pendingProveAuthToken.value = result?.proveAuthToken
-            proveAuthLaunchStarted = false
-            if (result?.id != null) {
-                _verifyPhoneUi.value = if (result.proveAuthToken != null) {
-                    VerifyPhoneUi.LoadingProve
+                val (result, verifyErr) = PhoneOTPVerificationAPI.createVerification(
+                    accountId = acctId,
+                    phoneNumber = phoneNumberForVerification,
+                    dateOfBirth = dateOfBirth
+                )
+                _pendingVerificationId.value = result?.id
+                _pendingProveAuthToken.value = result?.proveAuthToken
+                proveAuthLaunchStarted = false
+                if (result?.id != null) {
+                    _verifyPhoneUi.value = if (result.proveAuthToken != null) {
+                        VerifyPhoneUi.LoadingProve
+                    } else {
+                        VerifyPhoneUi.OtpFrameApi
+                    }
+                    _verifyIdSubStep.value = VerifyIdSubStep.VerifyPhone
                 } else {
-                    VerifyPhoneUi.OtpFrameApi
+                    reportUserError(userMessageForNetworkError(verifyErr))
                 }
-                _verifyIdSubStep.value = VerifyIdSubStep.VerifyPhone
-            } else {
-                reportUserError(userMessageForNetworkError(verifyErr))
+            } finally {
+                endAction()
             }
         }
     }
 
     fun resendVerificationCode() {
+        if (!beginAction()) return
         viewModelScope.launch {
-            val acctId = _resolvedAccountId.value ?: return@launch
-            val (_, err) = PhoneOTPVerificationAPI.createVerification(
-                accountId = acctId,
-                phoneNumber = _phoneNumber.value,
-                dateOfBirth = dateOfBirth
-            )
-            if (err != null) reportUserError(userMessageForNetworkError(err))
+            try {
+                val acctId = _resolvedAccountId.value ?: return@launch
+                val (_, err) = PhoneOTPVerificationAPI.createVerification(
+                    accountId = acctId,
+                    phoneNumber = phoneNumberForVerification,
+                    dateOfBirth = dateOfBirth
+                )
+                if (err != null) reportUserError(userMessageForNetworkError(err))
+            } finally {
+                endAction()
+            }
         }
     }
 
@@ -644,16 +684,21 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun confirmVerificationCode(code: String) {
+        if (!beginAction()) return
         viewModelScope.launch {
-            val acctId = _resolvedAccountId.value ?: return@launch
-            val verificationId = _pendingVerificationId.value ?: return@launch
-            val (_, err) = PhoneOTPVerificationAPI.confirmVerification(acctId, verificationId, code)
-            if (err == null) {
-                _pendingVerificationId.value = null
-                _pendingProveAuthToken.value = null
-                finalizePhoneVerificationAndShowPersonalInfo(acctId)
-            } else {
-                reportUserError(userMessageForNetworkError(err))
+            try {
+                val acctId = _resolvedAccountId.value ?: return@launch
+                val verificationId = _pendingVerificationId.value ?: return@launch
+                val (_, err) = PhoneOTPVerificationAPI.confirmVerification(acctId, verificationId, code)
+                if (err == null) {
+                    _pendingVerificationId.value = null
+                    _pendingProveAuthToken.value = null
+                    finalizePhoneVerificationAndShowPersonalInfo(acctId)
+                } else {
+                    reportUserError(userMessageForNetworkError(err))
+                }
+            } finally {
+                endAction()
             }
         }
     }
@@ -797,25 +842,32 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             phoneNumber = _phoneNumber.value
         )
 
+        if (!beginAction()) return
         viewModelScope.launch {
-            val billingAddress = FrameObjects.BillingAddress(
-                city = city,
-                country = country,
-                state = stateCode,
-                postalCode = postalCode,
-                addressLine1 = addressLine1,
-                addressLine2 = addressLine2
-            )
-            upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
-                ?: return@launch
-            // Customer identity creation is deferred — handled by createCustomerIdentity()
-            // separately in the flow once the account is established.
-            moveNext()
+            try {
+                val billingAddress = FrameObjects.BillingAddress(
+                    city = city,
+                    country = country,
+                    state = stateCode,
+                    postalCode = postalCode,
+                    addressLine1 = addressLine1,
+                    addressLine2 = addressLine2
+                )
+                upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
+                    ?: return@launch
+                // Customer identity creation is deferred — handled by createCustomerIdentity()
+                // separately in the flow once the account is established.
+                moveNext()
+            } finally {
+                endAction()
+            }
         }
     }
 
     fun createIndividualAccount() {
+        if (!beginAction()) return
         viewModelScope.launch {
+            try {
             if (_resolvedAccountId.value != null) return@launch
             val d = _onboardingData.value
             val dob = d.dateOfBirth ?: dateOfBirth
@@ -857,68 +909,81 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             } else {
                 reportUserError(userMessageForNetworkError(err))
             }
+            } finally {
+                endAction()
+            }
         }
     }
 
     fun updateExistingIndividualAccount() {
+        if (!beginAction()) return
         viewModelScope.launch {
-            val existing = _resolvedAccountId.value ?: return@launch
-            val d = _onboardingData.value
-            val dob = d.dateOfBirth ?: dateOfBirth
-            val billingAddress = FrameObjects.BillingAddress(
-                city = d.city,
-                country = d.country ?: "US",
-                state = d.stateCode,
-                postalCode = d.postalCode ?: "",
-                addressLine1 = d.addressLine1,
-                addressLine2 = d.addressLine2
-            )
-            val updateIndividual = AccountRequests.UpdateIndividualAccount(
-                name = AccountRequests.UpdateAccountInfo(
-                    firstName = d.firstName ?: return@launch,
-                    middleName = null,
-                    lastName = d.lastName ?: return@launch
-                ),
-                email = d.email ?: return@launch,
-                phoneNumber = _phoneNumber.value,
-                phoneCountryCode = _phoneCountry.value.dialCode,
-                address = billingAddress,
-                birthdate = dob,
-                ssnLast4 = d.ssnLast4?.ifEmpty { null }
-            )
-            val (_, updateErr) = AccountsAPI.updateAccount(
-                existing,
-                AccountRequests.UpdateAccountRequest(
-                    profile = AccountRequests.UpdateAccountProfile(individual = updateIndividual)
+            try {
+                val existing = _resolvedAccountId.value ?: return@launch
+                val d = _onboardingData.value
+                val dob = d.dateOfBirth ?: dateOfBirth
+                val billingAddress = FrameObjects.BillingAddress(
+                    city = d.city,
+                    country = d.country ?: "US",
+                    state = d.stateCode,
+                    postalCode = d.postalCode ?: "",
+                    addressLine1 = d.addressLine1,
+                    addressLine2 = d.addressLine2
                 )
-            )
-            if (updateErr != null) reportUserError(userMessageForNetworkError(updateErr))
+                val updateIndividual = AccountRequests.UpdateIndividualAccount(
+                    name = AccountRequests.UpdateAccountInfo(
+                        firstName = d.firstName ?: return@launch,
+                        middleName = null,
+                        lastName = d.lastName ?: return@launch
+                    ),
+                    email = d.email ?: return@launch,
+                    phoneNumber = _phoneNumber.value,
+                    phoneCountryCode = _phoneCountry.value.dialCode,
+                    address = billingAddress,
+                    birthdate = dob,
+                    ssnLast4 = d.ssnLast4?.ifEmpty { null }
+                )
+                val (_, updateErr) = AccountsAPI.updateAccount(
+                    existing,
+                    AccountRequests.UpdateAccountRequest(
+                        profile = AccountRequests.UpdateAccountProfile(individual = updateIndividual)
+                    )
+                )
+                if (updateErr != null) reportUserError(userMessageForNetworkError(updateErr))
+            } finally {
+                endAction()
+            }
         }
     }
 
     fun createCustomerIdentity() {
+        if (!beginAction()) return
         viewModelScope.launch {
-            val d = _onboardingData.value
-            val dob = d.dateOfBirth ?: dateOfBirth
-            if (dob.isEmpty()) return@launch
-            val billingAddress = FrameObjects.BillingAddress(
-                city = d.city,
-                country = d.country ?: "US",
-                state = d.stateCode,
-                postalCode = d.postalCode ?: "",
-                addressLine1 = d.addressLine1,
-                addressLine2 = d.addressLine2
-            )
-            if (!createCustomerIdentityForPersonalInfo(
-                    d.firstName ?: return@launch,
-                    d.lastName ?: return@launch,
-                    dob,
-                    d.email ?: return@launch,
-                    d.ssnLast4 ?: "",
-                    billingAddress
+            try {
+                val d = _onboardingData.value
+                val dob = d.dateOfBirth ?: dateOfBirth
+                if (dob.isEmpty()) return@launch
+                val billingAddress = FrameObjects.BillingAddress(
+                    city = d.city,
+                    country = d.country ?: "US",
+                    state = d.stateCode,
+                    postalCode = d.postalCode ?: "",
+                    addressLine1 = d.addressLine1,
+                    addressLine2 = d.addressLine2
                 )
-            ) {
-                return@launch
+                if (!createCustomerIdentityForPersonalInfo(
+                        d.firstName ?: return@launch,
+                        d.lastName ?: return@launch,
+                        dob,
+                        d.email ?: return@launch,
+                        d.ssnLast4 ?: "",
+                        billingAddress
+                    )
+                ) {
+                    return@launch
+                }
+            } finally {
+                endAction()
             }
         }
     }
@@ -960,49 +1025,55 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         val useForPayouts = cardDraft.useForPayouts
         val payoutIdForBilling = _onboardingData.value.selectedPayoutMethodId
 
+        if (!beginAction()) return
         viewModelScope.launch {
-            val acctId = _resolvedAccountId.value ?: return@launch
-            val billingAddress = FrameObjects.BillingAddress(
-                city = b.city ?: "",
-                country = b.country ?: "US",
-                state = b.state ?: "",
-                postalCode = b.postalCode,
-                addressLine1 = b.addressLine1 ?: "",
-                addressLine2 = b.addressLine2
-            )
-            val pmRequest = PaymentMethodRequests.CreateCardPaymentMethodRequest(
-                cardNumber = cardNumber,
-                expMonth = expMonth,
-                expYear = expYear,
-                cvc = cvc,
-                customer = null,
-                account = acctId,
-                billing = billingAddress
-            )
-            val encryptPayload = useEvervaultUi && FrameNetworking.isEvervaultConfigured
-            val (paymentMethod, pmErr) = PaymentMethodsAPI.createCardPaymentMethod(pmRequest, encryptData = encryptPayload)
-            if (paymentMethod != null) {
-                _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = paymentMethod.id)
-                _savedPaymentMethods.value += PaymentMethodSummary(
-                                    id = paymentMethod.id,
-                                    brand = paymentMethod.card?.brand?.uppercase() ?: "",
-                                    last4 = paymentMethod.card?.lastFourDigits ?: "",
-                                    exp = "${paymentMethod.card?.expirationMonth}/${paymentMethod.card?.expirationYear?.takeLast(2)}"
-                                )
-                if (useForPayouts && payoutIdForBilling != null) {
-                    val (_, billingErr) = PaymentMethodsAPI.updatePaymentMethodWith(
-                        payoutIdForBilling,
-                        PaymentMethodRequests.UpdatePaymentMethodRequest(billing = billingAddress)
-                    )
-                    if (billingErr != null) {
-                        reportUserError(userMessageForNetworkError(billingErr))
-                        return@launch
+            try {
+                val acctId = _resolvedAccountId.value ?: return@launch
+                val billingAddress = FrameObjects.BillingAddress(
+                    city = b.city ?: "",
+                    country = b.country ?: "US",
+                    state = b.state ?: "",
+                    postalCode = b.postalCode,
+                    addressLine1 = b.addressLine1 ?: "",
+                    addressLine2 = b.addressLine2
+                )
+                val pmRequest = PaymentMethodRequests.CreateCardPaymentMethodRequest(
+                    cardNumber = cardNumber,
+                    expMonth = expMonth,
+                    expYear = expYear,
+                    cvc = cvc,
+                    customer = null,
+                    account = acctId,
+                    billing = billingAddress
+                )
+                val encryptPayload = useEvervaultUi && FrameNetworking.isEvervaultConfigured
+                val (paymentMethod, pmErr) = PaymentMethodsAPI.createCardPaymentMethod(pmRequest, encryptData = encryptPayload)
+                val paymentMethodId = paymentMethod?.id
+                if (paymentMethod != null && paymentMethodId != null) {
+                    _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = paymentMethodId)
+                    _savedPaymentMethods.value += PaymentMethodSummary(
+                                        id = paymentMethodId,
+                                        brand = paymentMethod.card?.brand?.uppercase() ?: "",
+                                        last4 = paymentMethod.card?.lastFourDigits ?: "",
+                                        exp = "${paymentMethod.card?.expirationMonth}/${paymentMethod.card?.expirationYear?.takeLast(2)}"
+                                    )
+                    if (useForPayouts && payoutIdForBilling != null) {
+                        val (_, billingErr) = PaymentMethodsAPI.updatePaymentMethodWith(
+                            payoutIdForBilling,
+                            PaymentMethodRequests.UpdatePaymentMethodRequest(billing = billingAddress)
+                        )
+                        if (billingErr != null) {
+                            reportUserError(userMessageForNetworkError(billingErr))
+                            return@launch
+                        }
                     }
+                    clearAccountDetails()
+                    moveNext()
+                } else {
+                    reportUserError(userMessageForNetworkError(pmErr))
                 }
-                clearAccountDetails()
-                moveNext()
-            } else {
-                reportUserError(userMessageForNetworkError(pmErr))
+            } finally {
+                endAction()
             }
         }
     }
@@ -1011,7 +1082,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         if (!checkIfCustomerCanContinueWithPayoutMethod()) return
         val draft = _bankAccountDraft.value
         val b = _createdBillingAddress.value
+        if (!beginAction()) return
         viewModelScope.launch {
+            try {
             val acctId = _resolvedAccountId.value ?: return@launch
             val achAccountType = if (draft.accountTypeLabel.lowercase() == "savings") {
                 FrameObjects.PaymentAccountType.SAVINGS
@@ -1034,10 +1107,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 )
             )
             val (payoutMethod, achErr) = PaymentMethodsAPI.createACHPaymentMethod(achRequest)
-            if (payoutMethod != null) {
-                _onboardingData.value = _onboardingData.value.copy(selectedPayoutMethodId = payoutMethod.id)
+            val payoutMethodId = payoutMethod?.id
+            if (payoutMethod != null && payoutMethodId != null) {
+                _onboardingData.value = _onboardingData.value.copy(selectedPayoutMethodId = payoutMethodId)
                 _savedPayoutMethods.value += PaymentMethodSummary(
-                                    id = payoutMethod.id,
+                                    id = payoutMethodId,
                                     brand = "BANK",
                                     last4 = payoutMethod.ach?.lastFour ?: "",
                                     exp = ""
@@ -1047,6 +1121,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             } else {
                 reportUserError(userMessageForNetworkError(achErr))
             }
+            } finally {
+                endAction()
+            }
         }
     }
 
@@ -1055,21 +1132,24 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun onPlaidDismissed() {
-        _isConnectingPlaidBank.value = false
+        _isPerformingAction.value = false
     }
 
     fun fetchPlaidLinkToken() {
         val accountId = _resolvedAccountId.value ?: return
-        if (_isConnectingPlaidBank.value || _plaidLinkToken.value != null) return
-        _isConnectingPlaidBank.value = true
+        if (_plaidLinkToken.value != null) return
+        if (_isPerformingAction.value) return
+        _isPerformingAction.value = true
         viewModelScope.launch {
             val service = buildPlaidService(accountId)
             service.fetchLinkToken()
             val token = service.linkToken.value
             if (token != null) {
+                // Action stays active across the Plaid sheet; cleared by handlePlaidSuccess /
+                // onPlaidDismissed once the user finishes or cancels the link flow.
                 _plaidLinkToken.value = token
             } else {
-                _isConnectingPlaidBank.value = false
+                _isPerformingAction.value = false
                 val err = (service.result.value as? PlaidLinkResult.Failure)?.error
                 reportUserError(userMessageForNetworkError(err))
             }
@@ -1079,18 +1159,20 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun handlePlaidSuccess(publicToken: String, plaidAccountId: String, institutionName: String?, subtype: String?) {
         val accountId = _resolvedAccountId.value ?: return
         viewModelScope.launch {
-            _isConnectingPlaidBank.value = true
+            _isPerformingAction.value = true
             val service = buildPlaidService(accountId)
             service.connectBankAccount(publicToken, plaidAccountId, institutionName, subtype)
-            _isConnectingPlaidBank.value = false
+            _isPerformingAction.value = false
             when (val outcome = service.result.value) {
                 is PlaidLinkResult.Success -> {
                     val payoutMethod = outcome.paymentMethod
                     val ach = payoutMethod.ach
-                    if (ach != null) {
-                        _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethod.id) }
+                    @Suppress("USELESS_CAST")
+                    val payoutMethodId = payoutMethod.id as String?
+                    if (ach != null && payoutMethodId != null) {
+                        _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethodId) }
                         _savedPayoutMethods.value += PaymentMethodSummary(
-                            id = payoutMethod.id,
+                            id = payoutMethodId,
                             brand = "BANK",
                             last4 = ach.lastFour ?: "",
                             exp = ""
@@ -1112,21 +1194,26 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     // region 3DS
 
     fun initialize3DS() {
+        if (!beginAction()) return
         viewModelScope.launch {
-            val paymentMethodId = _onboardingData.value.selectedPaymentMethodId ?: return@launch
-            val request = ThreeDSecureRequests.CreateThreeDSecureVerification(paymentMethodId = paymentMethodId)
-            val (verification, verificationError, networkError) =
-                ThreeDSecureVerificationsAPI.create3DSecureVerification(request)
-            when {
-                verification != null && verification.id.isNotEmpty() -> {
-                    _paymentMethodVerification.value = verification
+            try {
+                val paymentMethodId = _onboardingData.value.selectedPaymentMethodId ?: return@launch
+                val request = ThreeDSecureRequests.CreateThreeDSecureVerification(paymentMethodId = paymentMethodId)
+                val (verification, verificationError, networkError) =
+                    ThreeDSecureVerificationsAPI.create3DSecureVerification(request)
+                when {
+                    verification != null && !verification.id.isNullOrEmpty() -> {
+                        _paymentMethodVerification.value = verification
+                    }
+                    verificationError?.error?.existingIntentId != null -> {
+                        val intentId = verificationError.error?.existingIntentId ?: return@launch
+                        retrieve3DSChallengeInternal(intentId)
+                    }
+                    networkError != null ->
+                        reportUserError("Failed to initialize card verification. Please try again.")
                 }
-                verificationError?.error?.existingIntentId != null -> {
-                    val intentId = verificationError.error.existingIntentId ?: return@launch
-                    retrieve3DSChallengeInternal(intentId)
-                }
-                networkError != null ->
-                    reportUserError("Failed to initialize card verification. Please try again.")
+            } finally {
+                endAction()
             }
         }
     }
@@ -1135,21 +1222,33 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     private suspend fun retrieve3DSChallengeInternal(verificationId: String) {
         val (retrieved, _) = ThreeDSecureVerificationsAPI.retrieve3DSecureVerification(verificationId)
-        if (retrieved != null && retrieved.id.isNotEmpty()) {
+        if (retrieved != null && !retrieved.id.isNullOrEmpty()) {
             _paymentMethodVerification.value = retrieved
         }
     }
 
     fun retrieve3DSChallenge(verificationId: String) {
-        viewModelScope.launch { retrieve3DSChallengeInternal(verificationId) }
+        if (!beginAction()) return
+        viewModelScope.launch {
+            try {
+                retrieve3DSChallengeInternal(verificationId)
+            } finally {
+                endAction()
+            }
+        }
     }
 
     fun resend3DS() {
+        if (!beginAction()) return
         viewModelScope.launch {
-            val id = _paymentMethodVerification.value?.id ?: return@launch
-            val (verification, _) = ThreeDSecureVerificationsAPI.resend3DSecureVerification(id)
-            if (verification != null && verification.id.isNotEmpty()) {
-                _paymentMethodVerification.value = verification
+            try {
+                val id = _paymentMethodVerification.value?.id ?: return@launch
+                val (verification, _) = ThreeDSecureVerificationsAPI.resend3DSecureVerification(id)
+                if (verification != null && !verification.id.isNullOrEmpty()) {
+                    _paymentMethodVerification.value = verification
+                }
+            } finally {
+                endAction()
             }
         }
     }
@@ -1173,13 +1272,25 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun uploadIdentificationDocuments(context: Context) {
-        viewModelScope.launch { performUploadIdentificationDocuments(context) }
+        if (!beginAction()) return
+        viewModelScope.launch {
+            try {
+                performUploadIdentificationDocuments(context)
+            } finally {
+                endAction()
+            }
+        }
     }
 
     fun uploadIdentificationDocumentsThenContinue(context: Context) {
+        if (!beginAction()) return
         viewModelScope.launch {
-            if (performUploadIdentificationDocuments(context)) {
-                moveNext()
+            try {
+                if (performUploadIdentificationDocuments(context)) {
+                    moveNext()
+                }
+            } finally {
+                endAction()
             }
         }
     }
@@ -1232,11 +1343,34 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun submitCustomerIdentityForVerification() {
+        if (!beginAction()) return
         viewModelScope.launch {
-            val id = effectiveCustomerIdentityId() ?: return@launch
-            val (updated, _) = CustomerIdentityAPI.submitForVerification(id)
-            updated?.let { _customerIdentity.value = it }
+            try {
+                val id = effectiveCustomerIdentityId() ?: return@launch
+                val (updated, _) = CustomerIdentityAPI.submitForVerification(id)
+                updated?.let { _customerIdentity.value = it }
+            } finally {
+                endAction()
+            }
         }
+    }
+
+    /// Google Pay merchant ID surfaced by [OnboardingConfig.googlePayMerchantId]. Drives the
+    /// wallet attach flow on AddPaymentMethod when the host app has a configured merchant.
+    val googlePayMerchantId: String? get() = config.googlePayMerchantId
+
+    /// Append a wallet-created payment method (Google Pay) to the in-memory list and select it.
+    /// Used by `AddPaymentMethodScreen` after a successful `FrameGooglePayButton` AddToOwner flow.
+    fun appendNewlyAddedPaymentMethod(paymentMethod: FrameObjects.PaymentMethod) {
+        val paymentMethodId = paymentMethod.id ?: return
+        _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = paymentMethodId)
+        _savedPaymentMethods.value += PaymentMethodSummary(
+            id = paymentMethodId,
+            brand = paymentMethod.card?.brand?.uppercase() ?: "WALLET",
+            last4 = paymentMethod.card?.lastFourDigits ?: "",
+            exp = "${paymentMethod.card?.expirationMonth ?: ""}/${paymentMethod.card?.expirationYear?.takeLast(2) ?: ""}"
+        )
+        clearAccountDetails()
     }
 
     // endregion
@@ -1268,7 +1402,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         useEvervaultCardInput: Boolean = true
     ): Boolean {
         val addrOk = !billing.addressLine1.isNullOrBlank() && !billing.city.isNullOrBlank() &&
-            !billing.state.isNullOrBlank() && billing.postalCode.length > 4
+            !billing.state.isNullOrBlank() && (billing.postalCode?.length ?: 0) > 4
         if (!addrOk) return false
         if (onlyAddress) return true
         if (useEvervaultCardInput) return paymentCard.isValid
@@ -1293,7 +1427,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         billing: FrameObjects.BillingAddress
     ): Boolean {
         val addrOk = !billing.addressLine1.isNullOrBlank() && !billing.city.isNullOrBlank() &&
-            !billing.state.isNullOrBlank() && billing.postalCode.length == 5
+            !billing.state.isNullOrBlank() && billing.postalCode?.length == 5
         if (!addrOk) return false
         return bank.routingNumber.length >= 9 && bank.accountNumber.isNotEmpty() && bank.accountTypeLabel.isNotEmpty()
     }
@@ -1314,11 +1448,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             val (list, _) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
             _savedPaymentMethods.value = list
                 ?.mapNotNull { pm ->
+                    val pmId = pm.id ?: return@mapNotNull null
                     pm.card?.let { c ->
                         PaymentMethodSummary(
-                            id = pm.id,
-                            brand = c.brand.uppercase(),
-                            last4 = c.lastFourDigits,
+                            id = pmId,
+                            brand = c.brand?.uppercase().orEmpty(),
+                            last4 = c.lastFourDigits.orEmpty(),
                             exp = "${c.expirationMonth.orEmpty()}/${c.expirationYear?.takeLast(2).orEmpty()}"
                         )
                     }
@@ -1326,9 +1461,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 ?: emptyList()
             _savedPayoutMethods.value = list
                 ?.filter { it.ach != null }
-                ?.map { pm ->
+                ?.mapNotNull { pm ->
+                    val pmId = pm.id ?: return@mapNotNull null
                     PaymentMethodSummary(
-                        id = pm.id,
+                        id = pmId,
                         brand = "BANK",
                         last4 = pm.ach?.lastFour ?: "",
                         exp = ""

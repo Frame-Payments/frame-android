@@ -17,17 +17,17 @@ enum class ProductRecurringInterval {
 }
 
 data class Product(
-    val id: String,
-    val name: String,
-    val livemode: Boolean,
+    val id: String?,
+    val name: String?,
+    val livemode: Boolean?,
     val image: String?,
     val description: String?,
     val url: String?,
-    val shippable: Boolean,
-    val active: Boolean,
+    val shippable: Boolean?,
+    val active: Boolean?,
     val metadata: Map<String, String>?,
-    val created: Int,
+    val created: Int?,
     val updated: Int?,
-    @SerializedName("default_price") val defaultPrice: Int,
+    @SerializedName("default_price") val defaultPrice: Int?,
     @SerializedName("object") val productObject: String?
 )
