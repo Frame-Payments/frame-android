@@ -31,11 +31,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.views.OnboardingContainerView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
@@ -106,6 +108,19 @@ fun PlaygroundScreen(
     }
 
     if (showOnboarding) {
+        // Demo: show how a host app overrides the SDK theme. The default theme
+        // (Frame's brand teal) is used when `theme = null`. Here we override the
+        // primary button color to a vivid orange so the customization path is
+        // visually obvious while running the playground.
+        val customTheme = FrameTheme.default().let { base ->
+            base.copy(
+                colors = base.colors.copy(
+                    primaryButton = Color(0xFFFF6B00),
+                    primaryButtonText = Color.White,
+                    onboardingHeaderBackground = Color(0xFFFF6B00)
+                )
+            )
+        }
         Box(modifier = Modifier.fillMaxSize()) {
             OnboardingContainerView(
                 config = OnboardingConfig(
@@ -117,7 +132,8 @@ fun PlaygroundScreen(
                         Capabilities.GEO_COMPLIANCE,
                         Capabilities.PHONE_VERIFICATION
                     ),
-                    googlePayMerchantId = "BCR2DN4T_TEST_STUB"
+                    googlePayMerchantId = "BCR2DN4T_TEST_STUB",
+                    theme = customTheme
                 ),
                 onResult = { showOnboarding = false }
             )

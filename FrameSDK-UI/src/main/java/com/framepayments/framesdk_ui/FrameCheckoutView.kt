@@ -12,6 +12,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.FragmentActivity
@@ -21,6 +22,7 @@ import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentCardBinding
+import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
@@ -41,6 +43,19 @@ class FrameCheckoutView @JvmOverloads constructor(
     private val viewModel: FrameCheckoutViewModel
 
     var checkoutCallback: ((ChargeIntent) -> Unit)? = null
+
+    /**
+     * Apply a [FrameTheme] to this checkout. Tints the pay button and forwards the
+     * primary-button color to the embedded [EncryptedPaymentCardInput]. Call after
+     * construction; safe to call multiple times.
+     */
+    fun setTheme(theme: FrameTheme) {
+        val payColor = theme.colors.primaryButton.toArgb()
+        val payTextColor = theme.colors.primaryButtonText.toArgb()
+        binding.payButton.setBackgroundColor(payColor)
+        binding.payButton.setTextColor(payTextColor)
+        binding.encryptedCardInput.accentColor = theme.colors.primaryButton
+    }
 
     init {
         val activity = (context as? AppCompatActivity)

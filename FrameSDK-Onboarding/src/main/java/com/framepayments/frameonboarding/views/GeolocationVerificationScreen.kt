@@ -35,8 +35,8 @@ import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.networking.geocompliance.GeocomplianceAPI
 import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceBlockReason
 import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceStatus
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 private enum class GeolocationState {
     CHECKING,
@@ -103,8 +103,8 @@ private fun CheckingLocationView() {
     ) {
         Surface(
             modifier = Modifier.size(96.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = MaterialTheme.shapes.extraLarge
+            color = LocalFrameTheme.current.colors.surface,
+            shape = RoundedCornerShape(LocalFrameTheme.current.radii.large)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -122,7 +122,7 @@ private fun CheckingLocationView() {
 
         Text(
             text = "Checking your location",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            style = LocalFrameTheme.current.fonts.heading.copy(fontWeight = FontWeight.Bold),
             textAlign = TextAlign.Center
         )
 
@@ -130,7 +130,7 @@ private fun CheckingLocationView() {
 
         Text(
             text = "This will only take a moment...",
-            style = MaterialTheme.typography.bodyMedium,
+            style = LocalFrameTheme.current.fonts.bodySmall,
             textAlign = TextAlign.Center
         )
     }
@@ -144,8 +144,8 @@ private fun LocationVerifiedView() {
     ) {
         Surface(
             modifier = Modifier.size(96.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = MaterialTheme.shapes.extraLarge
+            color = LocalFrameTheme.current.colors.surface,
+            shape = RoundedCornerShape(LocalFrameTheme.current.radii.large)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -163,7 +163,7 @@ private fun LocationVerifiedView() {
 
         Text(
             text = "Location verified",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            style = LocalFrameTheme.current.fonts.heading.copy(fontWeight = FontWeight.Bold),
             textAlign = TextAlign.Center
         )
 
@@ -171,7 +171,7 @@ private fun LocationVerifiedView() {
 
         Text(
             text = "This will only take a moment...",
-            style = MaterialTheme.typography.bodyMedium,
+            style = LocalFrameTheme.current.fonts.bodySmall,
             textAlign = TextAlign.Center
         )
     }
@@ -188,8 +188,8 @@ private fun VpnDetectedView(
     ) {
         Surface(
             modifier = Modifier.size(96.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            shape = MaterialTheme.shapes.extraLarge
+            color = LocalFrameTheme.current.colors.surface,
+            shape = RoundedCornerShape(LocalFrameTheme.current.radii.large)
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -207,7 +207,7 @@ private fun VpnDetectedView(
 
         Text(
             text = "VPN Detected",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            style = LocalFrameTheme.current.fonts.heading.copy(fontWeight = FontWeight.Bold),
             textAlign = TextAlign.Center
         )
 
@@ -215,7 +215,7 @@ private fun VpnDetectedView(
 
         Text(
             text = "This will only take a moment...",
-            style = MaterialTheme.typography.bodyMedium,
+            style = LocalFrameTheme.current.fonts.bodySmall,
             textAlign = TextAlign.Center
         )
 
@@ -225,8 +225,8 @@ private fun VpnDetectedView(
             modifier = Modifier.fillMaxWidth(),
             onClick = onContinue,
             colors = ButtonDefaults.buttonColors(
-                containerColor = FramePrimaryColor,
-                contentColor = FrameOnPrimaryColor
+                containerColor = LocalFrameTheme.current.colors.primaryButton,
+                contentColor = LocalFrameTheme.current.colors.primaryButtonText
             )
         ) {
             Text("Continue Anyway")

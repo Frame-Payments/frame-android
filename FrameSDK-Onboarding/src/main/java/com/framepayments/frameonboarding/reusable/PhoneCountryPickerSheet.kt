@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.PhoneCountrySelection
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 /**
  * Searchable country picker bottom sheet for the phone country selector.
@@ -71,7 +72,7 @@ fun PhoneCountryPickerSheet(
         ) {
             Text(
                 text = "Select Country",
-                style = MaterialTheme.typography.titleMedium,
+                style = LocalFrameTheme.current.fonts.headline,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
             OutlinedTextField(
@@ -95,17 +96,17 @@ fun PhoneCountryPickerSheet(
                     ) {
                         Text(
                             text = country.flag,
-                            style = MaterialTheme.typography.titleMedium
+                            style = LocalFrameTheme.current.fonts.headline
                         )
                         Text(
                             text = country.displayName,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = LocalFrameTheme.current.fonts.bodySmall,
                             modifier = Modifier.weight(1f)
                         )
                         Text(
                             text = country.dialCode,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = LocalFrameTheme.current.fonts.bodySmall,
+                            color = LocalFrameTheme.current.colors.textSecondary
                         )
                         Box(
                             modifier = Modifier
@@ -117,7 +118,7 @@ fun PhoneCountryPickerSheet(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = "Selected",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = LocalFrameTheme.current.colors.primaryButton
                                 )
                             }
                         }

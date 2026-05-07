@@ -40,8 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +58,7 @@ internal fun VerifyCardScreen(
     var code by remember { mutableStateOf("") }
     val focusRequesters = remember(digitCount) { List(digitCount) { FocusRequester() } }
     val canContinue = code.length == digitCount
-    val digitTextStyle = MaterialTheme.typography.headlineSmall.copy(
+    val digitTextStyle = LocalFrameTheme.current.fonts.heading.copy(
         textAlign = TextAlign.Center,
         lineHeight = 40.sp,
         lineHeightStyle = LineHeightStyle(
@@ -85,7 +84,7 @@ internal fun VerifyCardScreen(
             Column {
                 Text(
                     text = bodyText,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = LocalFrameTheme.current.fonts.bodySmall
                 )
 
                 Spacer(Modifier.height(32.dp))
@@ -147,10 +146,10 @@ internal fun VerifyCardScreen(
                 enabled = canContinue,
                 onClick = { onContinue(code) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = FramePrimaryColor,
-                    contentColor = FrameOnPrimaryColor,
-                    disabledContainerColor = FramePrimaryColor.copy(alpha = 0.35f),
-                    disabledContentColor = FrameOnPrimaryColor.copy(alpha = 0.7f)
+                    containerColor = LocalFrameTheme.current.colors.primaryButton,
+                    contentColor = LocalFrameTheme.current.colors.primaryButtonText,
+                    disabledContainerColor = LocalFrameTheme.current.colors.primaryButton.copy(alpha = 0.35f),
+                    disabledContentColor = LocalFrameTheme.current.colors.primaryButtonText.copy(alpha = 0.7f)
                 )
             ) {
                 Text(confirmButtonText)

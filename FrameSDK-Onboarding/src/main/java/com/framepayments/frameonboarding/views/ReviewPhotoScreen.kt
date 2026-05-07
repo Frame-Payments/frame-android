@@ -26,8 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +61,7 @@ internal fun ReviewPhotoScreen(
             Column {
                 Text(
                     text = "Make sure the entire ID is in frame, the text is readable, and there's no glare or blur.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = LocalFrameTheme.current.fonts.bodySmall
                 )
 
                 Spacer(Modifier.height(24.dp))
@@ -85,8 +84,8 @@ internal fun ReviewPhotoScreen(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onUsePhoto,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = FramePrimaryColor,
-                        contentColor = FrameOnPrimaryColor
+                        containerColor = LocalFrameTheme.current.colors.primaryButton,
+                        contentColor = LocalFrameTheme.current.colors.primaryButtonText
                     )
                 ) {
                     Text("Use Photo")

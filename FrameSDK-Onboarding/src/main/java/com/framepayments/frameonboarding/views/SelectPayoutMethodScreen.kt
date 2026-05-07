@@ -36,8 +36,8 @@ import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
 import com.framepayments.frameonboarding.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.cardBrandIcon
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,13 +76,13 @@ internal fun SelectPayoutMethodScreen(
             Column {
                 Text(
                     text = "Choose a saved payout method or add a new one to continue",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = LocalFrameTheme.current.fonts.bodySmall
                 )
 
                 Spacer(Modifier.height(20.dp))
 
                 if (savedMethods.isNotEmpty()) {
-                    Text("Saved Payout Methods", style = MaterialTheme.typography.labelLarge)
+                    Text("Saved Payout Methods", style = LocalFrameTheme.current.fonts.label)
                     Spacer(Modifier.height(8.dp))
                     savedMethods.forEach { pm ->
                         SavedPayoutMethodRow(
@@ -94,7 +94,7 @@ internal fun SelectPayoutMethodScreen(
                     }
                 }
 
-                Text("Add Payout Method", style = MaterialTheme.typography.labelLarge)
+                Text("Add Payout Method", style = LocalFrameTheme.current.fonts.label)
                 Spacer(Modifier.height(8.dp))
 
                 AddPayoutMethodRow(
@@ -123,7 +123,7 @@ private fun SavedPayoutMethodRow(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         tonalElevation = 0.dp,
-        shape = MaterialTheme.shapes.medium
+        shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
     ) {
         Row(
             modifier = Modifier
@@ -138,9 +138,9 @@ private fun SavedPayoutMethodRow(
             )
             Spacer(modifier = Modifier.width(20.dp))
             Column(Modifier.weight(1f)) {
-                Text(text = "•••• ${pm.last4}", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "•••• ${pm.last4}", style = LocalFrameTheme.current.fonts.body)
                 Spacer(Modifier.height(2.dp))
-                Text(text = "Account", style = MaterialTheme.typography.bodySmall)
+                Text(text = "Account", style = LocalFrameTheme.current.fonts.bodySmall)
             }
             RadioButton(selected = selected, onClick = onClick)
         }
@@ -158,7 +158,7 @@ private fun AddPayoutMethodRow(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         tonalElevation = 0.dp,
-        shape = MaterialTheme.shapes.medium
+        shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
     ) {
         Row(
             modifier = Modifier
@@ -168,8 +168,8 @@ private fun AddPayoutMethodRow(
         ) {
             Surface(
                 modifier = Modifier.size(40.dp),
-                color = FramePrimaryColor,
-                shape = MaterialTheme.shapes.small
+                color = LocalFrameTheme.current.colors.primaryButton,
+                shape = RoundedCornerShape(LocalFrameTheme.current.radii.small)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -178,17 +178,17 @@ private fun AddPayoutMethodRow(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = FrameOnPrimaryColor
+                        tint = LocalFrameTheme.current.colors.primaryButtonText
                     )
                 }
             }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.bodyLarge)
+                Text(text = title, style = LocalFrameTheme.current.fonts.body)
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    style = LocalFrameTheme.current.fonts.bodySmall,
+                    color = LocalFrameTheme.current.colors.textPrimary.copy(alpha = 0.6f)
                 )
             }
             Icon(

@@ -71,6 +71,82 @@ val (refund, error) = RefundsAPI.createRefund(request: {
 )
 ```
 
+## 🎨 Theming
+
+The SDK ships with a `FrameTheme` system that lets you customize the colors, fonts, and corner radii used by every Frame UI component (checkout, cart, onboarding flow). The same set of tokens exists on iOS, so a single brand spec drives both platforms.
+
+`FrameTheme` has three sections:
+
+- **`colors`** — 15 tokens (`primaryButton`, `primaryButtonText`, `secondaryButton`, `secondaryButtonText`, `disabledButton`, `disabledButtonStroke`, `disabledButtonText`, `surface`, `surfaceStroke`, `textPrimary`, `textSecondary`, `error`, `onboardingHeaderBackground`, `onboardingProgressFilledOnBrand`, `onboardingProgressEmptyOnBrand`).
+- **`fonts`** — 8 `TextStyle` tokens (`title`, `heading`, `headline`, `body`, `bodySmall`, `label`, `caption`, `button`).
+- **`radii`** — 3 corner-radius tokens (`small` 8dp, `medium` 10dp, `large` 16dp).
+
+### Defaults & dark mode
+
+`FrameTheme.default()` reads its colors from the `frame_*` color resources shipped in `FrameSDK-UI`. Dark variants live in `values-night/colors.xml`, so toggling the system theme swaps colors automatically with no code changes. Font defaults map to the host app's `MaterialTheme.typography` slots with weight overrides applied for visual parity with iOS.
+
+### Customizing the theme
+
+Use Kotlin's `copy()` to override only the tokens you care about. Everything you don't touch keeps its default:
+
+```kotlin
+val brandTheme = FrameTheme.default().let { base ->
+    base.copy(
+        colors = base.colors.copy(
+            primaryButton = Color(0xFF7B61FF),
+            primaryButtonText = Color.White
+        ),
+        radii = base.radii.copy(medium = 14.dp)
+    )
+}
+```
+
+### Applying the theme — onboarding (Compose)
+
+Pass the theme through `OnboardingConfig`. The container wraps content automatically:
+
+```kotlin
+OnboardingContainerView(
+    config = OnboardingConfig(
+        requiredCapabilities = listOf(Capabilities.KYC),
+        theme = brandTheme
+    ),
+    onResult = { /* ... */ }
+)
+```
+
+Or wrap your own UI hierarchy with the `FrameTheme { ... }` composable for fine-grained control:
+
+```kotlin
+FrameTheme(theme = brandTheme) {
+    MyCheckoutFlow()  // any SDK Composables inside read brandTheme
+}
+```
+
+### Applying the theme — checkout / cart (Views)
+
+Both `FrameCheckoutView` and `FrameCartView` accept a theme via `setTheme()`:
+
+```kotlin
+val cart = findViewById<FrameCartView>(R.id.cart)
+cart.setTheme(brandTheme)
+cart.configure(/* ... */)
+```
+
+### Reading the theme in custom UI
+
+Inside your own Composables hosted under `FrameTheme { ... }`, read the active theme via `LocalFrameTheme.current`:
+
+```kotlin
+@Composable
+fun MyHeader() {
+    val theme = LocalFrameTheme.current
+    Text(text = "Welcome", color = theme.colors.textPrimary, style = theme.fonts.heading)
+}
+```
+
+A working example with a custom theme is in [`PlaygroundScreen.kt`](app/src/main/java/com/framepayments/frame/PlaygroundScreen.kt).
+
 ## 💳 Google Pay
 
 The Frame Android SDK supports Google Pay as a payment method for merchants using FluidPay or Coinflow as their processor.

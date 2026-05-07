@@ -1,6 +1,8 @@
 name: Android CI
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -9,7 +11,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  unit-tests:
+  theme-lint:
+    # Fast-fail check: blocks SDK UI code from drifting away from FrameTheme
+    # tokens. Mirrors the iOS dark-mode lint step in frame-ios/.github/workflows/swift.yml.
+    # Runs before the heavier build/test job so theme regressions surface in seconds.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Theme lint (block hardcoded colors / fonts / radii in SDK UI)
+        run: ./scripts/theme-lint.sh
+
+  build-and-test:
+    needs: theme-lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -35,7 +52,12 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # Runs all JVM unit tests across modules/variants where applicable.
+      # Compile every module so any breakage in FrameSDK-UI / FrameSDK-Onboarding
+      # / app surfaces in CI (the previous workflow only ran `test`, which on the
+      # FrameSDK module is a no-op for UI modules without unit tests).
+      - name: Assemble debug
+        run: ./gradlew :FrameSDK-UI:assembleDebug :FrameSDK-Onboarding:assembleDebug :app:assembleDebug --stacktrace
+
       - name: Run unit tests
         run: ./gradlew test --stacktrace
 

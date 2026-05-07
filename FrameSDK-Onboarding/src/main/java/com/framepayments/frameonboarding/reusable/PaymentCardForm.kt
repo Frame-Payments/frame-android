@@ -8,13 +8,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 @Composable
 fun PaymentCardForm(
@@ -28,11 +28,13 @@ fun PaymentCardForm(
     headerTitle: String = "Card Details",
     showHeader: Boolean = true
 ) {
+    val theme = LocalFrameTheme.current
     Column {
         if (showHeader) {
             Text(
                 text = headerTitle,
-                style = MaterialTheme.typography.labelLarge,
+                style = theme.fonts.label,
+                color = theme.colors.textPrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
@@ -48,6 +50,7 @@ fun PaymentCardForm(
             label = { Text("Card Number") },
             placeholder = { Text("4242 4242 4242 4242") },
             modifier = Modifier.fillMaxWidth(),
+            textStyle = theme.fonts.body,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true
         )
@@ -73,6 +76,7 @@ fun PaymentCardForm(
                 label = { Text("MM/YY") },
                 placeholder = { Text("MM/YY") },
                 modifier = Modifier.weight(1f),
+                textStyle = theme.fonts.body,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true
             )
@@ -87,6 +91,7 @@ fun PaymentCardForm(
                 label = { Text("CVC") },
                 placeholder = { Text("CVC") },
                 modifier = Modifier.weight(1f),
+                textStyle = theme.fonts.body,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true
             )

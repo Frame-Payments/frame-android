@@ -21,6 +21,7 @@ import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingStep
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
+import com.framepayments.framesdk_ui.theme.FrameTheme
 
 @Composable
 fun OnboardingContainerView(
@@ -67,25 +68,27 @@ fun OnboardingContainerView(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            ProgressIndicator(
-                currentStep = viewModel.navigationState.currentStep,
-                flowSegments = viewModel.flowSegments,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Box(modifier = Modifier.weight(1f)) {
-                OnboardingScreenRouter(
-                    viewModel = viewModel,
-                    config = config,
-                    savedPaymentMethods = savedPaymentMethods,
-                    savedPayoutMethods = savedPayoutMethods,
-                    onboardingData = onboardingData,
-                    context = context
+    FrameTheme(theme = config.theme ?: FrameTheme.default()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { padding ->
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                ProgressIndicator(
+                    currentStep = viewModel.navigationState.currentStep,
+                    flowSegments = viewModel.flowSegments,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                Box(modifier = Modifier.weight(1f)) {
+                    OnboardingScreenRouter(
+                        viewModel = viewModel,
+                        config = config,
+                        savedPaymentMethods = savedPaymentMethods,
+                        savedPayoutMethods = savedPayoutMethods,
+                        onboardingData = onboardingData,
+                        context = context
+                    )
+                }
             }
         }
     }
