@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @Composable
 internal fun VerificationSubmittedScreen(
@@ -74,8 +76,10 @@ internal fun VerificationSubmittedScreen(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun VerificationSubmittedScreenPreview() {
+    FrameTheme {
     VerificationSubmittedScreen(onDone = {})
+    }
 }

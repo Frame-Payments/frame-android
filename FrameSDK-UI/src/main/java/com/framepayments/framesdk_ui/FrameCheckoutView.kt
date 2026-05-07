@@ -211,10 +211,12 @@ class FrameCheckoutView @JvmOverloads constructor(
                 false
             )
             itemBinding.paymentCardText.text = "${option.card?.brand.orEmpty().replaceFirstChar { it.uppercase() }} ${option.card?.lastFourDigits.orEmpty()}"
+            // Selected payment cards get a high-contrast border vs the surface; the
+            // tokens below adapt automatically in dark mode via values-night/colors.xml.
             val color = if (viewModel.selectedCustomerPaymentOption == option)
-                ContextCompat.getColor(context, R.color.black)
+                ContextCompat.getColor(context, R.color.frame_text_primary)
             else
-                ContextCompat.getColor(context, R.color.divider)
+                ContextCompat.getColor(context, R.color.frame_surface_stroke)
             itemBinding.paymentCardContainer.strokeColor = color
 
             itemBinding.root.setOnClickListener {

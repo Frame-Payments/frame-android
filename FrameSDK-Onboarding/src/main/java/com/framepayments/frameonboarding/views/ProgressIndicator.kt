@@ -14,11 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
 import com.framepayments.frameonboarding.classes.OnboardingStep
 import com.framepayments.frameonboarding.classes.toFlowSegment
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 /**
@@ -82,15 +83,17 @@ internal fun ProgressIndicator(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun ProgressIndicatorPreview() {
-    ProgressIndicator(
-        currentStep = OnboardingStep.SelectPaymentMethod,
-        flowSegments = listOf(
-            OnboardingFlowSegment.PERSONAL_INFORMATION,
-            OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD,
-            OnboardingFlowSegment.VERIFICATION_SUBMITTED
+    FrameTheme {
+        ProgressIndicator(
+            currentStep = OnboardingStep.SelectPaymentMethod,
+            flowSegments = listOf(
+                OnboardingFlowSegment.PERSONAL_INFORMATION,
+                OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD,
+                OnboardingFlowSegment.VERIFICATION_SUBMITTED
+            )
         )
-    )
+    }
 }

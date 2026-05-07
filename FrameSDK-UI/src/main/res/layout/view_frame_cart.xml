@@ -5,7 +5,7 @@
     android:id="@+id/cartRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white">
+    android:background="@color/frame_surface">
 
     <TextView
         android:id="@+id/cartTitle"
@@ -34,7 +34,7 @@
         android:id="@+id/dividerAfterTitle"
         android:layout_width="0dp"
         android:layout_height="1dp"
-        android:background="#E0E0E0"
+        android:background="@color/frame_surface_stroke"
         app:layout_constraintTop_toBottomOf="@id/cartSubtitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -104,7 +104,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginTop="8dp"
-            android:background="#E0E0E0"/>
+            android:background="@color/frame_surface_stroke"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -142,6 +142,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
 
-        android:backgroundTint="@android:color/black"
-        android:textColor="@android:color/white"/>
+        android:backgroundTint="@color/frame_primary_button"
+        android:textColor="@color/frame_primary_button_text"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

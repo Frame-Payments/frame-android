@@ -6,8 +6,10 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.widget.FrameLayout
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,6 +49,8 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
 
     private var surfaceColor: Color = colorRes(R.color.frame_surface)
     private var surfaceStrokeColor: Color = colorRes(R.color.frame_surface_stroke)
+    private var textPrimaryColor: Color = colorRes(R.color.frame_text_primary)
+    private var textSecondaryColor: Color = colorRes(R.color.frame_text_secondary)
     private var cornerRadiusDp: Float = 10f
 
     /**
@@ -77,10 +81,13 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
     fun setTheme(theme: FrameTheme) {
         surfaceColor = theme.colors.surface
         surfaceStrokeColor = theme.colors.surfaceStroke
+        textPrimaryColor = theme.colors.textPrimary
+        textSecondaryColor = theme.colors.textSecondary
         cornerRadiusDp = theme.radii.medium.value
         accentColor = theme.colors.primaryButton
         onAccentColor = theme.colors.primaryButtonText
         applySurface()
+        applyContent()
     }
 
     init {
@@ -108,15 +115,39 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
 
     private fun applyContent() {
         binding.evervaultCardCompose.setContent {
-            // Evervault's RowsPaymentCard reads from Material 3's MaterialTheme, so we
-            // override the primary slot in a Material 3 ColorScheme.
-            val scheme = lightColorScheme(
-                primary = accentColor,
-                onPrimary = onAccentColor,
-                secondary = accentColor,
-                onSecondary = onAccentColor,
-                tertiary = accentColor
-            )
+            // Evervault's RowsPaymentCard reads from Material 3's MaterialTheme.
+            // Build a ColorScheme keyed off `isSystemInDarkTheme()` so the embedded
+            // card field text + cursor adapt with the rest of the SDK; surface and
+            // onSurface are pulled from the FrameTheme tokens so customer overrides
+            // (or the values-night dark variants) flow through to the input contents.
+            val isDark = isSystemInDarkTheme()
+            val scheme = if (isDark) {
+                darkColorScheme(
+                    primary = accentColor,
+                    onPrimary = onAccentColor,
+                    secondary = accentColor,
+                    onSecondary = onAccentColor,
+                    tertiary = accentColor,
+                    surface = surfaceColor,
+                    onSurface = textPrimaryColor,
+                    onSurfaceVariant = textSecondaryColor,
+                    background = surfaceColor,
+                    onBackground = textPrimaryColor,
+                )
+            } else {
+                lightColorScheme(
+                    primary = accentColor,
+                    onPrimary = onAccentColor,
+                    secondary = accentColor,
+                    onSecondary = onAccentColor,
+                    tertiary = accentColor,
+                    surface = surfaceColor,
+                    onSurface = textPrimaryColor,
+                    onSurfaceVariant = textSecondaryColor,
+                    background = surfaceColor,
+                    onBackground = textPrimaryColor,
+                )
+            }
             MaterialTheme(colorScheme = scheme) {
                 RowsPaymentCard(
                     modifier = Modifier.fillMaxWidth(),

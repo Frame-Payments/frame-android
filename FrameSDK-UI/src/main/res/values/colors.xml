@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#000000</color>
-    <color name="divider">#33000000</color>
-    <color name="gray">#808080</color>
-    <color name="clear">#000000</color>
-
     <!-- FrameTheme tokens (light). Override in values-night/colors.xml for dark mode.
-         Names mirror FrameColors fields 1:1. -->
+         Names mirror FrameColors fields 1:1. Every layout / drawable in this module
+         must reference one of these tokens — see scripts/theme-lint.sh. -->
     <color name="frame_primary_button">#FF324D52</color>
     <color name="frame_primary_button_text">#FFFFFFFF</color>
     <color name="frame_secondary_button">#00000000</color>

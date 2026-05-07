@@ -26,6 +26,13 @@ SCAN_DIRS=(
   "FrameSDK-Onboarding/src/main/java"
 )
 
+# XML layouts shipped by the SDK modules. Layouts must reference theme-aware
+# `@color/frame_*` tokens (which auto-adapt via values-night/) so dark mode
+# works for Views-based components like FrameCheckoutView and FrameCartView.
+XML_DIRS=(
+  "FrameSDK-UI/src/main/res/layout"
+)
+
 # Allow-list — files / call sites where a hardcoded literal is intentional.
 # Keep this list short and justified; prefer fixing the call site over adding
 # an exception.
@@ -84,7 +91,23 @@ matches="$(
     || true
 )"
 
-if [ -n "$matches" ]; then
+# XML lint: hardcoded hex colors (#RRGGBB or #AARRGGBB), @android:color/white,
+# @android:color/black, and references to the legacy non-themed tokens
+# (@color/black, @color/gray, @color/divider, @color/clear, @color/white).
+# `@android:color/transparent` is intentionally NOT flagged — transparency is
+# colorless and adapts to whatever the parent renders.
+XML_PATTERNS=(
+  '#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?\b'
+  '@android:color/(white|black)\b'
+  '@color/(black|gray|divider|clear|white)\b'
+)
+XML_JOINED="$(IFS='|'; echo "${XML_PATTERNS[*]}")"
+
+xml_matches="$(
+  grep -RnE "$XML_JOINED" "${XML_DIRS[@]}" --include="*.xml" 2>/dev/null || true
+)"
+
+if [ -n "$matches" ] || [ -n "$xml_matches" ]; then
   echo "❌ Theme lint failed. Use FrameTheme tokens instead of hardcoded literals or raw MaterialTheme.* slots."
   echo
   echo "   Fix one of these patterns:"
@@ -96,12 +119,21 @@ if [ -n "$matches" ]; then
   echo "         → use RoundedCornerShape(LocalFrameTheme.current.radii.<small|medium|large>)"
   echo "     • fontSize = N.sp"
   echo "         → use style = LocalFrameTheme.current.fonts.<token>"
+  echo "     • XML hex literals / @android:color/{white,black} / @color/{black,gray,divider,clear,white}"
+  echo "         → use @color/frame_* tokens (which carry values-night/ overrides for dark mode)"
   echo
   echo "   If the call site is genuinely meant to bypass the theme, add it to"
   echo "   EXCLUDE_PATTERNS in scripts/theme-lint.sh with a one-line justification."
   echo
-  echo "Violations:"
-  echo "$matches"
+  if [ -n "$matches" ]; then
+    echo "Kotlin violations:"
+    echo "$matches"
+  fi
+  if [ -n "$xml_matches" ]; then
+    [ -n "$matches" ] && echo
+    echo "XML layout violations:"
+    echo "$xml_matches"
+  fi
   exit 1
 fi
 

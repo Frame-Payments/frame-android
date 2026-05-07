@@ -52,6 +52,8 @@ import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk_ui.EncryptedPaymentCardInput
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -288,9 +290,10 @@ internal fun AddPaymentMethodScreen(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun AddPaymentMethodScreenPreview() {
+    FrameTheme {
     MaterialTheme {
         AddPaymentMethodScreen(
             viewModel = FrameOnboardingViewModel(
@@ -298,5 +301,6 @@ private fun AddPaymentMethodScreenPreview() {
             ),
             onBack = {}
         )
+    }
     }
 }

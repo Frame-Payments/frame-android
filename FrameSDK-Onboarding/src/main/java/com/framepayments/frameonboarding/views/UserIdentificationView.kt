@@ -61,6 +61,8 @@ import com.framepayments.frameonboarding.viewmodels.OnboardingField
 import com.framepayments.frameonboarding.viewmodels.VerifyIdSubStep
 import com.framepayments.frameonboarding.viewmodels.VerifyPhoneUi
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -445,9 +447,10 @@ private fun addressFromOnboarding(vm: FrameOnboardingViewModel): FrameObjects.Bi
     )
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun UserIdentificationViewPreview() {
+    FrameTheme {
     UserIdentificationView(
         viewModel = FrameOnboardingViewModel(
             config = OnboardingConfig(requiredCapabilities = listOf(
@@ -464,4 +467,5 @@ private fun UserIdentificationViewPreview() {
         showTermsOfService = true,
         onBack = { }
     )
+    }
 }

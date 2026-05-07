@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.reusable.ContinueButton
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -189,9 +191,10 @@ private fun DocumentItem(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun UploadDocumentsScreenPreview() {
+    FrameTheme {
     UploadDocumentsScreen(
         frontPhotoComplete = true,
         backPhotoComplete = false,
@@ -202,4 +205,5 @@ private fun UploadDocumentsScreenPreview() {
         onSelfieClick = {},
         onSubmit = {}
     )
+    }
 }

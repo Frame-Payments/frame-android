@@ -27,6 +27,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,13 +104,15 @@ internal fun ReviewPhotoScreen(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun ReviewPhotoScreenPreview() {
+    FrameTheme {
     ReviewPhotoScreen(
         photoUri = Uri.EMPTY,
         onBack = {},
         onUsePhoto = {},
         onRetake = {}
     )
+    }
 }

@@ -38,6 +38,8 @@ import com.framepayments.frameonboarding.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -199,9 +201,10 @@ private fun AddPaymentMethodRow(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun SelectPaymentMethodScreenEmptyPreview() {
+    FrameTheme {
     SelectPaymentMethodScreen(
         savedMethods = emptyList(),
         selectedId = null,
@@ -210,11 +213,13 @@ private fun SelectPaymentMethodScreenEmptyPreview() {
         onBack = {},
         onContinue = {}
     )
+    }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun SelectPaymentMethodScreenWithMethodsPreview() {
+    FrameTheme {
     SelectPaymentMethodScreen(
         savedMethods = listOf(
             PaymentMethodSummary(id = "pm_1", brand = "visa", last4 = "4242", exp = "12/26"),
@@ -226,4 +231,5 @@ private fun SelectPaymentMethodScreenWithMethodsPreview() {
         onBack = {},
         onContinue = {}
     )
+    }
 }

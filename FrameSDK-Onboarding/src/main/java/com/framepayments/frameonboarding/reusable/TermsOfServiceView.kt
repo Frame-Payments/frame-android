@@ -20,6 +20,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @Composable
 fun TermsOfServiceView(
@@ -87,14 +89,18 @@ fun TermsOfServiceView(
     )
 }
 
-@Preview(showBackground = true, name = "Default")
+@FrameThemePreviews
 @Composable
 private fun TermsOfServiceViewPreview() {
+    FrameTheme {
     TermsOfServiceView()
+    }
 }
 
-@Preview(showBackground = true, name = "Padded")
+@FrameThemePreviews
 @Composable
 private fun TermsOfServiceViewPaddedPreview() {
+    FrameTheme {
     TermsOfServiceView(padded = true)
+    }
 }

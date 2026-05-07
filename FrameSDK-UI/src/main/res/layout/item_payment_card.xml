@@ -9,7 +9,7 @@
     android:layout_marginEnd="8dp"
     app:cardCornerRadius="10dp"
     app:strokeWidth="2dp"
-    app:strokeColor="@color/divider"
+    app:strokeColor="@color/frame_surface_stroke"
     app:cardElevation="0dp">
 
     <LinearLayout

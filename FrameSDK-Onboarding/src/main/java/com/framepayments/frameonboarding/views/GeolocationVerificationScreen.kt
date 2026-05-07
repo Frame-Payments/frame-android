@@ -37,6 +37,8 @@ import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceB
 import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceStatus
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 private enum class GeolocationState {
     CHECKING,
@@ -243,9 +245,10 @@ private fun VpnDetectedView(
     }
 }
 
-@Preview(showBackground = true, name = "Checking")
+@FrameThemePreviews
 @Composable
 private fun GeolocationCheckingPreview() {
+    FrameTheme {
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -258,11 +261,13 @@ private fun GeolocationCheckingPreview() {
             CheckingLocationView()
         }
     }
+    }
 }
 
-@Preview(showBackground = true, name = "Verified")
+@FrameThemePreviews
 @Composable
 private fun GeolocationVerifiedPreview() {
+    FrameTheme {
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -275,11 +280,13 @@ private fun GeolocationVerifiedPreview() {
             LocationVerifiedView()
         }
     }
+    }
 }
 
-@Preview(showBackground = true, name = "VPN Detected")
+@FrameThemePreviews
 @Composable
 private fun GeolocationVpnDetectedPreview() {
+    FrameTheme {
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -291,5 +298,6 @@ private fun GeolocationVpnDetectedPreview() {
         ) {
             VpnDetectedView(onContinue = {}, onDisableVpn = {})
         }
+    }
     }
 }
