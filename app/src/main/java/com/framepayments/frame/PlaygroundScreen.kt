@@ -116,7 +116,8 @@ fun PlaygroundScreen(
                         Capabilities.AGE_VERIFICATION,
                         Capabilities.GEO_COMPLIANCE,
                         Capabilities.PHONE_VERIFICATION
-                    )
+                    ),
+                    googlePayMerchantId = "BCR2DN4T_TEST_STUB"
                 ),
                 onResult = { showOnboarding = false }
             )
