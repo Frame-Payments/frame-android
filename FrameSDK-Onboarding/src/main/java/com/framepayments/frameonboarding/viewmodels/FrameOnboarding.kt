@@ -1048,10 +1048,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 )
                 val encryptPayload = useEvervaultUi && FrameNetworking.isEvervaultConfigured
                 val (paymentMethod, pmErr) = PaymentMethodsAPI.createCardPaymentMethod(pmRequest, encryptData = encryptPayload)
-                if (paymentMethod != null) {
-                    _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = paymentMethod.id)
+                val paymentMethodId = paymentMethod?.id
+                if (paymentMethod != null && paymentMethodId != null) {
+                    _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = paymentMethodId)
                     _savedPaymentMethods.value += PaymentMethodSummary(
-                                        id = paymentMethod.id,
+                                        id = paymentMethodId,
                                         brand = paymentMethod.card?.brand?.uppercase() ?: "",
                                         last4 = paymentMethod.card?.lastFourDigits ?: "",
                                         exp = "${paymentMethod.card?.expirationMonth}/${paymentMethod.card?.expirationYear?.takeLast(2)}"
@@ -1106,10 +1107,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 )
             )
             val (payoutMethod, achErr) = PaymentMethodsAPI.createACHPaymentMethod(achRequest)
-            if (payoutMethod != null) {
-                _onboardingData.value = _onboardingData.value.copy(selectedPayoutMethodId = payoutMethod.id)
+            val payoutMethodId = payoutMethod?.id
+            if (payoutMethod != null && payoutMethodId != null) {
+                _onboardingData.value = _onboardingData.value.copy(selectedPayoutMethodId = payoutMethodId)
                 _savedPayoutMethods.value += PaymentMethodSummary(
-                                    id = payoutMethod.id,
+                                    id = payoutMethodId,
                                     brand = "BANK",
                                     last4 = payoutMethod.ach?.lastFour ?: "",
                                     exp = ""
@@ -1165,10 +1167,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 is PlaidLinkResult.Success -> {
                     val payoutMethod = outcome.paymentMethod
                     val ach = payoutMethod.ach
-                    if (ach != null) {
-                        _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethod.id) }
+                    @Suppress("USELESS_CAST")
+                    val payoutMethodId = payoutMethod.id as String?
+                    if (ach != null && payoutMethodId != null) {
+                        _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethodId) }
                         _savedPayoutMethods.value += PaymentMethodSummary(
-                            id = payoutMethod.id,
+                            id = payoutMethodId,
                             brand = "BANK",
                             last4 = ach.lastFour ?: "",
                             exp = ""
