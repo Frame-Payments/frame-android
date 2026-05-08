@@ -22,8 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.R
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 @Composable
 internal fun OnboardingIntroView(
@@ -52,7 +51,7 @@ internal fun OnboardingIntroView(
 
                 Text(
                     text = "Verify Your Identity",
-                    style = MaterialTheme.typography.headlineSmall.copy(
+                    style = LocalFrameTheme.current.fonts.heading.copy(
                         fontWeight = FontWeight.Bold
                     ),
                     textAlign = TextAlign.Center
@@ -63,7 +62,7 @@ internal fun OnboardingIntroView(
                 Text(
                     text = "We're required by law to verify your identity. " +
                             "This takes about 2 minutes and you'll need a Government ID and a selfie.",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = LocalFrameTheme.current.fonts.bodySmall,
                     textAlign = TextAlign.Center
                 )
             }
@@ -72,8 +71,8 @@ internal fun OnboardingIntroView(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onContinue,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = FramePrimaryColor,
-                    contentColor = FrameOnPrimaryColor
+                    containerColor = LocalFrameTheme.current.colors.primaryButton,
+                    contentColor = LocalFrameTheme.current.colors.primaryButtonText
                 )
             ) {
                 Text("Continue")

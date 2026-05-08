@@ -21,8 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @Composable
 internal fun VerificationSubmittedScreen(
@@ -44,19 +45,19 @@ internal fun VerificationSubmittedScreen(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
                 modifier = Modifier.padding(16.dp),
-                tint = FramePrimaryColor
+                tint = LocalFrameTheme.current.colors.primaryButton
             )
             Text(
                 text = "Verification Submitted",
-                style = MaterialTheme.typography.titleLarge,
+                style = LocalFrameTheme.current.fonts.headline,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "Congratulations! You've submitted your identity verification check. You're ready to proceed.",
-                style = MaterialTheme.typography.bodyMedium,
+                style = LocalFrameTheme.current.fonts.bodySmall,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = LocalFrameTheme.current.colors.textSecondary
             )
         }
         Spacer(modifier = Modifier.weight(1f))
@@ -66,8 +67,8 @@ internal fun VerificationSubmittedScreen(
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = FramePrimaryColor,
-                contentColor = FrameOnPrimaryColor
+                containerColor = LocalFrameTheme.current.colors.primaryButton,
+                contentColor = LocalFrameTheme.current.colors.primaryButtonText
             )
         ) {
             Text("Done")
@@ -75,8 +76,10 @@ internal fun VerificationSubmittedScreen(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun VerificationSubmittedScreenPreview() {
+    FrameTheme {
     VerificationSubmittedScreen(onDone = {})
+    }
 }

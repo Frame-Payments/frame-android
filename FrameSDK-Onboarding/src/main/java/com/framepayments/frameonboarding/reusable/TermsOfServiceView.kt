@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,45 +13,51 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @Composable
 fun TermsOfServiceView(
     privacyPolicyUrl: String = "https://framepayments.com/privacy",
     termsOfServiceUrl: String = "https://framepayments.com/terms",
-    textColor: Color = Color.Gray,
-    linkColor: Color = FramePrimaryColor,
+    textColor: Color = LocalFrameTheme.current.colors.textSecondary,
+    linkColor: Color = LocalFrameTheme.current.colors.primaryButton,
     textAlign: TextAlign = TextAlign.Center,
     padded: Boolean = false
 ) {
+    val theme = LocalFrameTheme.current
     val uriHandler = LocalUriHandler.current
+    // Derive sizing from the theme's caption style so an integrator overriding
+    // FrameFonts.caption propagates through to the legal text below.
+    val captionSize = theme.fonts.caption.fontSize
+    val bodySpan = SpanStyle(color = textColor, fontSize = captionSize)
+    val linkSpan = SpanStyle(color = linkColor, fontSize = captionSize, fontWeight = FontWeight.Bold)
 
     val annotatedText = buildAnnotatedString {
-        withStyle(SpanStyle(color = textColor, fontSize = 13.sp)) {
+        withStyle(bodySpan) {
             append("By clicking continue, you agree to the terms of Frame's ")
         }
         pushStringAnnotation(tag = "URL", annotation = privacyPolicyUrl)
-        withStyle(SpanStyle(color = linkColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)) {
+        withStyle(linkSpan) {
             append("Privacy Policy")
         }
         pop()
-        withStyle(SpanStyle(color = textColor, fontSize = 13.sp)) {
+        withStyle(bodySpan) {
             append(" and ")
         }
         pushStringAnnotation(tag = "URL", annotation = termsOfServiceUrl)
-        withStyle(SpanStyle(color = linkColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)) {
+        withStyle(linkSpan) {
             append("Terms of Service")
         }
         pop()
-        withStyle(SpanStyle(color = textColor, fontSize = 13.sp)) {
+        withStyle(bodySpan) {
             append(".")
         }
     }
@@ -65,8 +70,8 @@ fun TermsOfServiceView(
 
     val modifier = if (padded) {
         baseModifier
-            .background(Color.White, RoundedCornerShape(12.dp))
-            .border(1.dp, Color.Gray.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+            .background(theme.colors.surface, RoundedCornerShape(theme.radii.medium))
+            .border(1.dp, theme.colors.surfaceStroke, RoundedCornerShape(theme.radii.medium))
             .padding(16.dp)
     } else {
         baseModifier
@@ -74,7 +79,7 @@ fun TermsOfServiceView(
 
     ClickableText(
         text = annotatedText,
-        style = TextStyle(textAlign = textAlign),
+        style = theme.fonts.caption.copy(textAlign = textAlign),
         modifier = modifier,
         onClick = { offset ->
             annotatedText.getStringAnnotations(tag = "URL", start = offset, end = offset)
@@ -84,14 +89,18 @@ fun TermsOfServiceView(
     )
 }
 
-@Preview(showBackground = true, name = "Default")
+@FrameThemePreviews
 @Composable
 private fun TermsOfServiceViewPreview() {
+    FrameTheme {
     TermsOfServiceView()
+    }
 }
 
-@Preview(showBackground = true, name = "Padded")
+@FrameThemePreviews
 @Composable
 private fun TermsOfServiceViewPaddedPreview() {
+    FrameTheme {
     TermsOfServiceView(padded = true)
+    }
 }

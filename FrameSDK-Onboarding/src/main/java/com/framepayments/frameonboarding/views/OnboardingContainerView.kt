@@ -15,12 +15,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingStep
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @Composable
 fun OnboardingContainerView(
@@ -67,31 +68,33 @@ fun OnboardingContainerView(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            ProgressIndicator(
-                currentStep = viewModel.navigationState.currentStep,
-                flowSegments = viewModel.flowSegments,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Box(modifier = Modifier.weight(1f)) {
-                OnboardingScreenRouter(
-                    viewModel = viewModel,
-                    config = config,
-                    savedPaymentMethods = savedPaymentMethods,
-                    savedPayoutMethods = savedPayoutMethods,
-                    onboardingData = onboardingData,
-                    context = context
+    FrameTheme(theme = config.theme ?: FrameTheme.default()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { padding ->
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                ProgressIndicator(
+                    currentStep = viewModel.navigationState.currentStep,
+                    flowSegments = viewModel.flowSegments,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                Box(modifier = Modifier.weight(1f)) {
+                    OnboardingScreenRouter(
+                        viewModel = viewModel,
+                        config = config,
+                        savedPaymentMethods = savedPaymentMethods,
+                        savedPayoutMethods = savedPayoutMethods,
+                        onboardingData = onboardingData,
+                        context = context
+                    )
+                }
             }
         }
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun OnboardingContainerViewPreview() {
     OnboardingContainerView(
@@ -104,7 +107,8 @@ private fun OnboardingContainerViewPreview() {
                 Capabilities.GEO_COMPLIANCE,
                 Capabilities.AGE_VERIFICATION,
                 Capabilities.PHONE_VERIFICATION
-            )
+            ),
+            skipInitNetwork = true
         ),
         onResult = {}
     )

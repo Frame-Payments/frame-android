@@ -51,6 +51,9 @@ import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk_ui.EncryptedPaymentCardInput
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,13 +179,13 @@ internal fun AddPaymentMethodScreen(
             ) {
                 Text(
                     text = "Card Details",
-                    style = MaterialTheme.typography.labelLarge
+                    style = LocalFrameTheme.current.fonts.label
                 )
                 cardError?.let { msg ->
                     Text(
                         text = msg,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error
+                        style = LocalFrameTheme.current.fonts.caption,
+                        color = LocalFrameTheme.current.colors.error
                     )
                 }
             }
@@ -191,13 +194,13 @@ internal fun AddPaymentMethodScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 160.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+                        .background(LocalFrameTheme.current.colors.surface.copy(alpha = 0.6f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "EncryptedPaymentCardInput (preview placeholder)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = LocalFrameTheme.current.fonts.bodySmall,
+                        color = LocalFrameTheme.current.colors.textSecondary
                     )
                 }
             } else {
@@ -211,9 +214,7 @@ internal fun AddPaymentMethodScreen(
                         CircularProgressIndicator()
                     }
                     true -> AndroidView(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 160.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         factory = { EncryptedPaymentCardInput(it) },
                         update = { view ->
                             view.onCardDataChange = { viewModel.onPaymentCardDataChange(it) }
@@ -251,7 +252,7 @@ internal fun AddPaymentMethodScreen(
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "Use this card for payouts if eligible",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = LocalFrameTheme.current.fonts.bodySmall
                 )
             }
 
@@ -287,9 +288,10 @@ internal fun AddPaymentMethodScreen(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun AddPaymentMethodScreenPreview() {
+    FrameTheme {
     MaterialTheme {
         AddPaymentMethodScreen(
             viewModel = FrameOnboardingViewModel(
@@ -297,5 +299,6 @@ private fun AddPaymentMethodScreenPreview() {
             ),
             onBack = {}
         )
+    }
     }
 }

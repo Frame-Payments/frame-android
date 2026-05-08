@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.framepayments.framesdk_ui.databinding.ItemCartBinding
 import com.framepayments.framesdk_ui.databinding.ViewFrameCartBinding
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.toCartAppearance
 import com.framepayments.framesdk_ui.viewmodels.FrameCartViewModel
 
 class FrameCartView @JvmOverloads constructor(
@@ -25,6 +27,23 @@ class FrameCartView @JvmOverloads constructor(
     private lateinit var viewModel: FrameCartViewModel
     private var listener: ((Int) -> Unit)? = null
     private var appearance: FrameCartAppearance? = null
+    private var explicitAppearance: FrameCartAppearance? = null
+    private var theme: FrameTheme? = null
+
+    /**
+     * Apply a [FrameTheme] to this cart. The theme is converted to a [FrameCartAppearance]
+     * and merged with any explicit appearance previously passed to [configure] (the explicit
+     * appearance wins on conflict). Safe to call before or after [configure]; takes effect
+     * immediately if [configure] has already run.
+     */
+    fun setTheme(theme: FrameTheme) {
+        this.theme = theme
+        if (::viewModel.isInitialized) {
+            appearance = theme.toCartAppearance(overlay = explicitAppearance)
+            applyAppearance()
+            binding.itemsList.adapter?.notifyDataSetChanged()
+        }
+    }
 
     fun configure(
         customerId: String?,
@@ -33,34 +52,40 @@ class FrameCartView @JvmOverloads constructor(
         onCheckout: (Int) -> Unit,
         appearance: FrameCartAppearance? = null
     ) {
-        this.appearance = appearance
+        explicitAppearance = appearance
+        this.appearance = theme?.toCartAppearance(overlay = appearance) ?: appearance
         listener = onCheckout
         viewModel = FrameCartViewModel(items, shippingCents)
 
-        // title
+        binding.itemsList.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = CartAdapter(items, this@FrameCartView.appearance?.cartItemHeightPx)
+        }
+
+        applyAppearance()
+
+        binding.checkoutButton.setOnClickListener {
+            listener?.invoke(viewModel.finalTotal)
+        }
+    }
+
+    private fun applyAppearance() {
+        val appearance = this.appearance
+
         binding.cartTitle.text = appearance?.cartTitle ?: context.getString(R.string.cart_title)
         appearance?.cartTitleColor?.let { binding.cartTitle.setTextColor(it) }
         appearance?.cartTitleSizeSp?.let { binding.cartTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, it) }
         binding.cartTitle.setTypeface(binding.cartTitle.typeface, appearance?.cartTitleTypeface ?: Typeface.BOLD)
 
-        // subtitle (optional)
         appearance?.subtitle?.let { subtitle ->
             binding.cartSubtitle.visibility = android.view.View.VISIBLE
             binding.cartSubtitle.text = subtitle
-            appearance?.subtitleColor?.let { binding.cartSubtitle.setTextColor(it) }
-            appearance?.subtitleSizeSp?.let { binding.cartSubtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, it) }
+            appearance.subtitleColor?.let { binding.cartSubtitle.setTextColor(it) }
+            appearance.subtitleSizeSp?.let { binding.cartSubtitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, it) }
         } ?: run { binding.cartSubtitle.visibility = android.view.View.GONE }
 
-        // background
         appearance?.backgroundColor?.let { binding.cartRoot.setBackgroundColor(it) }
 
-        // list
-        binding.itemsList.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = CartAdapter(items, appearance?.cartItemHeightPx)
-        }
-
-        // summary rows - subtotal
         binding.subtotalLabel.text = context.getString(R.string.subtotal)
         appearance?.auxiliaryLabelColor?.let { binding.subtotalLabel.setTextColor(it) }
         appearance?.auxiliaryLabelSizeSp?.let { binding.subtotalLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, it) }
@@ -84,14 +109,10 @@ class FrameCartView @JvmOverloads constructor(
         appearance?.totalSizeSp?.let { binding.totalValue.setTextSize(TypedValue.COMPLEX_UNIT_SP, it) }
         binding.totalValue.setTypeface(binding.totalValue.typeface, appearance?.totalTypeface ?: Typeface.BOLD)
 
-        // button
         binding.checkoutButton.text = appearance?.checkoutButtonTitle ?: context.getString(R.string.checkout)
         appearance?.checkoutButtonBackgroundColor?.let { binding.checkoutButton.setBackgroundColor(it) }
         appearance?.checkoutButtonTextColor?.let { binding.checkoutButton.setTextColor(it) }
         appearance?.checkoutButtonTextSizeSp?.let { binding.checkoutButton.setTextSize(TypedValue.COMPLEX_UNIT_SP, it) }
-        binding.checkoutButton.setOnClickListener {
-            listener?.invoke(viewModel.finalTotal)
-        }
     }
 
     /** View-holder / adapter */

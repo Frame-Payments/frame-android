@@ -30,8 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.reusable.ContinueButton
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,14 +76,14 @@ internal fun UploadDocumentsScreen(
             Column {
                 Text(
                     text = "Take photos of your government-issued ID and a selfie.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = LocalFrameTheme.current.fonts.bodySmall
                 )
 
                 Spacer(Modifier.height(24.dp))
 
                 Text(
                     text = "Driver's License",
-                    style = MaterialTheme.typography.labelLarge,
+                    style = LocalFrameTheme.current.fonts.label,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
@@ -105,7 +107,7 @@ internal fun UploadDocumentsScreen(
 
                 Text(
                     text = "Identity Verification",
-                    style = MaterialTheme.typography.labelLarge,
+                    style = LocalFrameTheme.current.fonts.label,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
@@ -132,8 +134,8 @@ private fun DocumentError(message: String?) {
         Spacer(Modifier.height(4.dp))
         Text(
             text = message,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.error,
+            style = LocalFrameTheme.current.fonts.caption,
+            color = LocalFrameTheme.current.colors.error,
             modifier = Modifier.padding(horizontal = 14.dp)
         )
     }
@@ -150,7 +152,7 @@ private fun DocumentItem(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         tonalElevation = 0.dp,
-        shape = MaterialTheme.shapes.medium
+        shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
     ) {
         Row(
             modifier = Modifier
@@ -160,8 +162,8 @@ private fun DocumentItem(
         ) {
             Surface(
                 modifier = Modifier.size(40.dp),
-                color = if (isComplete) FramePrimaryColor else MaterialTheme.colorScheme.surfaceVariant,
-                shape = MaterialTheme.shapes.small
+                color = if (isComplete) LocalFrameTheme.current.colors.primaryButton else LocalFrameTheme.current.colors.surface,
+                shape = RoundedCornerShape(LocalFrameTheme.current.radii.small)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -170,15 +172,15 @@ private fun DocumentItem(
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = null,
-                        tint = if (isComplete) FrameOnPrimaryColor else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isComplete) LocalFrameTheme.current.colors.primaryButtonText else LocalFrameTheme.current.colors.textSecondary
                     )
                 }
             }
             Spacer(Modifier.width(12.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isComplete) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                style = LocalFrameTheme.current.fonts.body,
+                color = if (isComplete) LocalFrameTheme.current.colors.textPrimary else LocalFrameTheme.current.colors.textPrimary.copy(alpha = 0.6f),
                 modifier = Modifier.weight(1f)
             )
             Icon(
@@ -189,9 +191,10 @@ private fun DocumentItem(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun UploadDocumentsScreenPreview() {
+    FrameTheme {
     UploadDocumentsScreen(
         frontPhotoComplete = true,
         backPhotoComplete = false,
@@ -202,4 +205,5 @@ private fun UploadDocumentsScreenPreview() {
         onSelfieClick = {},
         onSubmit = {}
     )
+    }
 }

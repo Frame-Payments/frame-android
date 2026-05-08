@@ -46,6 +46,8 @@ import com.plaid.link.PlaidHandler
 import com.plaid.link.configuration.LinkTokenConfiguration
 import com.plaid.link.result.LinkExit
 import com.plaid.link.result.LinkSuccess
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,11 +198,13 @@ internal fun AddPayoutMethodScreen(
     }
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun AddPayoutMethodScreenPreview() {
+    FrameTheme {
     AddPayoutMethodScreen(
         viewModel = FrameOnboardingViewModel(OnboardingConfig()),
         onBack = {}
     )
+    }
 }

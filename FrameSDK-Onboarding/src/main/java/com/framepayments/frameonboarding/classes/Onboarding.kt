@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.framepayments.framesdk_ui.theme.FrameTheme
 
 internal class OnboardingState(
     startStep: OnboardingStep = OnboardingStep.VerificationWelcome
@@ -165,7 +166,11 @@ data class OnboardingConfig(
     /**
      * When true, [FrameOnboardingViewModel] skips network work in `init` (Compose Preview / design tools).
      */
-    val skipInitNetwork: Boolean = false
+    val skipInitNetwork: Boolean = false,
+    /**
+     * Optional theme override applied to all onboarding screens. When null, [FrameTheme.default]
+     */
+    val theme: FrameTheme? = null,
 )
 
 internal data class PaymentMethodSummary(

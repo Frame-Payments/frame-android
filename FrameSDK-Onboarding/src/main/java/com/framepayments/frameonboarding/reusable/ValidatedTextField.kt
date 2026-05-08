@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,6 +53,7 @@ fun ValidatedTextField(
     }
 
     val showError = error != null && !compactError
+    val theme = LocalFrameTheme.current
 
     if (inlineError) {
         Row(
@@ -69,13 +70,14 @@ fun ValidatedTextField(
                     .height(64.dp),
                 singleLine = true,
                 isError = showError,
+                textStyle = theme.fonts.body,
                 keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
             )
             if (showError) {
                 Text(
                     text = error!!,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
+                    style = theme.fonts.caption,
+                    color = theme.colors.error,
                     modifier = Modifier.padding(end = 8.dp)
                 )
             }
@@ -89,14 +91,15 @@ fun ValidatedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 isError = showError,
+                textStyle = theme.fonts.body,
                 keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
             )
             if (showError) {
                 Spacer(Modifier.height(errorSpacing))
                 Text(
                     text = error!!,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
+                    style = theme.fonts.caption,
+                    color = theme.colors.error,
                     modifier = Modifier.padding(start = 16.dp)
                 )
             }

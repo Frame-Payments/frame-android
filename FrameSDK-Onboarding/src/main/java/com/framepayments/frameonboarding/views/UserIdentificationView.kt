@@ -60,6 +60,9 @@ import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.frameonboarding.viewmodels.OnboardingField
 import com.framepayments.frameonboarding.viewmodels.VerifyIdSubStep
 import com.framepayments.frameonboarding.viewmodels.VerifyPhoneUi
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -223,7 +226,7 @@ internal fun UserIdentificationView(
                         VerifyIdSubStep.PhoneAuth -> {
                             Text(
                                 text = "We'll send you a code — it helps us keep your account secure.",
-                                style = MaterialTheme.typography.bodyMedium
+                                style = LocalFrameTheme.current.fonts.bodySmall
                             )
                             Spacer(Modifier.height(20.dp))
 
@@ -234,12 +237,12 @@ internal fun UserIdentificationView(
                                     .padding(bottom = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Phone Number", style = MaterialTheme.typography.labelMedium)
+                                Text("Phone Number", style = LocalFrameTheme.current.fonts.label)
                                 fieldErrors[OnboardingField.AUTH_PHONE]?.let { msg ->
                                     Text(
                                         text = msg,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.error
+                                        style = LocalFrameTheme.current.fonts.caption,
+                                        color = LocalFrameTheme.current.colors.error
                                     )
                                 }
                             }
@@ -249,15 +252,15 @@ internal fun UserIdentificationView(
                             ) {
                                 OutlinedButton(
                                     onClick = { showPhoneCountryPicker = true },
-                                    shape = RoundedCornerShape(4.dp),
-                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                    shape = RoundedCornerShape(LocalFrameTheme.current.radii.small),
+                                    border = BorderStroke(1.dp, LocalFrameTheme.current.colors.surfaceStroke),
                                     modifier = Modifier
                                         .height(64.dp)
                                         .width(120.dp)
                                 ) {
                                     Text(phoneCountry.flag)
                                     Spacer(Modifier.width(4.dp))
-                                    Text(phoneCountry.dialCode, style = MaterialTheme.typography.bodyMedium)
+                                    Text(phoneCountry.dialCode, style = LocalFrameTheme.current.fonts.bodySmall)
                                     Icon(
                                         imageVector = Icons.Default.ArrowDropDown,
                                         contentDescription = "Pick country"
@@ -284,15 +287,15 @@ internal fun UserIdentificationView(
                                         .padding(bottom = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Date of Birth", style = MaterialTheme.typography.labelMedium)
+                                    Text("Date of Birth", style = LocalFrameTheme.current.fonts.label)
                                     val firstDobError = fieldErrors[OnboardingField.AUTH_BIRTH_MONTH]
                                         ?: fieldErrors[OnboardingField.AUTH_BIRTH_DAY]
                                         ?: fieldErrors[OnboardingField.AUTH_BIRTH_YEAR]
                                     firstDobError?.let { msg ->
                                         Text(
                                             text = msg,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.error
+                                            style = LocalFrameTheme.current.fonts.caption,
+                                            color = LocalFrameTheme.current.colors.error
                                         )
                                     }
                                 }
@@ -444,9 +447,10 @@ private fun addressFromOnboarding(vm: FrameOnboardingViewModel): FrameObjects.Bi
     )
 }
 
-@Preview(showBackground = true)
+@FrameThemePreviews
 @Composable
 private fun UserIdentificationViewPreview() {
+    FrameTheme {
     UserIdentificationView(
         viewModel = FrameOnboardingViewModel(
             config = OnboardingConfig(requiredCapabilities = listOf(
@@ -463,4 +467,5 @@ private fun UserIdentificationViewPreview() {
         showTermsOfService = true,
         onBack = { }
     )
+    }
 }

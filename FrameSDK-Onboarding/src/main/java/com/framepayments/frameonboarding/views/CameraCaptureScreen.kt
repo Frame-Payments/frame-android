@@ -63,14 +63,14 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.framepayments.frameonboarding.classes.PhotoType
-import com.framepayments.frameonboarding.theme.FrameOnPrimaryColor
-import com.framepayments.frameonboarding.theme.FramePrimaryColor
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -209,11 +209,11 @@ internal fun CameraCaptureScreen(
                             .align(Alignment.TopCenter)
                             .padding(24.dp),
                         color = Color.Black.copy(alpha = 0.6f),
-                        shape = MaterialTheme.shapes.medium
+                        shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
                     ) {
                         Text(
                             text = instruction,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = LocalFrameTheme.current.fonts.bodySmall,
                             color = Color.White,
                             modifier = Modifier.padding(16.dp)
                         )
@@ -266,8 +266,8 @@ internal fun CameraCaptureScreen(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .padding(24.dp),
-                        containerColor = FramePrimaryColor,
-                        contentColor = FrameOnPrimaryColor
+                        containerColor = LocalFrameTheme.current.colors.primaryButton,
+                        contentColor = LocalFrameTheme.current.colors.primaryButtonText
                     ) {
                         Icon(
                             imageVector = Icons.Default.CameraAlt,
@@ -302,12 +302,12 @@ private fun PermissionDeniedView(
     ) {
         Text(
             text = "Camera Permission Required",
-            style = MaterialTheme.typography.headlineSmall
+            style = LocalFrameTheme.current.fonts.heading
         )
         Spacer(Modifier.height(16.dp))
         Text(
             text = "We need access to your camera to take photos of your identity documents.",
-            style = MaterialTheme.typography.bodyMedium,
+            style = LocalFrameTheme.current.fonts.bodySmall,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(24.dp))

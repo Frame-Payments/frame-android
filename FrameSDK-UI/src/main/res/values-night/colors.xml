@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FrameTheme tokens (dark). Mirrors values/colors.xml; overrides for night mode. -->
+    <color name="frame_primary_button">#FF506F8A</color>
+    <color name="frame_primary_button_text">#FFFFFFFF</color>
+    <color name="frame_secondary_button">#00000000</color>
+    <color name="frame_secondary_button_text">#FF8FB3CC</color>
+    <color name="frame_disabled_button">#59506F8A</color>
+    <color name="frame_disabled_button_stroke">#33FFFFFF</color>
+    <color name="frame_disabled_button_text">#B3FFFFFF</color>
+    <color name="frame_surface">#FF1C1C1E</color>
+    <color name="frame_surface_stroke">#33FFFFFF</color>
+    <color name="frame_text_primary">#FFFFFFFF</color>
+    <color name="frame_text_secondary">#FF9CA3AF</color>
+    <color name="frame_error">#FFCF6679</color>
+    <color name="frame_onboarding_header_background">#FF1F2D33</color>
+    <color name="frame_onboarding_progress_filled_on_brand">#FFFFFFFF</color>
+    <color name="frame_onboarding_progress_empty_on_brand">#66FFFFFF</color>
+</resources>

@@ -115,3 +115,14 @@ mavenPublishing {
     publishToMavenCentral(automaticRelease = true)
     signAllPublications()
 }
+// CI: print per-test pass/fail names instead of the silent default. Helps surface
+// which API tests actually ran when reviewing the Android CI workflow logs.
+tasks.withType<Test> {
+    testLogging {
+        events("passed", "failed", "skipped")
+        showStandardStreams = false
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+}

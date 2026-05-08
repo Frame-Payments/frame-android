@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Surface for grouped form sections in FrameCheckoutView. Pulls colors from the
+  frame_surface / frame_surface_stroke tokens so dark mode (values-night) and
+  themed default-color overrides apply automatically.
+-->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
 
-    <solid android:color="@android:color/white"/>
-    <stroke android:width="1dp" android:color="#CCCCCC"/>
-    <corners android:radius="8dp"/>
+    <solid android:color="@color/frame_surface"/>
+    <stroke android:width="1dp" android:color="@color/frame_surface_stroke"/>
+    <corners android:radius="10dp"/>
 </shape>

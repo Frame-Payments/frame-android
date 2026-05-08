@@ -6,36 +6,27 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.frameonboarding.classes.AddressFormat
-import com.framepayments.frameonboarding.classes.PhoneCountrySelection
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 /**
  * Billing address form bound to a [BillingAddressFieldVM]. 1:1 port of iOS BillingAddressDetailView.
@@ -45,7 +36,6 @@ import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
  * - In [BillingAddressMode.INTERNATIONAL] mode a country picker is rendered at the bottom.
  *   Switching country re-runs postal validation so error messages update for the new country's rules.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BillingAddressDetailView(
     viewModel: BillingAddressFieldVM,
@@ -55,6 +45,7 @@ fun BillingAddressDetailView(
     val address by viewModel.address.collectAsState()
     val errors by viewModel.errors.collectAsState()
     var showCountryPicker by remember { mutableStateOf(false) }
+    val theme = LocalFrameTheme.current
 
     val isInternational = viewModel.mode == BillingAddressMode.INTERNATIONAL
     val countryCode = address.country?.takeIf { it.isNotBlank() } ?: "US"
@@ -64,7 +55,8 @@ fun BillingAddressDetailView(
         if (showHeader) {
             Text(
                 text = headerTitle,
-                style = MaterialTheme.typography.labelLarge,
+                style = theme.fonts.label,
+                color = theme.colors.textPrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
@@ -153,6 +145,7 @@ fun BillingAddressDetailView(
                 readOnly = true,
                 label = { Text("Country") },
                 isError = errors.containsKey(BillingAddressFieldVM.Field.COUNTRY),
+                textStyle = theme.fonts.body,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showCountryPicker = true },
@@ -167,8 +160,8 @@ fun BillingAddressDetailView(
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = msg,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error,
+                    style = theme.fonts.caption,
+                    color = theme.colors.error,
                     modifier = Modifier.padding(start = 16.dp)
                 )
             }
@@ -176,55 +169,13 @@ fun BillingAddressDetailView(
     }
 
     if (showCountryPicker) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-        ModalBottomSheet(
-            onDismissRequest = { showCountryPicker = false },
-            sheetState = sheetState
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.9f)
-                    .padding(horizontal = 16.dp)
-            ) {
-                Text(
-                    text = "Select Country",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-                val pickableCountries = remember {
-                    AvailableCountries.allCountries.filter {
-                        it.alpha2Code.uppercase() !in PhoneCountrySelection.OFAC_RESTRICTED
-                    }
-                }
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    items(pickableCountries, key = { it.alpha2Code }) { country ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    viewModel.setCountry(country.alpha2Code)
-                                    viewModel.clearError(BillingAddressFieldVM.Field.COUNTRY)
-                                    showCountryPicker = false
-                                }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = country.displayName,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = country.alpha2Code,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        HorizontalDivider()
-                    }
-                }
-            }
-        }
+        CountryPickerSheet(
+            onCountrySelected = { alpha2 ->
+                viewModel.setCountry(alpha2)
+                viewModel.clearError(BillingAddressFieldVM.Field.COUNTRY)
+                showCountryPicker = false
+            },
+            onDismiss = { showCountryPicker = false }
+        )
     }
 }

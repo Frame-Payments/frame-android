@@ -39,7 +39,7 @@
         <View android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_weight="1"
-            android:background="#DDDDDD"/>
+            android:background="@color/frame_surface_stroke"/>
 -
 
         <com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
@@ -61,14 +61,14 @@
             <View android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="#DDDDDD"/>
+                android:background="@color/frame_surface_stroke"/>
             <TextView android:text="@string/or"
                 android:layout_height="20dp"
                 android:layout_width="15dp"/>
             <View android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
-                android:background="#DDDDDD"/>
+                android:background="@color/frame_surface_stroke"/>
         </LinearLayout>
 
         <HorizontalScrollView
@@ -109,7 +109,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/customer_name"
                 android:hint="@string/customer_name"
-                android:textColorHint="@color/gray"
+                android:textColorHint="@color/frame_text_secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
@@ -124,7 +124,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/customer_email"
                 android:hint="@string/customer_email"
-                android:textColorHint="@color/gray"
+                android:textColorHint="@color/frame_text_secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"/>
@@ -184,7 +184,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/address_1"
                 android:hint="@string/address_line_1"
-                android:textColorHint="@color/gray"
+                android:textColorHint="@color/frame_text_secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"/>
@@ -197,7 +197,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/address_2"
                 android:hint="@string/address_line_2"
-                android:textColorHint="@color/gray"
+                android:textColorHint="@color/frame_text_secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"/>
@@ -217,7 +217,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/city"
                 android:hint="@string/city"
-                android:textColorHint="@color/gray"
+                android:textColorHint="@color/frame_text_secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"/>
@@ -231,7 +231,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/state"
                 android:hint="@string/state"
-                android:textColorHint="@color/gray"
+                android:textColorHint="@color/frame_text_secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
@@ -265,7 +265,7 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/zip"
                 android:hint="@string/zip"
-                android:textColorHint="@color/gray"
+                android:textColorHint="@color/frame_text_secondary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@android:color/transparent"
@@ -290,8 +290,8 @@
                 android:layout_marginTop="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:textStyle="bold" android:textColor="@android:color/white"
-                android:backgroundTint="@android:color/black"/>
+                android:textStyle="bold" android:textColor="@color/frame_primary_button_text"
+                android:backgroundTint="@color/frame_primary_button"/>
 
             <ProgressBar
                 android:id="@+id/checkoutProgressBar"

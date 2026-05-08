@@ -12,7 +12,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.viewmodels.BankAccountFieldVM
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 /**
  * Bank account form bound to a [BankAccountFieldVM]. 1:1 port of iOS BankAccountDetailView.
@@ -43,12 +43,14 @@ fun BankAccountDetailView(
     val draft by viewModel.draft.collectAsState()
     val errors by viewModel.errors.collectAsState()
     var expanded by remember { mutableStateOf(false) }
+    val theme = LocalFrameTheme.current
 
     Column {
         if (showHeader) {
             Text(
                 text = headerTitle,
-                style = MaterialTheme.typography.labelLarge,
+                style = theme.fonts.label,
+                color = theme.colors.textPrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
@@ -92,6 +94,7 @@ fun BankAccountDetailView(
                     readOnly = true,
                     label = { Text("Account Type") },
                     modifier = Modifier.fillMaxWidth(),
+                    textStyle = theme.fonts.body,
                     trailingIcon = {
                         IconButton(onClick = { expanded = !expanded }) {
                             Icon(

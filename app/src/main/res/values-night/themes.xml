@@ -1,16 +1,15 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Dark variant of the demo app theme. Uses the SDK's frame_* tokens for the
+         status bar so the demo blends with onboarding/checkout's dark surface
+         instead of clashing with a hardcoded purple. Primary/secondary still use
+         Material 2 purples for the demo's own toolbar/buttons. -->
     <style name="Theme.Frame" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_200</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
         <item name="colorOnPrimary">@color/black</item>
-        <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_200</item>
         <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <item name="android:statusBarColor">@color/frame_onboarding_header_background</item>
     </style>
 </resources>

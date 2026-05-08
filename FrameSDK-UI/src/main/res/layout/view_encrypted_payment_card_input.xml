@@ -3,9 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="100dp"
-    android:padding="8dp"
-    android:background="@drawable/border_background">
+    android:padding="8dp">
 
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/evervaultCardCompose"

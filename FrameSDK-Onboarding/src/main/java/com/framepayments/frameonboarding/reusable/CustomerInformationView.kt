@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.validation.DateOfBirthFormatter
 import com.framepayments.frameonboarding.viewmodels.CustomerInformationFieldVM
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 private val isoDobRegex = Regex("""^(\d{4})-(\d{1,2})-(\d{1,2})$""")
 
@@ -42,6 +42,7 @@ fun CustomerInformationView(
     val identity by viewModel.identity.collectAsState()
     val phoneCountry by viewModel.phoneCountry.collectAsState()
     val errors by viewModel.errors.collectAsState()
+    val theme = LocalFrameTheme.current
     val firstDobError by remember {
         derivedStateOf {
             errors[CustomerInformationFieldVM.Field.BIRTH_MONTH]
@@ -80,7 +81,8 @@ fun CustomerInformationView(
         if (showHeader) {
             Text(
                 text = headerTitle,
-                style = MaterialTheme.typography.labelLarge,
+                style = theme.fonts.label,
+                color = theme.colors.textPrimary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
@@ -130,12 +132,12 @@ fun CustomerInformationView(
                 .padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Phone Number", style = MaterialTheme.typography.labelMedium)
+            Text("Phone Number", style = theme.fonts.label, color = theme.colors.textPrimary)
             errors[CustomerInformationFieldVM.Field.PHONE]?.let { msg ->
                 Text(
                     text = msg,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error
+                    style = theme.fonts.caption,
+                    color = theme.colors.error
                 )
             }
         }
@@ -158,12 +160,12 @@ fun CustomerInformationView(
                 .padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Birthday", style = MaterialTheme.typography.labelMedium)
+            Text("Birthday", style = theme.fonts.label, color = theme.colors.textPrimary)
             firstDobError?.let { msg ->
                 Text(
                     text = msg,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error
+                    style = theme.fonts.caption,
+                    color = theme.colors.error
                 )
             }
         }

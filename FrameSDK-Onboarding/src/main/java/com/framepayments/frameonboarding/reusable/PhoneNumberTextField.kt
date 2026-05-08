@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -136,6 +136,7 @@ fun PhoneNumberTextField(
     }
 
     val showError = error != null && !compactError
+    val theme = LocalFrameTheme.current
 
     val handleChange: (TextFieldValue) -> Unit = { incoming ->
         // 1. Compute how many digit/plus chars precede the incoming cursor in the
@@ -174,6 +175,7 @@ fun PhoneNumberTextField(
                     .height(64.dp),
                 singleLine = true,
                 isError = showError,
+                textStyle = theme.fonts.body,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
             )
         }
@@ -181,8 +183,8 @@ fun PhoneNumberTextField(
             Spacer(Modifier.height(4.dp))
             Text(
                 text = error!!,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error,
+                style = theme.fonts.caption,
+                color = theme.colors.error,
                 modifier = Modifier.padding(start = 16.dp)
             )
         }

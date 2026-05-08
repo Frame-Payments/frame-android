@@ -106,6 +106,10 @@ fun PlaygroundScreen(
     }
 
     if (showOnboarding) {
+        // Demo: show how a host app overrides the SDK theme. The override is shared
+        // with CartTestActivity / CheckoutActivity so onboarding, cart, and checkout
+        // all render with the same custom branding while running the playground.
+        val customTheme = rememberDemoTheme()
         Box(modifier = Modifier.fillMaxSize()) {
             OnboardingContainerView(
                 config = OnboardingConfig(
@@ -117,7 +121,8 @@ fun PlaygroundScreen(
                         Capabilities.GEO_COMPLIANCE,
                         Capabilities.PHONE_VERIFICATION
                     ),
-                    googlePayMerchantId = "BCR2DN4T_TEST_STUB"
+                    googlePayMerchantId = "BCR2DN4T_TEST_STUB",
+                    theme = customTheme
                 ),
                 onResult = { showOnboarding = false }
             )

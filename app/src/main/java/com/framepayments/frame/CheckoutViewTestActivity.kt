@@ -29,6 +29,7 @@ class CheckoutActivity : BaseActivity() {
                 setResult(RESULT_OK)
                 finish()
             }
+            setTheme(demoTheme(this@CheckoutActivity))
         }
 
         rootLayout.addView(frameCheckoutView)
