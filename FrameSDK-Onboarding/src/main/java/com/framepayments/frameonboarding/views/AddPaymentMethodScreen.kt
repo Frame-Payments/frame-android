@@ -214,9 +214,7 @@ internal fun AddPaymentMethodScreen(
                         CircularProgressIndicator()
                     }
                     true -> AndroidView(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 160.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         factory = { EncryptedPaymentCardInput(it) },
                         update = { view ->
                             view.onCardDataChange = { viewModel.onPaymentCardDataChange(it) }
