@@ -1,5 +1,6 @@
 package com.framepayments.framesdk_ui.theme
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -21,6 +22,18 @@ data class FrameTheme(
         fun default(): FrameTheme = FrameTheme(
             colors = FrameColors.defaults(),
             fonts = FrameFonts.defaults(),
+            radii = FrameRadii(),
+        )
+
+        /**
+         * Non-Composable equivalent of [default] for View-based hosts that want to call
+         * [com.framepayments.framesdk_ui.FrameCartView.setTheme] /
+         * [com.framepayments.framesdk_ui.FrameCheckoutView.setTheme] without spinning up
+         * a Compose tree just to construct a theme.
+         */
+        fun default(context: Context): FrameTheme = FrameTheme(
+            colors = FrameColors.defaults(context),
+            fonts = FrameFonts.defaultsForViews(),
             radii = FrameRadii(),
         )
     }

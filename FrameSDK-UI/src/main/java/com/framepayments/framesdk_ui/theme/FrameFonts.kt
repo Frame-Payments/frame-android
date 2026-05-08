@@ -29,7 +29,15 @@ data class FrameFonts(
          */
         @Composable
         @ReadOnlyComposable
-        fun defaults(typography: Typography = MaterialTheme.typography): FrameFonts = FrameFonts(
+        fun defaults(): FrameFonts = fromTypography(MaterialTheme.typography)
+
+        /**
+         * Non-Composable variant for View-based hosts. Uses Material 3's default
+         * [Typography] (no theme-customized typography from a Compose tree).
+         */
+        fun defaultsForViews(): FrameFonts = fromTypography(Typography())
+
+        private fun fromTypography(typography: Typography): FrameFonts = FrameFonts(
             title = typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
             heading = typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
             headline = typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),

@@ -1,10 +1,12 @@
 package com.framepayments.framesdk_ui.theme
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.platform.LocalContext
 import com.framepayments.framesdk_ui.R
+import androidx.core.content.ContextCompat
 
 @Immutable
 data class FrameColors(
@@ -25,23 +27,28 @@ data class FrameColors(
     val onboardingProgressEmptyOnBrand: Color,
 ) {
     companion object {
+        fun defaults(context: Context): FrameColors {
+            fun c(id: Int) = Color(ContextCompat.getColor(context, id))
+            return FrameColors(
+                primaryButton = c(R.color.frame_primary_button),
+                primaryButtonText = c(R.color.frame_primary_button_text),
+                secondaryButton = c(R.color.frame_secondary_button),
+                secondaryButtonText = c(R.color.frame_secondary_button_text),
+                disabledButton = c(R.color.frame_disabled_button),
+                disabledButtonStroke = c(R.color.frame_disabled_button_stroke),
+                disabledButtonText = c(R.color.frame_disabled_button_text),
+                surface = c(R.color.frame_surface),
+                surfaceStroke = c(R.color.frame_surface_stroke),
+                textPrimary = c(R.color.frame_text_primary),
+                textSecondary = c(R.color.frame_text_secondary),
+                error = c(R.color.frame_error),
+                onboardingHeaderBackground = c(R.color.frame_onboarding_header_background),
+                onboardingProgressFilledOnBrand = c(R.color.frame_onboarding_progress_filled_on_brand),
+                onboardingProgressEmptyOnBrand = c(R.color.frame_onboarding_progress_empty_on_brand),
+            )
+        }
+
         @Composable
-        fun defaults(): FrameColors = FrameColors(
-            primaryButton = colorResource(R.color.frame_primary_button),
-            primaryButtonText = colorResource(R.color.frame_primary_button_text),
-            secondaryButton = colorResource(R.color.frame_secondary_button),
-            secondaryButtonText = colorResource(R.color.frame_secondary_button_text),
-            disabledButton = colorResource(R.color.frame_disabled_button),
-            disabledButtonStroke = colorResource(R.color.frame_disabled_button_stroke),
-            disabledButtonText = colorResource(R.color.frame_disabled_button_text),
-            surface = colorResource(R.color.frame_surface),
-            surfaceStroke = colorResource(R.color.frame_surface_stroke),
-            textPrimary = colorResource(R.color.frame_text_primary),
-            textSecondary = colorResource(R.color.frame_text_secondary),
-            error = colorResource(R.color.frame_error),
-            onboardingHeaderBackground = colorResource(R.color.frame_onboarding_header_background),
-            onboardingProgressFilledOnBrand = colorResource(R.color.frame_onboarding_progress_filled_on_brand),
-            onboardingProgressEmptyOnBrand = colorResource(R.color.frame_onboarding_progress_empty_on_brand),
-        )
+        fun defaults(): FrameColors = defaults(LocalContext.current)
     }
 }
