@@ -78,4 +78,13 @@ object SiftManager {
     }
 
     fun getIPAddress(): String? = getPublicIp()
+
+    /**
+     * Non-blocking accessor that returns the cached public IP if one is available
+     * and `null` otherwise. Use this from the network-header path so requests don't
+     * stall waiting on the first ipify lookup. The warmup launch in
+     * [FrameNetworking.initializeWithAPIKey] (`sdkScope.launch { getPublicIp() }`)
+     * populates the cache asynchronously so subsequent requests carry the header.
+     */
+    fun getCachedIPAddress(): String? = cachedPublicIp
 }

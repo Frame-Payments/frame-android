@@ -59,7 +59,16 @@ object FrameNetworking {
         applicationContext = context.applicationContext
 
         SiftManager.initializeSift(apiSecretKey)
-        configureEvervault()
+
+        // Evervault config first-launch reads `EncryptedSharedPreferences`, which lazily
+        // generates an AES master key in the Android Keystore — that takes hundreds of
+        // milliseconds on a cold start. Run it off the main thread so app launch isn't
+        // blocked. `EncryptedPaymentCardInput` polls `isEvervaultConfigured` before
+        // inflating, so a brief delay is safe; pre-Evervault checkout attempts simply
+        // wait through that poll.
+        sdkScope.launch {
+            configureEvervault()
+        }
 
         sdkScope.launch {
             SiftManager.getPublicIp()
@@ -113,15 +122,19 @@ object FrameNetworking {
         return this
     }
 
-    /** Resolves IP on IO; safe when this suspend runs from the main thread. */
-    private suspend fun Request.Builder.withFrameHeaders(usePublishableKey: Boolean = false): Request.Builder {
-        val ip = withContext(Dispatchers.IO) { SiftManager.getIPAddress() }
-        return applyFrameHeaders(ip, usePublishableKey)
+    /**
+     * Attaches headers using only the cached public IP. Requests never block waiting
+     * on the ipify lookup — the cache is warmed asynchronously by the launch in
+     * [initializeWithAPIKey]. The first request after a cold launch goes out without
+     * `ip_address`; later requests pick up the header once the cache is populated.
+     */
+    private fun Request.Builder.withFrameHeaders(usePublishableKey: Boolean = false): Request.Builder {
+        return applyFrameHeaders(SiftManager.getCachedIPAddress(), usePublishableKey)
     }
 
-    /** Call only from a background thread (e.g. OkHttp’s executor). Performs blocking IP fetch if uncached. */
+    /** Same cached-IP behavior as [withFrameHeaders]; this overload is called from OkHttp's worker pool. */
     private fun Request.Builder.withFrameHeadersOnWorkerThread(usePublishableKey: Boolean = false): Request.Builder {
-        return applyFrameHeaders(SiftManager.getIPAddress(), usePublishableKey)
+        return applyFrameHeaders(SiftManager.getCachedIPAddress(), usePublishableKey)
     }
 
     inline fun <reified T> parseResponse(data: ByteArray?): T? {
