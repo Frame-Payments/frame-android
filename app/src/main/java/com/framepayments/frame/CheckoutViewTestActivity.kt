@@ -24,8 +24,8 @@ class CheckoutActivity : BaseActivity() {
             configure(
                 accountId = accountId,
                 paymentAmount = totalCents
-            ) { transfer ->
-                println("Checkout Completed: $transfer")
+            ) { transferId ->
+                println("Checkout Completed: $transferId")
                 setResult(RESULT_OK)
                 finish()
             }

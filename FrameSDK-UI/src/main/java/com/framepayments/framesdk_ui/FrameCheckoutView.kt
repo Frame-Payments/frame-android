@@ -18,7 +18,6 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
-import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentCardBinding
@@ -42,7 +41,7 @@ class FrameCheckoutView @JvmOverloads constructor(
     )
     private val viewModel: FrameCheckoutViewModel
 
-    var checkoutCallback: ((ChargeIntent) -> Unit)? = null
+    var checkoutCallback: ((transferId: String) -> Unit)? = null
 
     /**
      * Apply a [FrameTheme] to this checkout. Tints the pay button and forwards the
@@ -85,12 +84,12 @@ class FrameCheckoutView @JvmOverloads constructor(
 
         binding.payButton.setOnClickListener {
             viewModel.checkoutWithSelectedPaymentMethod(binding.saveCard.isChecked)
-                .observe(activity) { intent ->
-                    intent?.let { checkoutCallback?.invoke(it) }
+                .observe(activity) { transfer ->
+                    transfer?.id?.let { checkoutCallback?.invoke(it) }
                 }
         }
 
-        viewModel.customerPaymentOptions.observe(activity) { list ->
+        viewModel.accountPaymentOptions.observe(activity) { list ->
             if (list.isNullOrEmpty()) {
                 binding.existingPaymentOptionsScrollView.visibility = View.GONE
             } else {
@@ -160,6 +159,12 @@ class FrameCheckoutView @JvmOverloads constructor(
             viewModel.setError(FieldKey.CARD, Validators.validateCard(data))
         }
 
+        viewModel.checkoutError.observe(activity) { message ->
+            if (!message.isNullOrEmpty()) {
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            }
+        }
+
         viewModel.fieldErrors.observe(activity) { errors ->
             binding.customerNameLayout.error = errors[FieldKey.NAME]?.let { context.getString(it.messageRes) }
             binding.customerEmailLayout.error = errors[FieldKey.EMAIL]?.let { context.getString(it.messageRes) }
@@ -213,14 +218,14 @@ class FrameCheckoutView @JvmOverloads constructor(
             itemBinding.paymentCardText.text = "${option.card?.brand.orEmpty().replaceFirstChar { it.uppercase() }} ${option.card?.lastFourDigits.orEmpty()}"
             // Selected payment cards get a high-contrast border vs the surface; the
             // tokens below adapt automatically in dark mode via values-night/colors.xml.
-            val color = if (viewModel.selectedCustomerPaymentOption == option)
+            val color = if (viewModel.selectedAccountPaymentOption == option)
                 ContextCompat.getColor(context, R.color.frame_text_primary)
             else
                 ContextCompat.getColor(context, R.color.frame_surface_stroke)
             itemBinding.paymentCardContainer.strokeColor = color
 
             itemBinding.root.setOnClickListener {
-                viewModel.selectedCustomerPaymentOption = option
+                viewModel.selectedAccountPaymentOption = option
                 renderPaymentOptions(options)
             }
             binding.paymentOptionsContainer.addView(itemBinding.root)
@@ -260,29 +265,39 @@ class FrameCheckoutView @JvmOverloads constructor(
         bottomSheetDialog.show()
     }
 
+    /**
+     * Configure the bundled checkout. The card path creates a `Transfer` (account-scoped),
+     * and so does the embedded Google Pay button — both require [accountId]. Callers
+     * needing a customer/ChargeIntent flow should use [FrameGooglePayButton] or the
+     * Apple Pay surface directly instead of the bundled checkout.
+     */
     @JvmOverloads
     @SuppressLint("SetTextI18n")
     fun configure(
-        customerId: String?,
+        accountId: String,
         paymentAmount: Int,
         googlePayMerchantId: String? = null,
         addressMode: AddressMode = AddressMode.REQUIRED,
-        onCheckout: (ChargeIntent) -> Unit
+        onCheckout: (transferId: String) -> Unit
     ) {
+        require(accountId.isNotEmpty()) { "FrameCheckoutView.configure requires a non-empty accountId" }
         checkoutCallback = onCheckout
         viewModel.addressMode = addressMode
         binding.customerAddressContainer.visibility =
             if (addressMode == AddressMode.HIDDEN) View.GONE else View.VISIBLE
-        viewModel.loadCustomer(customerId, paymentAmount)
+        viewModel.loadAccount(accountId, paymentAmount)
         binding.payButton.text = "Pay ${CurrencyFormatter.convertCentsToCurrencyString(paymentAmount)}"
 
         binding.googlePayBtn.configure(
             amountCents = paymentAmount,
-            customerId = customerId,
+            owner = FrameGooglePayButton.Owner.Account(accountId),
             googlePayMerchantId = googlePayMerchantId,
             onResult = { result ->
                 when (result) {
-                    is FrameGooglePayButton.Result.Success -> checkoutCallback?.invoke(result.chargeIntent)
+                    is FrameGooglePayButton.Result.Success -> {
+                        // Bundled checkout is always account-scoped, so `result.id` is a Transfer id.
+                        checkoutCallback?.invoke(result.id)
+                    }
                     else -> {}
                 }
             },

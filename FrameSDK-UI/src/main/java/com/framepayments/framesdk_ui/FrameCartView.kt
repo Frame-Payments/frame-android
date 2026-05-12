@@ -45,13 +45,20 @@ class FrameCartView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Configure the cart. [accountId] is not consumed directly by the cart UI, but is
+     * required because the cart flow always feeds into [FrameCheckoutView], which is
+     * account-scoped — surfacing the requirement here forces callers to acknowledge it
+     * before mounting the cart instead of crashing later at checkout time.
+     */
     fun configure(
-        @Suppress("UNUSED_PARAMETER") accountId: String?,
+        @Suppress("UNUSED_PARAMETER") accountId: String,
         items: List<FrameCartItem>,
         shippingCents: Int,
         onCheckout: (Int) -> Unit,
         appearance: FrameCartAppearance? = null
     ) {
+        require(accountId.isNotEmpty()) { "FrameCartView.configure requires a non-empty accountId" }
         explicitAppearance = appearance
         this.appearance = theme?.toCartAppearance(overlay = appearance) ?: appearance
         listener = onCheckout
