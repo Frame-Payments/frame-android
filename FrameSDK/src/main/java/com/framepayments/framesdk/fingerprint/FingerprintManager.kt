@@ -1,6 +1,7 @@
 package com.framepayments.framesdk.fingerprint
 
 import android.content.Context
+import android.util.Log
 import com.fingerprintjs.android.fpjs_pro.Configuration
 import com.fingerprintjs.android.fpjs_pro.FingerprintJSFactory
 
@@ -81,6 +82,7 @@ object FingerprintManager {
     ) {
         val fpClient = configuredClient(context)
         if (fpClient == null) {
+            Log.w("FingerprintManager", "Fingerprint client unavailable — FingerprintConfig.apiKey is empty")
             completion(null)
             return
         }
@@ -90,7 +92,11 @@ object FingerprintManager {
             listener = { response ->
                 completion(response.visitorId)
             },
-            errorListener = { _ ->
+            errorListener = { error ->
+                Log.e(
+                    "FingerprintManager",
+                    "Fingerprint getVisitorId failed: ${error::class.simpleName} — ${error.description} (requestId=${error.requestId})"
+                )
                 completion(null)
             }
         )

@@ -39,7 +39,8 @@ class FrameCheckoutViewModelTest {
     @Test fun required_blankAddress_populatesErrors() {
         vm.addressMode = AddressMode.REQUIRED
         fillValidCustomerInfo()
-        val errors = vm.validateAll(forSavedCard = true) // skip card check
+        // New-card path triggers full validation (card + address).
+        val errors = vm.validateAll(forSavedCard = false)
         assertEquals(ValidationError.ADDRESS_REQUIRED, errors[FieldKey.ADDRESS_LINE_1])
         assertEquals(ValidationError.CITY_REQUIRED, errors[FieldKey.CITY])
         assertEquals(ValidationError.STATE_REQUIRED, errors[FieldKey.STATE])
@@ -59,7 +60,8 @@ class FrameCheckoutViewModelTest {
         vm.addressMode = AddressMode.OPTIONAL
         fillValidCustomerInfo()
         vm.customerCity.value = "Burbank"
-        val errors = vm.validateAll(forSavedCard = true)
+        // Partial address input is all-or-nothing in optional mode (new-card path only).
+        val errors = vm.validateAll(forSavedCard = false)
         assertEquals(ValidationError.ADDRESS_REQUIRED, errors[FieldKey.ADDRESS_LINE_1])
         assertEquals(ValidationError.STATE_REQUIRED, errors[FieldKey.STATE])
         assertEquals(ValidationError.ZIP_INVALID, errors[FieldKey.ZIP])
@@ -88,7 +90,8 @@ class FrameCheckoutViewModelTest {
         fillValidCustomerInfo()
         fillValidAddress()
         vm.customerZipCode.value = "1234"
-        val errors = vm.validateAll(forSavedCard = true)
+        // New-card path runs address validation.
+        val errors = vm.validateAll(forSavedCard = false)
         assertEquals(ValidationError.ZIP_INVALID, errors[FieldKey.ZIP])
     }
 
@@ -108,13 +111,84 @@ class FrameCheckoutViewModelTest {
         assertNotNull(errors[FieldKey.EMAIL])
     }
 
-    @Test fun savedCard_stillValidatesAddressInRequired() {
+    @Test fun savedCard_skipsAddressValidationEvenInRequired() {
         vm.addressMode = AddressMode.REQUIRED
         vm.customerName.value = "Tester McTest"
         vm.customerEmail.value = "tester@example.com"
+        // Saved-card path skips address validation regardless of addressMode, because
+        // the saved PM already carries a billing address server-side and the UI hides
+        // those fields.
         val errors = vm.validateAll(forSavedCard = true)
-        assertNotNull(errors[FieldKey.ADDRESS_LINE_1])
-        assertNotNull(errors[FieldKey.ZIP])
+        assertNull(errors[FieldKey.ADDRESS_LINE_1])
+        assertNull(errors[FieldKey.ZIP])
+    }
+
+    @Test fun savedCard_skipsAddressValidationInOptionalWithPartialInput() {
+        vm.addressMode = AddressMode.OPTIONAL
+        vm.customerName.value = "Tester McTest"
+        vm.customerEmail.value = "tester@example.com"
+        vm.customerCity.value = "Burbank"
+        val errors = vm.validateAll(forSavedCard = true)
+        assertNull(errors[FieldKey.ADDRESS_LINE_1])
+        assertNull(errors[FieldKey.ZIP])
+    }
+
+    @Test fun switchingBackToNewCard_reRequiresAddressInRequired() {
+        vm.addressMode = AddressMode.REQUIRED
+        vm.customerName.value = "Tester McTest"
+        vm.customerEmail.value = "tester@example.com"
+        // Saved path: no address errors.
+        val savedErrors = vm.validateAll(forSavedCard = true)
+        assertNull(savedErrors[FieldKey.ADDRESS_LINE_1])
+        // New-card path: address required.
+        val newErrors = vm.validateAll(forSavedCard = false)
+        assertNotNull(newErrors[FieldKey.ADDRESS_LINE_1])
+        assertNotNull(newErrors[FieldKey.ZIP])
+    }
+
+    @Test fun clearNewCardFieldErrors_clearsOnlyNewCardKeys() {
+        vm.setError(FieldKey.NAME, ValidationError.NAME_REQUIRED)
+        vm.setError(FieldKey.EMAIL, ValidationError.EMAIL_INVALID)
+        vm.setError(FieldKey.CARD, ValidationError.CARD_INVALID)
+        vm.setError(FieldKey.ADDRESS_LINE_1, ValidationError.ADDRESS_REQUIRED)
+        vm.setError(FieldKey.CITY, ValidationError.CITY_REQUIRED)
+        vm.setError(FieldKey.STATE, ValidationError.STATE_REQUIRED)
+        vm.setError(FieldKey.ZIP, ValidationError.ZIP_INVALID)
+        vm.setError(FieldKey.COUNTRY, ValidationError.COUNTRY_REQUIRED)
+        vm.clearNewCardFieldErrors()
+        val errs = vm.fieldErrors.value.orEmpty()
+        assertEquals(ValidationError.NAME_REQUIRED, errs[FieldKey.NAME])
+        assertEquals(ValidationError.EMAIL_INVALID, errs[FieldKey.EMAIL])
+        assertNull(errs[FieldKey.CARD])
+        assertNull(errs[FieldKey.ADDRESS_LINE_1])
+        assertNull(errs[FieldKey.CITY])
+        assertNull(errs[FieldKey.STATE])
+        assertNull(errs[FieldKey.ZIP])
+        assertNull(errs[FieldKey.COUNTRY])
+    }
+
+    @Test fun selectionSetter_updatesLiveDataAndTriggersUsableInput() {
+        val saved = com.framepayments.framesdk.FrameObjects.PaymentMethod(
+            id = "saved",
+            customerId = null,
+            billing = null,
+            type = com.framepayments.framesdk.FrameObjects.PaymentMethodType.CARD,
+            methodObject = "payment_method",
+            created = 0,
+            updated = 0,
+            livemode = false,
+            card = null,
+            ach = null,
+            status = com.framepayments.framesdk.FrameObjects.PaymentMethodStatus.ACTIVE
+        )
+        assertNull(vm.selectedAccountPaymentOption.value)
+        assertEquals(false, vm.hasUsablePaymentInput.value)
+        vm.setSelectedAccountPaymentOption(saved)
+        assertEquals(saved, vm.selectedAccountPaymentOption.value)
+        assertEquals(true, vm.hasUsablePaymentInput.value)
+        vm.setSelectedAccountPaymentOption(null)
+        assertNull(vm.selectedAccountPaymentOption.value)
+        assertEquals(false, vm.hasUsablePaymentInput.value)
     }
 
     @Test fun setError_addsAndClears() {
@@ -151,7 +225,7 @@ class FrameCheckoutViewModelTest {
             ach = null,
             status = com.framepayments.framesdk.FrameObjects.PaymentMethodStatus.ACTIVE
         )
-        vm.selectedAccountPaymentOption = saved
+        vm.setSelectedAccountPaymentOption(saved)
         assertEquals(true, vm.hasUsablePaymentInput.value)
     }
 

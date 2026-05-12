@@ -20,7 +20,8 @@ import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
-import com.framepayments.framesdk_ui.databinding.ItemPaymentCardBinding
+import com.framepayments.framesdk_ui.databinding.ItemPaymentMethodRowBinding
+import com.framepayments.framesdk_ui.databinding.ItemPaymentNewRowBinding
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
@@ -89,14 +90,23 @@ class FrameCheckoutView @JvmOverloads constructor(
                 }
         }
 
-        viewModel.accountPaymentOptions.observe(activity) { list ->
-            if (list.isNullOrEmpty()) {
-                binding.existingPaymentOptionsScrollView.visibility = View.GONE
-            } else {
-                binding.existingPaymentOptionsScrollView.visibility = View.VISIBLE
-                renderPaymentOptions(list)
-            }
+        // The list always renders — even when there are no saved methods — because the
+        // "Enter New Payment Method" row is part of the same container and is always
+        // available as a selectable option.
+        fun refreshNewCardVisibility() {
+            val loaded = viewModel.didLoadAccountPaymentMethods.value == true
+            val selected = viewModel.selectedAccountPaymentOption.value
+            binding.newCardContainer.visibility =
+                if (loaded && selected == null) View.VISIBLE else View.GONE
         }
+        viewModel.accountPaymentOptions.observe(activity) { list ->
+            renderPaymentOptions(list ?: emptyList(), viewModel.selectedAccountPaymentOption.value)
+        }
+        viewModel.selectedAccountPaymentOption.observe(activity) { selected ->
+            renderPaymentOptions(viewModel.accountPaymentOptions.value ?: emptyList(), selected)
+            refreshNewCardVisibility()
+        }
+        viewModel.didLoadAccountPaymentMethods.observe(activity) { refreshNewCardVisibility() }
 
         // Bindings for customer information — also clear errors as the user edits.
         wireField(
@@ -160,8 +170,12 @@ class FrameCheckoutView @JvmOverloads constructor(
         }
 
         viewModel.checkoutError.observe(activity) { message ->
-            if (!message.isNullOrEmpty()) {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            if (message.isNullOrEmpty()) {
+                binding.checkoutErrorText.visibility = View.GONE
+                binding.checkoutErrorText.text = ""
+            } else {
+                binding.checkoutErrorText.visibility = View.VISIBLE
+                binding.checkoutErrorText.text = message
             }
         }
 
@@ -207,29 +221,67 @@ class FrameCheckoutView @JvmOverloads constructor(
     }
 
     @SuppressLint("SetTextI18n")
-    private fun renderPaymentOptions(options: List<FrameObjects.PaymentMethod>) {
+    private fun renderPaymentOptions(
+        options: List<FrameObjects.PaymentMethod>,
+        selected: FrameObjects.PaymentMethod?
+    ) {
         binding.paymentOptionsContainer.removeAllViews()
         options.forEach { option ->
-            val itemBinding = ItemPaymentCardBinding.inflate(
+            val itemBinding = ItemPaymentMethodRowBinding.inflate(
                 LayoutInflater.from(context),
                 binding.paymentOptionsContainer,
                 false
             )
-            itemBinding.paymentCardText.text = "${option.card?.brand.orEmpty().replaceFirstChar { it.uppercase() }} ${option.card?.lastFourDigits.orEmpty()}"
+            val isACH = option.type == FrameObjects.PaymentMethodType.ACH
+            if (isACH) {
+                itemBinding.paymentCardIcon.setImageResource(R.drawable.ic_bank)
+                itemBinding.paymentCardPrimary.text =
+                    "•••• ${option.ach?.lastFour.orEmpty()}"
+                val accountType = option.ach?.accountType?.name?.lowercase()
+                    ?.replaceFirstChar { it.uppercase() }.orEmpty()
+                itemBinding.paymentCardSecondary.text =
+                    if (accountType.isEmpty()) "Account" else "$accountType Account"
+            } else {
+                itemBinding.paymentCardIcon.setImageResource(R.drawable.ic_card)
+                itemBinding.paymentCardPrimary.text =
+                    "•••• ${option.card?.lastFourDigits.orEmpty()}"
+                itemBinding.paymentCardSecondary.text =
+                    "Exp. ${option.card?.expirationMonth.orEmpty()}/${option.card?.expirationYear.orEmpty()}"
+            }
+            val isSelected = option == selected
+            itemBinding.paymentCardRadio.isChecked = isSelected
             // Selected payment cards get a high-contrast border vs the surface; the
             // tokens below adapt automatically in dark mode via values-night/colors.xml.
-            val color = if (viewModel.selectedAccountPaymentOption == option)
+            val color = if (isSelected)
                 ContextCompat.getColor(context, R.color.frame_text_primary)
             else
                 ContextCompat.getColor(context, R.color.frame_surface_stroke)
             itemBinding.paymentCardContainer.strokeColor = color
 
             itemBinding.root.setOnClickListener {
-                viewModel.selectedAccountPaymentOption = option
-                renderPaymentOptions(options)
+                viewModel.setSelectedAccountPaymentOption(option)
+                viewModel.clearNewCardFieldErrors()
             }
             binding.paymentOptionsContainer.addView(itemBinding.root)
         }
+
+        // Always append the "Enter New Payment Method" row. Active when nothing else is selected.
+        val newRowBinding = ItemPaymentNewRowBinding.inflate(
+            LayoutInflater.from(context),
+            binding.paymentOptionsContainer,
+            false
+        )
+        val newIsSelected = selected == null
+        newRowBinding.paymentCardRadio.isChecked = newIsSelected
+        val newColor = if (newIsSelected)
+            ContextCompat.getColor(context, R.color.frame_text_primary)
+        else
+            ContextCompat.getColor(context, R.color.frame_surface_stroke)
+        newRowBinding.paymentCardContainer.strokeColor = newColor
+        newRowBinding.root.setOnClickListener {
+            viewModel.setSelectedAccountPaymentOption(null)
+        }
+        binding.paymentOptionsContainer.addView(newRowBinding.root)
     }
 
     @SuppressLint("SetTextI18n")

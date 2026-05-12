@@ -23,6 +23,12 @@ class FrameCheckoutViewModel : ViewModel() {
     private val _accountPaymentOptions = MutableLiveData<List<FrameObjects.PaymentMethod>?>(null)
     val accountPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _accountPaymentOptions
 
+    /// True once `loadAccountDetails` has finished fetching saved payment methods. The view
+    /// defers rendering the new-card section until this flips, so returning users don't see
+    /// the Card/Billing block flash visible before the auto-selection of their first saved method.
+    private val _didLoadAccountPaymentMethods = MutableLiveData(false)
+    val didLoadAccountPaymentMethods: LiveData<Boolean> = _didLoadAccountPaymentMethods
+
     // Customer-facing fields (payer details entered at checkout)
     val customerName = MutableLiveData("")
     val customerEmail = MutableLiveData("")
@@ -33,17 +39,34 @@ class FrameCheckoutViewModel : ViewModel() {
     var customerCountry: AvailableCountry = AvailableCountries.defaultCountry
     val customerZipCode = MutableLiveData("")
 
-    // Selected payment method and raw card data
-    var selectedAccountPaymentOption: FrameObjects.PaymentMethod? = null
-        set(value) {
-            field = value
-            recomputeUsablePaymentInput()
-        }
+    // Selected payment method (LiveData so the view can react to selection changes).
+    private val _selectedAccountPaymentOption = MutableLiveData<FrameObjects.PaymentMethod?>(null)
+    val selectedAccountPaymentOption: LiveData<FrameObjects.PaymentMethod?> = _selectedAccountPaymentOption
+
+    fun setSelectedAccountPaymentOption(method: FrameObjects.PaymentMethod?) {
+        _selectedAccountPaymentOption.value = method
+        recomputeUsablePaymentInput()
+    }
+
     var cardData: PaymentCardData = PaymentCardData()
         set(value) {
             field = value
             recomputeUsablePaymentInput()
         }
+
+    /// Clear field errors that only apply to the new-card flow. Called when the user
+    /// selects a saved payment method so stale validation messages don't linger
+    /// behind the collapsed Card/Billing sections.
+    fun clearNewCardFieldErrors() {
+        val current = _fieldErrors.value.orEmpty().toMutableMap()
+        current.remove(FieldKey.CARD)
+        current.remove(FieldKey.ADDRESS_LINE_1)
+        current.remove(FieldKey.CITY)
+        current.remove(FieldKey.STATE)
+        current.remove(FieldKey.ZIP)
+        current.remove(FieldKey.COUNTRY)
+        _fieldErrors.value = current
+    }
 
     /**
      * True when the user has either selected a saved payment method
@@ -56,7 +79,7 @@ class FrameCheckoutViewModel : ViewModel() {
         // Evervault's `isPotentiallyValid` returns true for an empty card, so we
         // also require a non-empty card number before treating new-card input as usable.
         val newCardOk = cardData.card.number.isNotEmpty() && cardData.isPotentiallyValid
-        _hasUsablePaymentInput.postValue(selectedAccountPaymentOption != null || newCardOk)
+        _hasUsablePaymentInput.postValue(_selectedAccountPaymentOption.value != null || newCardOk)
     }
 
     // Address mode + per-field errors
@@ -112,6 +135,13 @@ class FrameCheckoutViewModel : ViewModel() {
             val (paymentMethods, _) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
             withContext(Dispatchers.Main) {
                 _accountPaymentOptions.value = paymentMethods
+                if (_selectedAccountPaymentOption.value == null &&
+                    cardData.card.number.isEmpty() &&
+                    !paymentMethods.isNullOrEmpty()
+                ) {
+                    setSelectedAccountPaymentOption(paymentMethods.first())
+                }
+                _didLoadAccountPaymentMethods.value = true
             }
         }
     }
@@ -155,7 +185,7 @@ class FrameCheckoutViewModel : ViewModel() {
             Validators.validateCard(cardData)?.let { errors[FieldKey.CARD] = it }
         }
 
-        if (shouldValidateAddress()) {
+        if (!forSavedCard && shouldValidateAddress()) {
             Validators.validateAddressLine1(customerAddressLine1.value)?.let { errors[FieldKey.ADDRESS_LINE_1] = it }
             Validators.validateCity(customerCity.value)?.let { errors[FieldKey.CITY] = it }
             Validators.validateState(customerState.value)?.let { errors[FieldKey.STATE] = it }
@@ -183,7 +213,7 @@ class FrameCheckoutViewModel : ViewModel() {
         _isPerformingAction.postValue(true)
         _checkoutError.postValue(null)
         try {
-            val usingSavedCard = selectedAccountPaymentOption != null
+            val usingSavedCard = _selectedAccountPaymentOption.value != null
             val errors = validateAll(forSavedCard = usingSavedCard)
             if (errors.isNotEmpty()) {
                 _fieldErrors.postValue(errors)
@@ -194,10 +224,10 @@ class FrameCheckoutViewModel : ViewModel() {
             _fieldErrors.postValue(emptyMap())
 
             // Determine or create payment method
-            val paymentMethodId = selectedAccountPaymentOption?.id ?: run {
+            val paymentMethodId = _selectedAccountPaymentOption.value?.id ?: run {
                 val (pmId, pmError) = createPaymentMethod(accountId)
                 if (pmError != null) {
-                    _checkoutError.postValue(describeError(pmError))
+                    surfaceCheckoutError(pmError)
                     emit(null)
                     return@liveData
                 }
@@ -222,7 +252,7 @@ class FrameCheckoutViewModel : ViewModel() {
 
             val (transfer, transferError) = TransfersAPI.createTransfer(request)
             if (transferError != null) {
-                _checkoutError.postValue(describeError(transferError))
+                surfaceCheckoutError(transferError)
             }
             emit(transfer)
         } finally {
@@ -230,12 +260,35 @@ class FrameCheckoutViewModel : ViewModel() {
         }
     }
 
-    private fun describeError(error: com.framepayments.framesdk.NetworkingError): String = when (error) {
-        is com.framepayments.framesdk.NetworkingError.ServerError ->
-            error.errorDescription.takeIf { it.isNotEmpty() } ?: "Server error (HTTP ${error.statusCode})."
-        com.framepayments.framesdk.NetworkingError.DecodingFailed -> "Could not parse server response."
-        com.framepayments.framesdk.NetworkingError.InvalidURL -> "Invalid request URL."
-        com.framepayments.framesdk.NetworkingError.UnknownError -> "Something went wrong. Please try again."
+    /// Only retryable server-side errors (e.g. card declined) are surfaced inline so the
+    /// payer sees the decline reason verbatim from the server. Decode/network/unknown
+    /// errors are intentionally silent — they're terminal and don't have a payer-friendly
+    /// message; hosts should rely on the `null` emission to decide what to do next.
+    private fun surfaceCheckoutError(error: com.framepayments.framesdk.NetworkingError) {
+        if (error is com.framepayments.framesdk.NetworkingError.ServerError) {
+            val message = extractCheckoutErrorMessage(error.errorDescription)
+            if (message.isNotEmpty()) {
+                _checkoutError.postValue(message)
+            }
+        }
+    }
+
+    /// Extract a user-facing message from the raw error-envelope JSON the server sends back.
+    /// Shape: `{"status":N,"error":"...","code":"...","error_details":{"message":"...","data":...}}`.
+    /// Preference: `error_details.message` → `error` → the raw string as-is.
+    private fun extractCheckoutErrorMessage(raw: String): String {
+        if (raw.isEmpty()) return raw
+        try {
+            val envelope = org.json.JSONObject(raw)
+            val details = envelope.optJSONObject("error_details")
+            val message = details?.optString("message").orEmpty()
+            if (message.isNotEmpty()) return message
+            val error = envelope.optString("error")
+            if (error.isNotEmpty()) return error
+        } catch (_: Exception) {
+            // fall through to raw
+        }
+        return raw
     }
 
     /// Returns the new payment method's id paired with any underlying networking error

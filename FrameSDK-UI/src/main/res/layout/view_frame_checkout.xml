@@ -71,19 +71,27 @@
                 android:background="@color/frame_surface_stroke"/>
         </LinearLayout>
 
-        <HorizontalScrollView
+        <LinearLayout
             android:id="@+id/existingPaymentOptionsScrollView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="gone"
+            android:orientation="vertical"
+            android:paddingTop="16dp"
             android:paddingBottom="16dp">
 
             <LinearLayout
                 android:id="@+id/paymentOptionsContainer"
-                android:orientation="horizontal"
-                android:layout_width="wrap_content"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
-        </HorizontalScrollView>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/newCardContainer"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
 
         <TextView
             android:id="@+id/customer_information"
@@ -279,6 +287,16 @@
             android:layout_marginTop="8dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/checkoutErrorText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="12sp"
+            android:textColor="?attr/colorError"
+            android:visibility="gone" />
 
         <FrameLayout
             android:layout_width="match_parent"
