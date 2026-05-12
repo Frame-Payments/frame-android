@@ -46,7 +46,7 @@ class FrameCartView @JvmOverloads constructor(
     }
 
     fun configure(
-        customerId: String?,
+        @Suppress("UNUSED_PARAMETER") accountId: String?,
         items: List<FrameCartItem>,
         shippingCents: Int,
         onCheckout: (Int) -> Unit,

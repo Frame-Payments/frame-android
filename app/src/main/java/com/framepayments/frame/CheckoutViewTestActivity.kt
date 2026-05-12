@@ -10,7 +10,7 @@ class CheckoutActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
 
-        val customerId = intent.getStringExtra("customerId") ?: "default_customer"
+        val accountId = intent.getStringExtra("accountId") ?: "default_account"
         val totalCents = intent.getIntExtra("totalCents", 0)
 
         val rootLayout = FrameLayout(this).apply {
@@ -22,10 +22,10 @@ class CheckoutActivity : BaseActivity() {
 
         val frameCheckoutView = FrameCheckoutView(this).apply {
             configure(
-                customerId = customerId,
+                accountId = accountId,
                 paymentAmount = totalCents
-            ) { intent ->
-                println("Checkout Completed: $intent")
+            ) { transfer ->
+                println("Checkout Completed: $transfer")
                 setResult(RESULT_OK)
                 finish()
             }
