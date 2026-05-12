@@ -285,7 +285,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         viewModel.addressMode = addressMode
         binding.customerAddressContainer.visibility =
             if (addressMode == AddressMode.HIDDEN) View.GONE else View.VISIBLE
-        viewModel.loadAccount(accountId, paymentAmount)
+        viewModel.loadAccountDetails(accountId, paymentAmount)
         binding.payButton.text = "Pay ${CurrencyFormatter.convertCentsToCurrencyString(paymentAmount)}"
 
         binding.googlePayBtn.configure(

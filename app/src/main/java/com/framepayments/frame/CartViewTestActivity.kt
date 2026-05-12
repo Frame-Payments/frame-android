@@ -39,7 +39,8 @@ class CartTestActivity : BaseActivity() {
                     checkoutLauncher.launch(intent)
                 }
             )
-            setTheme(demoTheme(this@CartTestActivity))
+            // Uncomment to set the demo theme
+//            setTheme(demoTheme(this@CartTestActivity))
         }
 
         setContentView(cartView)

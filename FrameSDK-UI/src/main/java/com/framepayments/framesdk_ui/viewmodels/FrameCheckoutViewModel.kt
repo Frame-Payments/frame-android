@@ -3,6 +3,7 @@ package com.framepayments.framesdk_ui.viewmodels
 import androidx.lifecycle.*
 import com.evervault.sdk.input.model.card.PaymentCardData
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
 import com.framepayments.framesdk.transfers.Transfer
@@ -80,20 +81,34 @@ class FrameCheckoutViewModel : ViewModel() {
     val checkoutError: LiveData<String?> = _checkoutError
 
     /**
-     * Loads payment methods previously saved to the given account so the user can
-     * select one instead of entering a new card. The form fields (customerName,
-     * customerEmail, address) collect the *payer's* details on this checkout — not
-     * the account holder's — so they are intentionally not prefilled here.
+     * Fetches the account, prefills the customer name + email fields from its
+     * individual profile (matches iOS `loadAccountDetails`), then loads the saved
+     * payment methods so the user can pick one instead of entering a new card.
      *
      * [accountId] is required because the bundled checkout's pay button creates a
      * Transfer, which is account-scoped.
      */
-    fun loadAccount(accountId: String, amount: Int) {
-        require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccount requires a non-empty accountId" }
+    fun loadAccountDetails(accountId: String, amount: Int) {
+        require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccountDetails requires a non-empty accountId" }
         this.amount = amount
         currentAccountId = accountId
 
         viewModelScope.launch(Dispatchers.IO) {
+            val (account, _) = AccountsAPI.getAccountWith(accountId)
+            val individual = account?.profile?.individual
+            if (individual != null) {
+                val firstName = individual.name?.firstName.orEmpty()
+                val lastName = individual.name?.lastName.orEmpty()
+                val composedName = listOf(firstName, lastName)
+                    .filter { it.isNotEmpty() }
+                    .joinToString(" ")
+                val composedEmail = individual.email.orEmpty()
+                withContext(Dispatchers.Main) {
+                    if (composedName.isNotEmpty()) customerName.value = composedName
+                    if (composedEmail.isNotEmpty()) customerEmail.value = composedEmail
+                }
+            }
+
             val (paymentMethods, _) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
             withContext(Dispatchers.Main) {
                 _accountPaymentOptions.value = paymentMethods
