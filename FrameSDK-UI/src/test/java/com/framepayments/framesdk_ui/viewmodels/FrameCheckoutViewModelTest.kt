@@ -151,7 +151,7 @@ class FrameCheckoutViewModelTest {
             ach = null,
             status = com.framepayments.framesdk.FrameObjects.PaymentMethodStatus.ACTIVE
         )
-        vm.selectedCustomerPaymentOption = saved
+        vm.selectedAccountPaymentOption = saved
         assertEquals(true, vm.hasUsablePaymentInput.value)
     }
 

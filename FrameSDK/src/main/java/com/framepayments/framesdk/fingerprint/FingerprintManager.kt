@@ -58,10 +58,21 @@ object FingerprintManager {
     }
 
     /**
+     * Default request timeout for [getVisitorId]. The FingerprintPro SDK treats `0`
+     * as "no timeout" and keeps the callback pending indefinitely on a slow / blocked
+     * device, which stalls every downstream caller that awaits the visitorId. 3000ms
+     * is comfortably above a healthy device's typical fingerprint time (~500-1500ms)
+     * while still letting the Sonar fallback path fire promptly when the device or
+     * network is degraded.
+     */
+    const val DEFAULT_GET_VISITOR_ID_TIMEOUT_MS: Int = 3000
+
+    /**
      * Retrieves a Fingerprint visitorId.
      *
      * If configuration is missing, this returns null so the caller can fall back
-     * to an alternative visitor identifier.
+     * to an alternative visitor identifier. The timeout defaults to
+     * [DEFAULT_GET_VISITOR_ID_TIMEOUT_MS] — pass `0` explicitly to disable.
      */
     fun getVisitorId(
         context: Context,
@@ -75,7 +86,7 @@ object FingerprintManager {
         }
 
         fpClient.getVisitorId(
-            timeoutMillis = timeoutMillis ?: 0,
+            timeoutMillis = timeoutMillis ?: DEFAULT_GET_VISITOR_ID_TIMEOUT_MS,
             listener = { response ->
                 completion(response.visitorId)
             },

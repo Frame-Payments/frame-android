@@ -2,16 +2,13 @@ package com.framepayments.framesdk_ui.viewmodels
 
 import androidx.lifecycle.*
 import com.evervault.sdk.input.model.card.PaymentCardData
-import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
-import com.framepayments.framesdk.chargeintents.AuthorizationMode
-import com.framepayments.framesdk.chargeintents.ChargeIntent
-import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
-import com.framepayments.framesdk.chargeintents.ChargeIntentsRequests
-import com.framepayments.framesdk.customers.CustomersAPI
-import com.framepayments.framesdk.customers.CustomersRequests
+import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
+import com.framepayments.framesdk.transfers.Transfer
+import com.framepayments.framesdk.transfers.TransferRequests
+import com.framepayments.framesdk.transfers.TransfersAPI
 import com.framepayments.framesdk_ui.AddressMode
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
@@ -22,11 +19,11 @@ import kotlinx.coroutines.withContext
 
 class FrameCheckoutViewModel : ViewModel() {
 
-    // Observable customer payment options
-    private val _customerPaymentOptions = MutableLiveData<List<FrameObjects.PaymentMethod>?>(null)
-    val customerPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _customerPaymentOptions
+    // Observable account payment options
+    private val _accountPaymentOptions = MutableLiveData<List<FrameObjects.PaymentMethod>?>(null)
+    val accountPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _accountPaymentOptions
 
-    // Customer fields
+    // Customer-facing fields (payer details entered at checkout)
     val customerName = MutableLiveData("")
     val customerEmail = MutableLiveData("")
     val customerAddressLine1 = MutableLiveData("")
@@ -37,7 +34,7 @@ class FrameCheckoutViewModel : ViewModel() {
     val customerZipCode = MutableLiveData("")
 
     // Selected payment method and raw card data
-    var selectedCustomerPaymentOption: FrameObjects.PaymentMethod? = null
+    var selectedAccountPaymentOption: FrameObjects.PaymentMethod? = null
         set(value) {
             field = value
             recomputeUsablePaymentInput()
@@ -59,7 +56,7 @@ class FrameCheckoutViewModel : ViewModel() {
         // Evervault's `isPotentiallyValid` returns true for an empty card, so we
         // also require a non-empty card number before treating new-card input as usable.
         val newCardOk = cardData.card.number.isNotEmpty() && cardData.isPotentiallyValid
-        _hasUsablePaymentInput.postValue(selectedCustomerPaymentOption != null || newCardOk)
+        _hasUsablePaymentInput.postValue(selectedAccountPaymentOption != null || newCardOk)
     }
 
     // Address mode + per-field errors
@@ -68,7 +65,7 @@ class FrameCheckoutViewModel : ViewModel() {
     val fieldErrors: LiveData<Map<FieldKey, ValidationError>> = _fieldErrors
 
     // Internal tracking
-    private var currentCustomerId: String? = null
+    private var currentAccountId: String? = null
     internal var amount: Int = 0
 
     /// True while the checkout submit is in flight. Drives the pay button's disabled state and
@@ -76,32 +73,45 @@ class FrameCheckoutViewModel : ViewModel() {
     private val _isPerformingAction = MutableLiveData(false)
     val isPerformingAction: LiveData<Boolean> = _isPerformingAction
 
-    fun loadCustomer(customerId: String?, amount: Int) {
+    /**
+     * Set when the last checkout submit failed with a network/server error. The view
+     * observes this to display a banner; cleared on every new submit.
+     */
+    private val _checkoutError = MutableLiveData<String?>(null)
+    val checkoutError: LiveData<String?> = _checkoutError
+
+    /**
+     * Fetches the account, prefills the customer name + email fields from its
+     * individual profile (matches iOS `loadAccountDetails`), then loads the saved
+     * payment methods so the user can pick one instead of entering a new card.
+     *
+     * [accountId] is required because the bundled checkout's pay button creates a
+     * Transfer, which is account-scoped.
+     */
+    fun loadAccountDetails(accountId: String, amount: Int) {
+        require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccountDetails requires a non-empty accountId" }
         this.amount = amount
-        if (customerId == null) return
-        currentCustomerId = customerId
+        currentAccountId = accountId
 
         viewModelScope.launch(Dispatchers.IO) {
-            val (customer, _) = CustomersAPI.getCustomerWith(customerId)
-            customer ?: return@launch
-
-            withContext(Dispatchers.Main) {
-                _customerPaymentOptions.value = customer.paymentMethods
-                customerName.value = customer.name
-                customerEmail.value = customer.email.orEmpty()
-
-                customer.billingAddress?.let { address ->
-                    customerAddressLine1.value = address.addressLine1.orEmpty()
-                    customerAddressLine2.value = address.addressLine2.orEmpty()
-                    customerCity.value = address.city.orEmpty()
-                    customerState.value = address.state.orEmpty()
-                    customerZipCode.value = address.postalCode
-                    address.country?.let { code ->
-                        AvailableCountries.allCountries.firstOrNull {
-                            it.alpha2Code.equals(code, ignoreCase = true)
-                        }?.let { customerCountry = it }
-                    }
+            val (account, _) = AccountsAPI.getAccountWith(accountId)
+            val individual = account?.profile?.individual
+            if (individual != null) {
+                val firstName = individual.name?.firstName.orEmpty()
+                val lastName = individual.name?.lastName.orEmpty()
+                val composedName = listOf(firstName, lastName)
+                    .filter { it.isNotEmpty() }
+                    .joinToString(" ")
+                val composedEmail = individual.email.orEmpty()
+                withContext(Dispatchers.Main) {
+                    if (composedName.isNotEmpty()) customerName.value = composedName
+                    if (composedEmail.isNotEmpty()) customerEmail.value = composedEmail
                 }
+            }
+
+            val (paymentMethods, _) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+            withContext(Dispatchers.Main) {
+                _accountPaymentOptions.value = paymentMethods
             }
         }
     }
@@ -156,8 +166,13 @@ class FrameCheckoutViewModel : ViewModel() {
         return errors
     }
 
-    fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean): LiveData<ChargeIntent?> = liveData(Dispatchers.IO) {
+    fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean): LiveData<Transfer?> = liveData(Dispatchers.IO) {
         if (amount == 0) {
+            emit(null)
+            return@liveData
+        }
+        val accountId = currentAccountId
+        if (accountId.isNullOrEmpty()) {
             emit(null)
             return@liveData
         }
@@ -166,8 +181,9 @@ class FrameCheckoutViewModel : ViewModel() {
             return@liveData
         }
         _isPerformingAction.postValue(true)
+        _checkoutError.postValue(null)
         try {
-            val usingSavedCard = selectedCustomerPaymentOption != null
+            val usingSavedCard = selectedAccountPaymentOption != null
             val errors = validateAll(forSavedCard = usingSavedCard)
             if (errors.isNotEmpty()) {
                 _fieldErrors.postValue(errors)
@@ -178,14 +194,14 @@ class FrameCheckoutViewModel : ViewModel() {
             _fieldErrors.postValue(emptyMap())
 
             // Determine or create payment method
-            val paymentMethodId = selectedCustomerPaymentOption?.id ?: run {
-                val (newPmId, newCustId) = try {
-                    createPaymentMethod(currentCustomerId)
-                } catch (_: Exception) {
-                    Pair<String?, String?>(null, null)
+            val paymentMethodId = selectedAccountPaymentOption?.id ?: run {
+                val (pmId, pmError) = createPaymentMethod(accountId)
+                if (pmError != null) {
+                    _checkoutError.postValue(describeError(pmError))
+                    emit(null)
+                    return@liveData
                 }
-                currentCustomerId = newCustId
-                newPmId
+                pmId
             }
 
             if (paymentMethodId == null) {
@@ -193,31 +209,41 @@ class FrameCheckoutViewModel : ViewModel() {
                 return@liveData
             }
 
-            // Build the charge intent request
-            val request = ChargeIntentsRequests.CreateChargeIntentRequest(
+            // Build the transfer request (charge flow against the account)
+            val request = TransferRequests.CreateTransferRequest(
                 amount = amount,
+                accountId = accountId,
                 currency = "usd",
-                customer = currentCustomerId,
-                description = "",
-                paymentMethod = paymentMethodId,
-                confirm = true,
-                receiptEmail = null,
-                authorizationMode = AuthorizationMode.AUTOMATIC,
-                customerData = null,
-                paymentMethodData = null,
-                fraudSignals = null,
-                sonarSessionId = FrameNetworking.currentSonarSessionId()
+                sourcePaymentMethodId = paymentMethodId,
+                destinationPaymentMethodId = null,
+                description = null,
+                metadata = null
             )
 
-            // Create and emit the intent
-            val (intent, _) = ChargeIntentAPI.createChargeIntent(request)
-            emit(intent)
+            val (transfer, transferError) = TransfersAPI.createTransfer(request)
+            if (transferError != null) {
+                _checkoutError.postValue(describeError(transferError))
+            }
+            emit(transfer)
         } finally {
             _isPerformingAction.postValue(false)
         }
     }
 
-    private suspend fun createPaymentMethod(customerId: String? = null): Pair<String?, String?> {
+    private fun describeError(error: com.framepayments.framesdk.NetworkingError): String = when (error) {
+        is com.framepayments.framesdk.NetworkingError.ServerError ->
+            error.errorDescription.takeIf { it.isNotEmpty() } ?: "Server error (HTTP ${error.statusCode})."
+        com.framepayments.framesdk.NetworkingError.DecodingFailed -> "Could not parse server response."
+        com.framepayments.framesdk.NetworkingError.InvalidURL -> "Invalid request URL."
+        com.framepayments.framesdk.NetworkingError.UnknownError -> "Something went wrong. Please try again."
+    }
+
+    /// Returns the new payment method's id paired with any underlying networking error
+    /// from the create-payment-method call. The caller is responsible for surfacing the
+    /// error to the user via [_checkoutError] rather than discarding it.
+    private suspend fun createPaymentMethod(accountId: String): Pair<String?, com.framepayments.framesdk.NetworkingError?> {
+        if (accountId.isEmpty()) return Pair(null, null)
+
         val billingAddress: FrameObjects.BillingAddress? = if (shouldValidateAddress()) {
             FrameObjects.BillingAddress(
                 city = customerCity.value.orEmpty(),
@@ -229,32 +255,16 @@ class FrameCheckoutViewModel : ViewModel() {
             )
         } else null
 
-        // 1. Create or reuse customer
-        val newCustId = customerId ?: run {
-            val custReq = CustomersRequests.CreateCustomerRequest(
-                billingAddress = billingAddress,
-                name = customerName.value.orEmpty(),
-                email = customerEmail.value.orEmpty(),
-                shippingAddress = null,
-                phone = null,
-                description = null,
-                metadata = null
-            )
-            val (customer, _) = CustomersAPI.createCustomer(custReq)
-            customer?.id.takeIf { it?.isNotEmpty() == true } ?: return Pair(null, null)
-        }
-
-        // 2. Create payment method
         val pmReq = PaymentMethodRequests.CreateCardPaymentMethodRequest(
             cardNumber = cardData.card.number,
             expMonth = cardData.card.expMonth,
             expYear = cardData.card.expYear,
             cvc = cardData.card.cvc,
-            customer = newCustId,
+            customer = null,
+            account = accountId,
             billing = billingAddress
         )
-        val (pm, _) = PaymentMethodsAPI.createCardPaymentMethod(pmReq, encryptData = false)
-        val pmId = pm?.id ?: return Pair(null, newCustId)
-        return Pair(pmId, newCustId)
+        val (pm, pmError) = PaymentMethodsAPI.createCardPaymentMethod(pmReq, encryptData = false)
+        return Pair(pm?.id, pmError)
     }
 }

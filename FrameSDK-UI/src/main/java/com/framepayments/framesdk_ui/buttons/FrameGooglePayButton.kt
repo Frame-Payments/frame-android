@@ -14,11 +14,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.chargeintents.AuthorizationMode
-import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntentsRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
+import com.framepayments.framesdk.transfers.TransferRequests
+import com.framepayments.framesdk.transfers.TransfersAPI
 import com.framepayments.framesdk.wallet.WalletAPI
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
@@ -49,10 +50,13 @@ import org.json.JSONObject
  * val googlePayButton = findViewById<FrameGooglePayButton>(R.id.googlePayButton)
  * googlePayButton.configure(
  *     amountCents = 1000,
- *     customerId = "cus_12345",
+ *     owner = FrameGooglePayButton.Owner.Account("acc_12345"),
+ *     // or: owner = FrameGooglePayButton.Owner.Customer("cus_12345") for a ChargeIntent flow
  *     onResult = { result ->
  *         when (result) {
- *             is FrameGooglePayButton.Result.Success -> { /* handle charge intent */ }
+ *             is FrameGooglePayButton.Result.Success -> {
+ *                 // result.id is a Transfer id (account owner) or ChargeIntent id (customer owner)
+ *             }
  *             is FrameGooglePayButton.Result.Failure -> { /* handle error */ }
  *             is FrameGooglePayButton.Result.Cancelled -> { /* user cancelled */ }
  *         }
@@ -67,22 +71,38 @@ class FrameGooglePayButton @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+    /**
+     * Identifies who owns the resulting payment method and which downstream resource
+     * the Charge mode creates:
+     *  - [Customer] → creates a [ChargeIntent]; [Result.Success.id] is the ChargeIntent id.
+     *  - [Account]  → creates a [Transfer];     [Result.Success.id] is the Transfer id.
+     * Callers infer the resource type from the owner they passed in.
+     */
+    sealed class Owner {
+        data class Customer(val id: String) : Owner()
+        data class Account(val id: String) : Owner()
+    }
+
     sealed class Result {
-        /** Charge mode: payment authorized and a confirmed ChargeIntent was created. */
-        data class Success(val chargeIntent: ChargeIntent) : Result()
+        /**
+         * Charge mode: payment authorized and the downstream resource was created.
+         * `id` is a ChargeIntent id when the owner was [Owner.Customer], or a Transfer id
+         * when the owner was [Owner.Account].
+         */
+        data class Success(val id: String) : Result()
         /** AddToOwner mode: wallet card was attached to the customer/account as a PaymentMethod. */
         data class PaymentMethodCreated(val paymentMethod: FrameObjects.PaymentMethod) : Result()
         data class Failure(val message: String) : Result()
         data object Cancelled : Result()
     }
 
-    /// Drives whether the Google Pay sheet completes by creating a charge intent (`Charge`) or
+    /// Drives whether the Google Pay sheet completes by creating a charge (`Charge`) or
     /// only attaches the wallet card to the customer/account (`AddToOwner`).
     sealed class Mode {
         data class Charge(
             val amountCents: Int,
             val currencyCode: String = "USD",
-            val customerId: String? = null
+            val owner: Owner
         ) : Mode()
         data class AddToOwner(val customerId: String?, val accountId: String?) : Mode()
     }
@@ -99,7 +119,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
     private var googlePayGateway: String = ""
     private var googlePayGatewayMerchantId: String = ""
     private var googlePayMerchantId: String? = null
-    private var mode: Mode = Mode.Charge(amountCents = 0)
+    private var mode: Mode = Mode.Charge(amountCents = 0, owner = Owner.Account(""))
 
     private var onResult: ((Result) -> Unit)? = null
     private var onReadinessChanged: ((Boolean) -> Unit)? = null
@@ -152,12 +172,13 @@ class FrameGooglePayButton @JvmOverloads constructor(
     }
 
     /**
-     * Configures the button and checks Google Pay readiness.
+     * Configures the button for a Charge flow and checks Google Pay readiness.
      *
      * The button automatically shows/hides based on whether Google Pay is available.
      *
      * @param amountCents The payment amount in cents (e.g., 1000 for $10.00)
-     * @param customerId Optional Frame customer ID to associate the payment with
+     * @param owner Customer or account that owns the resulting payment method and charge.
+     *              Customer owners produce a ChargeIntent id; account owners produce a Transfer id.
      * @param currencyCode ISO 4217 currency code (default: "USD")
      * @param googlePayMerchantId Optional Google Pay merchant ID override
      * @param onResult Callback invoked with the payment result
@@ -165,14 +186,14 @@ class FrameGooglePayButton @JvmOverloads constructor(
      */
     fun configure(
         amountCents: Int,
-        customerId: String? = null,
+        owner: Owner,
         currencyCode: String = "USD",
         googlePayMerchantId: String? = null,
         onResult: (Result) -> Unit,
         onReadinessChanged: ((Boolean) -> Unit)? = null
     ) {
         configure(
-            mode = Mode.Charge(amountCents = amountCents, currencyCode = currencyCode, customerId = customerId),
+            mode = Mode.Charge(amountCents = amountCents, currencyCode = currencyCode, owner = owner),
             googlePayMerchantId = googlePayMerchantId,
             onResult = onResult,
             onReadinessChanged = onReadinessChanged
@@ -272,11 +293,11 @@ class FrameGooglePayButton @JvmOverloads constructor(
             )
 
             val ownerCustomer: String? = when (val m = mode) {
-                is Mode.Charge -> m.customerId
+                is Mode.Charge -> (m.owner as? Owner.Customer)?.id
                 is Mode.AddToOwner -> m.customerId
             }
             val ownerAccount: String? = when (val m = mode) {
-                is Mode.Charge -> null
+                is Mode.Charge -> (m.owner as? Owner.Account)?.id
                 is Mode.AddToOwner -> m.accountId
             }
 
@@ -301,29 +322,50 @@ class FrameGooglePayButton @JvmOverloads constructor(
                     }
                     return@launch
                 }
-                is Mode.Charge -> {
-                    val ciRequest = ChargeIntentsRequests.CreateChargeIntentRequest(
-                        amount = m.amountCents,
-                        currency = m.currencyCode.lowercase(),
-                        customer = m.customerId,
-                        description = "",
-                        paymentMethod = resolvedPaymentMethod.id,
-                        confirm = true,
-                        receiptEmail = null,
-                        authorizationMode = AuthorizationMode.AUTOMATIC,
-                        customerData = null,
-                        paymentMethodData = null,
-                        fraudSignals = null,
-                        sonarSessionId = FrameNetworking.currentSonarSessionId()
-                    )
-                    val (intent, ciError) = ChargeIntentAPI.createChargeIntent(ciRequest)
-
-                    withContext(Dispatchers.Main) {
-                        if (intent != null) {
-                            onResult?.invoke(Result.Success(intent))
-                        } else {
-                            onResult?.invoke(Result.Failure(ciError?.message ?: "Failed to create charge"))
+                is Mode.Charge -> when (val o = m.owner) {
+                    is Owner.Customer -> {
+                        // Customer owner → create a ChargeIntent. `Result.Success.id` is the ChargeIntent id.
+                        val ciRequest = ChargeIntentsRequests.CreateChargeIntentRequest(
+                            amount = m.amountCents,
+                            currency = m.currencyCode.lowercase(),
+                            customer = o.id,
+                            description = null,
+                            confirm = true,
+                            paymentMethod = resolvedPaymentMethod.id,
+                            receiptEmail = null,
+                            authorizationMode = AuthorizationMode.AUTOMATIC,
+                            customerData = null,
+                            paymentMethodData = null
+                        )
+                        val (intent, ciError) = ChargeIntentAPI.createChargeIntent(ciRequest)
+                        withContext(Dispatchers.Main) {
+                            val id = intent?.id
+                            if (id != null) {
+                                onResult?.invoke(Result.Success(id))
+                            } else {
+                                onResult?.invoke(Result.Failure(ciError?.message ?: "Failed to create charge intent"))
+                            }
                         }
+                        return@launch
+                    }
+                    is Owner.Account -> {
+                        // Account owner → create a Transfer. `Result.Success.id` is the Transfer id.
+                        val transferRequest = TransferRequests.CreateTransferRequest(
+                            amount = m.amountCents,
+                            accountId = o.id,
+                            currency = m.currencyCode.lowercase(),
+                            sourcePaymentMethodId = resolvedPaymentMethod.id
+                        )
+                        val (transfer, transferError) = TransfersAPI.createTransfer(transferRequest)
+                        withContext(Dispatchers.Main) {
+                            val id = transfer?.id
+                            if (id != null) {
+                                onResult?.invoke(Result.Success(id))
+                            } else {
+                                onResult?.invoke(Result.Failure(transferError?.message ?: "Failed to create transfer"))
+                            }
+                        }
+                        return@launch
                     }
                 }
             }

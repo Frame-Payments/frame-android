@@ -24,22 +24,23 @@ class CartTestActivity : BaseActivity() {
             FrameCartItem("2", "T-Shirt", 2599, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP2BAKInCCh3PZ5BwPdCBOk1v92vBLOgsgVw&s")
         )
 
-        val customerId = "debab238-9d04-410f-96cd-85855cb46f92" // Remove from PR, for testing purposes only
+        val accountId = "INSERT_SANDBOX_ACCOUNT_ID"
 
         val cartView = FrameCartView(this).apply {
             configure(
-                customerId = customerId,
+                accountId = accountId,
                 items = items,
                 shippingCents = 500,
                 onCheckout = { total: Int ->
                     val intent = Intent(this@CartTestActivity, CheckoutActivity::class.java).apply {
                         putExtra("totalCents", total)
-                        putExtra("customerId", customerId)
+                        putExtra("accountId", accountId)
                     }
                     checkoutLauncher.launch(intent)
                 }
             )
-            setTheme(demoTheme(this@CartTestActivity))
+            // Uncomment to set the demo theme
+//            setTheme(demoTheme(this@CartTestActivity))
         }
 
         setContentView(cartView)

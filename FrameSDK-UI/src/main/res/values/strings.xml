@@ -16,7 +16,7 @@
     <string name="mm_yy">MM/YY</string>
     <string name="close">close</string>
     <string name="customer_information">Customer Information</string>
-    <string name="customer_address">Customer Address</string>
+    <string name="customer_address">Billing Address</string>
     <string name="address_line_1">Address Line 1</string>
     <string name="address_line_2">Address Line 2</string>
     <string name="city">City</string>

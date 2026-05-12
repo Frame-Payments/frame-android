@@ -15,10 +15,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Supply sandbox keys via local.properties / BuildConfig before running the example.
+        // Do not commit real keys.
         FrameNetworking.initializeWithAPIKey(
             context = applicationContext,
-            secretKey = "INSERT_SANDBOX_KEY_HERE",
-            publishableKey = "INSERT_PUBLISHABLE_KEY_HERE",
+            secretKey = "INSERT_SANDBOX_SECRET_KEY",
+            publishableKey = "INSERT_SANDBOX_PUBLISHABLE_KEY",
             debug = true
         )
         setContent {

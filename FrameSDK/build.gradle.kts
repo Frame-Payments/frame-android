@@ -1,4 +1,4 @@
-val sdkVersion = "2.0.4"
+val sdkVersion = "2.0.6"
 
 plugins {
     alias(libs.plugins.android.library)
