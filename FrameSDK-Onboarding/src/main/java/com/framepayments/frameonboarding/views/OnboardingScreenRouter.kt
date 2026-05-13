@@ -33,7 +33,7 @@ internal fun OnboardingScreenRouter(
             UserIdentificationView(
                 viewModel = viewModel,
                 requiresDateOfBirth = config.requiredCapabilities.contains(Capabilities.KYC_PREFILL),
-                showTermsOfService = config.requiredCapabilities.contains(Capabilities.GEO_COMPLIANCE),
+                showTermsOfService = true,
                 onBack = { viewModel.moveBack() }
             )
         }

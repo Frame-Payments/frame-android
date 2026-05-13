@@ -118,7 +118,6 @@ fun PlaygroundScreen(
                         Capabilities.CARD_VERIFICATION,
                         Capabilities.BANK_ACCOUNT_VERIFICATION,
                         Capabilities.AGE_VERIFICATION,
-                        Capabilities.GEO_COMPLIANCE,
                         Capabilities.PHONE_VERIFICATION
                     ),
                     googlePayMerchantId = "BCR2DN4T_TEST_STUB",

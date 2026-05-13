@@ -203,6 +203,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     /** Mirrors iOS `termsOfServiceToken`. */
     val termsOfServiceToken: StateFlow<String?> = _termsOfServiceToken.asStateFlow()
 
+    private var existingAccountHasTOS: Boolean = false
+
     private val _paymentMethodVerification = MutableStateFlow<ThreeDSecureVerification?>(null)
     /** Mirrors iOS `paymentMethodVerification`. */
     val paymentMethodVerification: StateFlow<ThreeDSecureVerification?> = _paymentMethodVerification.asStateFlow()
@@ -377,6 +379,21 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         )
     }
 
+    /**
+     * Mirrors iOS: when updating an existing account, include the TOS only if the
+     * account hasn't already accepted one. Returns null when [existingAccountHasTOS]
+     * is true so the update request omits the field entirely.
+     */
+    private suspend fun termsOfServiceForUpdate(): AccountObjects.AccountTermsOfService? {
+        if (existingAccountHasTOS) return null
+        val ipAddress = withContext(Dispatchers.IO) { SiftManager.getIPAddress() }
+        return AccountObjects.AccountTermsOfService(
+            token = _termsOfServiceToken.value,
+            acceptedAt = Instant.now().toString(),
+            ipAddress = ipAddress
+        )
+    }
+
     fun updateOnboardingFlow() {
         val caps = _requiredCapabilities.value
         _orderedSteps = computeOrderedSteps(caps)
@@ -413,6 +430,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             _resolvedAccountId.value = aid
             _onboardingData.update { it.copy(resolvedAccountId = aid) }
         }
+        existingAccountHasTOS = account?.termsOfService?.acceptedAt != null
         val individual = account?.profile?.individual ?: return
         refreshAccountProfileIntoOnboarding(accountId)
         if (!updateCapabilities) return
@@ -742,6 +760,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             val (_, err) = AccountsAPI.updateAccount(
                 existing,
                 AccountRequests.UpdateAccountRequest(
+                    termsOfService = termsOfServiceForUpdate(),
                     profile = AccountRequests.UpdateAccountProfile(individual = updateIndividual)
                 )
             )
@@ -946,6 +965,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 val (_, updateErr) = AccountsAPI.updateAccount(
                     existing,
                     AccountRequests.UpdateAccountRequest(
+                        termsOfService = termsOfServiceForUpdate(),
                         profile = AccountRequests.UpdateAccountProfile(individual = updateIndividual)
                     )
                 )

@@ -88,6 +88,7 @@ object AccountObjects {
         val status: AccountStatus?,
         @SerializedName("external_id") val externalId: String? = null,
         val metadata: Map<String, String>? = null,
+        @SerializedName("terms_of_service") val termsOfService: AccountTermsOfService? = null,
         val profile: AccountProfile? = null,
         val capabilities: List<CapabilityObjects.Capability>? = null,
         val steps: List<AccountStep>? = null,
