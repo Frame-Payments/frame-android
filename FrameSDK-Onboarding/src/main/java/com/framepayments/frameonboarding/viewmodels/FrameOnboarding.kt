@@ -1375,10 +1375,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
     }
 
-    /// Google Pay merchant ID surfaced by [OnboardingConfig.googlePayMerchantId]. Drives the
-    /// wallet attach flow on AddPaymentMethod when the host app has a configured merchant.
-    val googlePayMerchantId: String? get() = config.googlePayMerchantId
-
     /// Append a wallet-created payment method (Google Pay) to the in-memory list and select it.
     /// Used by `AddPaymentMethodScreen` after a successful `FrameGooglePayButton` AddToOwner flow.
     fun appendNewlyAddedPaymentMethod(paymentMethod: FrameObjects.PaymentMethod) {

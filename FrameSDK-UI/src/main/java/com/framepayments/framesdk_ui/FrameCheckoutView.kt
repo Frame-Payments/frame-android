@@ -18,10 +18,12 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.FrameResult
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentMethodRowBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentNewRowBinding
+import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
@@ -42,12 +44,26 @@ class FrameCheckoutView @JvmOverloads constructor(
     )
     private val viewModel: FrameCheckoutViewModel
 
-    var checkoutCallback: ((transferId: String) -> Unit)? = null
+    var onResult: ((FrameResult) -> Unit)? = null
 
     /**
-     * Apply a [FrameTheme] to this checkout. Tints the pay button and forwards the
-     * primary-button color to the embedded [EncryptedPaymentCardInput]. Call after
-     * construction; safe to call multiple times.
+     * Set to true once a terminal [FrameResult] has been emitted (Completed / Failed). Used to
+     * suppress a duplicate [FrameResult.Cancelled] emission on the close-button path that also
+     * calls `Activity.finish()`.
+     */
+    private var didFinish: Boolean = false
+
+    /// Current snackbar colors, read at emission time so [setTheme] takes effect on the next toast
+    /// without requiring re-observation of the controller.
+    private var toastBackgroundColor: Int =
+        com.framepayments.framesdk_ui.theme.FrameColors.defaults(context).toastBackground.toArgb()
+    private var toastTextColor: Int =
+        com.framepayments.framesdk_ui.theme.FrameColors.defaults(context).toastText.toArgb()
+
+    /**
+     * Apply a [FrameTheme] to this checkout. Tints the pay button, forwards the primary-button
+     * color to the embedded [EncryptedPaymentCardInput], and updates the colors used by the
+     * transport-error snackbar. Call after construction; safe to call multiple times.
      */
     fun setTheme(theme: FrameTheme) {
         val payColor = theme.colors.primaryButton.toArgb()
@@ -55,6 +71,9 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.payButton.setBackgroundColor(payColor)
         binding.payButton.setTextColor(payTextColor)
         binding.encryptedCardInput.accentColor = theme.colors.primaryButton
+
+        toastBackgroundColor = theme.colors.toastBackground.toArgb()
+        toastTextColor = theme.colors.toastText.toArgb()
     }
 
     init {
@@ -62,7 +81,23 @@ class FrameCheckoutView @JvmOverloads constructor(
             ?: throw IllegalArgumentException("FrameCheckoutView must be used in an AppCompatActivity")
         viewModel = ViewModelProvider(activity)[FrameCheckoutViewModel::class.java]
 
-        binding.closeButton.setOnClickListener { (context as Activity).finish() }
+        binding.closeButton.setOnClickListener {
+            if (!didFinish) {
+                didFinish = true
+                onResult?.invoke(FrameResult.Cancelled)
+            }
+            (context as Activity).finish()
+        }
+
+        // Surface transport-error snackbars emitted by the Google Pay button (and any future
+        // Frame surface) without intruding on the inline server-validation error UI below.
+        // Suppliers re-read the latest theme on each emission so `setTheme(...)` is live.
+        FrameSnackbarController.observeWithSnackbar(
+            lifecycleOwner = activity,
+            anchorView = this,
+            backgroundColor = { toastBackgroundColor },
+            textColor = { toastTextColor },
+        )
 
         // Pay button is disabled until the user either selects a saved payment method
         // or enters new card details that pass potential-validity. It's also force-disabled
@@ -86,7 +121,9 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.payButton.setOnClickListener {
             viewModel.checkoutWithSelectedPaymentMethod(binding.saveCard.isChecked)
                 .observe(activity) { transfer ->
-                    transfer?.id?.let { checkoutCallback?.invoke(it) }
+                    val id = transfer?.id ?: return@observe
+                    didFinish = true
+                    onResult?.invoke(FrameResult.Completed(id))
                 }
         }
 
@@ -167,16 +204,6 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.encryptedCardInput.onCardDataChange = { data ->
             viewModel.cardData = data
             viewModel.setError(FieldKey.CARD, Validators.validateCard(data))
-        }
-
-        viewModel.checkoutError.observe(activity) { message ->
-            if (message.isNullOrEmpty()) {
-                binding.checkoutErrorText.visibility = View.GONE
-                binding.checkoutErrorText.text = ""
-            } else {
-                binding.checkoutErrorText.visibility = View.VISIBLE
-                binding.checkoutErrorText.text = message
-            }
         }
 
         viewModel.fieldErrors.observe(activity) { errors ->
@@ -320,20 +347,21 @@ class FrameCheckoutView @JvmOverloads constructor(
     /**
      * Configure the bundled checkout. The card path creates a `Transfer` (account-scoped),
      * and so does the embedded Google Pay button — both require [accountId]. Callers
-     * needing a customer/ChargeIntent flow should use [FrameGooglePayButton] or the
-     * Apple Pay surface directly instead of the bundled checkout.
+     * needing a customer/ChargeIntent flow should use [FrameGooglePayButton] directly.
+     *
+     * The Google Pay merchant identifier is read from [com.framepayments.framesdk.FrameNetworking.googlePayMerchantId]
+     * — pass it once at SDK init. The Google Pay row stays hidden if it isn't configured.
      */
     @JvmOverloads
     @SuppressLint("SetTextI18n")
     fun configure(
         accountId: String,
         paymentAmount: Int,
-        googlePayMerchantId: String? = null,
         addressMode: AddressMode = AddressMode.REQUIRED,
-        onCheckout: (transferId: String) -> Unit
+        onResult: (FrameResult) -> Unit,
     ) {
         require(accountId.isNotEmpty()) { "FrameCheckoutView.configure requires a non-empty accountId" }
-        checkoutCallback = onCheckout
+        this.onResult = onResult
         viewModel.addressMode = addressMode
         binding.customerAddressContainer.visibility =
             if (addressMode == AddressMode.HIDDEN) View.GONE else View.VISIBLE
@@ -343,14 +371,25 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.googlePayBtn.configure(
             amountCents = paymentAmount,
             owner = FrameGooglePayButton.Owner.Account(accountId),
-            googlePayMerchantId = googlePayMerchantId,
-            onResult = { result ->
-                when (result) {
+            onResult = { gpResult ->
+                when (gpResult) {
                     is FrameGooglePayButton.Result.Success -> {
-                        // Bundled checkout is always account-scoped, so `result.id` is a Transfer id.
-                        checkoutCallback?.invoke(result.id)
+                        // Bundled checkout is always account-scoped, so `gpResult.id` is a Transfer id.
+                        didFinish = true
+                        onResult.invoke(FrameResult.Completed(gpResult.id))
                     }
-                    else -> {}
+                    is FrameGooglePayButton.Result.Failure -> {
+                        // Keep the checkout open so the user can retry Google Pay or fall through
+                        // to card entry. Transport errors already toasted from inside the button;
+                        // non-transport failures surface a generic message here.
+                        FrameSnackbarController.emit("Error: Google Pay could not complete. Please try again or use a card.")
+                    }
+                    is FrameGooglePayButton.Result.Cancelled -> {
+                        // User backed out of the Google Pay sheet — they're still in checkout.
+                    }
+                    is FrameGooglePayButton.Result.PaymentMethodCreated -> {
+                        // Not produced in `Charge` mode (which is what the bundled checkout uses).
+                    }
                 }
             },
             onReadinessChanged = { isReady ->

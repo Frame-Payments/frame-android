@@ -3,6 +3,7 @@ package com.framepayments.framesdk_ui.viewmodels
 import androidx.lifecycle.*
 import com.evervault.sdk.input.model.card.PaymentCardData
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
@@ -10,6 +11,7 @@ import com.framepayments.framesdk.transfers.Transfer
 import com.framepayments.framesdk.transfers.TransferRequests
 import com.framepayments.framesdk.transfers.TransfersAPI
 import com.framepayments.framesdk_ui.AddressMode
+import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
@@ -97,13 +99,6 @@ class FrameCheckoutViewModel : ViewModel() {
     val isPerformingAction: LiveData<Boolean> = _isPerformingAction
 
     /**
-     * Set when the last checkout submit failed with a network/server error. The view
-     * observes this to display a banner; cleared on every new submit.
-     */
-    private val _checkoutError = MutableLiveData<String?>(null)
-    val checkoutError: LiveData<String?> = _checkoutError
-
-    /**
      * Fetches the account, prefills the customer name + email fields from its
      * individual profile (matches iOS `loadAccountDetails`), then loads the saved
      * payment methods so the user can pick one instead of entering a new card.
@@ -117,7 +112,8 @@ class FrameCheckoutViewModel : ViewModel() {
         currentAccountId = accountId
 
         viewModelScope.launch(Dispatchers.IO) {
-            val (account, _) = AccountsAPI.getAccountWith(accountId)
+            val (account, accountError) = AccountsAPI.getAccountWith(accountId)
+            reportError(accountError)
             val individual = account?.profile?.individual
             if (individual != null) {
                 val firstName = individual.name?.firstName.orEmpty()
@@ -132,7 +128,8 @@ class FrameCheckoutViewModel : ViewModel() {
                 }
             }
 
-            val (paymentMethods, _) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+            val (paymentMethods, paymentMethodsError) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+            reportError(paymentMethodsError)
             withContext(Dispatchers.Main) {
                 _accountPaymentOptions.value = paymentMethods
                 if (_selectedAccountPaymentOption.value == null &&
@@ -211,7 +208,6 @@ class FrameCheckoutViewModel : ViewModel() {
             return@liveData
         }
         _isPerformingAction.postValue(true)
-        _checkoutError.postValue(null)
         try {
             val usingSavedCard = _selectedAccountPaymentOption.value != null
             val errors = validateAll(forSavedCard = usingSavedCard)
@@ -227,7 +223,7 @@ class FrameCheckoutViewModel : ViewModel() {
             val paymentMethodId = _selectedAccountPaymentOption.value?.id ?: run {
                 val (pmId, pmError) = createPaymentMethod(accountId)
                 if (pmError != null) {
-                    surfaceCheckoutError(pmError)
+                    reportError(pmError)
                     emit(null)
                     return@liveData
                 }
@@ -252,7 +248,7 @@ class FrameCheckoutViewModel : ViewModel() {
 
             val (transfer, transferError) = TransfersAPI.createTransfer(request)
             if (transferError != null) {
-                surfaceCheckoutError(transferError)
+                reportError(transferError)
             }
             emit(transfer)
         } finally {
@@ -260,41 +256,18 @@ class FrameCheckoutViewModel : ViewModel() {
         }
     }
 
-    /// Only retryable server-side errors (e.g. card declined) are surfaced inline so the
-    /// payer sees the decline reason verbatim from the server. Decode/network/unknown
-    /// errors are intentionally silent — they're terminal and don't have a payer-friendly
-    /// message; hosts should rely on the `null` emission to decide what to do next.
-    private fun surfaceCheckoutError(error: com.framepayments.framesdk.NetworkingError) {
-        if (error is com.framepayments.framesdk.NetworkingError.ServerError) {
-            val message = extractCheckoutErrorMessage(error.errorDescription)
-            if (message.isNotEmpty()) {
-                _checkoutError.postValue(message)
-            }
+    /// Emit a snackbar for any [error]. Server errors surface the parsed `error_details.message`
+    /// from the Frame envelope; transport errors use the generic fallback. No-op for `null`.
+    private fun reportError(error: NetworkingError?) {
+        if (error != null) {
+            FrameSnackbarController.emit(error.toastMessage())
         }
-    }
-
-    /// Extract a user-facing message from the raw error-envelope JSON the server sends back.
-    /// Shape: `{"status":N,"error":"...","code":"...","error_details":{"message":"...","data":...}}`.
-    /// Preference: `error_details.message` → `error` → the raw string as-is.
-    private fun extractCheckoutErrorMessage(raw: String): String {
-        if (raw.isEmpty()) return raw
-        try {
-            val envelope = org.json.JSONObject(raw)
-            val details = envelope.optJSONObject("error_details")
-            val message = details?.optString("message").orEmpty()
-            if (message.isNotEmpty()) return message
-            val error = envelope.optString("error")
-            if (error.isNotEmpty()) return error
-        } catch (_: Exception) {
-            // fall through to raw
-        }
-        return raw
     }
 
     /// Returns the new payment method's id paired with any underlying networking error
     /// from the create-payment-method call. The caller is responsible for surfacing the
-    /// error to the user via [_checkoutError] rather than discarding it.
-    private suspend fun createPaymentMethod(accountId: String): Pair<String?, com.framepayments.framesdk.NetworkingError?> {
+    /// error to the user via the snackbar rather than discarding it.
+    private suspend fun createPaymentMethod(accountId: String): Pair<String?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
 
         val billingAddress: FrameObjects.BillingAddress? = if (shouldValidateAddress()) {

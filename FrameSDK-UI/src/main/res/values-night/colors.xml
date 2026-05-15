@@ -13,6 +13,8 @@
     <color name="frame_text_primary">#FFFFFFFF</color>
     <color name="frame_text_secondary">#FF9CA3AF</color>
     <color name="frame_error">#FFCF6679</color>
+    <color name="frame_toast_background">#FFCF6679</color>
+    <color name="frame_toast_text">#FF000000</color>
     <color name="frame_onboarding_header_background">#FF1F2D33</color>
     <color name="frame_onboarding_progress_filled_on_brand">#FFFFFFFF</color>
     <color name="frame_onboarding_progress_empty_on_brand">#66FFFFFF</color>

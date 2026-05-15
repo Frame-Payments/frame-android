@@ -13,6 +13,8 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
 import com.framepayments.framesdk.chargeintents.AuthorizationMode
 import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntentsRequests
@@ -118,7 +120,6 @@ class FrameGooglePayButton @JvmOverloads constructor(
 
     private var googlePayGateway: String = ""
     private var googlePayGatewayMerchantId: String = ""
-    private var googlePayMerchantId: String? = null
     private var mode: Mode = Mode.Charge(amountCents = 0, owner = Owner.Account(""))
 
     private var onResult: ((Result) -> Unit)? = null
@@ -174,13 +175,14 @@ class FrameGooglePayButton @JvmOverloads constructor(
     /**
      * Configures the button for a Charge flow and checks Google Pay readiness.
      *
-     * The button automatically shows/hides based on whether Google Pay is available.
+     * The button automatically shows/hides based on whether Google Pay is available. The Google
+     * Pay merchant identifier is read from [com.framepayments.framesdk.FrameNetworking.googlePayMerchantId]
+     * — pass it once at SDK init. The button stays hidden if it isn't configured.
      *
      * @param amountCents The payment amount in cents (e.g., 1000 for $10.00)
      * @param owner Customer or account that owns the resulting payment method and charge.
      *              Customer owners produce a ChargeIntent id; account owners produce a Transfer id.
      * @param currencyCode ISO 4217 currency code (default: "USD")
-     * @param googlePayMerchantId Optional Google Pay merchant ID override
      * @param onResult Callback invoked with the payment result
      * @param onReadinessChanged Optional callback invoked when Google Pay readiness changes
      */
@@ -188,13 +190,11 @@ class FrameGooglePayButton @JvmOverloads constructor(
         amountCents: Int,
         owner: Owner,
         currencyCode: String = "USD",
-        googlePayMerchantId: String? = null,
         onResult: (Result) -> Unit,
         onReadinessChanged: ((Boolean) -> Unit)? = null
     ) {
         configure(
             mode = Mode.Charge(amountCents = amountCents, currencyCode = currencyCode, owner = owner),
-            googlePayMerchantId = googlePayMerchantId,
             onResult = onResult,
             onReadinessChanged = onReadinessChanged
         )
@@ -205,12 +205,10 @@ class FrameGooglePayButton @JvmOverloads constructor(
     /// creating a charge intent.
     fun configure(
         mode: Mode,
-        googlePayMerchantId: String? = null,
         onResult: (Result) -> Unit,
         onReadinessChanged: ((Boolean) -> Unit)? = null
     ) {
         this.mode = mode
-        this.googlePayMerchantId = googlePayMerchantId
         this.onResult = onResult
         this.onReadinessChanged = onReadinessChanged
 
@@ -223,6 +221,10 @@ class FrameGooglePayButton @JvmOverloads constructor(
     }
 
     private fun checkGooglePayReadiness() {
+        if (FrameNetworking.googlePayMerchantId.isNullOrEmpty()) {
+            setReady(false)
+            return
+        }
         scope.launch {
             val (config, error) = WalletAPI.getGooglePayConfiguration()
             if (config == null || error != null) {
@@ -309,6 +311,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
 
             val (pm, pmError) = PaymentMethodsAPI.createGooglePayPaymentMethod(pmRequest)
             val resolvedPaymentMethod = pm ?: run {
+                reportError(pmError)
                 withContext(Dispatchers.Main) {
                     onResult?.invoke(Result.Failure(pmError?.message ?: "Failed to create payment method"))
                 }
@@ -338,6 +341,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
                             paymentMethodData = null
                         )
                         val (intent, ciError) = ChargeIntentAPI.createChargeIntent(ciRequest)
+                        if (intent == null) reportError(ciError)
                         withContext(Dispatchers.Main) {
                             val id = intent?.id
                             if (id != null) {
@@ -357,6 +361,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
                             sourcePaymentMethodId = resolvedPaymentMethod.id
                         )
                         val (transfer, transferError) = TransfersAPI.createTransfer(transferRequest)
+                        if (transfer == null) reportError(transferError)
                         withContext(Dispatchers.Main) {
                             val id = transfer?.id
                             if (id != null) {
@@ -369,6 +374,16 @@ class FrameGooglePayButton @JvmOverloads constructor(
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Surface a networking failure via the cross-surface toast controller. Server errors emit
+     * the parsed `error_details.message`; transport errors use the generic fallback.
+     */
+    private fun reportError(error: NetworkingError?) {
+        if (error != null) {
+            FrameSnackbarController.emit(error.toastMessage())
         }
     }
 
@@ -459,7 +474,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 }
             })
             put("merchantInfo", JSONObject().apply {
-                googlePayMerchantId?.let { put("merchantId", it) }
+                FrameNetworking.googlePayMerchantId?.let { put("merchantId", it) }
                 put("merchantName", "Frame Payments")
             })
             put("emailRequired", true)

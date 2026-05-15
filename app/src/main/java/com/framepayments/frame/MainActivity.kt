@@ -21,6 +21,7 @@ class MainActivity : ComponentActivity() {
             context = applicationContext,
             secretKey = "INSERT_SANDBOX_SECRET_KEY",
             publishableKey = "INSERT_SANDBOX_PUBLISHABLE_KEY",
+            googlePayMerchantId = "BCR2DN4T_TEST_STUB",
             debug = true
         )
         setContent {

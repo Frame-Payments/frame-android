@@ -47,14 +47,29 @@ object FrameNetworking {
     var apiPublishableKey: String = ""
     var debugMode: Boolean = false
     var isEvervaultConfigured: Boolean = false
+
+    /**
+     * Google Pay merchant identifier, captured at SDK init and read by every Google Pay surface
+     * (FrameGooglePayButton, the bundled checkout, onboarding's wallet attach). Null until set.
+     */
+    var googlePayMerchantId: String? = null
+        private set
+
     private var sonarSessionManager: SonarSessionManager? = null
     private val sdkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private lateinit var applicationContext: Context
 
-    fun initializeWithAPIKey(context: Context, secretKey: String, publishableKey: String, debug: Boolean = false) {
+    fun initializeWithAPIKey(
+        context: Context,
+        secretKey: String,
+        publishableKey: String,
+        googlePayMerchantId: String? = null,
+        debug: Boolean = false,
+    ) {
         apiSecretKey = secretKey
         apiPublishableKey = publishableKey
+        this.googlePayMerchantId = googlePayMerchantId
         debugMode = debug
         applicationContext = context.applicationContext
 

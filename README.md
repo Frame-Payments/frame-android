@@ -40,10 +40,18 @@ import com.framepayments.framesdk.FrameNetworking
 class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        FrameNetworking.initializeWithAPIKey(context = this, key="your_api_key_here")
+        FrameNetworking.initializeWithAPIKey(
+            context = this,
+            secretKey = "sk_your_secret_key_here",
+            publishableKey = "pk_your_publishable_key_here",
+            googlePayMerchantId = "BCR2DN4T...your-merchant-id...", // optional, see Google Pay section
+            debug = false
+        )
     }
 }
 ```
+
+> **Google Pay merchant ID:** Pass it once to `initializeWithAPIKey` and every Frame surface — `FrameGooglePayButton`, `FrameCheckoutView`, the onboarding wallet attach button — picks it up automatically. Skip it if you don't intend to surface Google Pay; the button hides itself when not configured.
 
 ## 📖 Examples
 
@@ -221,20 +229,60 @@ A live custom-theme integration is in [`PlaygroundScreen.kt`](app/src/main/java/
 
 The Frame Android SDK supports Google Pay as a payment method for merchants using FluidPay or Coinflow as their processor.
 
-### Obtaining a Google Pay Merchant ID
+Google Pay setup is a three-part process: get a merchant ID from Google, declare the wallet capability in your `AndroidManifest.xml`, pass the merchant ID to the SDK at init. Once those are done, **let us know** (see [Enabling Google Pay on your account](#enabling-google-pay-on-your-account)) and we'll flip the feature on for your business.
 
-To accept Google Pay payments, you need a Google Pay Merchant ID:
+### 1. Obtain a Google Pay merchant ID
 
-1. Sign up for a [Google Pay & Wallet Console](https://pay.google.com/business/console/) account
-2. Complete the business profile and agree to the Google Pay API Terms of Service
-3. Your **Merchant ID** is displayed on the Business Console home page once approved
-4. Provide this Merchant ID when configuring Google Pay through the [Frame Payments Dashboard](https://framepayments.com)
+1. Sign up for a [Google Pay & Wallet Console](https://pay.google.com/business/console/) account.
+2. Complete the business profile and agree to the Google Pay API Terms of Service.
+3. Your **Merchant ID** (looks like `BCR2DN4T…`) is displayed on the Business Console home page once approved.
 
-### How It Works
+### 2. Declare the Google Pay capability in your manifest
 
-- The SDK automatically detects mobile requests and bypasses domain verification required for web integrations
-- In development/test mode, Google Pay runs in `TEST` environment with example gateway credentials
-- In production, live processor credentials are used automatically based on your merchant configuration
+Add the following inside `<application>` in your app's `AndroidManifest.xml`:
+
+```xml
+<meta-data
+    android:name="com.google.android.gms.wallet.api.enabled"
+    android:value="true" />
+```
+
+Without this entry, the Google Pay button stays hidden on the user's device — the Wallet API is opted-out by default.
+
+### 3. Pass the merchant ID to the SDK at init
+
+`FrameNetworking` is the single source of truth for the Google Pay merchant ID. Pass it once when you initialize the SDK and every Frame surface — `FrameGooglePayButton`, the bundled `FrameCheckoutView`, the onboarding wallet attach button — will use it automatically.
+
+```kotlin
+FrameNetworking.initializeWithAPIKey(
+    context = this,
+    secretKey = "sk_your_secret_key_here",
+    publishableKey = "pk_your_publishable_key_here",
+    googlePayMerchantId = "BCR2DN4T...your-merchant-id..."
+)
+```
+
+### Enabling Google Pay on your account
+
+Once steps 1–3 are complete, contact Frame at [support@framepayments.com](mailto:support@framepayments.com) (or via your [Frame Payments Dashboard](https://framepayments.com)) and we'll enable Google Pay on your account. Google Pay charges won't succeed until this is done on our side.
+
+### How it works
+
+- The SDK automatically detects mobile requests and bypasses the domain verification step required for web integrations.
+- In development/test mode (`debug = true` at init), Google Pay runs in `ENVIRONMENT_TEST` with example gateway credentials.
+- In production, live processor credentials are used automatically based on your merchant configuration.
+
+### Result types
+
+Checkout flows resolve through the shared `FrameResult` sealed class:
+
+```kotlin
+sealed class FrameResult {
+    data class Completed(val id: String) : FrameResult()   // Transfer id for checkout/cart
+    data object Cancelled : FrameResult()
+    data class Failed(val error: Throwable) : FrameResult()
+}
+```
 
 ## 🔒 Privacy & Security
 
