@@ -131,12 +131,11 @@ internal fun AddPaymentMethodScreen(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Google Pay wallet attach button. Only surfaced when the host app provides a
-            // merchant ID via `OnboardingConfig.googlePayMerchantId` — this is the integrator's
-            // explicit opt-in to the wallet flow. The button still gates its own visibility
-            // internally via Google's `isReadyToPay` check + Frame's wallet config.
-            val googlePayMerchantId = viewModel.googlePayMerchantId
-            if (!isPreview && !googlePayMerchantId.isNullOrBlank()) {
+            // Google Pay wallet attach button. The button gates its own visibility internally
+            // via Google's `isReadyToPay` check + Frame's wallet config + the merchant ID stored
+            // on `FrameNetworking` (set once at SDK init). If the merchant ID isn't configured,
+            // the button stays hidden — no host-app opt-in required here.
+            if (!isPreview) {
                 AndroidView(
                     modifier = Modifier.fillMaxWidth(),
                     factory = { ctx -> FrameGooglePayButton(ctx) },
@@ -146,7 +145,6 @@ internal fun AddPaymentMethodScreen(
                                 customerId = null,
                                 accountId = resolvedAccountId
                             ),
-                            googlePayMerchantId = googlePayMerchantId,
                             onResult = { result ->
                                 when (result) {
                                     is FrameGooglePayButton.Result.PaymentMethodCreated -> {
@@ -154,9 +152,9 @@ internal fun AddPaymentMethodScreen(
                                         onBack()
                                     }
                                     is FrameGooglePayButton.Result.Failure -> {
-                                        // Surface failure message via the existing user-error channel.
-                                        // Reuse cardError? slot for visibility — alternatively the VM
-                                        // error flow handles inline display.
+                                        // Transport failures already surfaced via FrameSnackbarController
+                                        // inside the button; non-transport failures stay quiet here
+                                        // since the user can fall through to card entry below.
                                     }
                                     else -> Unit
                                 }

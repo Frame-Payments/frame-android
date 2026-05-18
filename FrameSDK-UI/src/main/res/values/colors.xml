@@ -15,6 +15,8 @@
     <color name="frame_text_primary">#FF000000</color>
     <color name="frame_text_secondary">#FF6B7280</color>
     <color name="frame_error">#FFB00020</color>
+    <color name="frame_toast_background">#FFB00020</color>
+    <color name="frame_toast_text">#FFFFFFFF</color>
     <color name="frame_onboarding_header_background">#FF324D52</color>
     <color name="frame_onboarding_progress_filled_on_brand">#FFFFFFFF</color>
     <color name="frame_onboarding_progress_empty_on_brand">#66FFFFFF</color>
