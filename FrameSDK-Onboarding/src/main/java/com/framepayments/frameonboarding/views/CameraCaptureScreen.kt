@@ -3,7 +3,6 @@ package com.framepayments.frameonboarding.views
 import android.Manifest
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -328,7 +327,7 @@ private fun PermissionDeniedViewPreview() {
 
 private fun createImageFile(context: Context, photoType: PhotoType): File {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-    val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+    val storageDir = File(context.cacheDir, "onboarding_photos").apply { mkdirs() }
     return File.createTempFile(
         "FRAME_${photoType.name}_${timeStamp}_",
         ".jpg",

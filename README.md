@@ -291,6 +291,24 @@ sealed class FrameResult {
 - The SDK is PCI-DSS compliant by design.  
 - You are responsible for handling customer authentication and complying with local regulations (e.g., SCA, PSD2).  
 
+### Backup & device transfer
+
+The SDK persists two SharedPreferences files that should not travel with Auto Backup or device-to-device transfer:
+
+- `config_store_encrypted` — sealed by an AndroidKeyStore master key that stays on the original device. Restoring it elsewhere leaves the SDK unable to decrypt its own config.
+- `sonar_sessions` — server-issued, device-scoped charge-session IDs that become stale on restore.
+
+If your host app sets `android:allowBackup="true"`, reference the SDK's rule files from your `<application>`:
+
+```xml
+<application
+    android:allowBackup="true"
+    android:fullBackupContent="@xml/frame_sdk_backup_rules"
+    android:dataExtractionRules="@xml/frame_sdk_data_extraction_rules">
+```
+
+If you already maintain your own backup rule files, merge the `<exclude>` entries from [`frame_sdk_backup_rules.xml`](FrameSDK/src/main/res/xml/frame_sdk_backup_rules.xml) and [`frame_sdk_data_extraction_rules.xml`](FrameSDK/src/main/res/xml/frame_sdk_data_extraction_rules.xml) into them. If your app uses `android:allowBackup="false"` (like the playground in this repo), no action is needed.
+
 ## 🛠 Support
 
 - [Documentation](https://docs.framepayments.com)  
