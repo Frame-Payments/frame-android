@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    API-31+ backup/transfer exclusions for Frame SDK persistent state.
+    Reference this from your app via
+    android:dataExtractionRules="@xml/frame_sdk_data_extraction_rules"
+    (or merge these entries into your own data-extraction-rules file).
+
+    See frame_sdk_backup_rules.xml for the rationale on each excluded path.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="config_store_encrypted.xml" />
+        <exclude domain="sharedpref" path="sonar_sessions.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="config_store_encrypted.xml" />
+        <exclude domain="sharedpref" path="sonar_sessions.xml" />
+    </device-transfer>
+</data-extraction-rules>

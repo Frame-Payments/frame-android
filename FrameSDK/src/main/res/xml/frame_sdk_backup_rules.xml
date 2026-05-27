@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Pre-API-31 Auto Backup exclusions for Frame SDK persistent state.
+    Reference this from your app via android:fullBackupContent="@xml/frame_sdk_backup_rules"
+    (or merge these entries into your own backup rules file).
+
+    Excluded:
+    - config_store_encrypted: EncryptedSharedPreferences sealed by an AndroidKeyStore master
+      key that is not part of Auto Backup. Restoring this file onto a new device leaves
+      the SDK unable to decrypt its config.
+    - sonar_sessions: server-issued device-scoped session IDs that are stale after restore.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="config_store_encrypted.xml" />
+    <exclude domain="sharedpref" path="sonar_sessions.xml" />
+</full-backup-content>
