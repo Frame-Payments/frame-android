@@ -138,6 +138,29 @@ OnboardingContainerView(
 )
 ```
 
+### Configuring Screen Visibility
+
+`OnboardingConfig` exposes two booleans to control which bookend screens are shown:
+
+| Field | Default | Description |
+|---|---|---|
+| `showIntroScreen` | `true` | Show the "Verify Your Identity" welcome screen before the first step. Set to `false` to skip it and open directly on the first capability step. |
+| `showCompletionScreen` | `true` | Show the "Verification Submitted" confirmation screen after the last step. Set to `false` to complete the flow immediately and finish without the final screen. |
+
+```kotlin
+// Skip both bookend screens — jump straight into the flow and complete silently
+OnboardingContainerView(
+    config = OnboardingConfig(
+        requiredCapabilities = listOf(Capabilities.KYC_PREFILL, Capabilities.BANK_ACCOUNT_VERIFICATION),
+        showIntroScreen = false,
+        showCompletionScreen = false
+    ),
+    onResult = { result ->
+        // fires as soon as the last step is done
+    }
+)
+```
+
 #### Option B — `FrameTheme { ... }` composable (for any Compose tree)
 
 Wrap any Compose UI that hosts SDK Composables — useful when you compose your own checkout flow on top of the SDK's primitives:

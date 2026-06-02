@@ -95,7 +95,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private fun requiredCapabilityApiStrings(): List<String> =
         _requiredCapabilities.value.map { it.apiValue }
 
-    private var _orderedSteps: List<OnboardingStep> = computeOrderedSteps(_requiredCapabilities.value)
+    private var _orderedSteps: List<OnboardingStep> = run {
+        var steps = computeOrderedSteps(_requiredCapabilities.value)
+        if (!config.showIntroScreen) steps = steps.filter { it != OnboardingStep.VerificationWelcome }
+        if (!config.showCompletionScreen) steps = steps.filter { it != OnboardingStep.VerificationSubmitted }
+        steps
+    }
     private var _flowSegments: List<OnboardingFlowSegment> = computeFlowSegments(_requiredCapabilities.value)
 
     val orderedSteps: List<OnboardingStep> get() = _orderedSteps
@@ -396,7 +401,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun updateOnboardingFlow() {
         val caps = _requiredCapabilities.value
-        _orderedSteps = computeOrderedSteps(caps)
+        var steps = computeOrderedSteps(caps)
+        if (!config.showIntroScreen) steps = steps.filter { it != OnboardingStep.VerificationWelcome }
+        if (!config.showCompletionScreen) steps = steps.filter { it != OnboardingStep.VerificationSubmitted }
+        _orderedSteps = steps
         _flowSegments = computeFlowSegments(caps)
         if (navigationState.currentStep !in _orderedSteps) {
             navigationState.goTo(_orderedSteps.first())

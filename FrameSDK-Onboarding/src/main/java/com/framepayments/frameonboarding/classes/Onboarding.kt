@@ -170,6 +170,16 @@ data class OnboardingConfig(
      * Optional theme override applied to all onboarding screens. When null, [FrameTheme.default]
      */
     val theme: FrameTheme? = null,
+    /**
+     * When false, the "Verify Your Identity" intro screen is skipped and the first
+     * capability-driven step is shown immediately. Defaults to true.
+     */
+    val showIntroScreen: Boolean = true,
+    /**
+     * When false, the "Verification Submitted" completion screen is skipped and the flow
+     * completes immediately after the last capability step. Defaults to true.
+     */
+    val showCompletionScreen: Boolean = true,
 )
 
 internal data class PaymentMethodSummary(
