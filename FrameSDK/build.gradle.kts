@@ -1,4 +1,4 @@
-val sdkVersion = "2.1.0"
+val sdkVersion = project.findProperty("SDK_VERSION") as String? ?: "unspecified"
 
 plugins {
     alias(libs.plugins.android.library)
