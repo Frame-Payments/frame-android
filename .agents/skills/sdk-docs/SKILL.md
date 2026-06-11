@@ -88,7 +88,7 @@ Match naming used in `frame-ios` and `frame-js` / `frame-react-native` for equiv
 ## What NOT to document
 
 - Implementation details or internal state invisible to callers.
-- Obvious getters/setters where the property name is fully self-documenting and there are no constraints or side effects to describe.
+- Truly self-evident properties where the name carries the full contract and there are no constraints, side effects, or non-obvious nullability to describe. Note: Detekt enforces `UndocumentedPublicProperty` with no exceptions — use `@Suppress("UndocumentedPublicProperty")` on the declaration if you genuinely need to skip one, and leave a code comment explaining why.
 - Private or internal symbols.
 
 ## Existing symbols

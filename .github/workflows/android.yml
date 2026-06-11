@@ -56,7 +56,7 @@ jobs:
           path: "**/build/reports/detekt/**"
 
   build-and-test:
-    needs: theme-lint
+    needs: [theme-lint, kdoc-lint]
     runs-on: ubuntu-latest
     permissions:
       contents: read
