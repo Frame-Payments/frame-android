@@ -8,6 +8,30 @@ import androidx.compose.ui.platform.LocalContext
 import com.framepayments.framesdk_ui.R
 import androidx.core.content.ContextCompat
 
+/**
+ * Complete color token set for the Frame SDK UI.
+ *
+ * Pass a customized instance to [FrameTheme] to override the default palette across all SDK
+ * components. All token names mirror the iOS FrameColors struct for cross-platform consistency.
+ *
+ * @property primaryButton Background color of primary action buttons.
+ * @property primaryButtonText Text/icon color on top of [primaryButton].
+ * @property secondaryButton Background color of secondary action buttons.
+ * @property secondaryButtonText Text/icon color on top of [secondaryButton].
+ * @property disabledButton Background color of disabled buttons.
+ * @property disabledButtonStroke Stroke color of disabled buttons.
+ * @property disabledButtonText Text color of disabled buttons.
+ * @property surface Background color of card surfaces and input containers.
+ * @property surfaceStroke Border color of card surfaces and input containers.
+ * @property textPrimary Primary body and heading text color.
+ * @property textSecondary Secondary/hint text color.
+ * @property error Color used for validation error messages and indicators.
+ * @property toastBackground Background color of error snackbars.
+ * @property toastText Text color of error snackbars.
+ * @property onboardingHeaderBackground Background color of the onboarding progress header strip.
+ * @property onboardingProgressFilledOnBrand Filled segment color of the onboarding progress bar.
+ * @property onboardingProgressEmptyOnBrand Empty segment color of the onboarding progress bar.
+ */
 @Immutable
 data class FrameColors(
     val primaryButton: Color,
@@ -28,7 +52,17 @@ data class FrameColors(
     val onboardingProgressFilledOnBrand: Color,
     val onboardingProgressEmptyOnBrand: Color,
 ) {
+    /** Factory methods for constructing default [FrameColors] instances from resources. */
     companion object {
+        /**
+         * Builds the default color set from `frame_*` color resources for the given [context].
+         *
+         * Resources defined in `values-night/colors.xml` are resolved automatically when the
+         * device is in dark mode.
+         *
+         * @param context Android context used to resolve color resources.
+         * @return A [FrameColors] instance populated from the SDK's default resource values.
+         */
         fun defaults(context: Context): FrameColors {
             fun c(id: Int) = Color(ContextCompat.getColor(context, id))
             return FrameColors(
@@ -52,6 +86,11 @@ data class FrameColors(
             )
         }
 
+        /**
+         * Composable variant of [defaults] that resolves resources from [LocalContext].
+         *
+         * @return A [FrameColors] instance populated from the SDK's default resource values.
+         */
         @Composable
         fun defaults(): FrameColors = defaults(LocalContext.current)
     }

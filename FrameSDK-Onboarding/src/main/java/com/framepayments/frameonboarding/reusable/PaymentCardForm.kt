@@ -16,6 +16,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
+/**
+ * A card number, expiry, and CVC input form for entering payment card details manually.
+ *
+ * @param cardNumber Current card number value (digits only, no spaces stored internally).
+ * @param onCardNumberChange Called when the card number changes.
+ * @param expiryMonth Two-digit expiry month.
+ * @param expiryYear Two-digit expiry year.
+ * @param onExpiryChange Called when either expiry component changes.
+ * @param cvc Current CVC value.
+ * @param onCvcChange Called when the CVC changes.
+ * @param headerTitle Label displayed above the form when [showHeader] is true.
+ * @param showHeader Whether to show the section header label.
+ */
 @Composable
 fun PaymentCardForm(
     cardNumber: String,

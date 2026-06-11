@@ -12,8 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
-/// Mirrors the "Or" divider used in the checkout layout to separate wallet payment options
-/// (Google Pay) from the card form. Drop between the wallet button and the card section.
+/**
+ * Horizontal "Or" divider used to separate wallet payment options (Google Pay) from the card form.
+ *
+ * @param modifier Layout modifier.
+ * @param label Text displayed between the two divider lines (default: "Or").
+ */
 @Composable
 fun PaymentDivider(
     modifier: Modifier = Modifier,

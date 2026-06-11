@@ -21,8 +21,27 @@ import com.framepayments.framesdk_ui.theme.LocalFrameTheme
  * While [isLoading] is true the label is replaced with a circular spinner and presses are
  * blocked; while !`enabled` the button is disabled and a stroke is drawn around it (matches iOS).
  */
-enum class ContinueButtonStyle { PRIMARY, SECONDARY }
+/** Visual style variant for [ContinueButton]. */
+enum class ContinueButtonStyle {
+    /** Filled primary button. */
+    PRIMARY,
+    /** Outlined secondary button. */
+    SECONDARY
+}
 
+/**
+ * Primary action button shared by checkout and onboarding. 1:1 port of iOS `ContinueButton`.
+ *
+ * While [isLoading] is true the label is replaced with a circular spinner and presses are
+ * blocked; while `!enabled` the button is disabled and a stroke is drawn around it.
+ *
+ * @param text Button label text.
+ * @param style [ContinueButtonStyle.PRIMARY] (filled) or [ContinueButtonStyle.SECONDARY] (outlined).
+ * @param enabled Whether the button accepts presses.
+ * @param isLoading When true, shows a spinner and blocks presses.
+ * @param modifier Layout modifier.
+ * @param onClick Called when the button is tapped.
+ */
 @Composable
 fun ContinueButton(
     text: String = "Continue",

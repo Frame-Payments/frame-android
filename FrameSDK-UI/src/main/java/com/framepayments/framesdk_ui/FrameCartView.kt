@@ -16,6 +16,10 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.toCartAppearance
 import com.framepayments.framesdk_ui.viewmodels.FrameCartViewModel
 
+/**
+ * Displays a scrollable list of cart items with subtotal, shipping, and total summaries, and
+ * a checkout button that invokes the merchant-supplied callback with the final total in cents.
+ */
 class FrameCartView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null

@@ -5,6 +5,12 @@ import android.util.AttributeSet
 import com.framepayments.framesdk_ui.R
 import com.google.android.material.button.MaterialButton
 
+/**
+ * Minimal Google Pay icon button used internally by [FrameGooglePayButton].
+ *
+ * Renders the Google Pay vector asset on a black rounded rectangle with no label text.
+ * Merchants should use [FrameGooglePayButton] for a fully functional Google Pay integration.
+ */
 class GooglePayButton @JvmOverloads constructor(
     ctx: Context, attrs: AttributeSet? = null
 ) : MaterialButton(ctx, attrs, com.google.android.material.R.attr.materialButtonOutlinedStyle) {

@@ -25,6 +25,36 @@ jobs:
       - name: Theme lint (block hardcoded colors / fonts / radii in SDK UI)
         run: ./scripts/theme-lint.sh
 
+  kdoc-lint:
+    # Fails if any public symbol in the SDK modules is missing a KDoc block.
+    # Gate for the KDoc backfill (FRA-3959): new public symbols must be documented from day one.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: KDoc lint (Detekt — UndocumentedPublicClass/Function/Property)
+        run: ./gradlew :FrameSDK:detekt :FrameSDK-UI:detekt :FrameSDK-Onboarding:detekt --stacktrace
+
+      - name: Upload Detekt reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detekt-reports
+          path: "**/build/reports/detekt/**"
+
   build-and-test:
     needs: theme-lint
     runs-on: ubuntu-latest

@@ -8,6 +8,21 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 
+/**
+ * Typography token set for the Frame SDK UI.
+ *
+ * Each slot maps to a Material 3 typography role with weight overrides applied so the visual
+ * hierarchy matches iOS. Pass a customized instance to [FrameTheme] to override fonts globally.
+ *
+ * @property title Large display text style used for screen titles.
+ * @property heading Medium display text style used for section headings.
+ * @property headline Prominent label text used for card headings and emphasized content.
+ * @property body Default body copy text style.
+ * @property bodySmall Smaller body copy used for secondary descriptions.
+ * @property label Semibold label used for form field labels and list item titles.
+ * @property caption Small text used for captions and footnotes.
+ * @property button Semibold text used inside action buttons.
+ */
 @Immutable
 data class FrameFonts(
     val title: TextStyle,
@@ -19,6 +34,7 @@ data class FrameFonts(
     val caption: TextStyle,
     val button: TextStyle,
 ) {
+    /** Factory methods for constructing default [FrameFonts] instances. */
     companion object {
         /**
          * Defaults map to Material 3 typography slots, with weight overrides applied so the

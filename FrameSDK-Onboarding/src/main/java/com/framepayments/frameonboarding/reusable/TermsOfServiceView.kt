@@ -23,6 +23,16 @@ import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
+/**
+ * Legal consent text linking to Frame's Privacy Policy and Terms of Service.
+ *
+ * @param privacyPolicyUrl URL for the Privacy Policy link.
+ * @param termsOfServiceUrl URL for the Terms of Service link.
+ * @param textColor Color for the non-link body text.
+ * @param linkColor Color for the tappable link text.
+ * @param textAlign Alignment of the legal text.
+ * @param padded When true, wraps the view in a rounded surface card.
+ */
 @Composable
 fun TermsOfServiceView(
     privacyPolicyUrl: String = "https://framepayments.com/privacy",

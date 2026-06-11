@@ -11,6 +11,16 @@ import com.framepayments.framesdk_ui.FrameCartAppearance
  * Only fields that map cleanly from the cross-platform theme tokens are populated.
  * Use [overlay] to layer Views-only customizations (titles, sizes, typefaces) on top.
  */
+/**
+ * Converts this [FrameTheme] to a [FrameCartAppearance] and merges an optional [overlay].
+ *
+ * Only token fields that map cleanly from the cross-platform theme are populated. Use [overlay]
+ * to layer Views-only customizations (titles, text sizes, typefaces) on top; overlay values
+ * win on conflict.
+ *
+ * @param overlay Optional appearance whose non-null fields override the theme-derived base.
+ * @return A [FrameCartAppearance] suitable for passing to [com.framepayments.framesdk_ui.FrameCartView.configure].
+ */
 fun FrameTheme.toCartAppearance(overlay: FrameCartAppearance? = null): FrameCartAppearance {
     val base = FrameCartAppearance(
         backgroundColor = colors.surface.toArgb(),

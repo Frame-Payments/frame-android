@@ -13,28 +13,50 @@ import kotlinx.coroutines.flow.update
 
 /**
  * Per-screen view model for the customer information form (first/last name, email, phone, DOB, SSN).
- * 1:1 port of iOS CustomerInformationViewModel.
  *
- * Stores DOB as ISO "YYYY-MM-DD" inside [identity]; the view layer manages three
- * local Compose state strings for month/day/year and syncs them via DateOfBirthFormatter.
+ * Mirrors iOS `CustomerInformationViewModel`. Stores DOB as ISO "YYYY-MM-DD" inside [identity];
+ * the view layer manages three local Compose state strings for month/day/year and syncs them via
+ * [com.framepayments.frameonboarding.validation.DateOfBirthFormatter].
+ *
+ * @param initialIdentity Pre-populated identity request (all fields default to empty strings).
+ * @param initialPhoneCountry Pre-selected phone country (defaults to the device locale country).
  */
 class CustomerInformationFieldVM(
     initialIdentity: CustomerIdentityRequests.CreateCustomerIdentityRequest,
     initialPhoneCountry: PhoneCountrySelection = PhoneCountrySelection.default
 ) {
 
+    /** Identifies each input field in the customer information form. */
     enum class Field {
-        FIRST_NAME, LAST_NAME, EMAIL, PHONE, BIRTH_MONTH, BIRTH_DAY, BIRTH_YEAR, SSN
+        /** First name field. */
+        FIRST_NAME,
+        /** Last name field. */
+        LAST_NAME,
+        /** Email address field. */
+        EMAIL,
+        /** Phone number field. */
+        PHONE,
+        /** Birth month field (1–2 digit numeric string). */
+        BIRTH_MONTH,
+        /** Birth day field (1–2 digit numeric string). */
+        BIRTH_DAY,
+        /** Birth year field (4-digit numeric string). */
+        BIRTH_YEAR,
+        /** Last four digits of SSN field. */
+        SSN
     }
 
     private val _identity = MutableStateFlow(initialIdentity)
+    /** Current identity request state; collect to drive the form UI. */
     val identity: StateFlow<CustomerIdentityRequests.CreateCustomerIdentityRequest> =
         _identity.asStateFlow()
 
     private val _phoneCountry = MutableStateFlow(initialPhoneCountry)
+    /** Currently selected phone country for dial-code prefix display and validation. */
     val phoneCountry: StateFlow<PhoneCountrySelection> = _phoneCountry.asStateFlow()
 
     private val _errors = MutableStateFlow<Map<Field, String>>(emptyMap())
+    /** Current field-level validation errors keyed by [Field]. */
     val errors: StateFlow<Map<Field, String>> = _errors.asStateFlow()
 
     /**
@@ -47,18 +69,39 @@ class CustomerInformationFieldVM(
         return errs[Field.BIRTH_MONTH] ?: errs[Field.BIRTH_DAY] ?: errs[Field.BIRTH_YEAR]
     }
 
+    /**
+     * Applies [transform] to the current [identity] request, replacing it with the result.
+     *
+     * @param transform Pure function that maps the current identity request to an updated one.
+     */
     fun updateIdentity(
         transform: (CustomerIdentityRequests.CreateCustomerIdentityRequest) -> CustomerIdentityRequests.CreateCustomerIdentityRequest
     ) {
         _identity.update(transform)
     }
 
+    /**
+     * Updates the selected phone country to [selection].
+     *
+     * @param selection The [PhoneCountrySelection] chosen by the customer.
+     */
     fun setPhoneCountry(selection: PhoneCountrySelection) {
         _phoneCountry.value = selection
     }
 
+    /**
+     * Returns the current validation error message for [field], or null if the field is valid.
+     *
+     * @param field The field to query.
+     * @return Error string, or null.
+     */
     fun errorFor(field: Field): String? = _errors.value[field]
 
+    /**
+     * Clears the validation error for [field] if one is currently set.
+     *
+     * @param field The field whose error should be cleared.
+     */
     fun clearError(field: Field) {
         if (_errors.value.containsKey(field)) {
             _errors.update { it - field }
@@ -78,6 +121,11 @@ class CustomerInformationFieldVM(
         }
     }
 
+    /**
+     * Validates the current [identity] form and updates [errors] with any failures.
+     *
+     * @return True if all fields pass validation; false if any errors were found.
+     */
     fun validate(): Boolean {
         val next = mutableMapOf<Field, String>()
         val id = _identity.value
@@ -110,6 +158,7 @@ class CustomerInformationFieldVM(
         return next.isEmpty()
     }
 
+    /** Saver factory for use with `rememberSaveable` so customer information survives config change. */
     companion object {
         /** Saver so user typing survives config change (rotation, dark-mode toggle, etc.). */
         val Saver: Saver<CustomerInformationFieldVM, Any> = listSaver(
