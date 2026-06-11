@@ -3,8 +3,11 @@ package com.framepayments.frameonboarding.networking.geocompliance
 import com.framepayments.framesdk.FrameNetworkingEndpoints
 import com.framepayments.framesdk.QueryItem
 
+/** Routing definitions for the Frame geo-compliance API endpoints. */
 sealed class GeocomplianceEndpoints : FrameNetworkingEndpoints {
+    /** Fetches all geofences configured for the merchant account. */
     data object ListGeofences : GeocomplianceEndpoints()
+    /** Fetches the geo-compliance status for a specific account. */
     data class AccountGeoCompliance(val accountId: String) : GeocomplianceEndpoints()
 
     override val endpointURL: String
@@ -19,4 +22,3 @@ sealed class GeocomplianceEndpoints : FrameNetworkingEndpoints {
     override val queryItems: List<QueryItem>?
         get() = null
 }
-

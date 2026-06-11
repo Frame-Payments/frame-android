@@ -1,0 +1,72 @@
+name: Publish SDK Docs
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '[0-9]*'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@b5418f5a58f5fd2eb486dd7efb368fe7be7eae45
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Generate Dokka HTML
+        run: ./gradlew :FrameSDK:dokkaHtml :FrameSDK-UI:dokkaHtml :FrameSDK-Onboarding:dokkaHtml --stacktrace
+
+      - name: Assemble docs site
+        run: |
+          mkdir -p _site/framesdk _site/framesdk-ui _site/framesdk-onboarding
+          cp -r FrameSDK/build/dokka/html/. _site/framesdk/
+          cp -r FrameSDK-UI/build/dokka/html/. _site/framesdk-ui/
+          cp -r FrameSDK-Onboarding/build/dokka/html/. _site/framesdk-onboarding/
+          # Root index redirects to the core SDK docs
+          cat > _site/index.html <<'EOF'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>Frame Android SDK Docs</title>
+          <meta http-equiv="refresh" content="0; url=framesdk/">
+          <a href="framesdk/">Frame Android SDK Docs →</a>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy-docs:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

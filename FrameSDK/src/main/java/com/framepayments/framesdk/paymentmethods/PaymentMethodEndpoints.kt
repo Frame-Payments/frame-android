@@ -3,17 +3,87 @@ package com.framepayments.framesdk.paymentmethods
 import com.framepayments.framesdk.FrameNetworkingEndpoints
 import com.framepayments.framesdk.QueryItem
 
+/**
+ * Defines every HTTP endpoint used by [PaymentMethodsAPI].
+ *
+ * Each case encapsulates the path parameters required to construct the endpoint URL, the HTTP
+ * method, and any query string items. Merchants interact with these indirectly through
+ * [PaymentMethodsAPI] and do not need to instantiate cases directly.
+ */
 sealed class PaymentMethodEndpoints : FrameNetworkingEndpoints {
+
+    /**
+     * Fetches a paginated list of all payment methods.
+     *
+     * @property perPage Number of results to return per page.
+     * @property page 1-based page number to retrieve.
+     */
     data class GetPaymentMethods(val perPage: Int? = null, val page: Int? = null) : PaymentMethodEndpoints()
+
+    /**
+     * Fetches a single payment method by its unique identifier.
+     *
+     * @property paymentMethodId The unique identifier of the payment method to retrieve.
+     */
     data class GetPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
+
+    /**
+     * Fetches all payment methods associated with a specific customer.
+     *
+     * @property customerId The unique identifier of the customer whose payment methods to retrieve.
+     */
     data class GetPaymentMethodsWithCustomer(val customerId: String) : PaymentMethodEndpoints()
+
+    /**
+     * Fetches all payment methods associated with a specific merchant account.
+     *
+     * @property accountId The unique identifier of the account whose payment methods to retrieve.
+     */
     data class GetPaymentMethodsWithAccount(val accountId: String) : PaymentMethodEndpoints()
+
+    /**
+     * Creates a new payment method (card, ACH, or Google Pay).
+     */
     object CreatePaymentMethod : PaymentMethodEndpoints()
+
+    /**
+     * Updates mutable fields on an existing payment method.
+     *
+     * @property paymentMethodId The unique identifier of the payment method to update.
+     */
     data class UpdatePaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
+
+    /**
+     * Attaches a payment method to a customer or merchant account.
+     *
+     * @property paymentMethodId The unique identifier of the payment method to attach.
+     */
     data class AttachPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
+
+    /**
+     * Detaches a payment method from its associated customer or account.
+     *
+     * @property paymentMethodId The unique identifier of the payment method to detach.
+     */
     data class DetachPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
+
+    /**
+     * Blocks a payment method, preventing it from being used for new transactions.
+     *
+     * @property paymentMethodId The unique identifier of the payment method to block.
+     */
     data class BlockPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
+
+    /**
+     * Unblocks a previously blocked payment method, restoring its ability to be used for transactions.
+     *
+     * @property paymentMethodId The unique identifier of the payment method to unblock.
+     */
     data class UnblockPaymentMethodWith(val paymentMethodId: String) : PaymentMethodEndpoints()
+
+    /**
+     * Creates an ACH payment method by exchanging a Plaid public token for a connected bank account.
+     */
     object ConnectPlaidBankAccount : PaymentMethodEndpoints()
 
     override val endpointURL: String

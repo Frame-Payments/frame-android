@@ -19,46 +19,69 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * ViewModel for the checkout surface.
+ *
+ * Holds the observable state for payer details, saved payment methods, field validation errors,
+ * and the in-flight action indicator. Call [loadAccountDetails] once after construction to
+ * pre-fill name/email and load saved cards. Call [checkoutWithSelectedPaymentMethod] to submit.
+ */
 class FrameCheckoutViewModel : ViewModel() {
 
-    // Observable account payment options
     private val _accountPaymentOptions = MutableLiveData<List<FrameObjects.PaymentMethod>?>(null)
+    /** Saved payment methods belonging to the account; null until [loadAccountDetails] completes. */
     val accountPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _accountPaymentOptions
 
-    /// True once `loadAccountDetails` has finished fetching saved payment methods. The view
-    /// defers rendering the new-card section until this flips, so returning users don't see
-    /// the Card/Billing block flash visible before the auto-selection of their first saved method.
     private val _didLoadAccountPaymentMethods = MutableLiveData(false)
+    /**
+     * True once [loadAccountDetails] has finished fetching saved payment methods. The view
+     * defers rendering the new-card section until this flips, so returning users don't see
+     * the Card/Billing block flash visible before auto-selection of their first saved method.
+     */
     val didLoadAccountPaymentMethods: LiveData<Boolean> = _didLoadAccountPaymentMethods
 
-    // Customer-facing fields (payer details entered at checkout)
+    /** Customer's full name entered in the checkout form. */
     val customerName = MutableLiveData("")
+    /** Customer's email address entered in the checkout form. */
     val customerEmail = MutableLiveData("")
+    /** Customer's primary street address entered in the checkout form. */
     val customerAddressLine1 = MutableLiveData("")
+    /** Customer's secondary address line (apartment, suite, etc.) entered in the checkout form. */
     val customerAddressLine2 = MutableLiveData("")
+    /** Customer's city entered in the checkout form. */
     val customerCity = MutableLiveData("")
+    /** Customer's state or province entered in the checkout form. */
     val customerState = MutableLiveData("")
+    /** Customer's selected country from the checkout country picker. */
     var customerCountry: AvailableCountry = AvailableCountries.defaultCountry
+    /** Customer's ZIP or postal code entered in the checkout form. */
     val customerZipCode = MutableLiveData("")
 
-    // Selected payment method (LiveData so the view can react to selection changes).
     private val _selectedAccountPaymentOption = MutableLiveData<FrameObjects.PaymentMethod?>(null)
+    /** The payment method selected from [accountPaymentOptions]; null when entering a new card. */
     val selectedAccountPaymentOption: LiveData<FrameObjects.PaymentMethod?> = _selectedAccountPaymentOption
 
+    /** Sets [selectedAccountPaymentOption] and recomputes [hasUsablePaymentInput]. */
     fun setSelectedAccountPaymentOption(method: FrameObjects.PaymentMethod?) {
         _selectedAccountPaymentOption.value = method
         recomputeUsablePaymentInput()
     }
 
+    /**
+     * Encrypted card data from the Evervault card input. Setting this value recomputes
+     * [hasUsablePaymentInput].
+     */
     var cardData: PaymentCardData = PaymentCardData()
         set(value) {
             field = value
             recomputeUsablePaymentInput()
         }
 
-    /// Clear field errors that only apply to the new-card flow. Called when the user
-    /// selects a saved payment method so stale validation messages don't linger
-    /// behind the collapsed Card/Billing sections.
+    /**
+     * Clears field errors that only apply to the new-card flow. Call when the customer selects
+     * a saved payment method so stale validation messages don't linger behind the collapsed
+     * Card/Billing sections.
+     */
     fun clearNewCardFieldErrors() {
         val current = _fieldErrors.value.orEmpty().toMutableMap()
         current.remove(FieldKey.CARD)
@@ -70,11 +93,11 @@ class FrameCheckoutViewModel : ViewModel() {
         _fieldErrors.value = current
     }
 
-    /**
-     * True when the user has either selected a saved payment method
-     * or entered card details that pass Evervault's potential-validity check.
-     */
     private val _hasUsablePaymentInput = MutableLiveData(false)
+    /**
+     * True when the customer has either selected a saved payment method or entered card details
+     * that pass Evervault's potential-validity check. Drives the pay button's enabled state.
+     */
     val hasUsablePaymentInput: LiveData<Boolean> = _hasUsablePaymentInput
 
     private fun recomputeUsablePaymentInput() {
@@ -84,18 +107,21 @@ class FrameCheckoutViewModel : ViewModel() {
         _hasUsablePaymentInput.postValue(_selectedAccountPaymentOption.value != null || newCardOk)
     }
 
-    // Address mode + per-field errors
+    /** Controls whether the billing address section is required, optional, or hidden. */
     var addressMode: AddressMode = AddressMode.REQUIRED
     private val _fieldErrors = MutableLiveData<Map<FieldKey, ValidationError>>(emptyMap())
+    /** Per-field validation errors surfaced to the UI; empty map when no errors are present. */
     val fieldErrors: LiveData<Map<FieldKey, ValidationError>> = _fieldErrors
 
     // Internal tracking
     private var currentAccountId: String? = null
     internal var amount: Int = 0
 
-    /// True while the checkout submit is in flight. Drives the pay button's disabled state and
-    /// the in-button progress indicator. Re-entrant submit calls bail out immediately.
     private val _isPerformingAction = MutableLiveData(false)
+    /**
+     * True while the checkout submit is in-flight. Drives the pay button's disabled state and
+     * the in-button progress indicator. Re-entrant submit calls bail out immediately.
+     */
     val isPerformingAction: LiveData<Boolean> = _isPerformingAction
 
     /**
@@ -143,12 +169,23 @@ class FrameCheckoutViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Sets or clears the validation error for [key]. Passing `null` for [error] removes the entry.
+     *
+     * @param key The form field whose error state should be updated.
+     * @param error The validation error to display, or null to clear the current error.
+     */
     fun setError(key: FieldKey, error: ValidationError?) {
         val current = _fieldErrors.value.orEmpty().toMutableMap()
         if (error == null) current.remove(key) else current[key] = error
         _fieldErrors.postValue(current)
     }
 
+    /**
+     * Removes the validation error for [key] if one is present; no-op otherwise.
+     *
+     * @param key The form field whose error should be cleared.
+     */
     fun clearError(key: FieldKey) {
         val current = _fieldErrors.value.orEmpty()
         if (!current.containsKey(key)) return
@@ -193,6 +230,16 @@ class FrameCheckoutViewModel : ViewModel() {
         return errors
     }
 
+    /**
+     * Validates inputs and submits the checkout.
+     *
+     * If a saved payment method is selected, the new-card fields are skipped during validation.
+     * Creates the payment method if needed, then creates a Transfer against [currentAccountId].
+     * Emits `null` on validation failure, a missing account id, or a networking error.
+     *
+     * @param saveMethod Whether to persist the new card as a saved payment method (currently unused).
+     * @return [LiveData] that emits the created [Transfer] on success, or null on failure.
+     */
     fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean): LiveData<Transfer?> = liveData(Dispatchers.IO) {
         if (amount == 0) {
             emit(null)

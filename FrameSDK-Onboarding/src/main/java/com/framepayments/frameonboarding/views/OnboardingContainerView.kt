@@ -23,6 +23,18 @@ import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
+/**
+ * Root composable for the Frame onboarding flow.
+ *
+ * Instantiates a [FrameOnboardingViewModel], renders a progress indicator, and routes the
+ * customer through the capability-driven step sequence defined by [OnboardingConfig].  The
+ * active [FrameTheme] is provided to all child composables automatically.
+ *
+ * @param config Onboarding configuration specifying the account, required capabilities, and
+ *   optional theme overrides.
+ * @param onResult Callback invoked with the terminal [OnboardingResult] when the flow
+ *   completes, is cancelled, or fails.
+ */
 @Composable
 fun OnboardingContainerView(
     config: OnboardingConfig,

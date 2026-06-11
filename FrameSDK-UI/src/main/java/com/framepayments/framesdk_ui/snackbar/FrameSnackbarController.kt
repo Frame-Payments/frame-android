@@ -34,8 +34,14 @@ object FrameSnackbarController {
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
+    /** Hot flow of transport-error messages; collect via [observeWithSnackbar] or [SnackbarBridge]. */
     val events: SharedFlow<String> = _events.asSharedFlow()
 
+    /**
+     * Emits [message] to all active observers.
+     *
+     * @param message Human-readable error string to display in a snackbar.
+     */
     fun emit(message: String) {
         _events.tryEmit(message)
     }

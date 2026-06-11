@@ -19,18 +19,36 @@ typealias ProveOtpProvider = suspend () -> String?
 // Closure invoked when Prove auth completes. Receives accountId and verificationId from the service.
 typealias ProveConfirmHandler = suspend (String, String) -> Unit
 
-// User information returned after successful Prove authentication and backend verify.
+/**
+ * User information returned after successful Prove authentication and backend verify.
+ *
+ * @property firstName Customer's first name as returned by Prove identity prefill.
+ * @property lastName Customer's last name as returned by Prove identity prefill.
+ */
 data class ProveUserInfo(
     val firstName: String,
     val lastName: String
 )
 
-// Typed errors for ProveAuthService for use by the UI layer.
+/** Typed errors from [ProveAuthService] for use by the UI layer. */
 sealed class ProveAuthServiceError : Exception() {
-    data class VerifyFailed(val underlying: Throwable) : ProveAuthServiceError()
+    /** The Prove backend verify call failed. */
+    data class VerifyFailed(
+        /** The underlying exception from the verify call. */
+        val underlying: Throwable
+    ) : ProveAuthServiceError()
+    /** The customer cancelled the Prove auth flow. */
     data object Cancelled : ProveAuthServiceError()
-    data class SdkError(val underlying: Throwable) : ProveAuthServiceError()
-    data class Unknown(val underlying: Throwable) : ProveAuthServiceError()
+    /** The Prove SDK itself threw an error. */
+    data class SdkError(
+        /** The underlying exception from the Prove SDK. */
+        val underlying: Throwable
+    ) : ProveAuthServiceError()
+    /** An unknown error occurred. */
+    data class Unknown(
+        /** The underlying exception. */
+        val underlying: Throwable
+    ) : ProveAuthServiceError()
 
     override val message: String?
         get() = when (this) {

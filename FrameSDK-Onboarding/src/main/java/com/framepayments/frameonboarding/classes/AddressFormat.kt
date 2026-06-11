@@ -3,7 +3,15 @@ package com.framepayments.frameonboarding.classes
 import androidx.compose.ui.text.input.KeyboardType
 
 /**
- * Per-country address field format hints. 1:1 port of iOS AddressFormat.
+ * Per-country address field format hints used to configure the billing address form.
+ *
+ * Mirrors iOS `AddressFormat`. Use [AddressFormat.format] to retrieve the format for a
+ * specific country; unknown countries fall back to a generic international format.
+ *
+ * @property stateLabel Localized label for the state/province field (e.g. "State", "Province").
+ * @property postalLabel Localized label for the postal code field (e.g. "Zip Code", "Postcode").
+ * @property postalKeyboard Keyboard type to use for the postal code input field.
+ * @property stateMaxLength Maximum character length for the state field, or null if unconstrained.
  */
 data class AddressFormat(
     val stateLabel: String,
@@ -11,6 +19,7 @@ data class AddressFormat(
     val postalKeyboard: KeyboardType,
     val stateMaxLength: Int?
 ) {
+    /** Factory methods and per-country format table. */
     companion object {
         private val DEFAULT = AddressFormat(
             stateLabel = "State",
@@ -38,6 +47,13 @@ data class AddressFormat(
             "SG" to AddressFormat("Region", "Postal Code", KeyboardType.Number, null)
         )
 
+        /**
+         * Returns the [AddressFormat] for the given country code, falling back to a generic
+         * international format for unsupported countries.
+         *
+         * @param forCountry ISO 3166-1 alpha-2 country code (case-insensitive).
+         * @return The country-specific [AddressFormat], or a generic fallback.
+         */
         fun format(forCountry: String): AddressFormat =
             formats[forCountry.uppercase()] ?: DEFAULT
     }

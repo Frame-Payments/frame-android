@@ -6,12 +6,24 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 
+/**
+ * Immutable design token bundle that drives all Frame SDK UI components.
+ *
+ * Construct a custom instance and pass it to the [FrameTheme] composable or to
+ * [com.framepayments.framesdk_ui.FrameCartView.setTheme] /
+ * [com.framepayments.framesdk_ui.FrameCheckoutView.setTheme] to apply merchant branding.
+ *
+ * @property colors Color token set controlling palette across all SDK surfaces.
+ * @property fonts Typography token set controlling text styles across all SDK surfaces.
+ * @property radii Corner-radius token set controlling shape across all SDK surfaces.
+ */
 @Immutable
 data class FrameTheme(
     val colors: FrameColors,
     val fonts: FrameFonts,
     val radii: FrameRadii,
 ) {
+    /** Factory methods for constructing default [FrameTheme] instances. */
     companion object {
         /**
          * Default theme — pulls colors via [colorResource] (so dark mode "just works" via
@@ -57,6 +69,13 @@ val LocalFrameTheme = staticCompositionLocalOf<FrameTheme> {
     )
 }
 
+/**
+ * Installs [theme] into the composition tree so all nested SDK components read it via
+ * [LocalFrameTheme].
+ *
+ * @param theme Theme to provide to child composables (default: [FrameTheme.default]).
+ * @param content Composable content that receives the theme.
+ */
 @Composable
 fun FrameTheme(
     theme: FrameTheme = FrameTheme.default(),

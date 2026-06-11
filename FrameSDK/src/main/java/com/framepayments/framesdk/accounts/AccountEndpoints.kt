@@ -3,9 +3,13 @@ package com.framepayments.framesdk.accounts
 import com.framepayments.framesdk.FrameNetworkingEndpoints
 import com.framepayments.framesdk.QueryItem
 
+/** Sealed class defining all account API endpoints and their routing metadata. */
 sealed class AccountEndpoints : FrameNetworkingEndpoints {
+    /** Endpoint for creating a new account. */
     object CreateAccount : AccountEndpoints()
+    /** Endpoint for updating an existing account. */
     data class UpdateAccount(val accountId: String) : AccountEndpoints()
+    /** Endpoint for listing accounts with optional filters. */
     data class GetAccounts(
         val status: AccountObjects.AccountStatus? = null,
         val type: AccountObjects.AccountType? = null,
@@ -14,8 +18,11 @@ sealed class AccountEndpoints : FrameNetworkingEndpoints {
         val page: Int? = null,
         val perPage: Int? = null
     ) : AccountEndpoints()
+    /** Endpoint for retrieving a single account by ID. */
     data class GetAccountWith(val accountId: String) : AccountEndpoints()
+    /** Endpoint for deleting an account by ID. */
     data class DeleteAccountWith(val accountId: String) : AccountEndpoints()
+    /** Endpoint for searching accounts by criteria. */
     data class SearchAccounts(
         val email: String? = null,
         val externalId: String? = null,
@@ -24,10 +31,15 @@ sealed class AccountEndpoints : FrameNetworkingEndpoints {
         val createdBefore: String? = null,
         val createdAfter: String? = null
     ) : AccountEndpoints()
+    /** Endpoint for restricting an account from transacting. */
     data class RestrictAccount(val accountId: String) : AccountEndpoints()
+    /** Endpoint for removing a restriction from an account. */
     data class UnrestrictAccount(val accountId: String) : AccountEndpoints()
+    /** Endpoint for obtaining a Plaid Link token for an account. */
     data class GetPlaidLinkToken(val accountId: String, val androidPackageName: String) : AccountEndpoints()
+    /** Endpoint for initiating a phone verification for an account. */
     data class CreatePhoneVerification(val accountId: String) : AccountEndpoints()
+    /** Endpoint for confirming a phone verification with a one-time code. */
     data class ConfirmPhoneVerification(val accountId: String, val verificationId: String) : AccountEndpoints()
 
     override val endpointURL: String

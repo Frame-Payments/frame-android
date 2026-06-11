@@ -29,8 +29,29 @@ import com.framepayments.framesdk_ui.theme.LocalFrameTheme
  * Note: this is a *styled* button. For a fully functional Google Pay flow with charge-intent
  * creation, use [FrameGooglePayButton] instead.
  */
-enum class PaymentButtonOption { GOOGLE }
+/**
+ * Wallet provider options for [FramePaymentButton].
+ *
+ * Only [GOOGLE] is supported on Android; the `APPLE` constant is omitted here to preserve
+ * cross-platform API symmetry without shipping a non-functional option.
+ */
+enum class PaymentButtonOption {
+    /** Renders the Google Pay brand mark. */
+    GOOGLE
+}
 
+/**
+ * Renders a styled wallet-provider button with the brand mark centered on a pill-shaped
+ * black or white background.
+ *
+ * For a fully functional Google Pay flow with charge-intent creation, use
+ * [FrameGooglePayButton] instead.
+ *
+ * @param paymentOption Wallet brand to display (default: [PaymentButtonOption.GOOGLE]).
+ * @param blackButton When true renders a black pill; when false renders a white pill.
+ * @param modifier Modifier applied to the outer button.
+ * @param onClick Called when the customer taps the button.
+ */
 @Composable
 fun FramePaymentButton(
     paymentOption: PaymentButtonOption = PaymentButtonOption.GOOGLE,

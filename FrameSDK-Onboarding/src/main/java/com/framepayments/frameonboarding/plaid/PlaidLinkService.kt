@@ -9,9 +9,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+/** Outcome of a Plaid Link bank account connection flow. */
 sealed class PlaidLinkResult {
-    data class Success(val paymentMethod: FrameObjects.PaymentMethod) : PlaidLinkResult()
-    data class Failure(val error: NetworkingError?) : PlaidLinkResult()
+    /** The bank account was successfully connected and a PaymentMethod was created. */
+    data class Success(
+        /** The PaymentMethod created for the connected bank account. */
+        val paymentMethod: FrameObjects.PaymentMethod
+    ) : PlaidLinkResult()
+    /** The connection failed due to a networking or API error. */
+    data class Failure(
+        /** The underlying error, or null if the cause is unknown. */
+        val error: NetworkingError?
+    ) : PlaidLinkResult()
+    /** The customer dismissed the Plaid Link UI without completing. */
     data object Dismissed : PlaidLinkResult()
 }
 
@@ -25,7 +35,10 @@ sealed class PlaidLinkResult {
  *  3. On Plaid success, call [connectBankAccount]. On dismiss/cancel, call [onDismissed].
  *  4. Observe [isConnecting] for loading state and [result] for final outcome.
  */
-class PlaidLinkService(val accountId: String) {
+class PlaidLinkService(
+    /** The Frame account ID that will own the connected bank account. */
+    val accountId: String
+) {
 
     private val _linkToken = MutableStateFlow<String?>(null)
     val linkToken: StateFlow<String?> = _linkToken.asStateFlow()
@@ -36,6 +49,7 @@ class PlaidLinkService(val accountId: String) {
     private val _result = MutableStateFlow<PlaidLinkResult?>(null)
     val result: StateFlow<PlaidLinkResult?> = _result.asStateFlow()
 
+    /** Fetches a Plaid Link token from the Frame API and stores it in [linkToken]. No-op if already loading or a token exists. */
     suspend fun fetchLinkToken() {
         if (_isConnecting.value || _linkToken.value != null) return
         _isConnecting.value = true
@@ -49,10 +63,12 @@ class PlaidLinkService(val accountId: String) {
         }
     }
 
+    /** Clears the stored link token so a [LaunchedEffect] won't re-fire after the Plaid UI is launched. */
     fun clearLinkToken() {
         _linkToken.value = null
     }
 
+    /** Exchanges the Plaid public token for a Frame PaymentMethod and stores the result in [result]. */
     suspend fun connectBankAccount(
         publicToken: String,
         plaidAccountId: String,
@@ -76,11 +92,13 @@ class PlaidLinkService(val accountId: String) {
         }
     }
 
+    /** Records a [PlaidLinkResult.Dismissed] result when the customer cancels the Plaid Link UI. */
     fun onDismissed() {
         _isConnecting.value = false
         _result.value = PlaidLinkResult.Dismissed
     }
 
+    /** Clears [result] so the UI can reset state after handling the outcome. */
     fun clearResult() {
         _result.value = null
     }

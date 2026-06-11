@@ -23,15 +23,31 @@ import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
+/** Default [URLSessionProtocol] implementation backed by OkHttp. */
 class DefaultURLSession(private val client: OkHttpClient) : URLSessionProtocol {
     override suspend fun execute(request: Request): Response = withContext(Dispatchers.IO) {
         client.newCall(request).execute()
     }
 }
 
+/**
+ * Central SDK singleton. Initialize once with [initializeWithAPIKey] from your `Application.onCreate`
+ * before using any Frame UI component or API client.
+ *
+ * @sample
+ * ```kotlin
+ * FrameNetworking.initializeWithAPIKey(
+ *     context = this,
+ *     secretKey = "sk_test_...",
+ *     publishableKey = "pk_test_...",
+ * )
+ * ```
+ */
 object FrameNetworking {
+    /** Gson instance shared across all SDK API clients. */
     val gson: Gson = Gson()
 
+    /** Shared OkHttp client configured with Frame's standard timeouts. */
     val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .callTimeout(30, TimeUnit.SECONDS)
@@ -40,12 +56,26 @@ object FrameNetworking {
             .writeTimeout(20, TimeUnit.SECONDS)
             .build()
     }
+
+    /** HTTP session used for all suspend-based API calls. Replace in tests to inject a mock. */
     var asyncURLSession: URLSessionProtocol = DefaultURLSession(okHttpClient)
+
+    /** Base URL for all Frame API requests. Defaults to the production endpoint. */
     var mainApiUrl: String = NetworkingConstants.MAIN_API_URL
+
+    /** The current SDK version string, sourced from `BuildConfig`. */
     const val CURRENT_VERSION = BuildConfig.SDK_VERSION
+
+    /** The secret key set during [initializeWithAPIKey]. Used as the Bearer token for most API calls. */
     var apiSecretKey: String = ""
+
+    /** The publishable key set during [initializeWithAPIKey]. Used for client-safe API calls. */
     var apiPublishableKey: String = ""
+
+    /** When `true`, request URLs, request bodies, and response bodies are printed to logcat. */
     var debugMode: Boolean = false
+
+    /** `true` once Evervault has been successfully configured; `false` until then. */
     var isEvervaultConfigured: Boolean = false
 
     /**
@@ -60,6 +90,15 @@ object FrameNetworking {
 
     private lateinit var applicationContext: Context
 
+    /**
+     * Initializes the Frame SDK. Call once from `Application.onCreate` before using any SDK component.
+     *
+     * @param context The application context.
+     * @param secretKey Your Frame secret key (`sk_...`). Keep this key server-side where possible.
+     * @param publishableKey Your Frame publishable key (`pk_...`). Safe to embed in the app.
+     * @param googlePayMerchantId Optional Google Pay merchant identifier. Required to show the Google Pay button in checkout.
+     * @param debug When `true`, API requests and responses are logged to logcat.
+     */
     fun initializeWithAPIKey(
         context: Context,
         secretKey: String,
@@ -117,8 +156,14 @@ object FrameNetworking {
         }
     }
 
+    /** Returns the current Sonar session identifier, or `null` if Sonar has not been initialized. */
     fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()
 
+    /**
+     * Returns the application context stored during [initializeWithAPIKey].
+     *
+     * @throws IllegalStateException if called before [initializeWithAPIKey].
+     */
     fun getContext(): Context {
         check(::applicationContext.isInitialized) { "FrameSDK must be initialized before use" }
         return applicationContext
@@ -152,6 +197,12 @@ object FrameNetworking {
         return applyFrameHeaders(SiftManager.getCachedIPAddress(), usePublishableKey)
     }
 
+    /**
+     * Deserializes [data] from JSON into type [T], or returns `null` on failure.
+     *
+     * @param data Raw JSON bytes from a network response.
+     * @return The deserialized object, or `null` if [data] is null or parsing fails.
+     */
     inline fun <reified T> parseResponse(data: ByteArray?): T? {
         if (data == null) return null
         return try {
@@ -164,6 +215,12 @@ object FrameNetworking {
         }
     }
 
+    /**
+     * Deserializes [data] from a JSON array into a list of [T], or returns `null` on failure.
+     *
+     * @param data Raw JSON bytes from a network response.
+     * @return The deserialized list, or `null` if [data] is null or parsing fails.
+     */
     inline fun <reified T> parseListResponse(data: ByteArray?): List<T>? {
         if (data == null) return null
         return try {
@@ -176,6 +233,13 @@ object FrameNetworking {
         }
     }
 
+    /**
+     * Executes a GET or DELETE request to [endpoint] and returns the raw response bytes.
+     *
+     * @param endpoint The endpoint to call.
+     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @return A pair of (response bytes, error). On success the error is `null`; on failure the bytes may contain an error body.
+     */
     suspend fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
         usePublishableKey: Boolean = false
@@ -222,6 +286,14 @@ object FrameNetworking {
         }
     }
 
+    /**
+     * Executes a POST or PATCH request to [endpoint], serializing [request] as the JSON body.
+     *
+     * @param endpoint The endpoint to call.
+     * @param request Optional request body. Serialized to JSON via Gson.
+     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @return A pair of (response bytes, error).
+     */
     suspend fun performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: Any? = null,
@@ -283,6 +355,14 @@ object FrameNetworking {
         }
     }
 
+    /**
+     * Executes a multipart POST to [endpoint], uploading each [FileUpload] as a form-data part.
+     *
+     * @param endpoint The endpoint to call.
+     * @param filesToUpload One or more document images to include in the upload.
+     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @return A pair of (response bytes, error).
+     */
     suspend fun performMultipartDataTask(
         endpoint: FrameNetworkingEndpoints,
         filesToUpload: List<FileUpload>,
@@ -331,6 +411,14 @@ object FrameNetworking {
         }
     }
 
+    /**
+     * Callback-based multipart POST for callers that cannot use coroutines.
+     *
+     * @param endpoint The endpoint to call.
+     * @param filesToUpload One or more document images to include in the upload.
+     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param completion Called on an OkHttp worker thread with the response bytes and any error.
+     */
     fun performMultipartDataTask(
         endpoint: FrameNetworkingEndpoints,
         filesToUpload: List<FileUpload>,
@@ -376,6 +464,13 @@ object FrameNetworking {
         }
     }
 
+    /**
+     * Callback-based GET/DELETE for callers that cannot use coroutines.
+     *
+     * @param endpoint The endpoint to call.
+     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param completion Called on an OkHttp worker thread with the response bytes and any error.
+     */
     fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
         usePublishableKey: Boolean = false,
@@ -418,6 +513,14 @@ object FrameNetworking {
         }
     }
 
+    /**
+     * Callback-based POST/PATCH for callers that cannot use coroutines.
+     *
+     * @param endpoint The endpoint to call.
+     * @param request Optional request body. Serialized to JSON via Gson.
+     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param completion Called on an OkHttp worker thread with the response bytes and any error.
+     */
     fun <T> performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: T? = null,
@@ -506,6 +609,10 @@ object FrameNetworking {
         return true
     }
 
+    /**
+     * Loads Evervault credentials from secure storage or the Frame API (callback-based variant).
+     * Prefer [ensureEvervaultReadyForCardInputs] from a coroutine when possible.
+     */
     fun configureEvervault() {
         val config: ConfigurationResponses.GetEvervaultConfigurationResponse? =
             SecureConfigurationStorage.retrieve(getContext(), "evervault")

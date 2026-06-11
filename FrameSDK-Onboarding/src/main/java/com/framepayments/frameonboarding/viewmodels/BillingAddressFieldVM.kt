@@ -10,23 +10,45 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-enum class BillingAddressMode { US_ONLY, INTERNATIONAL }
+/**
+ * Controls the validation behavior and available fields in [BillingAddressFieldVM].
+ */
+enum class BillingAddressMode {
+    /** Pins the country to "US" and uses US 5-digit zip validation. */
+    US_ONLY,
+    /** Allows country selection and applies per-country postal code validation. */
+    INTERNATIONAL
+}
 
 /**
  * Per-screen view model for the billing address form.
- * 1:1 port of iOS BillingAddressViewModel.
  *
- * In [BillingAddressMode.US_ONLY] mode the country is pinned to "US" and zip uses
- * the US 5-digit validator. In [BillingAddressMode.INTERNATIONAL] mode the country
- * is selectable and postal code validation uses [OnboardingValidators.validatePostalCode]
- * for the active country.
+ * Mirrors iOS `BillingAddressViewModel`. In [BillingAddressMode.US_ONLY] mode the country is
+ * pinned to "US" and zip uses the US 5-digit validator. In [BillingAddressMode.INTERNATIONAL]
+ * mode the country is selectable and postal code validation uses
+ * [OnboardingValidators.validatePostalCode] for the active country.
+ *
+ * @param initial Pre-populated billing address (country defaults to "US" if blank).
+ * @param mode Validation behavior and country-field visibility mode.
  */
 class BillingAddressFieldVM(
     initial: FrameObjects.BillingAddress,
     val mode: BillingAddressMode
 ) {
 
-    enum class Field { LINE1, CITY, STATE, POSTAL, COUNTRY }
+    /** Identifies each input field in the billing address form. */
+    enum class Field {
+        /** Address line 1 field. */
+        LINE1,
+        /** City field. */
+        CITY,
+        /** State/province field. */
+        STATE,
+        /** Postal/zip code field. */
+        POSTAL,
+        /** Country selection field (only used in [BillingAddressMode.INTERNATIONAL] mode). */
+        COUNTRY
+    }
 
     private val _address = MutableStateFlow(
         when (mode) {
@@ -35,17 +57,35 @@ class BillingAddressFieldVM(
                 if (initial.country.isNullOrBlank()) initial.copy(country = "US") else initial
         }
     )
+    /** Current billing address state; collect to drive the form UI. */
     val address: StateFlow<FrameObjects.BillingAddress> = _address.asStateFlow()
 
     private val _errors = MutableStateFlow<Map<Field, String>>(emptyMap())
+    /** Current field-level validation errors keyed by [Field]. */
     val errors: StateFlow<Map<Field, String>> = _errors.asStateFlow()
 
+    /**
+     * Applies [transform] to the current [address], replacing it with the result.
+     *
+     * @param transform Pure function that maps the current address to an updated address.
+     */
     fun updateAddress(transform: (FrameObjects.BillingAddress) -> FrameObjects.BillingAddress) {
         _address.update(transform)
     }
 
+    /**
+     * Returns the current validation error message for [field], or null if the field is valid.
+     *
+     * @param field The field to query.
+     * @return Error string, or null.
+     */
     fun errorFor(field: Field): String? = _errors.value[field]
 
+    /**
+     * Clears the validation error for [field] if one is currently set.
+     *
+     * @param field The field whose error should be cleared.
+     */
     fun clearError(field: Field) {
         if (_errors.value.containsKey(field)) {
             _errors.update { it - field }
@@ -71,6 +111,7 @@ class BillingAddressFieldVM(
         }
     }
 
+    /** Factory methods for constructing a [BillingAddressFieldVM] and its state [Saver]. */
     companion object {
         /** Saver for use with `rememberSaveable` so user typing survives config change. */
         fun Saver(mode: BillingAddressMode): Saver<BillingAddressFieldVM, Any> =
@@ -102,6 +143,11 @@ class BillingAddressFieldVM(
             )
     }
 
+    /**
+     * Validates the current [address] according to the active [mode] and updates [errors].
+     *
+     * @return True if all required fields pass validation; false if any errors were found.
+     */
     fun validate(): Boolean {
         val next = mutableMapOf<Field, String>()
         val addr = _address.value

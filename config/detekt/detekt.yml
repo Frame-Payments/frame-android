@@ -1,0 +1,74 @@
+# Detekt configuration for frame-android.
+# Only the KDoc documentation rules are active here; all other rule sets are disabled.
+# Run: ./gradlew detekt
+
+build:
+  maxIssues: 0
+
+# Disable every rule set except documentation.
+comments:
+  active: true
+  UndocumentedPublicClass:
+    active: true
+    excludes:
+      - "**/test/**"
+      - "**/androidTest/**"
+      - "**/sonar/**"
+      - "**/fingerprint/**"
+      - "**/managers/**"
+  UndocumentedPublicFunction:
+    active: true
+    excludes:
+      - "**/test/**"
+      - "**/androidTest/**"
+      - "**/sonar/**"
+      - "**/fingerprint/**"
+      - "**/managers/**"
+  UndocumentedPublicProperty:
+    active: true
+    excludes:
+      - "**/test/**"
+      - "**/androidTest/**"
+      - "**/sonar/**"
+      - "**/fingerprint/**"
+      - "**/managers/**"
+      - "**/*Endpoints.kt"
+  # All other comments rules off.
+  AbsentOrWrongFileLicense:
+    active: false
+  CommentOverPrivateFunction:
+    active: false
+  CommentOverPrivateProperty:
+    active: false
+  DeprecatedBlockTag:
+    active: false
+  EndOfSentenceFormat:
+    active: false
+  KDocReferencesNonPublicProperty:
+    active: false
+  OutdatedDocumentation:
+    active: false
+
+complexity:
+  active: false
+
+coroutines:
+  active: false
+
+empty-blocks:
+  active: false
+
+exceptions:
+  active: false
+
+naming:
+  active: false
+
+performance:
+  active: false
+
+potential-bugs:
+  active: false
+
+style:
+  active: false

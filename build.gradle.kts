@@ -5,4 +5,6 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10" apply false
     alias(libs.plugins.android.library) apply false
     id("com.vanniktech.maven.publish") apply false
+    alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.dokka) apply false
 }

@@ -17,42 +17,82 @@ internal class OnboardingState(
     }
 }
 
+/**
+ * Represents a single screen in the onboarding flow.
+ *
+ * The ordered list of steps is computed from [OnboardingConfig.requiredCapabilities] by
+ * [com.framepayments.frameonboarding.classes.computeOrderedSteps]. Merchants do not create
+ * or navigate steps directly; use [OnboardingContainerView] to drive the full flow.
+ */
 sealed class OnboardingStep {
+    /** Introductory welcome screen shown at the start of the flow. */
     data object VerificationWelcome: OnboardingStep()
+    /** Screen collecting personal information and phone/DOB for identity verification. */
     data object VerifyIdentification: OnboardingStep()
+    /** Screen checking the customer's geolocation for compliance. */
     data object GeolocationVerification: OnboardingStep()
+    /** Screen listing the customer's existing payment methods for selection. */
     data object SelectPaymentMethod: OnboardingStep()
+    /** Screen for adding a new payment Card. */
     data object AddPaymentMethod: OnboardingStep()
+    /** Screen for verifying the customer's Card via 3D Secure. */
     data object VerifyYourCard: OnboardingStep()
+    /** Screen listing the customer's existing payout methods for selection. */
     data object SelectPayoutMethod: OnboardingStep()
+    /** Screen for adding a new payout method (bank account). */
     data object AddPayoutMethod: OnboardingStep()
+    /** Screen listing the identity documents the customer must upload. */
     data object UploadDocumentsList: OnboardingStep()
+    /** Camera screen for capturing the front of the customer's ID document. */
     data object CaptureFrontPhoto: OnboardingStep()
+    /** Review screen for the front-of-ID photo before submission. */
     data object ReviewFrontPhoto: OnboardingStep()
+    /** Camera screen for capturing the back of the customer's ID document. */
     data object CaptureBackPhoto: OnboardingStep()
+    /** Review screen for the back-of-ID photo before submission. */
     data object ReviewBackPhoto: OnboardingStep()
+    /** Camera screen for capturing a selfie. */
     data object CaptureSelfie: OnboardingStep()
+    /** Review screen for the selfie photo before submission. */
     data object ReviewSelfie: OnboardingStep()
+    /** Confirmation screen shown after all verification data has been submitted. */
     data object VerificationSubmitted: OnboardingStep()
 }
 
 /**
- * Capability names matching the backend and iOS FrameObjects.Capabilities.
- * Used to drive which onboarding steps are shown (capability-driven flow).
+ * Capability names that map to backend capability strings and drive the onboarding step sequence.
+ *
+ * Pass one or more values in [OnboardingConfig.requiredCapabilities] to control which screens
+ * appear in the flow. Mirrors the iOS `FrameObjects.Capabilities` enum.
+ *
+ * @property apiValue The backend API string for this capability.
  */
 enum class Capabilities(val apiValue: String) {
+    /** Know Your Customer identity verification. */
     KYC("kyc"),
+    /** KYC with pre-filled identity data via Prove. */
     KYC_PREFILL("kyc_prefill"),
+    /** Phone number verification via OTP. */
     PHONE_VERIFICATION("phone_verification"),
+    /** Creator Shield fraud-protection capability. */
     CREATOR_SHIELD("creator_shield"),
+    /** Card ownership verification via 3D Secure. */
     CARD_VERIFICATION("card_verification"),
+    /** Ability to send funds from a Card. */
     CARD_SEND("card_send"),
+    /** Ability to receive funds to a Card. */
     CARD_RECEIVE("card_receive"),
+    /** Billing address verification. */
     ADDRESS_VERIFICATION("address_verification"),
+    /** Bank account ownership verification. */
     BANK_ACCOUNT_VERIFICATION("bank_account_verification"),
+    /** Ability to send funds from a bank account. */
     BANK_ACCOUNT_SEND("bank_account_send"),
+    /** Ability to receive funds to a bank account. */
     BANK_ACCOUNT_RECEIVE("bank_account_receive"),
+    /** Geographic compliance check. */
     GEO_COMPLIANCE("geo_compliance"),
+    /** Age verification (must be 18+). */
     AGE_VERIFICATION("age_verification")
 }
 
@@ -151,34 +191,53 @@ internal fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this)
     OnboardingStep.VerificationSubmitted -> OnboardingFlowSegment.VERIFICATION_SUBMITTED
 }
 
+/**
+ * Terminal outcome of an onboarding session delivered to the merchant via the
+ * [OnboardingContainerView] `onResult` callback.
+ */
 sealed class OnboardingResult {
+    /** The customer dismissed the onboarding flow before completing all steps. */
     data object Cancelled : OnboardingResult()
+
+    /**
+     * All required capability steps were completed.
+     *
+     * @property paymentMethodId ID of the payment method added during the flow, if any.
+     */
     data class Completed(
         val paymentMethodId: String?
     ) : OnboardingResult()
+
+    /**
+     * The onboarding flow encountered an unrecoverable error.
+     *
+     * @property message Human-readable description of the failure.
+     */
     data class Failed(val message: String) : OnboardingResult()
 }
 
+/**
+ * Configuration for an onboarding session passed to [OnboardingContainerView].
+ *
+ * @property accountId Pre-existing Frame account ID to resume onboarding for, or null to create
+ *   a new account during the flow.
+ * @property requiredCapabilities Capabilities the customer must satisfy; determines which
+ *   onboarding steps are shown.
+ * @property skipInitNetwork When true, suppresses network calls during ViewModel init (for
+ *   Compose previews and design tools).
+ * @property theme Optional [FrameTheme] applied to all onboarding screens. Defaults to
+ *   [FrameTheme.default] when null.
+ * @property showIntroScreen When false, the "Verify Your Identity" welcome screen is omitted
+ *   and the first capability-driven step is shown immediately.
+ * @property showCompletionScreen When false, the "Verification Submitted" screen is omitted
+ *   and the flow completes immediately after the last capability step.
+ */
 data class OnboardingConfig(
     val accountId: String? = null,
     val requiredCapabilities: List<Capabilities> = emptyList(),
-    /**
-     * When true, [FrameOnboardingViewModel] skips network work in `init` (Compose Preview / design tools).
-     */
     val skipInitNetwork: Boolean = false,
-    /**
-     * Optional theme override applied to all onboarding screens. When null, [FrameTheme.default]
-     */
     val theme: FrameTheme? = null,
-    /**
-     * When false, the "Verify Your Identity" intro screen is skipped and the first
-     * capability-driven step is shown immediately. Defaults to true.
-     */
     val showIntroScreen: Boolean = true,
-    /**
-     * When false, the "Verification Submitted" completion screen is skipped and the flow
-     * completes immediately after the last capability step. Defaults to true.
-     */
     val showCompletionScreen: Boolean = true,
 )
 
@@ -195,6 +254,15 @@ internal enum class PhotoType {
     SELFIE
 }
 
+/**
+ * Mutable draft state for the manual card entry form used when Evervault UI is unavailable.
+ *
+ * @property cardNumber Raw card number digits as entered by the customer.
+ * @property expiryMonth Two-digit expiration month (e.g. "01").
+ * @property expiryYear Two- or four-digit expiration year (e.g. "26" or "2026").
+ * @property cvc Three- or four-digit card security code.
+ * @property useForPayouts When true, the customer intends to use this card for payouts as well.
+ */
 data class PaymentCardDraft(
     val cardNumber: String = "",
     val expiryMonth: String = "",
@@ -203,6 +271,13 @@ data class PaymentCardDraft(
     val useForPayouts: Boolean = false
 )
 
+/**
+ * Mutable draft state for the ACH bank account form.
+ *
+ * @property routingNumber US 9-digit ABA routing number.
+ * @property accountNumber Bank account number (4–17 digits).
+ * @property accountTypeLabel Human-readable account type selected by the customer ("Checking" or "Savings").
+ */
 data class BankAccountDraft(
     val routingNumber: String = "",
     val accountNumber: String = "",

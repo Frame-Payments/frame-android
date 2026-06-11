@@ -32,6 +32,11 @@ import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk_ui.viewmodels.FrameCheckoutViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
+/**
+ * Full-screen checkout surface that collects customer information, billing address, and card
+ * details, then creates a Transfer against the supplied account and reports the outcome via
+ * [onResult].
+ */
 class FrameCheckoutView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -44,6 +49,7 @@ class FrameCheckoutView @JvmOverloads constructor(
     )
     private val viewModel: FrameCheckoutViewModel
 
+    /** Callback invoked with the terminal [FrameResult] once the checkout completes, is cancelled, or fails. */
     var onResult: ((FrameResult) -> Unit)? = null
 
     /**

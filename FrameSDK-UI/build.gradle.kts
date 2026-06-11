@@ -3,6 +3,8 @@ plugins {
     kotlin("android") version "2.2.10"
     id("org.jetbrains.kotlin.plugin.compose") version "2.2.10"
     id("com.vanniktech.maven.publish")
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.dokka)
 }
 
 android {
@@ -99,6 +101,16 @@ mavenPublishing {
 
     publishToMavenCentral(automaticRelease = true)
     signAllPublications()
+}
+
+detekt {
+    config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+    source.setFrom("src/main/java")
+    autoCorrect = false
+}
+
+tasks.named("dokkaHtml") {
+    outputs.upToDateWhen { false }
 }
 
 // CI: print per-test pass/fail names instead of the silent default. Helps surface

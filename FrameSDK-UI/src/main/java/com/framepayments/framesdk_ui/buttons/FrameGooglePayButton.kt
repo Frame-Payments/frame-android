@@ -81,31 +81,65 @@ class FrameGooglePayButton @JvmOverloads constructor(
      * Callers infer the resource type from the owner they passed in.
      */
     sealed class Owner {
-        data class Customer(val id: String) : Owner()
-        data class Account(val id: String) : Owner()
+        /** A customer-scoped owner; Google Pay charges produce a ChargeIntent. */
+        data class Customer(
+            /** The customer id (e.g. `cus_...`) that will own the ChargeIntent. */
+            val id: String
+        ) : Owner()
+        /** An account-scoped owner; Google Pay charges produce a Transfer. */
+        data class Account(
+            /** The account id (e.g. `acc_...`) that will own the Transfer. */
+            val id: String
+        ) : Owner()
     }
 
+    /** Outcome of a Google Pay flow initiated by [FrameGooglePayButton]. */
     sealed class Result {
         /**
          * Charge mode: payment authorized and the downstream resource was created.
          * `id` is a ChargeIntent id when the owner was [Owner.Customer], or a Transfer id
          * when the owner was [Owner.Account].
          */
-        data class Success(val id: String) : Result()
+        data class Success(
+            /** The id of the created ChargeIntent or Transfer, depending on [Owner] type. */
+            val id: String
+        ) : Result()
         /** AddToOwner mode: wallet card was attached to the customer/account as a PaymentMethod. */
-        data class PaymentMethodCreated(val paymentMethod: FrameObjects.PaymentMethod) : Result()
+        data class PaymentMethodCreated(
+            /** The PaymentMethod that was created and attached. */
+            val paymentMethod: FrameObjects.PaymentMethod
+        ) : Result()
+        /** The Google Pay flow encountered an error; [message] contains a human-readable description. */
         data class Failure(val message: String) : Result()
+        /** The customer dismissed the Google Pay sheet without completing payment. */
         data object Cancelled : Result()
     }
 
-    /// Drives whether the Google Pay sheet completes by creating a charge (`Charge`) or
-    /// only attaches the wallet card to the customer/account (`AddToOwner`).
+    /**
+     * Controls whether the Google Pay sheet completes by creating a charge or only attaches
+     * the wallet card to the customer/account without charging.
+     */
     sealed class Mode {
+        /**
+         * Completes payment immediately by creating a ChargeIntent (customer owner) or
+         * Transfer (account owner).
+         *
+         * @property amountCents The amount to charge in cents.
+         * @property currencyCode ISO 4217 currency code (default: "USD").
+         * @property owner The customer or account that will own the resulting resource.
+         */
         data class Charge(
             val amountCents: Int,
             val currencyCode: String = "USD",
             val owner: Owner
         ) : Mode()
+
+        /**
+         * Attaches the wallet card as a PaymentMethod without creating a charge.
+         *
+         * @property customerId Customer to attach the payment method to, or null.
+         * @property accountId Account to attach the payment method to, or null.
+         */
         data class AddToOwner(val customerId: String?, val accountId: String?) : Mode()
     }
 
@@ -200,9 +234,16 @@ class FrameGooglePayButton @JvmOverloads constructor(
         )
     }
 
-    /// Mode-aware configure. Use `Mode.Charge` for the existing checkout flow or
-    /// `Mode.AddToOwner` to attach a Google Pay wallet card to a customer/account without
-    /// creating a charge intent.
+    /**
+     * Configures the button with an explicit [Mode] and checks Google Pay readiness.
+     *
+     * Use [Mode.Charge] for the standard checkout flow or [Mode.AddToOwner] to attach a
+     * Google Pay wallet card to a customer/account without creating a charge.
+     *
+     * @param mode The payment mode controlling charge vs. attach-only behavior.
+     * @param onResult Callback invoked with the payment result.
+     * @param onReadinessChanged Optional callback invoked when Google Pay availability changes.
+     */
     fun configure(
         mode: Mode,
         onResult: (Result) -> Unit,
