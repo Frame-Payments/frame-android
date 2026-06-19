@@ -9,6 +9,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingStep
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
+import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
@@ -48,6 +50,21 @@ fun OnboardingContainerView(
     val savedPaymentMethods by viewModel.savedPaymentMethods.collectAsState()
     val savedPayoutMethods by viewModel.savedPayoutMethods.collectAsState()
     val context = LocalContext.current
+
+    // Authenticate every onboarding request with the onboarding-session token while this flow is
+    // on screen, scoping it to a single account. Only flows that began a session end one, so a
+    // legacy (clientSecret == null) flow leaves the configured keys untouched.
+    DisposableEffect(config.clientSecret) {
+        val clientSecret = config.clientSecret
+        if (clientSecret != null) {
+            FrameNetworking.beginOnboardingSession(clientSecret)
+        }
+        onDispose {
+            if (clientSecret != null) {
+                FrameNetworking.endOnboardingSession()
+            }
+        }
+    }
 
     LaunchedEffect(result) {
         when (val r = result) {

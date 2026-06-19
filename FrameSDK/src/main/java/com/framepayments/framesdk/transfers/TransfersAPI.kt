@@ -1,5 +1,6 @@
 package com.framepayments.framesdk.transfers
 
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 
@@ -18,7 +19,7 @@ object TransfersAPI {
      */
     suspend fun createTransfer(request: TransferRequests.CreateTransferRequest): Pair<Transfer?, NetworkingError?> {
         val endpoint = TransferEndpoints.CreateTransfer
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<Transfer>(data) }, error)
     }
 
@@ -30,7 +31,7 @@ object TransfersAPI {
      */
     suspend fun getTransferWith(transferId: String): Pair<Transfer?, NetworkingError?> {
         val endpoint = TransferEndpoints.GetTransferWith(transferId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<Transfer>(data) }, error)
     }
 
@@ -43,7 +44,7 @@ object TransfersAPI {
      */
     suspend fun getTransfers(perPage: Int? = null, page: Int? = null): Pair<TransferResponses.ListTransfersResponse?, NetworkingError?> {
         val endpoint = TransferEndpoints.GetTransfers(perPage = perPage, page = page)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<TransferResponses.ListTransfersResponse>(data) }, error)
     }
 
@@ -58,7 +59,7 @@ object TransfersAPI {
     fun createTransfer(request: TransferRequests.CreateTransferRequest, completionHandler: (Transfer?, NetworkingError?) -> Unit) {
         val endpoint = TransferEndpoints.CreateTransfer
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<Transfer>(data) }, error)
         }
     }
@@ -72,7 +73,7 @@ object TransfersAPI {
     fun getTransferWith(transferId: String, completionHandler: (Transfer?, NetworkingError?) -> Unit) {
         val endpoint = TransferEndpoints.GetTransferWith(transferId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<Transfer>(data) }, error)
         }
     }
@@ -87,7 +88,7 @@ object TransfersAPI {
     fun getTransfers(perPage: Int?, page: Int?, completionHandler: (TransferResponses.ListTransfersResponse?, NetworkingError?) -> Unit) {
         val endpoint = TransferEndpoints.GetTransfers(perPage = perPage, page = page)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<TransferResponses.ListTransfersResponse>(data) }, error)
         }
     }

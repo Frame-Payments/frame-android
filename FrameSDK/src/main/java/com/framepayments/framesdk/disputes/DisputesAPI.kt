@@ -1,5 +1,6 @@
 package com.framepayments.framesdk.disputes
 
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 
@@ -20,7 +21,7 @@ object DisputesAPI {
         request: DisputeRequests.UpdateDisputeRequest
     ): Pair<Dispute?, NetworkingError?> {
         val endpoint = DisputeEndpoints.UpdateDispute(disputeId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<Dispute>(data) }, error)
     }
 
@@ -32,7 +33,7 @@ object DisputesAPI {
      */
     suspend fun getDispute(disputeId: String): Pair<Dispute?, NetworkingError?> {
         val endpoint = DisputeEndpoints.GetDispute(disputeId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<Dispute>(data) }, error)
     }
 
@@ -57,7 +58,7 @@ object DisputesAPI {
             perPage = perPage,
             page = page
         )
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(
             data?.let { FrameNetworking.parseResponse<DisputeResponses.ListDisputesResponse>(data) },
             error
@@ -77,7 +78,7 @@ object DisputesAPI {
         completionHandler: (Dispute?, NetworkingError?) -> Unit
     ) {
         val endpoint = DisputeEndpoints.UpdateDispute(disputeId)
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<Dispute>(data) }, error)
         }
     }
@@ -90,7 +91,7 @@ object DisputesAPI {
      */
     fun getDispute(disputeId: String, completionHandler: (Dispute?, NetworkingError?) -> Unit) {
         val endpoint = DisputeEndpoints.GetDispute(disputeId)
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<Dispute>(data) }, error)
         }
     }
@@ -117,7 +118,7 @@ object DisputesAPI {
             perPage = perPage,
             page = page
         )
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(
                 data?.let { FrameNetworking.parseResponse<DisputeResponses.ListDisputesResponse>(data) },
                 error

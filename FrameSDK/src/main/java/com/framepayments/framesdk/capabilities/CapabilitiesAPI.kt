@@ -1,5 +1,6 @@
 package com.framepayments.framesdk.capabilities
 
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 
@@ -52,7 +53,7 @@ object CapabilitiesAPI {
     suspend fun getCapabilityWith(accountId: String, name: String): Pair<CapabilityObjects.Capability?, NetworkingError?> {
         if (accountId.isEmpty() || name.isEmpty()) return Pair(null, null)
         val endpoint = CapabilityEndpoints.GetCapabilityWith(accountId, name)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<CapabilityObjects.Capability>(it) }, error)
     }
 
@@ -67,7 +68,7 @@ object CapabilitiesAPI {
     suspend fun disableCapabilityWith(accountId: String, name: String): Pair<CapabilityObjects.Capability?, NetworkingError?> {
         if (accountId.isEmpty() || name.isEmpty()) return Pair(null, null)
         val endpoint = CapabilityEndpoints.DisableCapabilityWith(accountId, name)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<CapabilityObjects.Capability>(it) }, error)
     }
 
@@ -115,7 +116,7 @@ object CapabilitiesAPI {
     fun getCapabilityWith(accountId: String, name: String, completionHandler: (CapabilityObjects.Capability?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty() || name.isEmpty()) return completionHandler(null, null)
         val endpoint = CapabilityEndpoints.GetCapabilityWith(accountId, name)
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<CapabilityObjects.Capability>(it) }, error)
         }
     }
@@ -131,7 +132,7 @@ object CapabilitiesAPI {
     fun disableCapabilityWith(accountId: String, name: String, completionHandler: (CapabilityObjects.Capability?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty() || name.isEmpty()) return completionHandler(null, null)
         val endpoint = CapabilityEndpoints.DisableCapabilityWith(accountId, name)
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<CapabilityObjects.Capability>(it) }, error)
         }
     }

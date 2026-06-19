@@ -1,4 +1,5 @@
 package com.framepayments.framesdk.refunds
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 
@@ -19,7 +20,7 @@ object RefundsAPI {
      */
     suspend fun createRefund(request: RefundRequests.CreateRefundRequest): Pair<Refund?, NetworkingError?> {
         val endpoint = RefundEndpoints.CreateRefund
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
     }
 
@@ -34,7 +35,7 @@ object RefundsAPI {
      */
     suspend fun getRefunds(chargeId: String?, chargeIntentId: String?, perPage: Int?, page : Int?): Pair<RefundResponses.ListRefundsResponse?, NetworkingError?> {
         val endpoint = RefundEndpoints.GetRefunds(chargeId = chargeId, chargeIntentId = chargeIntentId, perPage = perPage, page = page)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<RefundResponses.ListRefundsResponse>(data) }, error)
     }
 
@@ -46,7 +47,7 @@ object RefundsAPI {
      */
     suspend fun getRefundWith(refundId: String): Pair<Refund?, NetworkingError?> {
         val endpoint = RefundEndpoints.GetRefundWith(refundId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
     }
 
@@ -61,7 +62,7 @@ object RefundsAPI {
     fun createRefund(request: RefundRequests.CreateRefundRequest, completionHandler: (Refund?, NetworkingError?) -> Unit) {
         val endpoint = RefundEndpoints.CreateRefund
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
         }
     }
@@ -78,7 +79,7 @@ object RefundsAPI {
     fun getRefunds(chargeId: String?, chargeIntentId: String?, perPage: Int?, page : Int?, completionHandler: (RefundResponses.ListRefundsResponse?, NetworkingError?) -> Unit) {
         val endpoint = RefundEndpoints.GetRefunds(chargeId = chargeId, chargeIntentId = chargeIntentId, perPage = perPage, page = page)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<RefundResponses.ListRefundsResponse>(data) }, error)
         }
     }
@@ -92,7 +93,7 @@ object RefundsAPI {
     fun getRefundWith(refundId: String, completionHandler: (Refund?, NetworkingError?) -> Unit) {
         val endpoint = RefundEndpoints.GetRefundWith(refundId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<Refund>(data) }, error)
         }
     }

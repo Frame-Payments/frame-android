@@ -1,6 +1,7 @@
 package com.framepayments.framesdk.invoices
 
 import com.framepayments.framesdk.EmptyRequest
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 
@@ -16,7 +17,7 @@ object InvoicesAPI {
      */
     suspend fun createInvoice(request: InvoiceRequests.CreateInvoiceRequest): Pair<Invoice?, NetworkingError?> {
         val endpoint = InvoiceEndpoints.CreateInvoice
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<Invoice>(data) }
         return Pair(decodedResponse, error)
@@ -31,7 +32,7 @@ object InvoicesAPI {
      */
     suspend fun updateInvoice(invoiceId: String, request: InvoiceRequests.UpdateInvoiceRequest): Pair<Invoice?, NetworkingError?> {
         val endpoint = InvoiceEndpoints.UpdateInvoice(invoiceId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<Invoice>(data) }, error)
     }
 
@@ -47,7 +48,7 @@ object InvoicesAPI {
      */
     suspend fun getInvoices(page: Int? = null, perPage: Int? = null, customer: String? = null, account: String? = null, status: InvoiceStatus? = null): Pair<InvoiceResponses.ListInvoicesResponse?, NetworkingError?> {
         val endpoint = InvoiceEndpoints.GetInvoices(perPage = perPage, page = page, customer = customer, account = account, status = status)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<InvoiceResponses.ListInvoicesResponse>(data) }, error)
     }
 
@@ -59,7 +60,7 @@ object InvoicesAPI {
      */
     suspend fun getInvoiceWith(invoiceId: String): Pair<Invoice?, NetworkingError?> {
         val endpoint = InvoiceEndpoints.GetInvoiceWith(invoiceId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<Invoice>(data) }
         return Pair(decodedResponse, error)
@@ -73,7 +74,7 @@ object InvoicesAPI {
      */
     suspend fun deleteInvoice(invoiceId: String): Pair<InvoiceResponses.DeletedInvoiceResponse?, NetworkingError?> {
         val endpoint = InvoiceEndpoints.DeleteInvoice(invoiceId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<InvoiceResponses.DeletedInvoiceResponse>(data) }, error)
     }
 
@@ -85,7 +86,7 @@ object InvoicesAPI {
      */
     suspend fun issueInvoice(invoiceId: String): Pair<Invoice?, NetworkingError?> {
         val endpoint = InvoiceEndpoints.IssueInvoice(invoiceId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret)
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<Invoice>(data) }
         return Pair(decodedResponse, error)
@@ -102,7 +103,7 @@ object InvoicesAPI {
     fun createInvoice(request: InvoiceRequests.CreateInvoiceRequest, completionHandler: (Invoice?, NetworkingError?) -> Unit) {
         val endpoint = InvoiceEndpoints.CreateInvoice
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<Invoice>(data) }
             completionHandler(decodedResponse, error)
         }
@@ -118,7 +119,7 @@ object InvoicesAPI {
     fun updateInvoice(invoiceId: String, request: InvoiceRequests.UpdateInvoiceRequest, completionHandler: (Invoice?, NetworkingError?) -> Unit) {
         val endpoint = InvoiceEndpoints.UpdateInvoice(invoiceId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<Invoice>(data) }, error)
         }
     }
@@ -136,7 +137,7 @@ object InvoicesAPI {
     fun getInvoices(page: Int? = null, perPage: Int? = null, customer: String? = null, account: String? = null, status: InvoiceStatus? = null, completionHandler: (InvoiceResponses.ListInvoicesResponse?, NetworkingError?) -> Unit) {
         val endpoint = InvoiceEndpoints.GetInvoices(perPage = perPage, page = page, customer = customer, account = account, status = status)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<InvoiceResponses.ListInvoicesResponse>(data) }, error)
         }
     }
@@ -150,7 +151,7 @@ object InvoicesAPI {
     fun getInvoiceWith(invoiceId: String, completionHandler: (Invoice?, NetworkingError?) -> Unit) {
         val endpoint = InvoiceEndpoints.GetInvoiceWith(invoiceId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<Invoice>(data) }, error)
         }
     }
@@ -164,7 +165,7 @@ object InvoicesAPI {
     fun deleteInvoice(invoiceId: String, completionHandler: (InvoiceResponses.DeletedInvoiceResponse?, NetworkingError?) -> Unit) {
         val endpoint = InvoiceEndpoints.DeleteInvoice(invoiceId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<InvoiceResponses.DeletedInvoiceResponse>(data) }, error)
         }
     }
@@ -178,7 +179,7 @@ object InvoicesAPI {
     fun issueInvoice(invoiceId: String, completionHandler: (Invoice?, NetworkingError?) -> Unit) {
         val endpoint = InvoiceEndpoints.IssueInvoice(invoiceId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<Invoice>(data) }, error)
         }
     }

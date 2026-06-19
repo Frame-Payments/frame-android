@@ -1,6 +1,7 @@
 package com.framepayments.framesdk.accounts
 
 import com.framepayments.framesdk.EmptyRequest
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.managers.SiftManager
@@ -17,7 +18,7 @@ object AccountsAPI {
      */
     suspend fun createAccount(request: AccountRequests.CreateAccountRequest): Pair<AccountObjects.Account?, NetworkingError?> {
         val endpoint = AccountEndpoints.CreateAccount
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
         decodedResponse?.let {
             val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
@@ -36,7 +37,7 @@ object AccountsAPI {
     suspend fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest): Pair<AccountObjects.Account?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.UpdateAccount(accountId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
     }
 
@@ -60,7 +61,7 @@ object AccountsAPI {
         perPage: Int? = null
     ): Pair<AccountResponses.ListAccountsResponse?, NetworkingError?> {
         val endpoint = AccountEndpoints.GetAccounts(status = status, type = type, externalId = externalId, includeDisabled = includeDisabled, page = page, perPage = perPage)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountResponses.ListAccountsResponse>(it) }, error)
     }
 
@@ -74,7 +75,7 @@ object AccountsAPI {
     suspend fun getAccountWith(accountId: String, forTesting: Boolean = false): Pair<AccountObjects.Account?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.GetAccountWith(accountId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
         if (!forTesting) {
             decodedResponse?.let {
@@ -94,7 +95,7 @@ object AccountsAPI {
     suspend fun deleteAccountWith(accountId: String): Pair<AccountObjects.Account?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.DeleteAccountWith(accountId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
     }
 
@@ -121,7 +122,7 @@ object AccountsAPI {
             email = email, externalId = externalId, type = type,
             status = status, createdBefore = createdBefore, createdAfter = createdAfter
         )
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountResponses.SearchAccountsResponse>(it) }, error)
     }
 
@@ -134,7 +135,7 @@ object AccountsAPI {
     suspend fun restrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.RestrictAccount(accountId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
     }
 
@@ -147,7 +148,7 @@ object AccountsAPI {
     suspend fun unrestrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.UnrestrictAccount(accountId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
     }
 
@@ -160,7 +161,7 @@ object AccountsAPI {
     suspend fun createPhoneVerification(accountId: String): Pair<AccountObjects.PhoneVerification?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.CreatePhoneVerification(accountId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.PhoneVerification>(it) }, error)
     }
 
@@ -175,7 +176,7 @@ object AccountsAPI {
     suspend fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest): Pair<AccountObjects.PhoneVerification?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.ConfirmPhoneVerification(accountId, verificationId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.PhoneVerification>(it) }, error)
     }
 
@@ -202,7 +203,7 @@ object AccountsAPI {
      */
     fun createAccount(request: AccountRequests.CreateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit) {
         val endpoint = AccountEndpoints.CreateAccount
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
             decodedResponse?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
@@ -222,7 +223,7 @@ object AccountsAPI {
     fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.UpdateAccount(accountId)
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
         }
     }
@@ -248,7 +249,7 @@ object AccountsAPI {
         completionHandler: (AccountResponses.ListAccountsResponse?, NetworkingError?) -> Unit
     ) {
         val endpoint = AccountEndpoints.GetAccounts(status = status, type = type, externalId = externalId, includeDisabled = includeDisabled, page = page, perPage = perPage)
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountResponses.ListAccountsResponse>(it) }, error)
         }
     }
@@ -262,7 +263,7 @@ object AccountsAPI {
     fun getAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.GetAccountWith(accountId)
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
             decodedResponse?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
@@ -281,7 +282,7 @@ object AccountsAPI {
     fun deleteAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.DeleteAccountWith(accountId)
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
         }
     }
@@ -310,7 +311,7 @@ object AccountsAPI {
             email = email, externalId = externalId, type = type,
             status = status, createdBefore = createdBefore, createdAfter = createdAfter
         )
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountResponses.SearchAccountsResponse>(it) }, error)
         }
     }
@@ -324,7 +325,7 @@ object AccountsAPI {
     fun restrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.RestrictAccount(accountId)
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
         }
     }
@@ -338,7 +339,7 @@ object AccountsAPI {
     fun unrestrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.UnrestrictAccount(accountId)
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
         }
     }
@@ -352,7 +353,7 @@ object AccountsAPI {
     fun createPhoneVerification(accountId: String, completionHandler: (AccountObjects.PhoneVerification?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.CreatePhoneVerification(accountId)
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountObjects.PhoneVerification>(it) }, error)
         }
     }
@@ -368,7 +369,7 @@ object AccountsAPI {
     fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest, completionHandler: (AccountObjects.PhoneVerification?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.ConfirmPhoneVerification(accountId, verificationId)
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<AccountObjects.PhoneVerification>(it) }, error)
         }
     }

@@ -1,6 +1,7 @@
 package com.framepayments.framesdk.productphases
 
 import com.framepayments.framesdk.subscriptionphases.SubscriptionPhase
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 
@@ -23,7 +24,7 @@ object ProductPhasesAPI {
      */
     suspend fun createProductPhase(productId: String, request: ProductPhaseRequest.CreateProductPhaseRequest): Pair<SubscriptionPhase?, NetworkingError?> {
         val endpoint = ProductPhaseEndpoints.CreateProductPhase(productId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
     }
 
@@ -37,7 +38,7 @@ object ProductPhasesAPI {
      */
     suspend fun updateProductPhase(productId: String, phaseId: String, request: ProductPhaseRequest.UpdateProductPhaseRequest): Pair<SubscriptionPhase?, NetworkingError?> {
         val endpoint = ProductPhaseEndpoints.UpdateProductPhase(productId, phaseId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
     }
 
@@ -50,7 +51,7 @@ object ProductPhasesAPI {
      */
     suspend fun getProductPhaseWith(productId: String, phaseId: String): Pair<SubscriptionPhase?, NetworkingError?> {
         val endpoint = ProductPhaseEndpoints.GetProductPhaseWith(productId, phaseId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(FrameNetworking.parseResponse<SubscriptionPhase>(data), error)
     }
 
@@ -62,7 +63,7 @@ object ProductPhasesAPI {
      */
     suspend fun getProductPhases(productId: String): Pair<ListProductPhaseResponse?, NetworkingError?> {
         val endpoint = ProductPhaseEndpoints.GetProductPhases(productId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(FrameNetworking.parseResponse<ListProductPhaseResponse>(data), error)
     }
 
@@ -75,7 +76,7 @@ object ProductPhasesAPI {
      */
     suspend fun bulkUpdateProductPhases(productId: String, request: ProductPhaseRequest.BulkUpdateProductPhaseRequest) : Pair<ListProductPhaseResponse?, NetworkingError?> {
         val endpoint = ProductPhaseEndpoints.BulkUpdateProductPhases(productId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(FrameNetworking.parseResponse<ListProductPhaseResponse>(data), error)
     }
 
@@ -88,7 +89,7 @@ object ProductPhasesAPI {
      */
     suspend fun deleteProductPhaseWith(productId: String, phaseId: String): NetworkingError? {
         val endpoint = ProductPhaseEndpoints.DeleteProductPhase(productId, phaseId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return error
     }
 
@@ -104,7 +105,7 @@ object ProductPhasesAPI {
     fun createProductPhase(productId: String, request: ProductPhaseRequest.CreateProductPhaseRequest, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
         val endpoint = ProductPhaseEndpoints.CreateProductPhase(productId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
         }
     }
@@ -120,7 +121,7 @@ object ProductPhasesAPI {
     fun updateProductPhase(productId: String, phaseId: String, request: ProductPhaseRequest.UpdateProductPhaseRequest, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
         val endpoint = ProductPhaseEndpoints.UpdateProductPhase(productId, phaseId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
         }
     }
@@ -135,7 +136,7 @@ object ProductPhasesAPI {
     fun getProductWith(productId: String, phaseId: String, completionHandler: (SubscriptionPhase?, NetworkingError?) -> Unit) {
         val endpoint = ProductPhaseEndpoints.GetProductPhaseWith(productId, phaseId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<SubscriptionPhase>(data) }, error)
         }
     }
@@ -149,7 +150,7 @@ object ProductPhasesAPI {
     fun getProducts(productId: String, completionHandler: (ListProductPhaseResponse?, NetworkingError?) -> Unit) {
         val endpoint = ProductPhaseEndpoints.GetProductPhases(productId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ListProductPhaseResponse>(data) }, error)
         }
     }
@@ -164,7 +165,7 @@ object ProductPhasesAPI {
     fun bulkUpdateProductPhases(productId: String, request: ProductPhaseRequest.BulkUpdateProductPhaseRequest, completionHandler: (ListProductPhaseResponse?, NetworkingError?) -> Unit) {
         val endpoint = ProductPhaseEndpoints.BulkUpdateProductPhases(productId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ListProductPhaseResponse>(data) }, error)
         }
     }
@@ -179,7 +180,7 @@ object ProductPhasesAPI {
     fun deleteProductPhaseWith(productId: String, phaseId: String, completionHandler: (NetworkingError?) -> Unit) {
         val endpoint = ProductPhaseEndpoints.DeleteProductPhase(productId, phaseId)
 
-        FrameNetworking.performDataTask(endpoint) { _, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { _, error ->
             completionHandler(error)
         }
     }

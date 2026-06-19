@@ -1,6 +1,7 @@
 package com.framepayments.framesdk.customers
 
 import com.framepayments.framesdk.EmptyRequest
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
@@ -22,7 +23,7 @@ object CustomersAPI {
      */
     suspend fun createCustomer(request: CustomersRequests.CreateCustomerRequest): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.CreateCustomer
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
         return Pair(decodedResponse, error)
@@ -37,7 +38,7 @@ object CustomersAPI {
      */
     suspend fun updateCustomer(customerId: String, request: CustomersRequests.UpdateCustomerRequest): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.UpdateCustomer(customerId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
     }
 
@@ -50,7 +51,7 @@ object CustomersAPI {
      */
     suspend fun getCustomers(page: Int? = null, perPage: Int? = null): Pair<CustomersResponses.ListCustomersResponse?, NetworkingError?> {
         val endpoint = CustomerEndpoints.GetCustomers(perPage = perPage, page = page)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data) }, error)
     }
 
@@ -62,7 +63,7 @@ object CustomersAPI {
      */
     suspend fun getCustomerWith(customerId: String): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.GetCustomerWith(customerId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
 
         val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
         return Pair(decodedResponse, error)
@@ -76,7 +77,7 @@ object CustomersAPI {
      */
     suspend fun searchCustomers(request: CustomersRequests.SearchCustomersRequest): Pair<List<FrameObjects.Customer>?, NetworkingError?> {
         val endpoint = CustomerEndpoints.SearchCustomers(request.q, request.email, request.createdAfter, request.page, request.perPage)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data)?.data }, error)
     }
 
@@ -88,7 +89,7 @@ object CustomersAPI {
      */
     suspend fun deleteCustomer(customerId: String): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.DeleteCustomer(customerId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
     }
 
@@ -100,7 +101,7 @@ object CustomersAPI {
      */
     suspend fun blockCustomerWith(customerId: String): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.BlockCustomerWith(customerId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
     }
 
@@ -112,7 +113,7 @@ object CustomersAPI {
      */
     suspend fun unblockCustomerWith(customerId: String): Pair<FrameObjects.Customer?, NetworkingError?> {
         val endpoint = CustomerEndpoints.UnblockCustomerWith(customerId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
     }
 
@@ -127,7 +128,7 @@ object CustomersAPI {
     fun createCustomer(request: CustomersRequests.CreateCustomerRequest, completionHandler: (FrameObjects.Customer?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.CreateCustomer
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
             completionHandler(decodedResponse, error)
         }
@@ -143,7 +144,7 @@ object CustomersAPI {
     fun updateCustomer(customerId: String, request: CustomersRequests.UpdateCustomerRequest, completionHandler: (FrameObjects.Customer?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.UpdateCustomer(customerId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
         }
     }
@@ -158,7 +159,7 @@ object CustomersAPI {
     fun getCustomers(page: Int? = null, perPage: Int? = null, completionHandler: (CustomersResponses.ListCustomersResponse?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.GetCustomers(perPage = perPage, page = page)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data) }, error)
         }
     }
@@ -172,7 +173,7 @@ object CustomersAPI {
     fun getCustomerWith(customerId: String, completionHandler: (FrameObjects.Customer?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.GetCustomerWith(customerId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }
             completionHandler(decodedResponse, error)
         }
@@ -187,7 +188,7 @@ object CustomersAPI {
     fun searchCustomers(request: CustomersRequests.SearchCustomersRequest, completionHandler: (List<FrameObjects.Customer>?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.SearchCustomers(request.q, request.email, request.createdAfter, request.page, request.perPage)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<CustomersResponses.ListCustomersResponse>(data)?.data }, error)
         }
     }
@@ -201,7 +202,7 @@ object CustomersAPI {
     fun deleteCustomer(customerId: String, completionHandler: (FrameObjects.Customer?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.DeleteCustomer(customerId)
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
         }
     }
@@ -215,7 +216,7 @@ object CustomersAPI {
     fun blockCustomerWith(customerId: String, completionHandler: (FrameObjects.Customer?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.BlockCustomerWith(customerId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
         }
     }
@@ -229,7 +230,7 @@ object CustomersAPI {
     fun unblockCustomerWith(customerId: String, completionHandler: (FrameObjects.Customer?, NetworkingError?) -> Unit) {
         val endpoint = CustomerEndpoints.UnblockCustomerWith(customerId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.Customer>(data) }, error)
         }
     }

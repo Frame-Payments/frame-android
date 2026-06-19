@@ -221,6 +221,9 @@ sealed class OnboardingResult {
  *
  * @property accountId Pre-existing Frame account ID to resume onboarding for, or null to create
  *   a new account during the flow.
+ * @property clientSecret Onboarding-session token (`onb_sess_…`) minted by your backend. When
+ *   provided, every onboarding request is authenticated with it, scoping the flow to a single
+ *   account. Leave null only for legacy integrations that authenticate via the configured keys.
  * @property requiredCapabilities Capabilities the customer must satisfy; determines which
  *   onboarding steps are shown.
  * @property skipInitNetwork When true, suppresses network calls during ViewModel init (for
@@ -234,6 +237,7 @@ sealed class OnboardingResult {
  */
 data class OnboardingConfig(
     val accountId: String? = null,
+    val clientSecret: String? = null,
     val requiredCapabilities: List<Capabilities> = emptyList(),
     val skipInitNetwork: Boolean = false,
     val theme: FrameTheme? = null,
