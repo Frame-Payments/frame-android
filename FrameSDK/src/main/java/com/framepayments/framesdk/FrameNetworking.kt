@@ -239,6 +239,15 @@ object FrameNetworking {
      * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your backend.
      */
     fun beginOnboardingSession(clientSecret: String) {
+        if (!clientSecret.startsWith("onb_sess_")) {
+            Log.w(
+                "FrameSDK",
+                "⚠️ Frame: beginOnboardingSession was called with a token that is not an onboarding-session " +
+                    "token (onb_sess_…). Onboarding requests authenticate with this value verbatim, so a publishable " +
+                    "key, secret key, or charge-intent client secret will not scope the flow to an account and may be " +
+                    "rejected. Mint the token from your backend via POST /v1/onboarding_sessions."
+            )
+        }
         onboardingSessionToken = clientSecret
     }
 

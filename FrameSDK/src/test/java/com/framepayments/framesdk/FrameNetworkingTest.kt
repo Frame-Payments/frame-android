@@ -146,6 +146,17 @@ class FrameNetworkingTest {
     }
 
     @Test
+    fun beginOnboardingSessionStillAppliesNonPrefixedToken() = runBlocking {
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
+
+        FrameNetworking.beginOnboardingSession("pk_wrong_token")
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"))
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer pk_wrong_token", recorded.getHeader("Authorization"))
+    }
+
+    @Test
     fun endOnboardingSessionRestoresPublishableKey() = runBlocking {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
 

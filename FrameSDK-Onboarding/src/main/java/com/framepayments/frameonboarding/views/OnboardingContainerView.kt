@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.views
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -58,6 +59,13 @@ fun OnboardingContainerView(
         val clientSecret = config.clientSecret
         if (clientSecret != null) {
             FrameNetworking.beginOnboardingSession(clientSecret)
+        } else {
+            Log.w(
+                "FrameSDK",
+                "⚠️ Frame: onboarding launched without OnboardingConfig.clientSecret. Requests will fall back to " +
+                    "the configured pk_/sk_ keys, which are not scoped to a single account. Mint an onboarding-session " +
+                    "token from your backend (POST /v1/onboarding_sessions) and pass it as OnboardingConfig.clientSecret."
+            )
         }
         onDispose {
             if (clientSecret != null) {
