@@ -52,6 +52,7 @@ fun PlaygroundScreen(
     viewModel: ContentViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val onboardingClientSecret by viewModel.onboardingClientSecret.collectAsState()
     val plaidService by viewModel.plaidService.collectAsState()
     val plaidMessage by viewModel.plaidMessage.collectAsState()
     val plaidToken by remember(plaidService) {
@@ -113,6 +114,10 @@ fun PlaygroundScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             OnboardingContainerView(
                 config = OnboardingConfig(
+                    // The onb_sess_… token minted from the configured sk_ (demo/testing only). In
+                    // production your backend mints this (POST /v1/onboarding_sessions) and passes
+                    // it in as the clientSecret, scoping every onboarding request to one account.
+                    clientSecret = onboardingClientSecret,
                     requiredCapabilities = listOf(
                         Capabilities.KYC_PREFILL,
                         Capabilities.CARD_VERIFICATION,
@@ -154,7 +159,13 @@ fun PlaygroundScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            PlaygroundButton(text = "Show Onboarding Flow") { showOnboarding = true }
+            PlaygroundButton(text = "Show Onboarding Flow") {
+                // Demo/testing only: mint an onboarding-session token (onb_sess_…) from the
+                // configured sk_ before launching. In production your backend mints this token and
+                // hands it to the app as the clientSecret — see ContentViewModel.
+                viewModel.mintOnboardingClientSecret()
+                showOnboarding = true
+            }
             PlaygroundButton(
                 text = if (isConnectingPlaid) "Connecting to Plaid…" else "Test Plaid Link",
                 enabled = !isConnectingPlaid,

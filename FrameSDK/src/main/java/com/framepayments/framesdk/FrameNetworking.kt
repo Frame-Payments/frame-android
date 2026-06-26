@@ -110,6 +110,7 @@ object FrameNetworking {
     @Volatile private var hasWarnedAboutPublishableKeyMisuse = false
     @Volatile private var hasWarnedAboutSecretKeyConfig = false
     @Volatile private var hasWarnedAboutSecretKeyRequest = false
+    @Volatile private var hasWarnedAboutMissingPublishableKey = false
 
     /**
      * The active onboarding-session token (`onb_sess_…`), or null when no onboarding flow is in
@@ -260,16 +261,28 @@ object FrameNetworking {
         if (auth is FrameAuthMode.ClientSecret) return auth.token
         onboardingSessionToken?.let { return it }
         return when (auth) {
-            is FrameAuthMode.ClientSecret -> auth.token
-            is FrameAuthMode.Publishable -> apiPublishableKey.ifEmpty { apiSecretKey }
+            is FrameAuthMode.Publishable -> {
+                if (apiPublishableKey.isEmpty()) {
+                    warnOnce(
+                        ::hasWarnedAboutMissingPublishableKey,
+                        "⚠️ Frame: a client-safe request was made but no publishable key (pk_) is configured. Call initializeWithAPIKey(...) first."
+                    )
+                }
+                // Return the (possibly empty) publishable key rather than silently substituting the
+                // secret key — a missing pk_ must never cause sk_ to leave the device on a client-safe call.
+                apiPublishableKey
+            }
             is FrameAuthMode.Secret -> {
                 warnOnce(::hasWarnedAboutSecretKeyRequest, secretKeyWarning("used to authenticate a request from the app"))
                 apiSecretKey
             }
+            // Unreachable: handled by the early return above. Kept so the compiler enforces
+            // exhaustiveness over FrameAuthMode instead of falling through a silent `else`.
+            is FrameAuthMode.ClientSecret -> auth.token
         }
     }
 
-    private fun Request.Builder.applyFrameHeaders(ip: String?, auth: FrameAuthMode = FrameAuthMode.Publishable): Request.Builder {
+    private fun Request.Builder.applyFrameHeaders(ip: String?, auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {
         header("Authorization", "Bearer ${bearerToken(auth)}")
         header("User-Agent", "Android/$CURRENT_VERSION")
         ip?.let { header("ip_address", it) }
@@ -282,12 +295,12 @@ object FrameNetworking {
      * [initializeWithAPIKey]. The first request after a cold launch goes out without
      * `ip_address`; later requests pick up the header once the cache is populated.
      */
-    private fun Request.Builder.withFrameHeaders(auth: FrameAuthMode = FrameAuthMode.Publishable): Request.Builder {
+    private fun Request.Builder.withFrameHeaders(auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {
         return applyFrameHeaders(SiftManager.getCachedIPAddress(), auth)
     }
 
     /** Same cached-IP behavior as [withFrameHeaders]; this overload is called from OkHttp's worker pool. */
-    private fun Request.Builder.withFrameHeadersOnWorkerThread(auth: FrameAuthMode = FrameAuthMode.Publishable): Request.Builder {
+    private fun Request.Builder.withFrameHeadersOnWorkerThread(auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {
         return applyFrameHeaders(SiftManager.getCachedIPAddress(), auth)
     }
 
@@ -336,7 +349,7 @@ object FrameNetworking {
      */
     suspend fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
-        auth: FrameAuthMode = FrameAuthMode.Publishable
+        auth: FrameAuthMode = FrameAuthMode.Secret
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -391,7 +404,7 @@ object FrameNetworking {
     suspend fun performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: Any? = null,
-        auth: FrameAuthMode = FrameAuthMode.Publishable
+        auth: FrameAuthMode = FrameAuthMode.Secret
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -460,7 +473,7 @@ object FrameNetworking {
     suspend fun performMultipartDataTask(
         endpoint: FrameNetworkingEndpoints,
         filesToUpload: List<FileUpload>,
-        auth: FrameAuthMode = FrameAuthMode.Publishable
+        auth: FrameAuthMode = FrameAuthMode.Secret
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -516,7 +529,7 @@ object FrameNetworking {
     fun performMultipartDataTask(
         endpoint: FrameNetworkingEndpoints,
         filesToUpload: List<FileUpload>,
-        auth: FrameAuthMode = FrameAuthMode.Publishable,
+        auth: FrameAuthMode = FrameAuthMode.Secret,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = mainApiUrl.trimEnd('/')
@@ -567,7 +580,7 @@ object FrameNetworking {
      */
     fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
-        auth: FrameAuthMode = FrameAuthMode.Publishable,
+        auth: FrameAuthMode = FrameAuthMode.Secret,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = mainApiUrl.trimEnd('/')
@@ -618,7 +631,7 @@ object FrameNetworking {
     fun <T> performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: T? = null,
-        auth: FrameAuthMode = FrameAuthMode.Publishable,
+        auth: FrameAuthMode = FrameAuthMode.Secret,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
         val baseUrl = mainApiUrl.trimEnd('/')

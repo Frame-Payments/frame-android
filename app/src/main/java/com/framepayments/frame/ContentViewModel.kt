@@ -9,6 +9,8 @@ import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
 import com.framepayments.framesdk.customers.CustomersAPI
+import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
+import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
 import com.framepayments.framesdk.refunds.Refund
 import com.framepayments.framesdk.refunds.RefundsAPI
@@ -42,6 +44,14 @@ class ContentViewModel : ViewModel() {
 
     private val _plaidMessage = MutableStateFlow<PlaidMessage?>(null)
     val plaidMessage: StateFlow<PlaidMessage?> = _plaidMessage.asStateFlow()
+
+    /**
+     * The onboarding-session token (`onb_sess_…`) minted for the demo flow, or `null` until one is
+     * minted (or if minting failed). Passed to `OnboardingConfig.clientSecret` so the flow is scoped
+     * to a single account.
+     */
+    private val _onboardingClientSecret = MutableStateFlow<String?>(null)
+    val onboardingClientSecret: StateFlow<String?> = _onboardingClientSecret.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -77,6 +87,37 @@ class ContentViewModel : ViewModel() {
     private suspend fun loadRefunds() {
         val (response, _) = RefundsAPI.getRefunds(chargeId = null, chargeIntentId = null, perPage = 50, page = 1)
         _uiState.value = _uiState.value.copy(refunds = response?.data ?: emptyList())
+    }
+
+    /**
+     * Demo/testing only: mints an onboarding-session token (`onb_sess_…`) for the first available
+     * account so the example app can exercise the onboarding flow end-to-end.
+     *
+     * This is **not** the production path. Creating an onboarding session is a server-only operation
+     * that requires your secret key (`sk_`). Production integrations mint the token from their
+     * backend (`POST /v1/onboarding_sessions`) and pass it to `OnboardingConfig.clientSecret`. The
+     * example app does it inline only because it is configured with an `sk_`.
+     */
+    @Suppress("DEPRECATION")
+    fun mintOnboardingClientSecret() {
+        viewModelScope.launch {
+            val (accountsResponse, _) = AccountsAPI.getAccounts(perPage = 1, page = 1)
+            val accountId = accountsResponse?.data?.firstOrNull()?.id
+            if (accountId == null) {
+                _onboardingClientSecret.value = null
+                return@launch
+            }
+            val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(
+                accountId = accountId,
+                steps = listOf(
+                    OnboardingSessionRequests.OnboardingSessionStep.ID_VERIFICATION,
+                    OnboardingSessionRequests.OnboardingSessionStep.GEO_COMPLIANCE,
+                    OnboardingSessionRequests.OnboardingSessionStep.PAYMENT_METHOD,
+                )
+            )
+            val (session, _) = OnboardingSessionsAPI.createOnboardingSession(request)
+            _onboardingClientSecret.value = session?.clientSecret
+        }
     }
 
     fun startPlaidLink() {

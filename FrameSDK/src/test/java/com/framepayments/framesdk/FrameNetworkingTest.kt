@@ -101,7 +101,9 @@ class FrameNetworkingTest {
     }
 
     @Test
-    fun publishableKeyUsedAsBearerTokenByDefault() = runBlocking {
+    fun secretKeyUsedAsBearerTokenByDefault() = runBlocking {
+        // The transport layer defaults to Secret so a forgotten auth argument fails safe to
+        // server-only; client-safe endpoints opt in explicitly with FrameAuthMode.Publishable.
         val body = """{"ok":true}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(body))
 
@@ -109,7 +111,35 @@ class FrameNetworkingTest {
         FrameNetworking.performDataTask(endpoint)
 
         val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer sk_test_key", recorded.getHeader("Authorization"))
+    }
+
+    @Test
+    fun publishableKeyUsedWhenAuthIsPublishable() = runBlocking {
+        val body = """{"ok":true}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(body))
+
+        val endpoint = TestEndpoint("GET", "/test")
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+
+        val recorded = mockWebServer.takeRequest()
         assertEquals("Bearer pk_test_key", recorded.getHeader("Authorization"))
+    }
+
+    @Test
+    fun missingPublishableKeyDoesNotFallBackToSecretKey() = runBlocking {
+        // A missing pk_ must never cause the secret key to leave the device on a client-safe call.
+        FrameNetworking.apiPublishableKey = ""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
+
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Publishable)
+
+        val recorded = mockWebServer.takeRequest()
+        // Empty publishable key → empty bearer (OkHttp trims the trailing space). Crucially, the
+        // secret key is NOT substituted.
+        val authHeader = recorded.getHeader("Authorization")
+        assertEquals("Bearer", authHeader?.trim())
+        assertFalse(authHeader!!.contains("sk_test_key"))
     }
 
     @Test
@@ -117,7 +147,7 @@ class FrameNetworkingTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
 
         FrameNetworking.beginOnboardingSession("onb_sess_abc123")
-        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"))
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Publishable)
 
         val recorded = mockWebServer.takeRequest()
         assertEquals("Bearer onb_sess_abc123", recorded.getHeader("Authorization"))
@@ -150,7 +180,7 @@ class FrameNetworkingTest {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
 
         FrameNetworking.beginOnboardingSession("pk_wrong_token")
-        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"))
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Publishable)
 
         val recorded = mockWebServer.takeRequest()
         assertEquals("Bearer pk_wrong_token", recorded.getHeader("Authorization"))
@@ -162,7 +192,7 @@ class FrameNetworkingTest {
 
         FrameNetworking.beginOnboardingSession("onb_sess_abc123")
         FrameNetworking.endOnboardingSession()
-        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"))
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Publishable)
 
         val recorded = mockWebServer.takeRequest()
         assertEquals("Bearer pk_test_key", recorded.getHeader("Authorization"))
