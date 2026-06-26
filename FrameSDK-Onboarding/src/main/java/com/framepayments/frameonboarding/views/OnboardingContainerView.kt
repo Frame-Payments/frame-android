@@ -69,7 +69,9 @@ fun OnboardingContainerView(
         }
         onDispose {
             if (clientSecret != null) {
-                FrameNetworking.endOnboardingSession()
+                // Clear only the token this flow set; if a newer onboarding flow has already begun
+                // its own session, this stale disposal must not wipe it out.
+                FrameNetworking.endOnboardingSession(clientSecret)
             }
         }
     }

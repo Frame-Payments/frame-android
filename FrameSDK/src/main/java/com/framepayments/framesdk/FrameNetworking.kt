@@ -252,9 +252,20 @@ object FrameNetworking {
         onboardingSessionToken = clientSecret
     }
 
-    /** Ends the active onboarding session, restoring normal `pk_`/`sk_` authentication. */
-    fun endOnboardingSession() {
-        onboardingSessionToken = null
+    /**
+     * Ends the active onboarding session, restoring normal `pk_`/`sk_` authentication.
+     *
+     * @param clientSecret When non-null, the token is cleared only if it still matches this value.
+     *   This makes teardown safe against out-of-order disposals: a stale onboarding view tearing
+     *   down after a newer one has already begun its own session will not wipe the newer token.
+     *   Pass the same value given to [beginOnboardingSession]. A null argument clears
+     *   unconditionally (legacy behavior).
+     */
+    @Synchronized
+    fun endOnboardingSession(clientSecret: String? = null) {
+        if (clientSecret == null || onboardingSessionToken == clientSecret) {
+            onboardingSessionToken = null
+        }
     }
 
     private fun bearerToken(auth: FrameAuthMode): String {

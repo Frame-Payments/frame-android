@@ -27,7 +27,7 @@ object OnboardingSessionResponses {
         @SerializedName("return_url") val returnUrl: String?,
         val steps: List<String>?,
         @SerializedName("object") val sessionObject: String?,
-        @SerializedName("expires_at") val expiresAt: Int?,
+        @SerializedName("expires_at") val expiresAt: Long?,
         val livemode: Boolean?,
         val url: String?,
     )
