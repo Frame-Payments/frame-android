@@ -3,6 +3,7 @@ package com.framepayments.framesdk.sonar
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameNetworkingEndpoints
 import com.framepayments.framesdk.NetworkingError
@@ -78,7 +79,7 @@ class SessionManager(
         return try {
             val endpoint = SonarSessionEndpoints.Create
             val body = SessionRequestBody(fingerprint_visitor_id = visitorId)
-            val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body)
+            val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.Publishable)
 
             if (error != null) {
                 throw error
@@ -101,7 +102,7 @@ class SessionManager(
         return try {
             val endpoint = SonarSessionEndpoints.Update(current)
             val body = SessionRequestBody(fingerprint_visitor_id = visitorId)
-            val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body)
+            val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.Publishable)
 
             if (error != null) {
                 throw error

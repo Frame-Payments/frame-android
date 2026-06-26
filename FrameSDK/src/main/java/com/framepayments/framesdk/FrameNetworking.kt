@@ -1,5 +1,7 @@
 package com.framepayments.framesdk
 import android.content.Context
+import android.util.Log
+import kotlin.reflect.KMutableProperty0
 import com.evervault.sdk.Evervault
 import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
@@ -22,6 +24,36 @@ import okhttp3.MultipartBody
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
+
+/**
+ * Selects which credential authenticates a Frame API request.
+ *
+ * The Frame Android SDK is **publishable-key first**: client-safe endpoints (tokenization,
+ * config, charge confirm) authenticate with your publishable key (`pk_`). A publishable key
+ * is safe to embed in an app binary — it can only tokenize and retrieve/confirm objects the
+ * client already owns.
+ *
+ * - Warning: [Secret] sends your secret key (`sk_`), which grants full merchant privileges.
+ *   A secret key must never ship inside an app binary; serve it only from your backend. The
+ *   SDK emits a one-time runtime warning the first time [Secret] is used.
+ */
+sealed class FrameAuthMode {
+    /** Authenticate with the publishable key (`pk_`). Default for all client-safe endpoints. */
+    object Publishable : FrameAuthMode()
+
+    /** Authenticate with the secret key (`sk_`). Server-only — avoid shipping this in an app binary. */
+    object Secret : FrameAuthMode()
+
+    /**
+     * Authenticate with a server-minted, per-object client secret used as a Bearer token.
+     *
+     * Covers the charge-intent `client_secret` (`ci_<id>_secret_…`) and onboarding-session
+     * tokens (`onb_sess_…`).
+     *
+     * @property token The client secret value to use as the Bearer token.
+     */
+    data class ClientSecret(val token: String) : FrameAuthMode()
+}
 
 /** Default [URLSessionProtocol] implementation backed by OkHttp. */
 class DefaultURLSession(private val client: OkHttpClient) : URLSessionProtocol {
@@ -75,6 +107,18 @@ object FrameNetworking {
     /** When `true`, request URLs, request bodies, and response bodies are printed to logcat. */
     var debugMode: Boolean = false
 
+    @Volatile private var hasWarnedAboutPublishableKeyMisuse = false
+    @Volatile private var hasWarnedAboutSecretKeyConfig = false
+    @Volatile private var hasWarnedAboutSecretKeyRequest = false
+    @Volatile private var hasWarnedAboutMissingPublishableKey = false
+
+    /**
+     * The active onboarding-session token (`onb_sess_…`), or null when no onboarding flow is in
+     * progress. While set, it takes precedence over the publishable and secret keys for every
+     * request, scoping the flow to a single account (see [beginOnboardingSession]).
+     */
+    @Volatile private var onboardingSessionToken: String? = null
+
     /** `true` once Evervault has been successfully configured; `false` until then. */
     var isEvervaultConfigured: Boolean = false
 
@@ -94,7 +138,7 @@ object FrameNetworking {
      * Initializes the Frame SDK. Call once from `Application.onCreate` before using any SDK component.
      *
      * @param context The application context.
-     * @param secretKey Your Frame secret key (`sk_...`). Keep this key server-side where possible.
+     * @param secretKey Your Frame secret key (`sk_...`). Server-only — avoid shipping this in an app binary. The SDK emits a one-time warning whenever the secret key is used.
      * @param publishableKey Your Frame publishable key (`pk_...`). Safe to embed in the app.
      * @param googlePayMerchantId Optional Google Pay merchant identifier. Required to show the Google Pay button in checkout.
      * @param debug When `true`, API requests and responses are logged to logcat.
@@ -106,6 +150,8 @@ object FrameNetworking {
         googlePayMerchantId: String? = null,
         debug: Boolean = false,
     ) {
+        if (publishableKey.startsWith("sk_")) warnOnce(::hasWarnedAboutPublishableKeyMisuse) { secretKeyWarning("passed as the publishableKey") }
+        if (secretKey.isNotEmpty()) warnOnce(::hasWarnedAboutSecretKeyConfig) { secretKeyWarning("configured via secretKey") }
         apiSecretKey = secretKey
         apiPublishableKey = publishableKey
         this.googlePayMerchantId = googlePayMerchantId
@@ -174,9 +220,80 @@ object FrameNetworking {
         return fromBody ?: response.message.ifEmpty { "HTTP ${response.code}" }
     }
 
-    private fun Request.Builder.applyFrameHeaders(ip: String?, usePublishableKey: Boolean = false): Request.Builder {
-        val authKey = if (usePublishableKey && apiPublishableKey.isNotEmpty()) apiPublishableKey else apiSecretKey
-        header("Authorization", "Bearer $authKey")
+    private fun warnOnce(flag: KMutableProperty0<Boolean>, message: () -> String) {
+        if (flag.get()) return
+        flag.set(true)
+        Log.w("FrameSDK", message())
+    }
+
+    private fun secretKeyWarning(context: String) =
+        "⚠️ Frame: a secret key (sk_) was $context. Secret keys grant full merchant privileges and must never ship in an app binary, where they can be extracted by reverse-engineering. Serve sk_ from your backend and pass only your publishable key (pk_) to the SDK."
+
+    /**
+     * Begins an onboarding session scoped to a single account.
+     *
+     * While a session is active, the onboarding-session token authenticates every request,
+     * overriding the publishable and secret keys. This scopes the onboarding flow to one account —
+     * a bare publishable key would allow cross-account access. Call [endOnboardingSession] when the
+     * onboarding flow completes or is dismissed.
+     *
+     * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your backend.
+     */
+    fun beginOnboardingSession(clientSecret: String) {
+        if (!clientSecret.startsWith("onb_sess_")) {
+            Log.w(
+                "FrameSDK",
+                "⚠️ Frame: beginOnboardingSession was called with a token that is not an onboarding-session " +
+                    "token (onb_sess_…). Onboarding requests authenticate with this value verbatim, so a publishable " +
+                    "key, secret key, or charge-intent client secret will not scope the flow to an account and may be " +
+                    "rejected. Mint the token from your backend via POST /v1/onboarding_sessions."
+            )
+        }
+        onboardingSessionToken = clientSecret
+    }
+
+    /**
+     * Ends the active onboarding session, restoring normal `pk_`/`sk_` authentication.
+     *
+     * @param clientSecret When non-null, the token is cleared only if it still matches this value.
+     *   This makes teardown safe against out-of-order disposals: a stale onboarding view tearing
+     *   down after a newer one has already begun its own session will not wipe the newer token.
+     *   Pass the same value given to [beginOnboardingSession]. A null argument clears
+     *   unconditionally (legacy behavior).
+     */
+    @Synchronized
+    fun endOnboardingSession(clientSecret: String? = null) {
+        if (clientSecret == null || onboardingSessionToken == clientSecret) {
+            onboardingSessionToken = null
+        }
+    }
+
+    private fun bearerToken(auth: FrameAuthMode): String {
+        if (auth is FrameAuthMode.ClientSecret) return auth.token
+        onboardingSessionToken?.let { return it }
+        return when (auth) {
+            is FrameAuthMode.Publishable -> {
+                if (apiPublishableKey.isEmpty()) {
+                    warnOnce(::hasWarnedAboutMissingPublishableKey) {
+                        "⚠️ Frame: a client-safe request was made but no publishable key (pk_) is configured. Call initializeWithAPIKey(...) first."
+                    }
+                }
+                // Return the (possibly empty) publishable key rather than silently substituting the
+                // secret key — a missing pk_ must never cause sk_ to leave the device on a client-safe call.
+                apiPublishableKey
+            }
+            is FrameAuthMode.Secret -> {
+                warnOnce(::hasWarnedAboutSecretKeyRequest) { secretKeyWarning("used to authenticate a request from the app") }
+                apiSecretKey
+            }
+            // Unreachable: handled by the early return above. Kept so the compiler enforces
+            // exhaustiveness over FrameAuthMode instead of falling through a silent `else`.
+            is FrameAuthMode.ClientSecret -> auth.token
+        }
+    }
+
+    private fun Request.Builder.applyFrameHeaders(ip: String?, auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {
+        header("Authorization", "Bearer ${bearerToken(auth)}")
         header("User-Agent", "Android/$CURRENT_VERSION")
         ip?.let { header("ip_address", it) }
         return this
@@ -188,13 +305,13 @@ object FrameNetworking {
      * [initializeWithAPIKey]. The first request after a cold launch goes out without
      * `ip_address`; later requests pick up the header once the cache is populated.
      */
-    private fun Request.Builder.withFrameHeaders(usePublishableKey: Boolean = false): Request.Builder {
-        return applyFrameHeaders(SiftManager.getCachedIPAddress(), usePublishableKey)
+    private fun Request.Builder.withFrameHeaders(auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {
+        return applyFrameHeaders(SiftManager.getCachedIPAddress(), auth)
     }
 
     /** Same cached-IP behavior as [withFrameHeaders]; this overload is called from OkHttp's worker pool. */
-    private fun Request.Builder.withFrameHeadersOnWorkerThread(usePublishableKey: Boolean = false): Request.Builder {
-        return applyFrameHeaders(SiftManager.getCachedIPAddress(), usePublishableKey)
+    private fun Request.Builder.withFrameHeadersOnWorkerThread(auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {
+        return applyFrameHeaders(SiftManager.getCachedIPAddress(), auth)
     }
 
     /**
@@ -237,12 +354,12 @@ object FrameNetworking {
      * Executes a GET or DELETE request to [endpoint] and returns the raw response bytes.
      *
      * @param endpoint The endpoint to call.
-     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @return A pair of (response bytes, error). On success the error is `null`; on failure the bytes may contain an error body.
      */
     suspend fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
-        usePublishableKey: Boolean = false
+        auth: FrameAuthMode = FrameAuthMode.Secret
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -259,7 +376,7 @@ object FrameNetworking {
 
         val requestBuilder = Request.Builder()
             .url(httpUrl)
-            .withFrameHeaders(usePublishableKey)
+            .withFrameHeaders(auth)
 
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
@@ -291,13 +408,13 @@ object FrameNetworking {
      *
      * @param endpoint The endpoint to call.
      * @param request Optional request body. Serialized to JSON via Gson.
-     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @return A pair of (response bytes, error).
      */
     suspend fun performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: Any? = null,
-        usePublishableKey: Boolean = false
+        auth: FrameAuthMode = FrameAuthMode.Secret
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -314,7 +431,7 @@ object FrameNetworking {
 
         val requestBuilder = Request.Builder()
             .url(httpUrl)
-            .withFrameHeaders(usePublishableKey)
+            .withFrameHeaders(auth)
 
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
@@ -360,13 +477,13 @@ object FrameNetworking {
      *
      * @param endpoint The endpoint to call.
      * @param filesToUpload One or more document images to include in the upload.
-     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @return A pair of (response bytes, error).
      */
     suspend fun performMultipartDataTask(
         endpoint: FrameNetworkingEndpoints,
         filesToUpload: List<FileUpload>,
-        usePublishableKey: Boolean = false
+        auth: FrameAuthMode = FrameAuthMode.Secret
     ): Pair<ByteArray?, NetworkingError?> {
         val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
@@ -386,7 +503,7 @@ object FrameNetworking {
 
         val request = Request.Builder()
             .url(httpUrl)
-            .withFrameHeaders(usePublishableKey)
+            .withFrameHeaders(auth)
             .post(multipartBody)
             .build()
 
@@ -416,16 +533,16 @@ object FrameNetworking {
      *
      * @param endpoint The endpoint to call.
      * @param filesToUpload One or more document images to include in the upload.
-     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @param completion Called on an OkHttp worker thread with the response bytes and any error.
      */
     fun performMultipartDataTask(
         endpoint: FrameNetworkingEndpoints,
         filesToUpload: List<FileUpload>,
-        usePublishableKey: Boolean = false,
+        auth: FrameAuthMode = FrameAuthMode.Secret,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
-        val baseUrl = NetworkingConstants.MAIN_API_URL
+        val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
 
         val httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, NetworkingError.InvalidURL)
@@ -444,7 +561,7 @@ object FrameNetworking {
         okHttpClient.dispatcher.executorService.execute {
             val request = Request.Builder()
                 .url(httpUrl)
-                .withFrameHeadersOnWorkerThread(usePublishableKey)
+                .withFrameHeadersOnWorkerThread(auth)
                 .post(multipartBody)
                 .build()
 
@@ -468,15 +585,15 @@ object FrameNetworking {
      * Callback-based GET/DELETE for callers that cannot use coroutines.
      *
      * @param endpoint The endpoint to call.
-     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @param completion Called on an OkHttp worker thread with the response bytes and any error.
      */
     fun performDataTask(
         endpoint: FrameNetworkingEndpoints,
-        usePublishableKey: Boolean = false,
+        auth: FrameAuthMode = FrameAuthMode.Secret,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
-        val baseUrl = NetworkingConstants.MAIN_API_URL
+        val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
 
         var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, NetworkingError.InvalidURL)
@@ -491,7 +608,7 @@ object FrameNetworking {
         okHttpClient.dispatcher.executorService.execute {
             val requestBuilder = Request.Builder()
                 .url(httpUrl)
-                .withFrameHeadersOnWorkerThread(usePublishableKey)
+                .withFrameHeadersOnWorkerThread(auth)
 
             val method = endpoint.httpMethod.uppercase()
             requestBuilder.method(method, null)
@@ -518,16 +635,16 @@ object FrameNetworking {
      *
      * @param endpoint The endpoint to call.
      * @param request Optional request body. Serialized to JSON via Gson.
-     * @param usePublishableKey When `true`, the publishable key is used instead of the secret key.
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @param completion Called on an OkHttp worker thread with the response bytes and any error.
      */
     fun <T> performDataTaskWithRequest(
         endpoint: FrameNetworkingEndpoints,
         request: T? = null,
-        usePublishableKey: Boolean = false,
+        auth: FrameAuthMode = FrameAuthMode.Secret,
         completion: (data: ByteArray?, error: NetworkingError?) -> Unit
     ) {
-        val baseUrl = NetworkingConstants.MAIN_API_URL
+        val baseUrl = mainApiUrl.trimEnd('/')
         val fullUrl = baseUrl + endpoint.endpointURL
 
         var httpUrl: HttpUrl = fullUrl.toHttpUrlOrNull() ?: return completion(null, NetworkingError.InvalidURL)
@@ -548,7 +665,7 @@ object FrameNetworking {
         okHttpClient.dispatcher.executorService.execute {
             val requestBuilder = Request.Builder()
                 .url(httpUrl)
-                .withFrameHeadersOnWorkerThread(usePublishableKey)
+                .withFrameHeadersOnWorkerThread(auth)
 
             val method = endpoint.httpMethod.uppercase()
             if (method == "POST" || method == "PATCH") {

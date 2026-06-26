@@ -2,6 +2,7 @@ package com.framepayments.framesdk.paymentmethods
 
 import com.evervault.sdk.Evervault
 import com.framepayments.framesdk.EmptyRequest
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
@@ -89,7 +90,7 @@ object PaymentMethodsAPI {
             request.cardNumber = Evervault.shared.encrypt(request.cardNumber) as String
             request.cvc = Evervault.shared.encrypt(request.cvc) as String
         }
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -101,7 +102,7 @@ object PaymentMethodsAPI {
      */
     suspend fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -177,7 +178,7 @@ object PaymentMethodsAPI {
      */
     suspend fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, usePublishableKey = true)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -189,7 +190,7 @@ object PaymentMethodsAPI {
      */
     suspend fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.ConnectPlaidBankAccount
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(it) }, error)
     }
 
@@ -273,7 +274,7 @@ object PaymentMethodsAPI {
                 cvc = Evervault.shared.encrypt(request.cvc) as String
             ) else request
 
-            FrameNetworking.performDataTaskWithRequest(endpoint, encryptedRequest) { data, error ->
+            FrameNetworking.performDataTaskWithRequest(endpoint, encryptedRequest, FrameAuthMode.Publishable) { data, error ->
                 scope.launch(Dispatchers.Main) {
                     completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
                 }
@@ -291,7 +292,7 @@ object PaymentMethodsAPI {
     fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -371,15 +372,13 @@ object PaymentMethodsAPI {
     /**
      * Creates a new payment method from a Google Pay wallet token and delivers the result to a callback.
      *
-     * Sends the request using the merchant's publishable key rather than the secret key.
-     *
      * @param request The Google Pay wallet data and optional customer or account associations.
      * @param completionHandler Called with the created payment method on success, or a [NetworkingError] on failure.
      */
     fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request, usePublishableKey = true) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -392,7 +391,7 @@ object PaymentMethodsAPI {
      */
     fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.ConnectPlaidBankAccount
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(it) }, error)
         }
     }

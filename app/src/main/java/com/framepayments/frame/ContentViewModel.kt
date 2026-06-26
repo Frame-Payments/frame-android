@@ -9,6 +9,8 @@ import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
 import com.framepayments.framesdk.customers.CustomersAPI
+import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
+import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
 import com.framepayments.framesdk.refunds.Refund
 import com.framepayments.framesdk.refunds.RefundsAPI
@@ -32,6 +34,25 @@ data class ContentUiState(
 
 data class PlaidMessage(val title: String, val body: String)
 
+/**
+ * State of the demo onboarding-session mint flow. The example app cannot launch onboarding until a
+ * token is minted, so the UI gates on this: [Loading] shows a spinner, [Ready] launches the flow,
+ * and [Error] shows an actionable retry instead of spinning forever when minting fails.
+ */
+sealed class OnboardingMintState {
+    /** No mint in progress; onboarding not launched. */
+    object Idle : OnboardingMintState()
+
+    /** A mint is in flight; show a spinner. */
+    object Loading : OnboardingMintState()
+
+    /** A token was minted; [clientSecret] is the `onb_sess_…` to launch the flow with. */
+    data class Ready(val clientSecret: String) : OnboardingMintState()
+
+    /** Minting failed; [message] explains why so the UI can offer a retry. */
+    data class Error(val message: String) : OnboardingMintState()
+}
+
 class ContentViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow(ContentUiState())
@@ -42,6 +63,14 @@ class ContentViewModel : ViewModel() {
 
     private val _plaidMessage = MutableStateFlow<PlaidMessage?>(null)
     val plaidMessage: StateFlow<PlaidMessage?> = _plaidMessage.asStateFlow()
+
+    /**
+     * State of the demo onboarding-session mint flow. The minted token (`onb_sess_…`) is exposed via
+     * [OnboardingMintState.Ready] and passed to `OnboardingConfig.clientSecret`, scoping the flow to a
+     * single account. Starts [OnboardingMintState.Idle].
+     */
+    private val _onboardingMintState = MutableStateFlow<OnboardingMintState>(OnboardingMintState.Idle)
+    val onboardingMintState: StateFlow<OnboardingMintState> = _onboardingMintState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -77,6 +106,54 @@ class ContentViewModel : ViewModel() {
     private suspend fun loadRefunds() {
         val (response, _) = RefundsAPI.getRefunds(chargeId = null, chargeIntentId = null, perPage = 50, page = 1)
         _uiState.value = _uiState.value.copy(refunds = response?.data ?: emptyList())
+    }
+
+    /**
+     * Demo/testing only: mints an onboarding-session token (`onb_sess_…`) for the first available
+     * account so the example app can exercise the onboarding flow end-to-end.
+     *
+     * This is **not** the production path. Creating an onboarding session is a server-only operation
+     * that requires your secret key (`sk_`). Production integrations mint the token from their
+     * backend (`POST /v1/onboarding_sessions`) and pass it to `OnboardingConfig.clientSecret`. The
+     * example app does it inline only because it is configured with an `sk_`.
+     */
+    @Suppress("DEPRECATION")
+    fun mintOnboardingClientSecret() {
+        _onboardingMintState.value = OnboardingMintState.Loading
+        viewModelScope.launch {
+            val (accountsResponse, accountsError) = AccountsAPI.getAccounts(perPage = 1, page = 1)
+            val accountId = accountsResponse?.data?.firstOrNull()?.id
+            if (accountId == null) {
+                _onboardingMintState.value = OnboardingMintState.Error(
+                    accountsError?.let { "Couldn't load an account to onboard: $it" }
+                        ?: "No accounts available to onboard. Create an account first."
+                )
+                return@launch
+            }
+            val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(
+                accountId = accountId,
+                steps = listOf(
+                    OnboardingSessionRequests.OnboardingSessionStep.ID_VERIFICATION,
+                    OnboardingSessionRequests.OnboardingSessionStep.GEO_COMPLIANCE,
+                    OnboardingSessionRequests.OnboardingSessionStep.PAYMENT_METHOD,
+                )
+            )
+            val (session, sessionError) = OnboardingSessionsAPI.createOnboardingSession(request)
+            val clientSecret = session?.clientSecret
+            _onboardingMintState.value = if (clientSecret != null) {
+                OnboardingMintState.Ready(clientSecret)
+            } else {
+                OnboardingMintState.Error(
+                    sessionError?.let { "Couldn't mint an onboarding session: $it" }
+                        ?: "Onboarding session response did not include a client secret."
+                )
+            }
+        }
+    }
+
+    /** Resets the mint flow to [OnboardingMintState.Idle] so the next launch mints a fresh token. */
+    fun clearOnboardingClientSecret() {
+        _onboardingMintState.value = OnboardingMintState.Idle
     }
 
     fun startPlaidLink() {

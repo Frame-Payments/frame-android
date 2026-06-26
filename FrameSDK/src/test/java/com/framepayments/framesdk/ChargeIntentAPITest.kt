@@ -5,6 +5,7 @@ import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntentStatus
 import com.framepayments.framesdk.chargeintents.ChargeIntentsRequests
 import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
@@ -19,7 +20,11 @@ class ChargeIntentAPITest {
     fun setUp() {
         mockWebServer = MockWebServer()
         mockWebServer.start()
+        val testClient = OkHttpClient.Builder().build()
+        FrameNetworking.asyncURLSession = DefaultURLSession(testClient)
         FrameNetworking.mainApiUrl = mockWebServer.url("/").toString()
+        FrameNetworking.apiSecretKey = "sk_test_key"
+        FrameNetworking.apiPublishableKey = "pk_test_key"
     }
 
     @After
@@ -69,11 +74,22 @@ class ChargeIntentAPITest {
         val responseBody = """{"id":"intent_123", "status":"succeeded"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val (result, error) = ChargeIntentAPI.confirmChargeIntent("intent_123")
+        val (result, error) = ChargeIntentAPI.confirmChargeIntent("intent_123", "ci_intent_123_secret_abc")
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
         assertEquals(ChargeIntentStatus.SUCCEEDED, result?.status)
+    }
+
+    @Test
+    fun testConfirmChargeIntentUsesClientSecretAsBearer() = runBlocking {
+        val responseBody = """{"id":"intent_123", "status":"succeeded"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        ChargeIntentAPI.confirmChargeIntent("intent_123", "ci_intent_123_secret_abc")
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer ci_intent_123_secret_abc", recorded.getHeader("Authorization"))
     }
 
     @Test
@@ -114,11 +130,22 @@ class ChargeIntentAPITest {
         val responseBody = """{"id":"intent_123", "status":"pending"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val (result, error) = ChargeIntentAPI.getChargeIntent("intent_123")
+        val (result, error) = ChargeIntentAPI.getChargeIntent("intent_123", "ci_intent_123_secret_abc")
 
         assertNotNull(result)
         assertEquals("intent_123", result?.id)
         assertEquals(ChargeIntentStatus.PENDING, result?.status)
+    }
+
+    @Test
+    fun testGetChargeIntentUsesClientSecretAsBearer() = runBlocking {
+        val responseBody = """{"id":"intent_123", "status":"pending"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        ChargeIntentAPI.getChargeIntent("intent_123", "ci_intent_123_secret_xyz")
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer ci_intent_123_secret_xyz", recorded.getHeader("Authorization"))
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.views
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,6 +22,7 @@ import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingStep
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
+import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
@@ -48,6 +51,30 @@ fun OnboardingContainerView(
     val savedPaymentMethods by viewModel.savedPaymentMethods.collectAsState()
     val savedPayoutMethods by viewModel.savedPayoutMethods.collectAsState()
     val context = LocalContext.current
+
+    // Authenticate every onboarding request with the onboarding-session token while this flow is
+    // on screen, scoping it to a single account. Only flows that began a session end one, so a
+    // legacy (clientSecret == null) flow leaves the configured keys untouched.
+    DisposableEffect(config.clientSecret) {
+        val clientSecret = config.clientSecret
+        if (clientSecret != null) {
+            FrameNetworking.beginOnboardingSession(clientSecret)
+        } else {
+            Log.w(
+                "FrameSDK",
+                "⚠️ Frame: onboarding launched without OnboardingConfig.clientSecret. Requests will fall back to " +
+                    "the configured pk_/sk_ keys, which are not scoped to a single account. Mint an onboarding-session " +
+                    "token from your backend (POST /v1/onboarding_sessions) and pass it as OnboardingConfig.clientSecret."
+            )
+        }
+        onDispose {
+            if (clientSecret != null) {
+                // Clear only the token this flow set; if a newer onboarding flow has already begun
+                // its own session, this stale disposal must not wipe it out.
+                FrameNetworking.endOnboardingSession(clientSecret)
+            }
+        }
+    }
 
     LaunchedEffect(result) {
         when (val r = result) {

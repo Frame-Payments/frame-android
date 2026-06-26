@@ -16,6 +16,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -30,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +54,7 @@ fun PlaygroundScreen(
     viewModel: ContentViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val onboardingMintState by viewModel.onboardingMintState.collectAsState()
     val plaidService by viewModel.plaidService.collectAsState()
     val plaidMessage by viewModel.plaidMessage.collectAsState()
     val plaidToken by remember(plaidService) {
@@ -106,6 +109,56 @@ fun PlaygroundScreen(
     }
 
     if (showOnboarding) {
+        // Wait for the onboarding-session token to be minted before launching the flow. Rendering
+        // OnboardingContainerView with a null clientSecret would start onboarding requests (e.g. the
+        // ToS token) before beginOnboardingSession runs, leaving those early requests unscoped to the
+        // account. Gating on the minted token guarantees the session is active before the first call.
+        val mintState = onboardingMintState
+        when (mintState) {
+            is OnboardingMintState.Loading, OnboardingMintState.Idle -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                return
+            }
+            is OnboardingMintState.Error -> {
+                // Minting failed — show why and let the user retry or back out, instead of
+                // spinning forever on the gate above.
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Couldn't start onboarding",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = mintState.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(onClick = { viewModel.mintOnboardingClientSecret() }) {
+                            Text("Retry")
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = {
+                            showOnboarding = false
+                            viewModel.clearOnboardingClientSecret()
+                        }) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+                return
+            }
+            is OnboardingMintState.Ready -> Unit // fall through to launch the flow below
+        }
+        val clientSecret = mintState.clientSecret
+
         // Demo: show how a host app overrides the SDK theme. The override is shared
         // with CartTestActivity / CheckoutActivity so onboarding, cart, and checkout
         // all render with the same custom branding while running the playground.
@@ -113,6 +166,10 @@ fun PlaygroundScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             OnboardingContainerView(
                 config = OnboardingConfig(
+                    // The onb_sess_… token minted from the configured sk_ (demo/testing only). In
+                    // production your backend mints this (POST /v1/onboarding_sessions) and passes
+                    // it in as the clientSecret, scoping every onboarding request to one account.
+                    clientSecret = clientSecret,
                     requiredCapabilities = listOf(
                         Capabilities.KYC_PREFILL,
                         Capabilities.CARD_VERIFICATION,
@@ -122,7 +179,11 @@ fun PlaygroundScreen(
                     ),
                     theme = customTheme
                 ),
-                onResult = { showOnboarding = false }
+                onResult = {
+                    showOnboarding = false
+                    // Clear the minted token so the next launch mints a fresh one.
+                    viewModel.clearOnboardingClientSecret()
+                }
             )
         }
         return
@@ -154,7 +215,13 @@ fun PlaygroundScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            PlaygroundButton(text = "Show Onboarding Flow") { showOnboarding = true }
+            PlaygroundButton(text = "Show Onboarding Flow") {
+                // Demo/testing only: mint an onboarding-session token (onb_sess_…) from the
+                // configured sk_ before launching. In production your backend mints this token and
+                // hands it to the app as the clientSecret — see ContentViewModel.
+                viewModel.mintOnboardingClientSecret()
+                showOnboarding = true
+            }
             PlaygroundButton(
                 text = if (isConnectingPlaid) "Connecting to Plaid…" else "Test Plaid Link",
                 enabled = !isConnectingPlaid,
