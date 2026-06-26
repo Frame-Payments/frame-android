@@ -1,4 +1,5 @@
 package com.framepayments.framesdk.configurations
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 
 /**
@@ -18,7 +19,7 @@ object ConfigurationAPI {
      */
     suspend fun getEvervaultConfiguration(): ConfigurationResponses.GetEvervaultConfigurationResponse? {
         val endpoint = ConfigurationEndpoints.GetEvervaultConfiguration
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
+        val (data, _) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
 
         if (data != null) {
             val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetEvervaultConfigurationResponse>(data)
@@ -43,7 +44,7 @@ object ConfigurationAPI {
      */
     suspend fun getSiftConfiguration(): ConfigurationResponses.GetSiftConfigurationResponse? {
         val endpoint = ConfigurationEndpoints.GetSiftConfiguration
-        val (data, _) = FrameNetworking.performDataTask(endpoint)
+        val (data, _) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
 
         if (data != null) {
             val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetSiftConfigurationResponse>(data)
@@ -72,7 +73,7 @@ object ConfigurationAPI {
     fun getEvervaultConfiguration(completionHandler: (ConfigurationResponses.GetEvervaultConfigurationResponse?) -> Unit) {
         val endpoint = ConfigurationEndpoints.GetEvervaultConfiguration
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
             if (data != null) {
                 val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetEvervaultConfigurationResponse>(data)
 
@@ -101,7 +102,7 @@ object ConfigurationAPI {
     fun getSiftConfiguration(completionHandler: (ConfigurationResponses.GetSiftConfigurationResponse?) -> Unit) {
         val endpoint = ConfigurationEndpoints.GetSiftConfiguration
 
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
             if (data != null) {
                 val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetSiftConfigurationResponse>(data)
 

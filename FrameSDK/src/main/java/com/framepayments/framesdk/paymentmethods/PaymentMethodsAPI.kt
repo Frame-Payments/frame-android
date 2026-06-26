@@ -29,7 +29,7 @@ object PaymentMethodsAPI {
      */
     suspend fun getPaymentMethods(page: Int? = null, perPage: Int? = null): Pair<PaymentMethodResponses.ListPaymentMethodsResponse?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethods(perPage = perPage, page = page)
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data) }, error)
     }
 
@@ -41,7 +41,7 @@ object PaymentMethodsAPI {
      */
     suspend fun getPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -53,7 +53,7 @@ object PaymentMethodsAPI {
      */
     suspend fun getPaymentMethodsWithCustomer(customerId: String): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
     }
 
@@ -65,7 +65,7 @@ object PaymentMethodsAPI {
      */
     suspend fun getPaymentMethodsWithAccount(accountId: String): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithAccount(accountId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
     }
 
@@ -90,7 +90,7 @@ object PaymentMethodsAPI {
             request.cardNumber = Evervault.shared.encrypt(request.cardNumber) as String
             request.cvc = Evervault.shared.encrypt(request.cvc) as String
         }
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -102,7 +102,7 @@ object PaymentMethodsAPI {
      */
     suspend fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -128,7 +128,7 @@ object PaymentMethodsAPI {
      */
     suspend fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest):Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.AttachPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -140,7 +140,7 @@ object PaymentMethodsAPI {
      */
     suspend fun detachPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.DetachPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null), FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -152,7 +152,7 @@ object PaymentMethodsAPI {
      */
     suspend fun blockPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.BlockPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null), FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -164,7 +164,7 @@ object PaymentMethodsAPI {
      */
     suspend fun unblockPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.UnblockPaymentMethodWith(paymentMethodId = paymentMethodId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null), FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null))
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -178,7 +178,7 @@ object PaymentMethodsAPI {
      */
     suspend fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error)
     }
 
@@ -190,7 +190,7 @@ object PaymentMethodsAPI {
      */
     suspend fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.ConnectPlaidBankAccount
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(it) }, error)
     }
 
@@ -206,7 +206,7 @@ object PaymentMethodsAPI {
     fun getPaymentMethods(page: Int? = null, perPage: Int? = null, completionHandler: (PaymentMethodResponses.ListPaymentMethodsResponse?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethods(perPage = perPage, page = page)
 
-        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data) }, error )
         }
     }
@@ -220,7 +220,7 @@ object PaymentMethodsAPI {
     fun getPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodWith(paymentMethodId = paymentMethodId)
 
-        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -233,7 +233,7 @@ object PaymentMethodsAPI {
      */
     fun getPaymentMethodsWithCustomer(customerId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithCustomer(customerId)
-        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error )
         }
     }
@@ -246,7 +246,7 @@ object PaymentMethodsAPI {
      */
     fun getPaymentMethodsWithAccount(accountId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithAccount(accountId)
-        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error )
         }
     }
@@ -274,7 +274,7 @@ object PaymentMethodsAPI {
                 cvc = Evervault.shared.encrypt(request.cvc) as String
             ) else request
 
-            FrameNetworking.performDataTaskWithRequest(endpoint, encryptedRequest) { data, error ->
+            FrameNetworking.performDataTaskWithRequest(endpoint, encryptedRequest, FrameAuthMode.Publishable) { data, error ->
                 scope.launch(Dispatchers.Main) {
                     completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
                 }
@@ -292,7 +292,7 @@ object PaymentMethodsAPI {
     fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -322,7 +322,7 @@ object PaymentMethodsAPI {
     fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.AttachPaymentMethodWith(paymentMethodId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -336,7 +336,7 @@ object PaymentMethodsAPI {
     fun detachPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.DetachPaymentMethodWith(paymentMethodId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null), FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -350,7 +350,7 @@ object PaymentMethodsAPI {
     fun blockPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.BlockPaymentMethodWith(paymentMethodId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null), FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -364,7 +364,7 @@ object PaymentMethodsAPI {
     fun unblockPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.UnblockPaymentMethodWith(paymentMethodId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null), FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(description = null)) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -378,7 +378,7 @@ object PaymentMethodsAPI {
     fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(data) }, error )
         }
     }
@@ -391,7 +391,7 @@ object PaymentMethodsAPI {
      */
     fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.ConnectPlaidBankAccount
-        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<FrameObjects.PaymentMethod>(it) }, error)
         }
     }

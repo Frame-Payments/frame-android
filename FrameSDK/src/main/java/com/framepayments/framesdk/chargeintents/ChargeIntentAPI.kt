@@ -35,7 +35,7 @@ object ChargeIntentAPI {
         request.fraudSignals = ChargeIntentsRequests.FraudSignals(
             clientIp = withContext(Dispatchers.IO) { SiftManager.getPublicIp() }
         )
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
@@ -49,7 +49,7 @@ object ChargeIntentAPI {
      */
     suspend fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.CaptureChargeIntent(intentId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
 
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
@@ -81,7 +81,7 @@ object ChargeIntentAPI {
      */
     suspend fun cancelChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.CancelChargeIntent(intentId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
 
@@ -94,7 +94,7 @@ object ChargeIntentAPI {
      */
     suspend fun getAllChargeIntents(page: Int?, perPage: Int?): Pair<ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.GetAllChargeIntents(page = page, perPage = perPage)
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTask(endpoint)
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntentResponses.ListChargeIntentsResponse>(data) }, error)
     }
 
@@ -120,7 +120,7 @@ object ChargeIntentAPI {
      */
     suspend fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.UpdateChargeIntent(intentId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
 
@@ -132,7 +132,7 @@ object ChargeIntentAPI {
      */
     suspend fun voidRemainingChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.VoidRemainingChargeIntent(intentId)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null))
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
 
@@ -151,7 +151,7 @@ object ChargeIntentAPI {
         request.sonarSessionId = FrameNetworking.currentSonarSessionId()
         FrameNetworking.okHttpClient.dispatcher.executorService.execute {
             request.fraudSignals = ChargeIntentsRequests.FraudSignals(clientIp = SiftManager.getPublicIp())
-            FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
+            FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
                 completionHandler(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
             }
         }
@@ -167,7 +167,7 @@ object ChargeIntentAPI {
     fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.CaptureChargeIntent(intentId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
@@ -200,7 +200,7 @@ object ChargeIntentAPI {
     fun cancelChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.CancelChargeIntent(intentId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
@@ -215,7 +215,7 @@ object ChargeIntentAPI {
     fun getAllChargeIntents(page: Int?, perPage: Int?, completionHandler: (ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.GetAllChargeIntents(page = page, perPage = perPage)
 
-        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTask(endpoint) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<ChargeIntentResponses.ListChargeIntentsResponse>(data) }, error)
         }
     }
@@ -245,7 +245,7 @@ object ChargeIntentAPI {
     fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.UpdateChargeIntent(intentId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
@@ -259,7 +259,7 @@ object ChargeIntentAPI {
     fun voidRemainingChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit) {
         val endpoint = ChargeIntentEndpoints.VoidRemainingChargeIntent(intentId)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null), FrameAuthMode.Secret) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, EmptyRequest(null)) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
