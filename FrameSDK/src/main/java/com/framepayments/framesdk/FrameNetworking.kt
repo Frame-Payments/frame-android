@@ -343,7 +343,7 @@ object FrameNetworking {
      * Executes a GET or DELETE request to [endpoint] and returns the raw response bytes.
      *
      * @param endpoint The endpoint to call.
-     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Publishable].
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @return A pair of (response bytes, error). On success the error is `null`; on failure the bytes may contain an error body.
      */
     suspend fun performDataTask(
@@ -397,7 +397,7 @@ object FrameNetworking {
      *
      * @param endpoint The endpoint to call.
      * @param request Optional request body. Serialized to JSON via Gson.
-     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Publishable].
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @return A pair of (response bytes, error).
      */
     suspend fun performDataTaskWithRequest(
@@ -466,7 +466,7 @@ object FrameNetworking {
      *
      * @param endpoint The endpoint to call.
      * @param filesToUpload One or more document images to include in the upload.
-     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Publishable].
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @return A pair of (response bytes, error).
      */
     suspend fun performMultipartDataTask(
@@ -522,7 +522,7 @@ object FrameNetworking {
      *
      * @param endpoint The endpoint to call.
      * @param filesToUpload One or more document images to include in the upload.
-     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Publishable].
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @param completion Called on an OkHttp worker thread with the response bytes and any error.
      */
     fun performMultipartDataTask(
@@ -574,7 +574,7 @@ object FrameNetworking {
      * Callback-based GET/DELETE for callers that cannot use coroutines.
      *
      * @param endpoint The endpoint to call.
-     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Publishable].
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @param completion Called on an OkHttp worker thread with the response bytes and any error.
      */
     fun performDataTask(
@@ -624,7 +624,7 @@ object FrameNetworking {
      *
      * @param endpoint The endpoint to call.
      * @param request Optional request body. Serialized to JSON via Gson.
-     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Publishable].
+     * @param auth The credential to use for this request. Defaults to [FrameAuthMode.Secret], which fails safe to server-only; client-safe endpoints opt in with [FrameAuthMode.Publishable].
      * @param completion Called on an OkHttp worker thread with the response bytes and any error.
      */
     fun <T> performDataTaskWithRequest(
