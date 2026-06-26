@@ -12,19 +12,18 @@ import com.google.gson.annotations.SerializedName
 object OnboardingSessionRequests {
 
     /**
-     * An onboarding step the session can require.
-     *
-     * @property value The wire value sent to the API.
+     * An onboarding step the session can require. Gson serializes each constant by its
+     * [SerializedName] wire value.
      */
-    enum class OnboardingSessionStep(val value: String) {
+    enum class OnboardingSessionStep {
         /** Identity verification (KYC). */
-        @SerializedName("id_verification") ID_VERIFICATION("id_verification"),
+        @SerializedName("id_verification") ID_VERIFICATION,
 
         /** Geographic-compliance verification. */
-        @SerializedName("geo_compliance") GEO_COMPLIANCE("geo_compliance"),
+        @SerializedName("geo_compliance") GEO_COMPLIANCE,
 
         /** Payment-method collection. */
-        @SerializedName("payment_method") PAYMENT_METHOD("payment_method"),
+        @SerializedName("payment_method") PAYMENT_METHOD,
     }
 
     /**

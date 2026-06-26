@@ -102,11 +102,7 @@ class ContentViewModel : ViewModel() {
     fun mintOnboardingClientSecret() {
         viewModelScope.launch {
             val (accountsResponse, _) = AccountsAPI.getAccounts(perPage = 1, page = 1)
-            val accountId = accountsResponse?.data?.firstOrNull()?.id
-            if (accountId == null) {
-                _onboardingClientSecret.value = null
-                return@launch
-            }
+            val accountId = accountsResponse?.data?.firstOrNull()?.id ?: return@launch
             val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(
                 accountId = accountId,
                 steps = listOf(
@@ -118,6 +114,11 @@ class ContentViewModel : ViewModel() {
             val (session, _) = OnboardingSessionsAPI.createOnboardingSession(request)
             _onboardingClientSecret.value = session?.clientSecret
         }
+    }
+
+    /** Clears the minted onboarding-session token so the next launch mints a fresh one. */
+    fun clearOnboardingClientSecret() {
+        _onboardingClientSecret.value = null
     }
 
     fun startPlaidLink() {

@@ -150,8 +150,8 @@ object FrameNetworking {
         googlePayMerchantId: String? = null,
         debug: Boolean = false,
     ) {
-        if (publishableKey.startsWith("sk_")) warnOnce(::hasWarnedAboutPublishableKeyMisuse, secretKeyWarning("passed as the publishableKey"))
-        if (secretKey.isNotEmpty()) warnOnce(::hasWarnedAboutSecretKeyConfig, secretKeyWarning("configured via secretKey"))
+        if (publishableKey.startsWith("sk_")) warnOnce(::hasWarnedAboutPublishableKeyMisuse) { secretKeyWarning("passed as the publishableKey") }
+        if (secretKey.isNotEmpty()) warnOnce(::hasWarnedAboutSecretKeyConfig) { secretKeyWarning("configured via secretKey") }
         apiSecretKey = secretKey
         apiPublishableKey = publishableKey
         this.googlePayMerchantId = googlePayMerchantId
@@ -220,10 +220,10 @@ object FrameNetworking {
         return fromBody ?: response.message.ifEmpty { "HTTP ${response.code}" }
     }
 
-    private fun warnOnce(flag: KMutableProperty0<Boolean>, message: String) {
+    private fun warnOnce(flag: KMutableProperty0<Boolean>, message: () -> String) {
         if (flag.get()) return
         flag.set(true)
-        Log.w("FrameSDK", message)
+        Log.w("FrameSDK", message())
     }
 
     private fun secretKeyWarning(context: String) =
@@ -263,17 +263,16 @@ object FrameNetworking {
         return when (auth) {
             is FrameAuthMode.Publishable -> {
                 if (apiPublishableKey.isEmpty()) {
-                    warnOnce(
-                        ::hasWarnedAboutMissingPublishableKey,
+                    warnOnce(::hasWarnedAboutMissingPublishableKey) {
                         "⚠️ Frame: a client-safe request was made but no publishable key (pk_) is configured. Call initializeWithAPIKey(...) first."
-                    )
+                    }
                 }
                 // Return the (possibly empty) publishable key rather than silently substituting the
                 // secret key — a missing pk_ must never cause sk_ to leave the device on a client-safe call.
                 apiPublishableKey
             }
             is FrameAuthMode.Secret -> {
-                warnOnce(::hasWarnedAboutSecretKeyRequest, secretKeyWarning("used to authenticate a request from the app"))
+                warnOnce(::hasWarnedAboutSecretKeyRequest) { secretKeyWarning("used to authenticate a request from the app") }
                 apiSecretKey
             }
             // Unreachable: handled by the early return above. Kept so the compiler enforces

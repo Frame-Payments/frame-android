@@ -16,6 +16,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -30,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -107,6 +109,18 @@ fun PlaygroundScreen(
     }
 
     if (showOnboarding) {
+        // Wait for the onboarding-session token to be minted before launching the flow. Rendering
+        // OnboardingContainerView with a null clientSecret would start onboarding requests (e.g. the
+        // ToS token) before beginOnboardingSession runs, leaving those early requests unscoped to the
+        // account. Gating on the minted token guarantees the session is active before the first call.
+        val clientSecret = onboardingClientSecret
+        if (clientSecret == null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            return
+        }
+
         // Demo: show how a host app overrides the SDK theme. The override is shared
         // with CartTestActivity / CheckoutActivity so onboarding, cart, and checkout
         // all render with the same custom branding while running the playground.
@@ -117,7 +131,7 @@ fun PlaygroundScreen(
                     // The onb_sess_… token minted from the configured sk_ (demo/testing only). In
                     // production your backend mints this (POST /v1/onboarding_sessions) and passes
                     // it in as the clientSecret, scoping every onboarding request to one account.
-                    clientSecret = onboardingClientSecret,
+                    clientSecret = clientSecret,
                     requiredCapabilities = listOf(
                         Capabilities.KYC_PREFILL,
                         Capabilities.CARD_VERIFICATION,
@@ -127,7 +141,11 @@ fun PlaygroundScreen(
                     ),
                     theme = customTheme
                 ),
-                onResult = { showOnboarding = false }
+                onResult = {
+                    showOnboarding = false
+                    // Clear the minted token so the next launch mints a fresh one.
+                    viewModel.clearOnboardingClientSecret()
+                }
             )
         }
         return
