@@ -54,7 +54,7 @@ fun PlaygroundScreen(
     viewModel: ContentViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val onboardingClientSecret by viewModel.onboardingClientSecret.collectAsState()
+    val onboardingMintState by viewModel.onboardingMintState.collectAsState()
     val plaidService by viewModel.plaidService.collectAsState()
     val plaidMessage by viewModel.plaidMessage.collectAsState()
     val plaidToken by remember(plaidService) {
@@ -113,13 +113,51 @@ fun PlaygroundScreen(
         // OnboardingContainerView with a null clientSecret would start onboarding requests (e.g. the
         // ToS token) before beginOnboardingSession runs, leaving those early requests unscoped to the
         // account. Gating on the minted token guarantees the session is active before the first call.
-        val clientSecret = onboardingClientSecret
-        if (clientSecret == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+        val mintState = onboardingMintState
+        when (mintState) {
+            is OnboardingMintState.Loading, OnboardingMintState.Idle -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                return
             }
-            return
+            is OnboardingMintState.Error -> {
+                // Minting failed — show why and let the user retry or back out, instead of
+                // spinning forever on the gate above.
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Couldn't start onboarding",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = mintState.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(onClick = { viewModel.mintOnboardingClientSecret() }) {
+                            Text("Retry")
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(onClick = {
+                            showOnboarding = false
+                            viewModel.clearOnboardingClientSecret()
+                        }) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+                return
+            }
+            is OnboardingMintState.Ready -> Unit // fall through to launch the flow below
         }
+        val clientSecret = mintState.clientSecret
 
         // Demo: show how a host app overrides the SDK theme. The override is shared
         // with CartTestActivity / CheckoutActivity so onboarding, cart, and checkout
