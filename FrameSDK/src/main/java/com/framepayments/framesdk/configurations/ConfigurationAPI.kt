@@ -37,6 +37,31 @@ object ConfigurationAPI {
     }
 
     /**
+     * Fetches the Fingerprint configuration from the API and caches it locally.
+     *
+     * @return The parsed [ConfigurationResponses.GetFingerprintConfigurationResponse], or `null` if
+     *   the request fails or the response cannot be parsed.
+     */
+    suspend fun getFingerprintConfiguration(): ConfigurationResponses.GetFingerprintConfigurationResponse? {
+        val endpoint = ConfigurationEndpoints.GetFingerprintConfiguration
+        val (data, _) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+
+        if (data != null) {
+            val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetFingerprintConfigurationResponse>(data)
+
+            if (dataResponse != null) {
+                SecureConfigurationStorage.save(
+                    context = FrameNetworking.getContext(),
+                    key = "fingerprint",
+                    value = dataResponse
+                )
+            }
+            return dataResponse
+        }
+        return null
+    }
+
+    /**
      * Fetches the Sift configuration from the API and caches it locally.
      *
      * @return The parsed [ConfigurationResponses.GetSiftConfigurationResponse], or `null` if the
@@ -81,6 +106,35 @@ object ConfigurationAPI {
                     SecureConfigurationStorage.save(
                         context = FrameNetworking.getContext(),
                         key = "evervault",
+                        value = dataResponse
+                    )
+                }
+                completionHandler(dataResponse)
+            } else {
+                completionHandler(null)
+            }
+        }
+    }
+
+    /**
+     * Fetches the Fingerprint configuration from the API and caches it locally, delivering the
+     * result via a callback.
+     *
+     * @param completionHandler Invoked with the parsed
+     *   [ConfigurationResponses.GetFingerprintConfigurationResponse], or `null` if the request
+     *   fails or the response cannot be parsed.
+     */
+    fun getFingerprintConfiguration(completionHandler: (ConfigurationResponses.GetFingerprintConfigurationResponse?) -> Unit) {
+        val endpoint = ConfigurationEndpoints.GetFingerprintConfiguration
+
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
+            if (data != null) {
+                val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetFingerprintConfigurationResponse>(data)
+
+                if (dataResponse != null) {
+                    SecureConfigurationStorage.save(
+                        context = FrameNetworking.getContext(),
+                        key = "fingerprint",
                         value = dataResponse
                     )
                 }

@@ -4,27 +4,18 @@ import android.content.Context
 import android.util.Log
 import com.fingerprintjs.android.fpjs_pro.Configuration
 import com.fingerprintjs.android.fpjs_pro.FingerprintJSFactory
+import com.framepayments.framesdk.configurations.ConfigurationAPI
+import com.framepayments.framesdk.configurations.ConfigurationResponses
+import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 
 /**
  * Configuration container for the Fingerprint Android SDK used by Frame.
  *
- * The host app is responsible for setting [apiKey] (and optionally [region])
- * before Frame initializes network/session tracking.
+ * The Fingerprint public API key and region are fetched from the Frame
+ * configuration API (and cached in encrypted storage), so only client-side
+ * behaviour toggles are exposed here.
  */
 object FingerprintConfig {
-    /**
-     * Public API key obtained from the Fingerprint dashboard.
-     */
-    @JvmStatic
-    var apiKey: String = "YQnpZMcPLRUoK0998JIm"
-
-    /**
-     * Backend region associated with the API key.
-     * Defaults to US. Ensure this matches your workspace region.
-     */
-    @JvmStatic
-    var region: Configuration.Region = Configuration.Region.US
-
     /**
      * Whether to request extended response format from Fingerprint.
      */
@@ -36,26 +27,58 @@ object FingerprintManager {
     @Volatile
     private var client: com.fingerprintjs.android.fpjs_pro.FingerprintJS? = null
 
-    private fun configuredClient(context: Context): com.fingerprintjs.android.fpjs_pro.FingerprintJS? {
+    /**
+     * Fetches the Fingerprint configuration from the Frame API, falling back to
+     * the encrypted-storage cached copy when the network request is unavailable.
+     */
+    private fun fetchConfiguration(
+        context: Context,
+        completion: (ConfigurationResponses.GetFingerprintConfigurationResponse?) -> Unit
+    ) {
+        ConfigurationAPI.getFingerprintConfiguration { configFromAPI ->
+            if (configFromAPI != null) {
+                completion(configFromAPI)
+            } else {
+                completion(SecureConfigurationStorage.retrieve(context, "fingerprint"))
+            }
+        }
+    }
+
+    private fun region(rawValue: String?): Configuration.Region =
+        when (rawValue) {
+            "eu" -> Configuration.Region.EU
+            "ap" -> Configuration.Region.AP
+            else -> Configuration.Region.US
+        }
+
+    private fun configuredClient(
+        context: Context,
+        completion: (com.fingerprintjs.android.fpjs_pro.FingerprintJS?) -> Unit
+    ) {
         val existing = client
         if (existing != null) {
-            return existing
+            completion(existing)
+            return
         }
 
-        if (FingerprintConfig.apiKey.isEmpty()) {
-            // SDK consumer must set FingerprintConfig.apiKey before initialization.
-            return null
+        fetchConfiguration(context) { config ->
+            val apiKey = config?.apiKey
+            if (apiKey.isNullOrEmpty()) {
+                // Fingerprint credentials are unavailable from both the Frame API and the local cache.
+                completion(null)
+                return@fetchConfiguration
+            }
+
+            val configuration = Configuration(
+                apiKey = apiKey,
+                region = region(config.region),
+                extendedResponseFormat = FingerprintConfig.extendedResponseFormat
+            )
+
+            val instance = FingerprintJSFactory(context.applicationContext).createInstance(configuration)
+            client = instance
+            completion(instance)
         }
-
-        val configuration = Configuration(
-            apiKey = FingerprintConfig.apiKey,
-            region = FingerprintConfig.region,
-            extendedResponseFormat = FingerprintConfig.extendedResponseFormat
-        )
-
-        val instance = FingerprintJSFactory(context.applicationContext).createInstance(configuration)
-        client = instance
-        return instance
     }
 
     /**
@@ -80,25 +103,26 @@ object FingerprintManager {
         timeoutMillis: Int? = null,
         completion: (visitorId: String?) -> Unit
     ) {
-        val fpClient = configuredClient(context)
-        if (fpClient == null) {
-            Log.w("FingerprintManager", "Fingerprint client unavailable — FingerprintConfig.apiKey is empty")
-            completion(null)
-            return
-        }
-
-        fpClient.getVisitorId(
-            timeoutMillis = timeoutMillis ?: DEFAULT_GET_VISITOR_ID_TIMEOUT_MS,
-            listener = { response ->
-                completion(response.visitorId)
-            },
-            errorListener = { error ->
-                Log.e(
-                    "FingerprintManager",
-                    "Fingerprint getVisitorId failed: ${error::class.simpleName} — ${error.description} (requestId=${error.requestId})"
-                )
+        configuredClient(context) { fpClient ->
+            if (fpClient == null) {
+                Log.w("FingerprintManager", "Fingerprint client unavailable — configuration could not be fetched")
                 completion(null)
+                return@configuredClient
             }
-        )
+
+            fpClient.getVisitorId(
+                timeoutMillis = timeoutMillis ?: DEFAULT_GET_VISITOR_ID_TIMEOUT_MS,
+                listener = { response ->
+                    completion(response.visitorId)
+                },
+                errorListener = { error ->
+                    Log.e(
+                        "FingerprintManager",
+                        "Fingerprint getVisitorId failed: ${error::class.simpleName} — ${error.description} (requestId=${error.requestId})"
+                    )
+                    completion(null)
+                }
+            )
+        }
     }
 }

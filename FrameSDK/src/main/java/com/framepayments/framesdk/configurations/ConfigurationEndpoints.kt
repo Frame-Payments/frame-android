@@ -10,6 +10,9 @@ sealed class ConfigurationEndpoints : FrameNetworkingEndpoints {
     /** Requests the Evervault configuration from `GET /v1/config/evervault`. */
     object GetEvervaultConfiguration : ConfigurationEndpoints()
 
+    /** Requests the Fingerprint configuration from `GET /v1/config/fingerprint`. */
+    object GetFingerprintConfiguration : ConfigurationEndpoints()
+
     /** Requests the Sift configuration from `GET /v1/config/sift`. */
     object GetSiftConfiguration: ConfigurationEndpoints()
 
@@ -17,6 +20,8 @@ sealed class ConfigurationEndpoints : FrameNetworkingEndpoints {
         get() = when (this) {
             is GetEvervaultConfiguration ->
                 "/v1/config/evervault"
+            is GetFingerprintConfiguration ->
+                "/v1/config/fingerprint"
             is GetSiftConfiguration ->
                 "/v1/config/sift"
         }

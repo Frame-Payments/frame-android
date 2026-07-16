@@ -16,6 +16,17 @@ object ConfigurationResponses {
     )
 
     /**
+     * Holds the Fingerprint credentials returned by the configuration endpoint.
+     *
+     * @property apiKey The Fingerprint public API key.
+     * @property region The Fingerprint region associated with the API key (e.g. "us", "eu", "ap").
+     */
+    data class GetFingerprintConfigurationResponse(
+        @SerializedName("api_key") val apiKey: String? = null,
+        @SerializedName("region") val region: String? = null
+    )
+
+    /**
      * Holds the Sift credentials returned by the configuration endpoint.
      *
      * @property accountId The Sift account identifier.
