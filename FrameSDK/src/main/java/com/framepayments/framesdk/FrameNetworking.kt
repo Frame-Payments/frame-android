@@ -433,6 +433,10 @@ object FrameNetworking {
             .url(httpUrl)
             .withFrameHeaders(auth)
 
+        for ((name, value) in endpoint.additionalHeaders) {
+            requestBuilder.header(name, value)
+        }
+
         val requestBody: ByteArray? = try {
             gson.toJson(request).toByteArray(Charsets.UTF_8)
         } catch (_: Exception) {

@@ -20,7 +20,10 @@ import com.framepayments.frameonboarding.classes.PaymentMethodSummary
 import com.framepayments.frameonboarding.classes.computeFlowSegments
 import com.framepayments.frameonboarding.classes.computeOrderedSteps
 import com.framepayments.frameonboarding.classes.toFlowSegment
+import com.framepayments.frameonboarding.networking.idv.IdvAPI
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
+import com.framepayments.frameonboarding.persona.PersonaVerificationResult
+import com.framepayments.frameonboarding.persona.PersonaVerificationService
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
@@ -125,6 +128,23 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     private val _plaidLinkToken = MutableStateFlow<String?>(null)
     val plaidLinkToken: StateFlow<String?> = _plaidLinkToken.asStateFlow()
+
+    // Government-ID (Persona) no-SSN verification. [personaInquiryToLaunch] is set to a pre-created
+    // inquiry id once /idv/session returns; the personal-info view observes it from a
+    // LaunchedEffect and launches the Persona SDK (the ActivityResult launcher is lifecycle-owned by
+    // the composable, so the VM can't launch it directly). Cleared via [clearPersonaInquiryToLaunch]
+    // right after launch so the effect won't re-fire.
+    private val personaService = PersonaVerificationService()
+
+    private val _personaInquiryToLaunch = MutableStateFlow<String?>(null)
+    val personaInquiryToLaunch: StateFlow<String?> = _personaInquiryToLaunch.asStateFlow()
+
+    /** True while /idv/session is in flight or the Persona SDK / completion round-trip is running. */
+    private val _isVerifyingGovId = MutableStateFlow(false)
+    val isVerifyingGovId: StateFlow<Boolean> = _isVerifyingGovId.asStateFlow()
+
+    // Whether the customer has verified via government ID is read from
+    // [onboardingData].identityVerifiedViaGovId directly in the UI — no separate flow needed.
 
     /// Single re-entrancy + loading flag for any user-initiated network action. Drives the
     /// in-button spinner across every onboarding screen and prevents double-submits.
@@ -890,6 +910,103 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             }
         }
     }
+
+    // region Government-ID (Persona) no-SSN verification
+
+    /**
+     * Kicks off the no-SSN government-ID flow. Calls `POST /idv/session` to obtain a pre-created
+     * Persona inquiry id, then publishes it via [personaInquiryToLaunch]. The personal-info view
+     * observes that flow from a `LaunchedEffect` and drives the Persona SDK through
+     * [launchPersonaInquiry], because the Persona `ActivityResultLauncher` is owned by the
+     * composable's lifecycle and cannot be launched from the ViewModel directly.
+     *
+     * No-op if a verification is already in flight, if the customer is already verified, or if the
+     * onboarding session has no `client_secret` (the IDV endpoints authenticate via it in the body).
+     */
+    fun verifyIdentityWithoutSsn() {
+        if (_isVerifyingGovId.value) return
+        if (_onboardingData.value.identityVerifiedViaGovId) return
+        val clientSecret = config.clientSecret ?: run {
+            reportUserError("Verification is unavailable for this session.")
+            return
+        }
+        _isVerifyingGovId.value = true
+        viewModelScope.launch {
+            val (session, err) = IdvAPI.createSession(clientSecret)
+            val inquiryId = session?.inquiryId
+            if (inquiryId == null) {
+                _isVerifyingGovId.value = false
+                reportUserError(userMessageForNetworkError(err))
+                return@launch
+            }
+            // Hand the inquiry id to the UI; the flag stays true until launch/completion resolves it.
+            _personaInquiryToLaunch.value = inquiryId
+        }
+    }
+
+    /** Clears the pending inquiry id once the UI has launched the Persona SDK, so the effect won't re-fire. */
+    fun clearPersonaInquiryToLaunch() {
+        _personaInquiryToLaunch.value = null
+    }
+
+    /**
+     * Forwards the Persona `ActivityResult` callback from the host composable into the service so the
+     * suspended [launchPersonaInquiry] round-trip can resume. Wire this into
+     * `registerForActivityResult(Inquiry.Contract()) { onPersonaInquiryResult(it) }`.
+     */
+    fun onPersonaInquiryResult(response: com.withpersona.sdk2.inquiry.InquiryResponse) {
+        personaService.onInquiryResult(response)
+    }
+
+    /**
+     * Launches the Persona SDK for [inquiryId] via a lifecycle-owned [launcher], awaits the
+     * (best-effort) client outcome, then confirms with the server via `POST /idv/complete` — the
+     * authoritative source of truth for flipping the UI to verified.
+     *
+     * @param inquiryId Pre-created Persona inquiry id from [verifyIdentityWithoutSsn].
+     * @param launcher A launcher registered via `registerForActivityResult(Inquiry.Contract())`.
+     */
+    fun launchPersonaInquiry(
+        inquiryId: String,
+        launcher: androidx.activity.result.ActivityResultLauncher<com.withpersona.sdk2.inquiry.Inquiry>
+    ) {
+        clearPersonaInquiryToLaunch()
+        val clientSecret = config.clientSecret ?: run {
+            _isVerifyingGovId.value = false
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val outcome = personaService.awaitResult(inquiryId, launcher)
+                when (outcome) {
+                    is PersonaVerificationResult.Completed -> {
+                        // Server response — not the Persona callback — decides verification.
+                        val (complete, err) = IdvAPI.completeInquiry(clientSecret, outcome.inquiryId)
+                        if (complete?.verified == true) {
+                            _onboardingData.update {
+                                it.copy(
+                                    identityVerifiedViaGovId = true,
+                                    govIdInquiryId = outcome.inquiryId
+                                )
+                            }
+                        } else if (err != null && !err.isTransport) {
+                            reportUserError(userMessageForNetworkError(err))
+                        } else {
+                            // Pending (JSON variant not live yet / transient) — leave unverified.
+                            reportUserError("We couldn't confirm your ID yet. Please try again.")
+                        }
+                    }
+                    is PersonaVerificationResult.Cancelled -> Unit
+                    is PersonaVerificationResult.Failure ->
+                        reportUserError(outcome.message ?: "Identity verification failed. Please try again.")
+                }
+            } finally {
+                _isVerifyingGovId.value = false
+            }
+        }
+    }
+
+    // endregion
 
     fun createIndividualAccount() {
         if (!beginAction()) return

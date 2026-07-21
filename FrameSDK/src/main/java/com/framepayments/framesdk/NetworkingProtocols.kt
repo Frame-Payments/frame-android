@@ -24,6 +24,14 @@ interface FrameNetworkingEndpoints {
 
     /** Optional query-string parameters appended to [endpointURL]. */
     val queryItems: List<QueryItem>?
+
+    /**
+     * Optional extra HTTP headers to attach to the request (e.g. `Accept: application/json`).
+     * Defaults to empty. Standard Frame headers (Authorization, User-Agent, Content-Type on
+     * POST/PATCH) are always applied by the networking layer and take precedence.
+     */
+    val additionalHeaders: Map<String, String>
+        get() = emptyMap()
 }
 
 /**
