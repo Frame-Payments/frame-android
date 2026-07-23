@@ -143,14 +143,17 @@ class FrameNetworkingTest {
     }
 
     @Test
-    fun onboardingSessionTokenOverridesPublishableKey() = runBlocking {
+    fun explicitPublishableAuthWinsOverOnboardingSession() = runBlocking {
+        // Merchant-level, publishable-only endpoints (terms_of_service, device_attestation, …)
+        // reject the onb_sess_ token, so an explicit .Publishable request must use the pk_ even
+        // while a session is active. Precedence: ClientSecret > Publishable > session > Secret.
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
 
         FrameNetworking.beginOnboardingSession("onb_sess_abc123")
         FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Publishable)
 
         val recorded = mockWebServer.takeRequest()
-        assertEquals("Bearer onb_sess_abc123", recorded.getHeader("Authorization"))
+        assertEquals("Bearer pk_test_key", recorded.getHeader("Authorization"))
     }
 
     @Test
@@ -179,8 +182,11 @@ class FrameNetworkingTest {
     fun beginOnboardingSessionStillAppliesNonPrefixedToken() = runBlocking {
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
 
+        // beginOnboardingSession stores the token verbatim (even a non-onb_sess_ one). Verify with a
+        // default (.Secret) call, which is scoped to the session — unlike an explicit .Publishable
+        // request, which now intentionally bypasses the session (see explicitPublishableAuthWins…).
         FrameNetworking.beginOnboardingSession("pk_wrong_token")
-        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Publishable)
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Secret)
 
         val recorded = mockWebServer.takeRequest()
         assertEquals("Bearer pk_wrong_token", recorded.getHeader("Authorization"))

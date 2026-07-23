@@ -17,8 +17,8 @@ sealed class IdvEndpoints : FrameNetworkingEndpoints {
 
     override val endpointURL: String
         get() = when (this) {
-            CreateSession -> "/idv/session"
-            Complete -> "/idv/complete"
+            CreateSession -> "/v1/idv/session"
+            Complete -> "/v1/idv/complete"
         }
 
     override val httpMethod: String

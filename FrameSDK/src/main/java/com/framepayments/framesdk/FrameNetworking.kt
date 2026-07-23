@@ -268,26 +268,39 @@ object FrameNetworking {
         }
     }
 
+    /**
+     * Whether an onboarding session (`onb_sess_…`) is currently active. Lets the onboarding flow
+     * avoid re-minting a session when the host already supplied one via `OnboardingContainerView`.
+     */
+    val hasActiveOnboardingSession: Boolean
+        get() = onboardingSessionToken != null
+
     private fun bearerToken(auth: FrameAuthMode): String {
+        // An explicit .clientSecret always wins. An explicit .publishable also wins over any active
+        // onboarding session: merchant-level endpoints (terms_of_service, device_attestation, sonar,
+        // configuration, wallet config) opt into pk_ and the backend rejects an onb_sess_ token on
+        // them ("Client secret is not permitted for this endpoint."). Only after those explicit
+        // credentials does the onboarding-session token take precedence over the configured key.
         if (auth is FrameAuthMode.ClientSecret) return auth.token
+        if (auth is FrameAuthMode.Publishable) {
+            if (apiPublishableKey.isEmpty()) {
+                warnOnce(::hasWarnedAboutMissingPublishableKey) {
+                    "⚠️ Frame: a client-safe request was made but no publishable key (pk_) is configured. Call initializeWithAPIKey(...) first."
+                }
+            }
+            // Return the (possibly empty) publishable key rather than silently substituting the
+            // secret key — a missing pk_ must never cause sk_ to leave the device on a client-safe call.
+            return apiPublishableKey
+        }
         onboardingSessionToken?.let { return it }
         return when (auth) {
-            is FrameAuthMode.Publishable -> {
-                if (apiPublishableKey.isEmpty()) {
-                    warnOnce(::hasWarnedAboutMissingPublishableKey) {
-                        "⚠️ Frame: a client-safe request was made but no publishable key (pk_) is configured. Call initializeWithAPIKey(...) first."
-                    }
-                }
-                // Return the (possibly empty) publishable key rather than silently substituting the
-                // secret key — a missing pk_ must never cause sk_ to leave the device on a client-safe call.
-                apiPublishableKey
-            }
             is FrameAuthMode.Secret -> {
                 warnOnce(::hasWarnedAboutSecretKeyRequest) { secretKeyWarning("used to authenticate a request from the app") }
                 apiSecretKey
             }
-            // Unreachable: handled by the early return above. Kept so the compiler enforces
-            // exhaustiveness over FrameAuthMode instead of falling through a silent `else`.
+            // Unreachable: .Publishable and .ClientSecret are handled by the early returns above.
+            // Kept so the compiler enforces exhaustiveness over FrameAuthMode.
+            is FrameAuthMode.Publishable -> apiPublishableKey
             is FrameAuthMode.ClientSecret -> auth.token
         }
     }
