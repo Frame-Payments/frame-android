@@ -45,9 +45,10 @@ sealed class PersonaVerificationResult {
  * `Inquiry.fromInquiry(inquiryId)`, never a template.
  *
  * Registration lifecycle: the [ActivityResultLauncher] must be created by the host
- * Activity/Composable via `registerForActivityResult(Inquiry.Contract())` (see the composable that
- * calls [awaitResult]) so it is bound to the lifecycle and survives configuration change. This
- * service does not register the callback itself.
+ * Activity/Composable via `registerForActivityResult(Inquiry.Contract())` and passed into
+ * [awaitResult] (the composable creates the launcher; the view model calls [awaitResult] with it) so
+ * it is bound to the lifecycle and survives configuration change. This service does not register the
+ * callback itself.
  */
 class PersonaVerificationService {
 

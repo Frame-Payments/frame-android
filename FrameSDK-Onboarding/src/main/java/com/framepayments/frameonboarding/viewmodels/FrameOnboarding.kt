@@ -121,6 +121,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private val _resolvedAccountId = MutableStateFlow(config.accountId)
     val resolvedAccountId: StateFlow<String?> = _resolvedAccountId.asStateFlow()
 
+    // Onboarding-session secret (`onb_sess_…`) minted locally when the host did not supply a
+    // config.clientSecret. Retained so endpoints that carry client_secret in the body (e.g. IDV) can
+    // authenticate on the publishable-key path. FrameNetworking uses it for auth headers but does not
+    // expose it, so we keep our own copy.
+    private var mintedOnboardingSessionSecret: String? = null
+
     // Payment methods loaded for the account
     private val _savedPaymentMethods = MutableStateFlow<List<PaymentMethodSummary>>(emptyList())
     val savedPaymentMethods: StateFlow<List<PaymentMethodSummary>> = _savedPaymentMethods.asStateFlow()
@@ -216,6 +222,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         val (session, error) = OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey(request)
         if (error != null) reportUserError(userMessageForNetworkError(error))
         val clientSecret = session?.clientSecret ?: return
+        mintedOnboardingSessionSecret = clientSecret
         FrameNetworking.beginOnboardingSession(clientSecret)
     }
 
@@ -950,12 +957,13 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      * composable's lifecycle and cannot be launched from the ViewModel directly.
      *
      * No-op if a verification is already in flight, if the customer is already verified, or if the
-     * onboarding session has no `client_secret` (the IDV endpoints authenticate via it in the body).
+     * onboarding session has no `client_secret` — either a host-supplied one or a locally minted
+     * `onb_sess_` secret (the IDV endpoints authenticate via it in the body).
      */
     fun verifyIdentityWithoutSsn() {
         if (_isVerifyingGovId.value) return
         if (_onboardingData.value.identityVerifiedViaGovId) return
-        val clientSecret = config.clientSecret ?: run {
+        val clientSecret = config.clientSecret ?: mintedOnboardingSessionSecret ?: run {
             reportUserError("Verification is unavailable for this session.")
             return
         }
