@@ -73,6 +73,9 @@ dependencies {
     // Plaid Link SDK
     implementation(libs.plaid.link)
 
+    // Persona Inquiry SDK (government-ID identity verification for the no-SSN path)
+    implementation(libs.persona.inquiry)
+
     // Prove Auth SDK
     implementation(libs.proveauth)
 

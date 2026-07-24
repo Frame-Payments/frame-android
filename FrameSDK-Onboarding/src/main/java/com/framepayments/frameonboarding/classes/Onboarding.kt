@@ -314,6 +314,11 @@ internal data class OnboardingData(
     val postalCode: String? = null,
     val country: String? = null,
     val phoneNumber: String? = null,
+    // Government-ID (Persona) no-SSN verification. When [identityVerifiedViaGovId] is true the
+    // customer verified with a government ID instead of an SSN: the SSN input is optional and
+    // omitted from account submit. [govIdInquiryId] is the Persona inquiry that produced it.
+    val identityVerifiedViaGovId: Boolean = false,
+    val govIdInquiryId: String? = null,
     // IDs set after API calls
     val customerIdentityId: String? = null,
     val resolvedAccountId: String? = null,

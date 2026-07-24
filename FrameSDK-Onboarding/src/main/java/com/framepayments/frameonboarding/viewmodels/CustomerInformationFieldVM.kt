@@ -124,9 +124,11 @@ class CustomerInformationFieldVM(
     /**
      * Validates the current [identity] form and updates [errors] with any failures.
      *
+     * @param ssnOptional When true, SSN validation is skipped entirely (used when the customer has
+     *   verified their identity with a government ID and no longer needs to supply an SSN).
      * @return True if all fields pass validation; false if any errors were found.
      */
-    fun validate(): Boolean {
+    fun validate(ssnOptional: Boolean = false): Boolean {
         val next = mutableMapOf<Field, String>()
         val id = _identity.value
 
@@ -151,8 +153,10 @@ class CustomerInformationFieldVM(
                 next[Field.BIRTH_YEAR] = err
             }
 
-        OnboardingValidators.validateSSNLast4(id.ssn)
-            ?.let { next[Field.SSN] = it }
+        if (!ssnOptional) {
+            OnboardingValidators.validateSSNLast4(id.ssn)
+                ?.let { next[Field.SSN] = it }
+        }
 
         _errors.value = next
         return next.isEmpty()

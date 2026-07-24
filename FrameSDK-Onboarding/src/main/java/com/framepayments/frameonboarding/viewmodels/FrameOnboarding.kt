@@ -20,7 +20,10 @@ import com.framepayments.frameonboarding.classes.PaymentMethodSummary
 import com.framepayments.frameonboarding.classes.computeFlowSegments
 import com.framepayments.frameonboarding.classes.computeOrderedSteps
 import com.framepayments.frameonboarding.classes.toFlowSegment
+import com.framepayments.frameonboarding.networking.idv.IdvAPI
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
+import com.framepayments.frameonboarding.persona.PersonaVerificationResult
+import com.framepayments.frameonboarding.persona.PersonaVerificationService
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
@@ -36,6 +39,8 @@ import com.framepayments.framesdk.capabilities.CapabilitiesAPI
 import com.framepayments.framesdk.capabilities.CapabilityRequests
 import com.framepayments.framesdk.customeridentity.CustomerIdentityAPI
 import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
+import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
+import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
 import com.framepayments.framesdk.managers.SiftManager
@@ -116,6 +121,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private val _resolvedAccountId = MutableStateFlow(config.accountId)
     val resolvedAccountId: StateFlow<String?> = _resolvedAccountId.asStateFlow()
 
+    // Onboarding-session secret (`onb_sess_…`) minted locally when the host did not supply a
+    // config.clientSecret. Retained so endpoints that carry client_secret in the body (e.g. IDV) can
+    // authenticate on the publishable-key path. FrameNetworking uses it for auth headers but does not
+    // expose it, so we keep our own copy.
+    private var mintedOnboardingSessionSecret: String? = null
+
     // Payment methods loaded for the account
     private val _savedPaymentMethods = MutableStateFlow<List<PaymentMethodSummary>>(emptyList())
     val savedPaymentMethods: StateFlow<List<PaymentMethodSummary>> = _savedPaymentMethods.asStateFlow()
@@ -125,6 +136,23 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     private val _plaidLinkToken = MutableStateFlow<String?>(null)
     val plaidLinkToken: StateFlow<String?> = _plaidLinkToken.asStateFlow()
+
+    // Government-ID (Persona) no-SSN verification. [personaInquiryToLaunch] is set to a pre-created
+    // inquiry id once /idv/session returns; the personal-info view observes it from a
+    // LaunchedEffect and launches the Persona SDK (the ActivityResult launcher is lifecycle-owned by
+    // the composable, so the VM can't launch it directly). Cleared via [clearPersonaInquiryToLaunch]
+    // right after launch so the effect won't re-fire.
+    private val personaService = PersonaVerificationService()
+
+    private val _personaInquiryToLaunch = MutableStateFlow<String?>(null)
+    val personaInquiryToLaunch: StateFlow<String?> = _personaInquiryToLaunch.asStateFlow()
+
+    /** True while /idv/session is in flight or the Persona SDK / completion round-trip is running. */
+    private val _isVerifyingGovId = MutableStateFlow(false)
+    val isVerifyingGovId: StateFlow<Boolean> = _isVerifyingGovId.asStateFlow()
+
+    // Whether the customer has verified via government ID is read from
+    // [onboardingData].identityVerifiedViaGovId directly in the UI — no separate flow needed.
 
     /// Single re-entrancy + loading flag for any user-initiated network action. Drives the
     /// in-button spinner across every onboarding screen and prevents double-submits.
@@ -174,6 +202,28 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             NetworkingError.InvalidURL -> "Configuration error. Please try again later."
             NetworkingError.UnknownError -> "Something went wrong. Please try again."
         }
+    }
+
+    /**
+     * Binds the onboarding flow to the resolved account by minting an account-scoped onboarding
+     * session (`onb_sess_…`) and beginning it, so subsequent requests (e.g. IDV) authenticate as the
+     * session rather than falling back to the configured publishable/secret key.
+     *
+     * Mints with the publishable key (`pk_`), which `POST /v1/onboarding_sessions` accepts, so no
+     * secret key leaves the device. Idempotent and safe to call after each account-creation path: it
+     * does nothing when the host already supplied a `clientSecret` (a session is active) or when no
+     * account exists yet.
+     */
+    private suspend fun beginOnboardingSessionIfNeeded() {
+        if (FrameNetworking.hasActiveOnboardingSession) return
+        val accountId = _resolvedAccountId.value ?: return
+
+        val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(accountId = accountId)
+        val (session, error) = OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey(request)
+        if (error != null) reportUserError(userMessageForNetworkError(error))
+        val clientSecret = session?.clientSecret ?: return
+        mintedOnboardingSessionSecret = clientSecret
+        FrameNetworking.beginOnboardingSession(clientSecret)
     }
 
     // Phone OTP step state
@@ -433,6 +483,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     suspend fun checkExistingAccount(updateCapabilities: Boolean = false, depth: Int = 0) {
         val accountId = _resolvedAccountId.value ?: return
+        // A host that launches onboarding with an existing accountId but no clientSecret has no
+        // account-creation step to mint from, so bind a session here too — otherwise IDV and other
+        // account-scoped requests fall back to the configured key. No-ops if a session is already active.
+        beginOnboardingSessionIfNeeded()
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
         account?.id?.let { aid ->
             _resolvedAccountId.value = aid
@@ -593,6 +647,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     } else {
                         _resolvedAccountId.value = id
                         _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = id)
+                        beginOnboardingSessionIfNeeded()
                         id
                     }
                 } ?: return@launch
@@ -808,6 +863,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             } else {
                 _resolvedAccountId.value = newId
                 _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = newId)
+                beginOnboardingSessionIfNeeded()
                 newId
             }
         }
@@ -891,6 +947,120 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
     }
 
+    // region Government-ID (Persona) no-SSN verification
+
+    /**
+     * Kicks off the no-SSN government-ID flow. Calls `POST /idv/session` to obtain a pre-created
+     * Persona inquiry id, then publishes it via [personaInquiryToLaunch]. The personal-info view
+     * observes that flow from a `LaunchedEffect` and drives the Persona SDK through
+     * [launchPersonaInquiry], because the Persona `ActivityResultLauncher` is owned by the
+     * composable's lifecycle and cannot be launched from the ViewModel directly.
+     *
+     * No-op if a verification is already in flight, if the customer is already verified, or if the
+     * onboarding session has no `client_secret` — either a host-supplied one or a locally minted
+     * `onb_sess_` secret (the IDV endpoints authenticate via it in the body).
+     */
+    fun verifyIdentityWithoutSsn() {
+        if (_isVerifyingGovId.value) return
+        if (_onboardingData.value.identityVerifiedViaGovId) return
+        val clientSecret = config.clientSecret ?: mintedOnboardingSessionSecret ?: run {
+            reportUserError("Verification is unavailable for this session.")
+            return
+        }
+        _isVerifyingGovId.value = true
+        viewModelScope.launch {
+            val (session, err) = IdvAPI.createSession(clientSecret)
+            val inquiryId = session?.inquiryId?.takeIf { it.isNotBlank() }
+            if (inquiryId == null) {
+                _isVerifyingGovId.value = false
+                reportUserError(userMessageForNetworkError(err))
+                return@launch
+            }
+            // For a pre-existing account, createSession may return an already-approved inquiry, which
+            // is terminal — the Persona SDK can't open a session on it and would fail. The server
+            // reads inquiry status from Persona (works on terminal inquiries), so confirm first: if it
+            // reports verified, mark the step done and skip the Persona launch entirely. Any other
+            // outcome (not verified / error / null) falls through to the normal Persona flow.
+            val (existing, existingErr) = IdvAPI.completeInquiry(clientSecret, inquiryId)
+            if (existingErr == null && existing?.verified == true) {
+                _onboardingData.update {
+                    it.copy(
+                        identityVerifiedViaGovId = true,
+                        govIdInquiryId = inquiryId
+                    )
+                }
+                _isVerifyingGovId.value = false
+                return@launch
+            }
+            // Hand the inquiry id to the UI; the flag stays true until launch/completion resolves it.
+            _personaInquiryToLaunch.value = inquiryId
+        }
+    }
+
+    /** Clears the pending inquiry id once the UI has launched the Persona SDK, so the effect won't re-fire. */
+    fun clearPersonaInquiryToLaunch() {
+        _personaInquiryToLaunch.value = null
+    }
+
+    /**
+     * Forwards the Persona `ActivityResult` callback from the host composable into the service so the
+     * suspended [launchPersonaInquiry] round-trip can resume. Wire this into
+     * `registerForActivityResult(Inquiry.Contract()) { onPersonaInquiryResult(it) }`.
+     */
+    fun onPersonaInquiryResult(response: com.withpersona.sdk2.inquiry.InquiryResponse) {
+        personaService.onInquiryResult(response)
+    }
+
+    /**
+     * Launches the Persona SDK for [inquiryId] via a lifecycle-owned [launcher], awaits the
+     * (best-effort) client outcome, then confirms with the server via `POST /idv/complete` — the
+     * authoritative source of truth for flipping the UI to verified.
+     *
+     * @param inquiryId Pre-created Persona inquiry id from [verifyIdentityWithoutSsn].
+     * @param launcher A launcher registered via `registerForActivityResult(Inquiry.Contract())`.
+     */
+    fun launchPersonaInquiry(
+        inquiryId: String,
+        launcher: androidx.activity.result.ActivityResultLauncher<com.withpersona.sdk2.inquiry.Inquiry>
+    ) {
+        clearPersonaInquiryToLaunch()
+        val clientSecret = config.clientSecret ?: run {
+            _isVerifyingGovId.value = false
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val outcome = personaService.awaitResult(inquiryId, launcher)
+                when (outcome) {
+                    is PersonaVerificationResult.Completed -> {
+                        // Server response — not the Persona callback — decides verification.
+                        val (complete, err) = IdvAPI.completeInquiry(clientSecret, outcome.inquiryId)
+                        if (complete?.verified == true) {
+                            _onboardingData.update {
+                                it.copy(
+                                    identityVerifiedViaGovId = true,
+                                    govIdInquiryId = outcome.inquiryId
+                                )
+                            }
+                        } else if (err != null && !err.isTransport) {
+                            reportUserError(userMessageForNetworkError(err))
+                        } else {
+                            // Pending (JSON variant not live yet / transient) — leave unverified.
+                            reportUserError("We couldn't confirm your ID yet. Please try again.")
+                        }
+                    }
+                    is PersonaVerificationResult.Cancelled -> Unit
+                    is PersonaVerificationResult.Failure ->
+                        reportUserError(outcome.message ?: "Identity verification failed. Please try again.")
+                }
+            } finally {
+                _isVerifyingGovId.value = false
+            }
+        }
+    }
+
+    // endregion
+
     fun createIndividualAccount() {
         if (!beginAction()) return
         viewModelScope.launch {
@@ -933,6 +1103,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             if (id != null) {
                 _resolvedAccountId.value = id
                 _onboardingData.update { o -> o.copy(resolvedAccountId = id) }
+                beginOnboardingSessionIfNeeded()
             } else {
                 reportUserError(userMessageForNetworkError(err))
             }

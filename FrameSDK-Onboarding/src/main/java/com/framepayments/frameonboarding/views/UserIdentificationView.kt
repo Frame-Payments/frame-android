@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.views
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,6 +64,7 @@ import com.framepayments.frameonboarding.viewmodels.VerifyPhoneUi
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
+import com.withpersona.sdk2.inquiry.Inquiry
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +87,27 @@ internal fun UserIdentificationView(
     val termsToken by viewModel.termsOfServiceToken.collectAsState()
     val onboardingData by viewModel.onboardingData.collectAsState()
     val fieldErrors by viewModel.fieldErrors.collectAsState()
+    val requiredCapabilities by viewModel.requiredCapabilities.collectAsState()
+    val personaInquiryToLaunch by viewModel.personaInquiryToLaunch.collectAsState()
+    val isVerifyingGovId by viewModel.isVerifyingGovId.collectAsState()
     val context = LocalContext.current
+
+    // Show the no-SSN government-ID path only when KYC is required (the same gate as the SSN field).
+    val showGovIdVerification = requiredCapabilities.contains(Capabilities.KYC) ||
+        requiredCapabilities.contains(Capabilities.KYC_PREFILL)
+
+    // Persona result launcher. Lifecycle-owned here (the VM can't launch an ActivityResult); the
+    // callback forwards the (best-effort) client outcome to the VM, which confirms with the server.
+    val personaLauncher = rememberLauncherForActivityResult(Inquiry.Contract(context)) { response ->
+        viewModel.onPersonaInquiryResult(response)
+    }
+
+    // When /idv/session returns an inquiry id, launch the Persona SDK against it and confirm server-side.
+    LaunchedEffect(personaInquiryToLaunch) {
+        personaInquiryToLaunch?.let { inquiryId ->
+            viewModel.launchPersonaInquiry(inquiryId, personaLauncher)
+        }
+    }
 
     LaunchedEffect(showTermsOfService, termsToken) {
         if (showTermsOfService && termsToken == null) {
@@ -343,7 +365,11 @@ internal fun UserIdentificationView(
                         VerifyIdSubStep.InformationForm -> {
                             CustomerInformationView(
                                 viewModel = customerInfoVM,
-                                showHeader = false
+                                showHeader = false,
+                                showGovIdVerification = showGovIdVerification,
+                                identityVerifiedViaGovId = onboardingData.identityVerifiedViaGovId,
+                                isVerifyingGovId = isVerifyingGovId,
+                                onVerifyWithoutSsn = { viewModel.verifyIdentityWithoutSsn() }
                             )
 
                             Spacer(Modifier.height(24.dp))
@@ -373,7 +399,8 @@ internal fun UserIdentificationView(
                                     }
                                 }
                                 else -> {
-                                    val infoOK = customerInfoVM.validate()
+                                    val verifiedViaGovId = onboardingData.identityVerifiedViaGovId
+                                    val infoOK = customerInfoVM.validate(ssnOptional = verifiedViaGovId)
                                     val addressOK = personalAddressVM.validate()
                                     if (infoOK && addressOK) {
                                         val id = customerInfoVM.identity.value
@@ -384,7 +411,8 @@ internal fun UserIdentificationView(
                                             lastName = id.lastName,
                                             email = id.email,
                                             dobOverride = id.dateOfBirth.takeIf { it.isNotBlank() },
-                                            ssnLastFour = id.ssn,
+                                            // Omit SSN when verified via government ID; upsert treats "" as null.
+                                            ssnLastFour = if (verifiedViaGovId) "" else id.ssn,
                                             addressLine1 = addr.addressLine1.orEmpty(),
                                             addressLine2 = addr.addressLine2,
                                             city = addr.city.orEmpty(),

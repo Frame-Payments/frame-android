@@ -37,7 +37,19 @@ private val isoDobRegex = Regex("""^(\d{4})-(\d{1,2})-(\d{1,2})$""")
 fun CustomerInformationView(
     viewModel: CustomerInformationFieldVM,
     headerTitle: String = "Customer Information",
-    showHeader: Boolean = true
+    showHeader: Boolean = true,
+    /**
+     * When true, shows the "I don't have a social security number" government-ID path beneath the
+     * SSN row. Gate this on the same KYC capability that requires the SSN field. Defaults to false
+     * so previews and other callers are unaffected.
+     */
+    showGovIdVerification: Boolean = false,
+    /** When true, the SSN input and the button are hidden and a "Verified with government ID." line is shown. */
+    identityVerifiedViaGovId: Boolean = false,
+    /** When true, the government-ID button shows a spinner and is disabled (verification in flight). */
+    isVerifyingGovId: Boolean = false,
+    /** Invoked when the customer taps "I don't have a social security number". */
+    onVerifyWithoutSsn: () -> Unit = {}
 ) {
     val identity by viewModel.identity.collectAsState()
     val phoneCountry by viewModel.phoneCountry.collectAsState()
@@ -219,18 +231,38 @@ fun CustomerInformationView(
 
         Spacer(Modifier.height(16.dp))
 
-        ValidatedTextField(
-            value = identity.ssn,
-            onValueChange = { v ->
-                val filtered = v.filter(Char::isDigit).take(4)
-                viewModel.updateIdentity { it.copy(ssn = filtered) }
-            },
-            prompt = "SSN (last 4 digits)",
-            error = errors[CustomerInformationFieldVM.Field.SSN],
-            keyboardType = KeyboardType.Number,
-            characterLimit = 4,
-            inlineError = true,
-            onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.SSN) }
-        )
+        if (identityVerifiedViaGovId) {
+            // Verified with a government ID: replace both the SSN input and the button with a
+            // confirmation line. SSN is optional (and omitted from submit) on this path.
+            Text(
+                text = "Verified with government ID.",
+                style = theme.fonts.bodySmall,
+                color = theme.colors.textPrimary
+            )
+        } else {
+            ValidatedTextField(
+                value = identity.ssn,
+                onValueChange = { v ->
+                    val filtered = v.filter(Char::isDigit).take(4)
+                    viewModel.updateIdentity { it.copy(ssn = filtered) }
+                },
+                prompt = "SSN (last 4 digits)",
+                error = errors[CustomerInformationFieldVM.Field.SSN],
+                keyboardType = KeyboardType.Number,
+                characterLimit = 4,
+                inlineError = true,
+                onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.SSN) }
+            )
+
+            if (showGovIdVerification) {
+                Spacer(Modifier.height(12.dp))
+                ContinueButton(
+                    text = "I don't have a social security number",
+                    style = ContinueButtonStyle.SECONDARY,
+                    isLoading = isVerifyingGovId,
+                    onClick = onVerifyWithoutSsn
+                )
+            }
+        }
     }
 }
