@@ -457,10 +457,10 @@ object FrameNetworking {
         }
 
         val method = endpoint.httpMethod.uppercase()
-        if (method == "POST" || method == "PATCH") {
+        if (method == "POST" || method == "PUT" || method == "PATCH") {
             requestBuilder.header("Content-Type", "application/json")
             val mediaType = "application/json".toMediaTypeOrNull()
-            val body = requestBody?.toRequestBody(mediaType)
+            val body = (requestBody ?: ByteArray(0)).toRequestBody(mediaType)
             requestBuilder.method(method, body)
         } else {
             requestBuilder.method(method, null)
@@ -689,10 +689,10 @@ object FrameNetworking {
             }
 
             val method = endpoint.httpMethod.uppercase()
-            if (method == "POST" || method == "PATCH") {
+            if (method == "POST" || method == "PUT" || method == "PATCH") {
                 requestBuilder.header("Content-Type", "application/json")
                 val mediaType = "application/json".toMediaTypeOrNull()
-                val body = requestBody?.toRequestBody(mediaType)
+                val body = (requestBody ?: ByteArray(0)).toRequestBody(mediaType)
                 requestBuilder.method(method, body)
             } else {
                 requestBuilder.method(method, null)
