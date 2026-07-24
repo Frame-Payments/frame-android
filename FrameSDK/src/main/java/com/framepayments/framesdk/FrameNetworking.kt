@@ -684,6 +684,10 @@ object FrameNetworking {
                 .url(httpUrl)
                 .withFrameHeadersOnWorkerThread(auth)
 
+            for ((name, value) in endpoint.additionalHeaders) {
+                requestBuilder.header(name, value)
+            }
+
             val method = endpoint.httpMethod.uppercase()
             if (method == "POST" || method == "PATCH") {
                 requestBuilder.header("Content-Type", "application/json")
