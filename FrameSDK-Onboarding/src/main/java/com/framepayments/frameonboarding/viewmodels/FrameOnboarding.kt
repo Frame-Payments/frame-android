@@ -962,7 +962,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         _isVerifyingGovId.value = true
         viewModelScope.launch {
             val (session, err) = IdvAPI.createSession(clientSecret)
-            val inquiryId = session?.inquiryId
+            val inquiryId = session?.inquiryId?.takeIf { it.isNotBlank() }
             if (inquiryId == null) {
                 _isVerifyingGovId.value = false
                 reportUserError(userMessageForNetworkError(err))
