@@ -1,3 +1,5 @@
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+
 val sdkVersion = project.findProperty("SDK_VERSION") as String? ?: "unspecified"
 
 plugins {
@@ -63,6 +65,11 @@ dependencies {
 }
 
 mavenPublishing {
+    // AGP's own javaDocReleaseGeneration task bundles a pre-ASM9 Dokka that cannot read the
+    // PermittedSubclasses attribute emitted for sealed classes by some dependencies. Skip it
+    // and attach the Dokka plugin's javadoc jar (see dokkaJavadocJar below) instead.
+    configure(AndroidSingleVariantLibrary(variant = "release", publishJavadocJar = false))
+
     coordinates("com.framepayments", "framesdk", sdkVersion)
 
     pom {
@@ -104,6 +111,19 @@ detekt {
 
 tasks.named("dokkaHtml") {
     outputs.upToDateWhen { false }
+}
+
+// Maven Central requires a javadoc jar. AGP's generator can't parse sealed classes in our
+// dependencies, so build it from Dokka, which can. Paired with publishJavadocJar = false above.
+val dokkaJavadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+    from(tasks.named("dokkaJavadoc"))
+}
+
+afterEvaluate {
+    publishing.publications.named<MavenPublication>("maven") {
+        artifact(dokkaJavadocJar)
+    }
 }
 
 // CI: print per-test pass/fail names instead of the silent default. Helps surface
