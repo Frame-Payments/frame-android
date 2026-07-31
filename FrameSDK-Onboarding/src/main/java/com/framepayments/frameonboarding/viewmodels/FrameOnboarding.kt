@@ -124,8 +124,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     // Onboarding-session secret (`onb_sess_…`) minted locally when the host did not supply a
     // config.clientSecret. Retained so endpoints that carry client_secret in the body (e.g. IDV) can
     // authenticate on the publishable-key path. FrameNetworking uses it for auth headers but does not
-    // expose it, so we keep our own copy.
+    // expose it, so we keep our own copy — along with the account it was minted for, since
+    // FrameNetworking.hasActiveOnboardingSession is a process-global flag that says nothing about
+    // which account the live token belongs to.
     private var mintedOnboardingSessionSecret: String? = null
+    private var mintedOnboardingSessionAccountId: String? = null
 
     /**
      * The onboarding-session secret the IDV endpoints authenticate with: the host-supplied
@@ -139,7 +142,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      * strands the flow half-completed on the publishable-key path.
      */
     private val idvClientSecret: String?
-        get() = config.clientSecret ?: mintedOnboardingSessionSecret
+        get() = config.clientSecret ?: mintedOnboardingSessionSecret?.takeIf {
+            mintedOnboardingSessionAccountId == _resolvedAccountId.value
+        }
 
     // Payment methods loaded for the account
     private val _savedPaymentMethods = MutableStateFlow<List<PaymentMethodSummary>>(emptyList())
@@ -229,14 +234,21 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      * account exists yet.
      */
     private suspend fun beginOnboardingSessionIfNeeded() {
-        if (FrameNetworking.hasActiveOnboardingSession) return
+        if (config.clientSecret != null) return
         val accountId = _resolvedAccountId.value ?: return
+        // Only skip when *this* flow already holds a session for *this* account.
+        // FrameNetworking.hasActiveOnboardingSession alone is not enough: a locally minted session is
+        // never ended on dispose (OnboardingContainerView only ends host-supplied ones), so a second
+        // flow for a different account would see a stale global token, skip minting, and end up with
+        // no secret it can use for the body-authenticated IDV endpoints.
+        if (mintedOnboardingSessionSecret != null && mintedOnboardingSessionAccountId == accountId) return
 
         val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(accountId = accountId)
         val (session, error) = OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey(request)
         if (error != null) reportUserError(userMessageForNetworkError(error))
         val clientSecret = session?.clientSecret ?: return
         mintedOnboardingSessionSecret = clientSecret
+        mintedOnboardingSessionAccountId = accountId
         FrameNetworking.beginOnboardingSession(clientSecret)
     }
 
