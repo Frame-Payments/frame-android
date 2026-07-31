@@ -124,8 +124,27 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     // Onboarding-session secret (`onb_sess_…`) minted locally when the host did not supply a
     // config.clientSecret. Retained so endpoints that carry client_secret in the body (e.g. IDV) can
     // authenticate on the publishable-key path. FrameNetworking uses it for auth headers but does not
-    // expose it, so we keep our own copy.
+    // expose it, so we keep our own copy — along with the account it was minted for, since
+    // FrameNetworking.hasActiveOnboardingSession is a process-global flag that says nothing about
+    // which account the live token belongs to.
     private var mintedOnboardingSessionSecret: String? = null
+    private var mintedOnboardingSessionAccountId: String? = null
+
+    /**
+     * The onboarding-session secret the IDV endpoints authenticate with: the host-supplied
+     * [OnboardingConfig.clientSecret] when present, otherwise the locally minted `onb_sess_…`.
+     *
+     * Every step of the government-ID flow must resolve the secret the same way — Frame-iOS keeps
+     * this in one place by letting `FrameNetworking` resolve auth centrally, so its
+     * `IdentityVerificationAPI` takes no secret at all. Android threads it explicitly (the server
+     * reads `client_secret` from the request body here), so this accessor is the single source of
+     * truth instead. Reading `config.clientSecret` directly in one step and this chain in another
+     * strands the flow half-completed on the publishable-key path.
+     */
+    private val idvClientSecret: String?
+        get() = config.clientSecret ?: mintedOnboardingSessionSecret?.takeIf {
+            mintedOnboardingSessionAccountId == _resolvedAccountId.value
+        }
 
     // Payment methods loaded for the account
     private val _savedPaymentMethods = MutableStateFlow<List<PaymentMethodSummary>>(emptyList())
@@ -215,14 +234,21 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      * account exists yet.
      */
     private suspend fun beginOnboardingSessionIfNeeded() {
-        if (FrameNetworking.hasActiveOnboardingSession) return
+        if (config.clientSecret != null) return
         val accountId = _resolvedAccountId.value ?: return
+        // Only skip when *this* flow already holds a session for *this* account.
+        // FrameNetworking.hasActiveOnboardingSession alone is not enough: a locally minted session is
+        // never ended on dispose (OnboardingContainerView only ends host-supplied ones), so a second
+        // flow for a different account would see a stale global token, skip minting, and end up with
+        // no secret it can use for the body-authenticated IDV endpoints.
+        if (mintedOnboardingSessionSecret != null && mintedOnboardingSessionAccountId == accountId) return
 
         val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(accountId = accountId)
         val (session, error) = OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey(request)
         if (error != null) reportUserError(userMessageForNetworkError(error))
         val clientSecret = session?.clientSecret ?: return
         mintedOnboardingSessionSecret = clientSecret
+        mintedOnboardingSessionAccountId = accountId
         FrameNetworking.beginOnboardingSession(clientSecret)
     }
 
@@ -963,7 +989,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun verifyIdentityWithoutSsn() {
         if (_isVerifyingGovId.value) return
         if (_onboardingData.value.identityVerifiedViaGovId) return
-        val clientSecret = config.clientSecret ?: mintedOnboardingSessionSecret ?: run {
+        val clientSecret = idvClientSecret ?: run {
             reportUserError("Verification is unavailable for this session.")
             return
         }
@@ -1003,6 +1029,18 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     /**
+     * Clears the government-ID verified state so the applicant can re-run verification or enter an
+     * SSN instead. Restores the SSN input and the "I don't have a social security number" button.
+     *
+     * Mirrors Frame-iOS's `resetIdentityVerification()`, which backs its "Use SSN instead" button.
+     */
+    fun resetIdentityVerification() {
+        _onboardingData.update {
+            it.copy(identityVerifiedViaGovId = false, govIdInquiryId = null)
+        }
+    }
+
+    /**
      * Forwards the Persona `ActivityResult` callback from the host composable into the service so the
      * suspended [launchPersonaInquiry] round-trip can resume. Wire this into
      * `registerForActivityResult(Inquiry.Contract()) { onPersonaInquiryResult(it) }`.
@@ -1024,8 +1062,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         launcher: androidx.activity.result.ActivityResultLauncher<com.withpersona.sdk2.inquiry.Inquiry>
     ) {
         clearPersonaInquiryToLaunch()
-        val clientSecret = config.clientSecret ?: run {
+        // Must resolve the secret exactly as verifyIdentityWithoutSsn did — it already reached
+        // /idv/session, so bailing here would strand the applicant with an inquiry that never opens.
+        val clientSecret = idvClientSecret ?: run {
             _isVerifyingGovId.value = false
+            reportUserError("Verification is unavailable for this session.")
             return
         }
         viewModelScope.launch {
@@ -1046,7 +1087,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                             reportUserError(userMessageForNetworkError(err))
                         } else {
                             // Pending (JSON variant not live yet / transient) — leave unverified.
-                            reportUserError("We couldn't confirm your ID yet. Please try again.")
+                            // Names the SSN fallback like Frame-iOS does; "try again" alone is a
+                            // dead end for an applicant who has no SSN to fall back on.
+                            reportUserError(
+                                "We couldn't verify your identity. Please try again or enter your Social Security Number."
+                            )
                         }
                     }
                     is PersonaVerificationResult.Cancelled -> Unit
