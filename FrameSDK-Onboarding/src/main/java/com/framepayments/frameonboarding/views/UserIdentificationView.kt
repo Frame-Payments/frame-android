@@ -369,7 +369,8 @@ internal fun UserIdentificationView(
                                 showGovIdVerification = showGovIdVerification,
                                 identityVerifiedViaGovId = onboardingData.identityVerifiedViaGovId,
                                 isVerifyingGovId = isVerifyingGovId,
-                                onVerifyWithoutSsn = { viewModel.verifyIdentityWithoutSsn() }
+                                onVerifyWithoutSsn = { viewModel.verifyIdentityWithoutSsn() },
+                                onUseSsnInstead = { viewModel.resetIdentityVerification() }
                             )
 
                             Spacer(Modifier.height(24.dp))

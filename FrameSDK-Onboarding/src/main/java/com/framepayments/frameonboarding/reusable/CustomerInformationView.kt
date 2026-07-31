@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -49,7 +51,9 @@ fun CustomerInformationView(
     /** When true, the government-ID button shows a spinner and is disabled (verification in flight). */
     isVerifyingGovId: Boolean = false,
     /** Invoked when the customer taps "I don't have a social security number". */
-    onVerifyWithoutSsn: () -> Unit = {}
+    onVerifyWithoutSsn: () -> Unit = {},
+    /** Invoked when the customer taps "Use SSN instead" to undo government-ID verification. */
+    onUseSsnInstead: () -> Unit = {}
 ) {
     val identity by viewModel.identity.collectAsState()
     val phoneCountry by viewModel.phoneCountry.collectAsState()
@@ -234,11 +238,26 @@ fun CustomerInformationView(
         if (identityVerifiedViaGovId) {
             // Verified with a government ID: replace both the SSN input and the button with a
             // confirmation line. SSN is optional (and omitted from submit) on this path.
-            Text(
-                text = "Verified with government ID.",
-                style = theme.fonts.bodySmall,
-                color = theme.colors.textPrimary
-            )
+            // "Use SSN instead" restores the SSN path, matching Frame-iOS — without it the
+            // applicant is locked into the gov-ID result with no way back.
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Verified with government ID.",
+                    style = theme.fonts.bodySmall,
+                    color = theme.colors.textPrimary
+                )
+                TextButton(onClick = onUseSsnInstead) {
+                    Text(
+                        text = "Use SSN instead",
+                        style = theme.fonts.caption,
+                        color = theme.colors.textSecondary
+                    )
+                }
+            }
         } else {
             ValidatedTextField(
                 value = identity.ssn,
