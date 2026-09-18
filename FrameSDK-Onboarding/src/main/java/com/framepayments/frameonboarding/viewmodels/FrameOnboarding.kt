@@ -1,7 +1,6 @@
 package com.framepayments.frameonboarding.viewmodels
 
 import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.framepayments.frameonboarding.classes.Capabilities
@@ -28,8 +27,6 @@ import com.framepayments.frameonboarding.persona.PersonaVerificationService
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
-import com.framepayments.framesdk.FileUpload
-import com.framepayments.framesdk.FileUploadFieldName
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
@@ -66,16 +63,13 @@ import java.time.Instant
 
 internal enum class VerifyIdSubStep { PhoneAuth, VerifyPhone, InformationForm }
 
-internal enum class OnboardingFieldGroup { PHONE_AUTH, DOCS }
+internal enum class OnboardingFieldGroup { PHONE_AUTH }
 
 internal enum class OnboardingField(val group: OnboardingFieldGroup) {
     AUTH_PHONE(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_MONTH(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_DAY(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_YEAR(OnboardingFieldGroup.PHONE_AUTH),
-    DOC_FRONT(OnboardingFieldGroup.DOCS),
-    DOC_BACK(OnboardingFieldGroup.DOCS),
-    DOC_SELFIE(OnboardingFieldGroup.DOCS),
 }
 
 /** UI state for the phone verification step (Prove vs manual Frame confirm). */
@@ -427,16 +421,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             }
         }
         return applyValidation(OnboardingFieldGroup.PHONE_AUTH, errors)
-    }
-
-    /** Validate the documents-upload screen. Errors in the [OnboardingFieldGroup.DOCS] group only. */
-    fun validateAllDocs(): Boolean {
-        val errors = mutableMapOf<OnboardingField, String>()
-        val data = _onboardingData.value
-        if (data.frontPhotoUri == null) errors[OnboardingField.DOC_FRONT] = "Front of ID is required"
-        if (data.backPhotoUri == null) errors[OnboardingField.DOC_BACK] = "Back of ID is required"
-        if (data.selfieUri == null) errors[OnboardingField.DOC_SELFIE] = "Selfie is required"
-        return applyValidation(OnboardingFieldGroup.DOCS, errors)
     }
 
     // endregion
@@ -1515,91 +1499,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     // endregion
 
-    // region Document upload
-
-    fun onFrontPhotoSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(frontPhotoUri = uri)
-    }
-
-    fun onBackPhotoSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(backPhotoUri = uri)
-    }
-
-    fun onSelfieSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(selfieUri = uri)
-    }
-
-    fun uploadIdentificationDocuments(context: Context) {
-        if (!beginAction()) return
-        viewModelScope.launch {
-            try {
-                performUploadIdentificationDocuments(context)
-            } finally {
-                endAction()
-            }
-        }
-    }
-
-    fun uploadIdentificationDocumentsThenContinue(context: Context) {
-        if (!beginAction()) return
-        viewModelScope.launch {
-            try {
-                if (performUploadIdentificationDocuments(context)) {
-                    moveNext()
-                }
-            } finally {
-                endAction()
-            }
-        }
-    }
-
-    private suspend fun performUploadIdentificationDocuments(context: Context): Boolean {
-        val identityId = effectiveCustomerIdentityId() ?: run {
-            reportUserError("Your profile isn't ready for document upload. Please try again.")
-            return false
-        }
-        val data = _onboardingData.value
-        val frontUri = data.frontPhotoUri ?: return false
-        val backUri = data.backPhotoUri ?: return false
-        val selfieUri = data.selfieUri ?: return false
-
-        fun uriToBitmap(uri: Uri): android.graphics.Bitmap? = try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                android.graphics.ImageDecoder.decodeBitmap(
-                    android.graphics.ImageDecoder.createSource(context.contentResolver, uri)
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-            }
-        } catch (e: Exception) { null }
-
-        val frontBitmap = uriToBitmap(frontUri)
-        val backBitmap = uriToBitmap(backUri)
-        val selfieBitmap = uriToBitmap(selfieUri)
-        if (frontBitmap == null || backBitmap == null || selfieBitmap == null) {
-            reportUserError("Couldn't read one or more photos. Please try again.")
-            return false
-        }
-
-        val uploads = listOf(
-            FileUpload(frontBitmap, FileUploadFieldName.FRONT),
-            FileUpload(backBitmap, FileUploadFieldName.BACK),
-            FileUpload(selfieBitmap, FileUploadFieldName.SELFIE)
-        )
-        frontBitmap.recycle()
-        backBitmap.recycle()
-        selfieBitmap.recycle()
-
-        val (updated, err) = CustomerIdentityAPI.uploadIdentityDocuments(identityId, uploads)
-        if (updated != null) {
-            _customerIdentity.value = updated
-            return true
-        }
-        reportUserError(userMessageForNetworkError(err))
-        return false
-    }
-
     fun submitCustomerIdentityForVerification() {
         if (!beginAction()) return
         viewModelScope.launch {
@@ -1688,11 +1587,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun checkIfCustomerCanContinueWithPayoutMethod(): Boolean =
         isPayoutMethodFormComplete(_bankAccountDraft.value, _createdBillingAddress.value)
-
-    fun checkIfCustomerCanContinueWithDocs(): Boolean {
-        val d = _onboardingData.value
-        return d.frontPhotoUri != null && d.backPhotoUri != null && d.selfieUri != null
-    }
 
     @Suppress("unused")
     fun createNewBusinessAccount() {}

@@ -1,6 +1,5 @@
 package com.framepayments.frameonboarding.classes
 
-import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -41,20 +40,6 @@ sealed class OnboardingStep {
     data object SelectPayoutMethod: OnboardingStep()
     /** Screen for adding a new payout method (bank account). */
     data object AddPayoutMethod: OnboardingStep()
-    /** Screen listing the identity documents the customer must upload. */
-    data object UploadDocumentsList: OnboardingStep()
-    /** Camera screen for capturing the front of the customer's ID document. */
-    data object CaptureFrontPhoto: OnboardingStep()
-    /** Review screen for the front-of-ID photo before submission. */
-    data object ReviewFrontPhoto: OnboardingStep()
-    /** Camera screen for capturing the back of the customer's ID document. */
-    data object CaptureBackPhoto: OnboardingStep()
-    /** Review screen for the back-of-ID photo before submission. */
-    data object ReviewBackPhoto: OnboardingStep()
-    /** Camera screen for capturing a selfie. */
-    data object CaptureSelfie: OnboardingStep()
-    /** Review screen for the selfie photo before submission. */
-    data object ReviewSelfie: OnboardingStep()
     /** Confirmation screen shown after all verification data has been submitted. */
     data object VerificationSubmitted: OnboardingStep()
 }
@@ -121,8 +106,7 @@ internal enum class OnboardingFlowSegment(val order: Int) {
     PERSONAL_INFORMATION(0),
     CONFIRM_PAYMENT_METHOD(1),
     CONFIRM_PAYOUT_METHOD(2),
-    VERIFICATION_SUBMITTED(3),
-    UPLOAD_DOCUMENTS(4)
+    VERIFICATION_SUBMITTED(3)
 }
 
 internal fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
@@ -148,15 +132,6 @@ internal fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this)
     OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD -> listOf(
         OnboardingStep.SelectPayoutMethod,
         OnboardingStep.AddPayoutMethod
-    )
-    OnboardingFlowSegment.UPLOAD_DOCUMENTS -> listOf(
-        OnboardingStep.UploadDocumentsList,
-        OnboardingStep.CaptureFrontPhoto,
-        OnboardingStep.ReviewFrontPhoto,
-        OnboardingStep.CaptureBackPhoto,
-        OnboardingStep.ReviewBackPhoto,
-        OnboardingStep.CaptureSelfie,
-        OnboardingStep.ReviewSelfie
     )
     OnboardingFlowSegment.VERIFICATION_SUBMITTED -> listOf(OnboardingStep.VerificationSubmitted)
 }
@@ -200,13 +175,6 @@ internal fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this)
     OnboardingStep.VerifyYourCard -> OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD
     OnboardingStep.SelectPayoutMethod,
     OnboardingStep.AddPayoutMethod -> OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD
-    OnboardingStep.UploadDocumentsList,
-    OnboardingStep.CaptureFrontPhoto,
-    OnboardingStep.ReviewFrontPhoto,
-    OnboardingStep.CaptureBackPhoto,
-    OnboardingStep.ReviewBackPhoto,
-    OnboardingStep.CaptureSelfie,
-    OnboardingStep.ReviewSelfie -> OnboardingFlowSegment.UPLOAD_DOCUMENTS
     OnboardingStep.VerificationSubmitted -> OnboardingFlowSegment.VERIFICATION_SUBMITTED
 }
 
@@ -282,12 +250,6 @@ internal data class PaymentMethodSummary(
     val exp: String
 )
 
-internal enum class PhotoType {
-    FRONT,
-    BACK,
-    SELFIE
-}
-
 /**
  * Mutable draft state for the manual card entry form used when Evervault UI is unavailable.
  *
@@ -325,11 +287,6 @@ internal data class OnboardingData(
 
     // Step 3: Payout Methods
     val selectedPayoutMethodId: String? = null,
-
-    // Step 4: Document Upload
-    val frontPhotoUri: Uri? = null,
-    val backPhotoUri: Uri? = null,
-    val selfieUri: Uri? = null,
 
     // Personal information (collected in UserIdentificationView)
     val firstName: String? = null,

@@ -61,13 +61,7 @@ dependencies {
     
     // Activity Compose for permission launcher
     implementation(libs.androidx.activity.compose)
-    
-    // CameraX
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.view)
-    
+
     // Coil for image loading
     implementation(libs.coil)
     implementation(libs.coil.compose)
