@@ -19,19 +19,19 @@ object AccountEventEmitter {
     private val scope = CoroutineScope(Dispatchers.IO)
 
     /**
-     * Queues an event for the given account.
+     * Queues an event for the account this app run belongs to.
      *
-     * Silently does nothing if [accountId] is null or blank — there is no account to
-     * attribute the event to, and, per the queue's contract, this must never surface an
-     * error or block the caller.
+     * Silently does nothing if no [FrameNetworking.accountId] was supplied to
+     * [FrameNetworking.initializeWithAPIKey] — there is no account to attribute the event to,
+     * and, per the queue's contract, this must never surface an error or block the caller.
      *
      * @param detail Optional developer-facing detail, either a fixed [AccountEventDetail]
      *   constant or a dynamic debug description (e.g. `"$error"`). Must never contain PII,
      *   a PAN, a CVV, or a raw customer identifier — use a debug description, never
      *   user-facing copy.
      */
-    fun emit(accountId: String?, name: AccountEventName, screen: AccountEventScreen, detail: String? = null) {
-        if (accountId.isNullOrBlank()) return
+    fun emit(name: AccountEventName, screen: AccountEventScreen, detail: String? = null) {
+        val accountId = FrameNetworking.accountId ?: return
 
         val event = AccountEventsRequests.Event(
             accountId = accountId,

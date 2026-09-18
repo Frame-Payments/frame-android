@@ -166,6 +166,14 @@ object FrameNetworking {
      */
     @Volatile private var onboardingSessionToken: String? = null
 
+    /**
+     * The Frame account this app run belongs to, set at [initializeWithAPIKey]. Read by
+     * [com.framepayments.framesdk.accountevents.AccountEventEmitter] to attribute account
+     * events; null until set, in which case events are silently dropped.
+     */
+    var accountId: String? = null
+        private set
+
     /** `true` once Evervault has been successfully configured; `false` until then. */
     var isEvervaultConfigured: Boolean = false
 
@@ -187,6 +195,7 @@ object FrameNetworking {
      * @param context The application context.
      * @param secretKey Your Frame secret key (`sk_...`). Server-only — avoid shipping this in an app binary. The SDK emits a one-time warning whenever the secret key is used.
      * @param publishableKey Your Frame publishable key (`pk_...`). Safe to embed in the app.
+     * @param accountId The Frame account this app run belongs to, if known at init. Used to attribute account events; leave null when the account isn't known yet (e.g. before onboarding creates one).
      * @param googlePayMerchantId Optional Google Pay merchant identifier. Required to show the Google Pay button in checkout.
      * @param debug When `true`, API requests and responses are logged to logcat.
      */
@@ -194,6 +203,7 @@ object FrameNetworking {
         context: Context,
         secretKey: String,
         publishableKey: String,
+        accountId: String? = null,
         googlePayMerchantId: String? = null,
         debug: Boolean = false,
     ) {
@@ -201,6 +211,7 @@ object FrameNetworking {
         if (secretKey.isNotEmpty()) warnOnce(::hasWarnedAboutSecretKeyConfig) { secretKeyWarning("configured via secretKey") }
         apiSecretKey = secretKey
         apiPublishableKey = publishableKey
+        this.accountId = accountId?.takeIf { it.isNotEmpty() }
         this.googlePayMerchantId = googlePayMerchantId
         debugMode = debug
         applicationContext = context.applicationContext
