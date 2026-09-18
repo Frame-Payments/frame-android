@@ -32,3 +32,21 @@ sealed class FrameResult {
  * @param message Description of the configuration problem.
  */
 class FrameConfigurationError(message: String) : RuntimeException(message)
+
+/** Raised from [FrameResult.Failed] for a checkout-flow charge outcome the caller should message distinctly. */
+sealed class FrameCheckoutError(message: String) : Exception(message) {
+    /** The issuer declined the charge, optionally with a message safe to show the cardholder. */
+    class Declined(
+        /** Message safe to show the cardholder, or null when the API gave none. */
+        val cardholderMessage: String?
+    ) : FrameCheckoutError(cardholderMessage ?: "Your card was declined. Try another payment method.")
+
+    /** The charge did not reach a terminal state in time. Not a decline: it may still settle. */
+    class Unresolved : FrameCheckoutError("We could not confirm this payment. Check your bank before trying again.")
+
+    /** A 3D Secure challenge was required but could not be started. */
+    class ThreeDSecureUnavailable : FrameCheckoutError("Card verification could not be started. Please try again.")
+
+    /** User-facing message for the toast surface, prefixed to match [NetworkingError.toastMessage]. */
+    fun toastMessage(): String = "Error: $message"
+}

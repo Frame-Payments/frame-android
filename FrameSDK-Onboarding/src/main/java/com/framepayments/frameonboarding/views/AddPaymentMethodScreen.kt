@@ -41,10 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
-import com.framepayments.frameonboarding.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.PaymentCardForm
 import com.framepayments.frameonboarding.reusable.PaymentDivider
-import com.framepayments.frameonboarding.validation.OnboardingValidators
+import com.framepayments.framesdk_ui.validation.Validators
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
@@ -263,7 +263,7 @@ internal fun AddPaymentMethodScreen(
                 onClick = {
                     val addressOK = billingVM.validate()
                     val cardOK = if (evervaultReady == true) {
-                        OnboardingValidators.validateCard(paymentCard).also { cardError = it } == null
+                        Validators.validateOnboardingCard(paymentCard).also { cardError = it } == null
                     } else {
                         // Manual fallback form: validate via the existing form-completeness check.
                         val ok = viewModel.isPaymentMethodFormComplete(

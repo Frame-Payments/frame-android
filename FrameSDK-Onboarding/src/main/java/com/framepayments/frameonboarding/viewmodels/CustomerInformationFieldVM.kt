@@ -5,7 +5,7 @@ import androidx.compose.runtime.saveable.listSaver
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.frameonboarding.classes.PhoneCountrySelection
-import com.framepayments.frameonboarding.validation.OnboardingValidators
+import com.framepayments.framesdk_ui.validation.Validators
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -132,13 +132,13 @@ class CustomerInformationFieldVM(
         val next = mutableMapOf<Field, String>()
         val id = _identity.value
 
-        OnboardingValidators.validateNonEmpty(id.firstName, "First name")
+        Validators.validateNonEmpty(id.firstName, "First name")
             ?.let { next[Field.FIRST_NAME] = it }
-        OnboardingValidators.validateNonEmpty(id.lastName, "Last name")
+        Validators.validateNonEmpty(id.lastName, "Last name")
             ?.let { next[Field.LAST_NAME] = it }
-        OnboardingValidators.validateEmail(id.email)
+        Validators.validateEmailAddress(id.email)
             ?.let { next[Field.EMAIL] = it }
-        OnboardingValidators.validatePhoneE164(id.phoneNumber, _phoneCountry.value.alpha2)
+        Validators.validatePhoneE164(id.phoneNumber, _phoneCountry.value.alpha2)
             ?.let { next[Field.PHONE] = it }
 
         // Parse stored ISO date "YYYY-MM-DD" into components for validation.
@@ -146,7 +146,7 @@ class CustomerInformationFieldVM(
         val year = parts.getOrNull(0).orEmpty()
         val month = parts.getOrNull(1).orEmpty()
         val day = parts.getOrNull(2).orEmpty()
-        OnboardingValidators.validateDateOfBirth(year = year, month = month, day = day)
+        Validators.validateDateOfBirth(year = year, month = month, day = day)
             ?.let { err ->
                 next[Field.BIRTH_MONTH] = err
                 next[Field.BIRTH_DAY] = err
@@ -154,7 +154,7 @@ class CustomerInformationFieldVM(
             }
 
         if (!ssnOptional) {
-            OnboardingValidators.validateSSNLast4(id.ssn)
+            Validators.validateSSNLast4(id.ssn)
                 ?.let { next[Field.SSN] = it }
         }
 

@@ -1,16 +1,23 @@
 package com.framepayments.framesdk_ui.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.*
 import com.evervault.sdk.input.model.card.PaymentCardData
+import com.framepayments.framesdk.FrameCheckoutError
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountsAPI
+import com.framepayments.framesdk.chargeintents.ChargeIntentConfirmation
+import com.framepayments.framesdk.chargeintents.FrameChargeIntentError
+import com.framepayments.framesdk.chargeintents.FrameChargeIntentOutcome
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
 import com.framepayments.framesdk.transfers.Transfer
 import com.framepayments.framesdk.transfers.TransferRequests
+import com.framepayments.framesdk.transfers.TransferStatus
 import com.framepayments.framesdk.transfers.TransfersAPI
 import com.framepayments.framesdk_ui.AddressMode
+import com.framepayments.framesdk_ui.FrameThreeDSecureChallengePresenter
 import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
@@ -240,7 +247,7 @@ class FrameCheckoutViewModel : ViewModel() {
      * @param saveMethod Whether to persist the new card as a saved payment method (currently unused).
      * @return [LiveData] that emits the created [Transfer] on success, or null on failure.
      */
-    fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean): LiveData<Transfer?> = liveData(Dispatchers.IO) {
+    fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<Transfer?> = liveData(Dispatchers.IO) {
         if (amount == 0) {
             emit(null)
             return@liveData
@@ -296,10 +303,53 @@ class FrameCheckoutViewModel : ViewModel() {
             val (transfer, transferError) = TransfersAPI.createTransfer(request)
             if (transferError != null) {
                 reportError(transferError)
+                emit(null)
+                return@liveData
             }
-            emit(transfer)
+            if (transfer == null) {
+                emit(null)
+                return@liveData
+            }
+
+            if (transfer.status != TransferStatus.REQUIRES_CONFIRMATION && transfer.status != TransferStatus.REQUIRES_THREE_D_SECURE) {
+                emit(transfer)
+                return@liveData
+            }
+
+            emit(completeThreeDSecure(transfer, context))
         } finally {
             _isPerformingAction.postValue(false)
+        }
+    }
+
+    /**
+     * Confirms a transfer the API held back, running a 3D Secure challenge if the confirm asks
+     * for one, and reports the charge's real outcome.
+     */
+    private suspend fun completeThreeDSecure(transfer: Transfer, context: Context): Transfer? {
+        val clientSecret = transfer.clientSecret ?: run {
+            FrameSnackbarController.emit(FrameCheckoutError.ThreeDSecureUnavailable().toastMessage())
+            return null
+        }
+
+        val confirmation = ChargeIntentConfirmation(challengePresenter = FrameThreeDSecureChallengePresenter(context))
+
+        return try {
+            when (val outcome = confirmation.confirm(clientSecret)) {
+                is FrameChargeIntentOutcome.Succeeded -> transfer
+                is FrameChargeIntentOutcome.Failed -> {
+                    FrameSnackbarController.emit(FrameCheckoutError.Declined(outcome.reason?.message).toastMessage())
+                    null
+                }
+                is FrameChargeIntentOutcome.TimedOut -> {
+                    // The charge may still settle, so this is not reported as a decline.
+                    FrameSnackbarController.emit(FrameCheckoutError.Unresolved().toastMessage())
+                    null
+                }
+            }
+        } catch (e: FrameChargeIntentError) {
+            FrameSnackbarController.emit(FrameCheckoutError.ThreeDSecureUnavailable().toastMessage())
+            null
         }
     }
 

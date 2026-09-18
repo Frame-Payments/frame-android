@@ -39,14 +39,33 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.framepayments.frameonboarding.classes.Capabilities
+import com.framepayments.frameonboarding.classes.OnboardingResult
+import com.framepayments.frameonboarding.views.FrameAddPaymentMethodView
+import com.framepayments.frameonboarding.views.FrameAddPayoutMethodView
+import com.framepayments.frameonboarding.views.FrameSelectPayoutMethodView
 import com.framepayments.frameonboarding.views.OnboardingContainerView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
+import com.framepayments.framesdk.FrameResult
 import com.plaid.link.FastOpenPlaidLink
 import com.plaid.link.Plaid
 import com.plaid.link.PlaidHandler
 import com.plaid.link.configuration.LinkTokenConfiguration
 import com.plaid.link.result.LinkExit
 import com.plaid.link.result.LinkSuccess
+
+/** Which standalone entry-point view to launch once [ContentViewModel.mintDemoAccount] resolves an account. */
+private enum class StandaloneView {
+    ADD_PAYMENT_METHOD, ADD_PAYOUT_METHOD, SELECT_PAYOUT_METHOD
+}
+
+private data class DemoResultMessage(val title: String, val body: String)
+
+/** Renders a [FrameResult] as a title/body pair for [DemoResultMessage], matching the FrameExample-iOS pattern. */
+private fun FrameResult.toDemoMessage(title: String): DemoResultMessage = when (this) {
+    is FrameResult.Completed -> DemoResultMessage(title, "Completed: $id")
+    is FrameResult.Cancelled -> DemoResultMessage(title, "Cancelled")
+    is FrameResult.Failed -> DemoResultMessage(title, "Failed: ${error.message}")
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +74,7 @@ fun PlaygroundScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val onboardingMintState by viewModel.onboardingMintState.collectAsState()
+    val demoAccountState by viewModel.demoAccountState.collectAsState()
     val plaidService by viewModel.plaidService.collectAsState()
     val plaidMessage by viewModel.plaidMessage.collectAsState()
     val plaidToken by remember(plaidService) {
@@ -72,6 +92,9 @@ fun PlaygroundScreen(
     var showChargeIntents by remember { mutableStateOf(false) }
     var showRefunds by remember { mutableStateOf(false) }
     var showSubscriptionPhases by remember { mutableStateOf(false) }
+    // Which standalone entry-point demo to launch once mintDemoAccount() resolves an account.
+    var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
+    var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
@@ -179,14 +202,95 @@ fun PlaygroundScreen(
                     ),
                     theme = customTheme
                 ),
-                onResult = {
+                onResult = { result ->
                     showOnboarding = false
                     // Clear the minted token so the next launch mints a fresh one.
                     viewModel.clearOnboardingClientSecret()
+                    when (result) {
+                        is OnboardingResult.Completed ->
+                            demoResultMessage = DemoResultMessage("Onboarding", "Completed: ${result.paymentMethodId}")
+                        is OnboardingResult.FinishedUnverified ->
+                            // The flow ran to the end but the applicant isn't verified — still worth
+                            // surfacing rather than treating it the same as a full success.
+                            demoResultMessage = DemoResultMessage("Onboarding", "Finished unverified: ${result.outcome}")
+                        is OnboardingResult.Cancelled -> Unit
+                        is OnboardingResult.Failed ->
+                            demoResultMessage = DemoResultMessage("Onboarding", "Failed: ${result.message}")
+                    }
                 }
             )
         }
         return
+    }
+
+    val standaloneView = pendingStandaloneView
+    if (standaloneView != null) {
+        // Self-sufficient: mints whenever a standalone view becomes pending, regardless of
+        // whether the click site already called mintDemoAccount() — a stale Idle/Ready/Error
+        // from a previous session can never get stuck rendering nothing.
+        LaunchedEffect(standaloneView) {
+            viewModel.mintDemoAccount()
+        }
+        when (val accountState = demoAccountState) {
+            is DemoAccountState.Idle,
+            is DemoAccountState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                return
+            }
+            is DemoAccountState.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Couldn't resolve an account",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = accountState.message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+                        Spacer(modifier = Modifier.height(24.dp))
+                        TextButton(onClick = {
+                            pendingStandaloneView = null
+                            viewModel.clearDemoAccount()
+                        }) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+                return
+            }
+            is DemoAccountState.Ready -> {
+                fun finish(message: DemoResultMessage) {
+                    pendingStandaloneView = null
+                    viewModel.clearDemoAccount()
+                    demoResultMessage = message
+                }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when (standaloneView) {
+                        StandaloneView.ADD_PAYMENT_METHOD -> FrameAddPaymentMethodView(
+                            accountId = accountState.accountId,
+                            clientSecret = accountState.clientSecret,
+                            onResult = { finish(it.toDemoMessage("Add Payment Method")) }
+                        )
+                        StandaloneView.ADD_PAYOUT_METHOD -> FrameAddPayoutMethodView(
+                            accountId = accountState.accountId,
+                            clientSecret = accountState.clientSecret,
+                            onResult = { finish(it.toDemoMessage("Add Payout Method")) }
+                        )
+                        StandaloneView.SELECT_PAYOUT_METHOD -> FrameSelectPayoutMethodView(
+                            accountId = accountState.accountId,
+                            clientSecret = accountState.clientSecret,
+                            onResult = { finish(it.toDemoMessage("Select Payout Method")) }
+                        )
+                    }
+                }
+                return
+            }
+        }
     }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
@@ -231,6 +335,18 @@ fun PlaygroundScreen(
                 val intent = Intent(context, CartTestActivity::class.java)
                 context.startActivity(intent)
             }
+            PlaygroundButton(text = "Add Payment Method (standalone)") {
+                viewModel.clearDemoAccount()
+                pendingStandaloneView = StandaloneView.ADD_PAYMENT_METHOD
+            }
+            PlaygroundButton(text = "Add Payout Method (standalone)") {
+                viewModel.clearDemoAccount()
+                pendingStandaloneView = StandaloneView.ADD_PAYOUT_METHOD
+            }
+            PlaygroundButton(text = "Select Payout Method (standalone)") {
+                viewModel.clearDemoAccount()
+                pendingStandaloneView = StandaloneView.SELECT_PAYOUT_METHOD
+            }
             PlaygroundButton(
                 text = "View All Customers",
                 enabled = uiState.customers.isNotEmpty(),
@@ -271,6 +387,17 @@ fun PlaygroundScreen(
             text = { Text(message.body) },
             confirmButton = {
                 TextButton(onClick = { viewModel.clearPlaidMessage() }) { Text("OK") }
+            }
+        )
+    }
+
+    demoResultMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { demoResultMessage = null },
+            title = { Text(message.title) },
+            text = { Text(message.body) },
+            confirmButton = {
+                TextButton(onClick = { demoResultMessage = null }) { Text("OK") }
             }
         )
     }

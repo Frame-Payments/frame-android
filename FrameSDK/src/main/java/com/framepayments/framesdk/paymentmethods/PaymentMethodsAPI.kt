@@ -2,6 +2,7 @@ package com.framepayments.framesdk.paymentmethods
 
 import com.evervault.sdk.Evervault
 import com.framepayments.framesdk.EmptyRequest
+import com.framepayments.framesdk.EvervaultConfigurator
 import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
@@ -81,8 +82,8 @@ object PaymentMethodsAPI {
      * @return A pair of the created payment method and a networking error.
      */
     suspend fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
-        if (!FrameNetworking.isEvervaultConfigured && encryptData) {
-            FrameNetworking.configureEvervault()
+        if (encryptData) {
+            EvervaultConfigurator.ensureConfigured()
         }
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
@@ -263,12 +264,12 @@ object PaymentMethodsAPI {
      * @param completionHandler Called on the main thread with the created payment method on success, or a [NetworkingError] on failure.
      */
     fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
-        if (!FrameNetworking.isEvervaultConfigured) {
-            FrameNetworking.configureEvervault()
-        }
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
         scope.launch(Dispatchers.IO) {
+            if (encryptData) {
+                EvervaultConfigurator.ensureConfigured()
+            }
             val encryptedRequest = if (encryptData) request.copy(
                 cardNumber = Evervault.shared.encrypt(request.cardNumber) as String,
                 cvc = Evervault.shared.encrypt(request.cvc) as String

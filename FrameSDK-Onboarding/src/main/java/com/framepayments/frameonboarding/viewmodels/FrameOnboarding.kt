@@ -1,7 +1,6 @@
 package com.framepayments.frameonboarding.viewmodels
 
 import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.framepayments.frameonboarding.classes.Capabilities
@@ -9,8 +8,9 @@ import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.BankAccountDraft
 import com.framepayments.frameonboarding.classes.OnboardingData
 import com.framepayments.frameonboarding.classes.PhoneCountrySelection
-import com.framepayments.frameonboarding.validation.OnboardingValidators
+import com.framepayments.framesdk_ui.validation.Validators
 import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
+import com.framepayments.frameonboarding.classes.OnboardingOutcome
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingState
 import com.framepayments.frameonboarding.classes.OnboardingStep
@@ -27,8 +27,6 @@ import com.framepayments.frameonboarding.persona.PersonaVerificationService
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
-import com.framepayments.framesdk.FileUpload
-import com.framepayments.framesdk.FileUploadFieldName
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
@@ -65,16 +63,13 @@ import java.time.Instant
 
 internal enum class VerifyIdSubStep { PhoneAuth, VerifyPhone, InformationForm }
 
-internal enum class OnboardingFieldGroup { PHONE_AUTH, DOCS }
+internal enum class OnboardingFieldGroup { PHONE_AUTH }
 
 internal enum class OnboardingField(val group: OnboardingFieldGroup) {
     AUTH_PHONE(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_MONTH(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_DAY(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_YEAR(OnboardingFieldGroup.PHONE_AUTH),
-    DOC_FRONT(OnboardingFieldGroup.DOCS),
-    DOC_BACK(OnboardingFieldGroup.DOCS),
-    DOC_SELFIE(OnboardingFieldGroup.DOCS),
 }
 
 /** UI state for the phone verification step (Prove vs manual Frame confirm). */
@@ -95,6 +90,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     /** Mirrors iOS `OnboardingContainerViewModel.requiredCapabilities` (shrinks as capabilities complete). */
     val requiredCapabilities: StateFlow<List<Capabilities>> = _requiredCapabilities.asStateFlow()
+
+    private var lastKnownCapabilities: List<CapabilityObjects.Capability> = emptyList()
 
     /** API string values for [_requiredCapabilities] (e.g. `"kyc_prefill"`). */
     private fun requiredCapabilityApiStrings(): List<String> =
@@ -362,7 +359,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         get() {
             val m = _dobMonth.value; val d = _dobDay.value; val y = _dobYear.value
             // Pad single-digit month/day so a user typing "5" for May still produces a
-            // well-formed `YYYY-MM-DD` ISO string for the backend. `OnboardingValidators`
+            // well-formed `YYYY-MM-DD` ISO string for the backend. `Validators`
             // is responsible for rejecting out-of-range values before this is read.
             return if (y.length == 4 && m.isNotEmpty() && d.isNotEmpty()) {
                 "$y-${m.padStart(2, '0')}-${d.padStart(2, '0')}"
@@ -410,10 +407,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     /** Validate the phone-auth screen. Errors in the [OnboardingFieldGroup.PHONE_AUTH] group only. */
     fun validateAllPhoneAuth(): Boolean {
         val errors = mutableMapOf<OnboardingField, String>()
-        OnboardingValidators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
+        Validators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
             ?.let { errors[OnboardingField.AUTH_PHONE] = it }
         if (_requiredCapabilities.value.contains(Capabilities.KYC_PREFILL)) {
-            OnboardingValidators.validateDateOfBirth(
+            Validators.validateDateOfBirth(
                 year = _dobYear.value,
                 month = _dobMonth.value,
                 day = _dobDay.value
@@ -424,16 +421,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             }
         }
         return applyValidation(OnboardingFieldGroup.PHONE_AUTH, errors)
-    }
-
-    /** Validate the documents-upload screen. Errors in the [OnboardingFieldGroup.DOCS] group only. */
-    fun validateAllDocs(): Boolean {
-        val errors = mutableMapOf<OnboardingField, String>()
-        val data = _onboardingData.value
-        if (data.frontPhotoUri == null) errors[OnboardingField.DOC_FRONT] = "Front of ID is required"
-        if (data.backPhotoUri == null) errors[OnboardingField.DOC_BACK] = "Back of ID is required"
-        if (data.selfieUri == null) errors[OnboardingField.DOC_SELFIE] = "Selfie is required"
-        return applyValidation(OnboardingFieldGroup.DOCS, errors)
     }
 
     // endregion
@@ -496,6 +483,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     private suspend fun updateCapabilitiesBasedOnCompletion(accountCaps: List<CapabilityObjects.Capability>) {
+        lastKnownCapabilities = accountCaps
         val mutable = _requiredCapabilities.value.toMutableList()
         for (cap in accountCaps) {
             val enumCap = Capabilities.entries.find { it.apiValue == cap.name } ?: continue
@@ -549,11 +537,21 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun moveNext() {
         val i = orderedSteps.indexOf(navigationState.currentStep)
         if (i < 0 || i >= orderedSteps.size - 1) {
-            _result.value = OnboardingResult.Completed(
-                paymentMethodId = _onboardingData.value.selectedPaymentMethodId
-            )
+            viewModelScope.launch { finishOnboarding() }
         } else {
             navigationState.goTo(orderedSteps[i + 1])
+        }
+    }
+
+    /** Refetches capabilities before resolving the outcome — [lastKnownCapabilities] may be stale or never fetched. */
+    private suspend fun finishOnboarding() {
+        checkExistingAccount(updateCapabilities = true)
+        val paymentMethodId = _onboardingData.value.selectedPaymentMethodId
+        val outcome = OnboardingOutcome.resolve(lastKnownCapabilities, config.requiredCapabilities.toList())
+        _result.value = if (outcome.isSuccess) {
+            OnboardingResult.Completed(paymentMethodId = paymentMethodId)
+        } else {
+            OnboardingResult.FinishedUnverified(paymentMethodId = paymentMethodId, outcome = outcome)
         }
     }
 
@@ -1501,91 +1499,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     // endregion
 
-    // region Document upload
-
-    fun onFrontPhotoSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(frontPhotoUri = uri)
-    }
-
-    fun onBackPhotoSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(backPhotoUri = uri)
-    }
-
-    fun onSelfieSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(selfieUri = uri)
-    }
-
-    fun uploadIdentificationDocuments(context: Context) {
-        if (!beginAction()) return
-        viewModelScope.launch {
-            try {
-                performUploadIdentificationDocuments(context)
-            } finally {
-                endAction()
-            }
-        }
-    }
-
-    fun uploadIdentificationDocumentsThenContinue(context: Context) {
-        if (!beginAction()) return
-        viewModelScope.launch {
-            try {
-                if (performUploadIdentificationDocuments(context)) {
-                    moveNext()
-                }
-            } finally {
-                endAction()
-            }
-        }
-    }
-
-    private suspend fun performUploadIdentificationDocuments(context: Context): Boolean {
-        val identityId = effectiveCustomerIdentityId() ?: run {
-            reportUserError("Your profile isn't ready for document upload. Please try again.")
-            return false
-        }
-        val data = _onboardingData.value
-        val frontUri = data.frontPhotoUri ?: return false
-        val backUri = data.backPhotoUri ?: return false
-        val selfieUri = data.selfieUri ?: return false
-
-        fun uriToBitmap(uri: Uri): android.graphics.Bitmap? = try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                android.graphics.ImageDecoder.decodeBitmap(
-                    android.graphics.ImageDecoder.createSource(context.contentResolver, uri)
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-            }
-        } catch (e: Exception) { null }
-
-        val frontBitmap = uriToBitmap(frontUri)
-        val backBitmap = uriToBitmap(backUri)
-        val selfieBitmap = uriToBitmap(selfieUri)
-        if (frontBitmap == null || backBitmap == null || selfieBitmap == null) {
-            reportUserError("Couldn't read one or more photos. Please try again.")
-            return false
-        }
-
-        val uploads = listOf(
-            FileUpload(frontBitmap, FileUploadFieldName.FRONT),
-            FileUpload(backBitmap, FileUploadFieldName.BACK),
-            FileUpload(selfieBitmap, FileUploadFieldName.SELFIE)
-        )
-        frontBitmap.recycle()
-        backBitmap.recycle()
-        selfieBitmap.recycle()
-
-        val (updated, err) = CustomerIdentityAPI.uploadIdentityDocuments(identityId, uploads)
-        if (updated != null) {
-            _customerIdentity.value = updated
-            return true
-        }
-        reportUserError(userMessageForNetworkError(err))
-        return false
-    }
-
     fun submitCustomerIdentityForVerification() {
         if (!beginAction()) return
         viewModelScope.launch {
@@ -1674,11 +1587,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun checkIfCustomerCanContinueWithPayoutMethod(): Boolean =
         isPayoutMethodFormComplete(_bankAccountDraft.value, _createdBillingAddress.value)
-
-    fun checkIfCustomerCanContinueWithDocs(): Boolean {
-        val d = _onboardingData.value
-        return d.frontPhotoUri != null && d.backPhotoUri != null && d.selfieUri != null
-    }
 
     @Suppress("unused")
     fun createNewBusinessAccount() {}

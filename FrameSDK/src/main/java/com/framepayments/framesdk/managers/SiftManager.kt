@@ -26,15 +26,19 @@ object SiftManager {
     fun initializeSift(userId: String) {
         Sift.setUserId(userId)
 
-        val config: ConfigurationResponses.GetSiftConfigurationResponse? = SecureConfigurationStorage.retrieve(FrameNetworking.getContext(), "sift")
-        if (config == null) {
-            ConfigurationAPI.getSiftConfiguration { configFromAPI ->
-                Sift.open(FrameNetworking.getContext(), Sift.Config.Builder()
-                    .withAccountId(configFromAPI?.accountId)
-                    .withBeaconKey(configFromAPI?.beaconKey)
-                    .build())
-                Sift.collect()
-            }
+        fun openSift(config: ConfigurationResponses.GetSiftConfigurationResponse?) {
+            Sift.open(FrameNetworking.getContext(), Sift.Config.Builder()
+                .withAccountId(config?.accountId)
+                .withBeaconKey(config?.beaconKey)
+                .build())
+            Sift.collect()
+        }
+
+        val cached: ConfigurationResponses.GetSiftConfigurationResponse? = SecureConfigurationStorage.retrieve(FrameNetworking.getContext(), "sift")
+        if (cached != null) {
+            openSift(cached)
+        } else {
+            ConfigurationAPI.getSiftConfiguration { configFromAPI -> openSift(configFromAPI) }
         }
     }
 

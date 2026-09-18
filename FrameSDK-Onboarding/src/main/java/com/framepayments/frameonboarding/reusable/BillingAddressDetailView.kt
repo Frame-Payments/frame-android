@@ -22,7 +22,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.framepayments.framesdk_ui.reusable.AddressAutocompleteField
+import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
+import com.framepayments.framesdk.AddressSubregions
 import com.framepayments.frameonboarding.classes.AddressFormat
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
@@ -45,11 +48,13 @@ fun BillingAddressDetailView(
     val address by viewModel.address.collectAsState()
     val errors by viewModel.errors.collectAsState()
     var showCountryPicker by remember { mutableStateOf(false) }
+    var showSubregionPicker by remember { mutableStateOf(false) }
     val theme = LocalFrameTheme.current
 
     val isInternational = viewModel.mode == BillingAddressMode.INTERNATIONAL
     val countryCode = address.country?.takeIf { it.isNotBlank() } ?: "US"
     val format = remember(countryCode) { AddressFormat.format(countryCode) }
+    val subregions = remember(countryCode) { AddressSubregions.subregions(forCountry = countryCode) }
 
     Column {
         if (showHeader) {
@@ -61,13 +66,15 @@ fun BillingAddressDetailView(
             )
         }
 
-        ValidatedTextField(
+        AddressAutocompleteField(
             value = address.addressLine1.orEmpty(),
             onValueChange = { v -> viewModel.updateAddress { it.copy(addressLine1 = v) } },
             prompt = "Address Line 1",
             error = errors[BillingAddressFieldVM.Field.LINE1],
+            countryCode = countryCode,
             inlineError = true,
-            onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.LINE1) }
+            onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.LINE1) },
+            onSelect = { picked -> viewModel.applyAutocompletedAddress(picked) }
         )
 
         Spacer(Modifier.height(16.dp))
@@ -99,18 +106,52 @@ fun BillingAddressDetailView(
                 )
             }
             Box(modifier = Modifier.weight(1f)) {
-                ValidatedTextField(
-                    value = address.state.orEmpty(),
-                    onValueChange = { v ->
-                        val limited = format.stateMaxLength?.let { v.take(it) } ?: v
-                        viewModel.updateAddress { it.copy(state = limited) }
-                    },
-                    prompt = format.stateLabel,
-                    error = errors[BillingAddressFieldVM.Field.STATE],
-                    characterLimit = format.stateMaxLength,
-                    inlineError = true,
-                    onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.STATE) }
-                )
+                if (subregions != null) {
+                    val subregionName = remember(address.state, countryCode) {
+                        AddressSubregions.subregion(
+                            forCode = address.state.orEmpty(),
+                            countryCode = countryCode
+                        )?.name ?: format.stateLabel
+                    }
+                    OutlinedTextField(
+                        value = subregionName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(format.stateLabel) },
+                        isError = errors.containsKey(BillingAddressFieldVM.Field.STATE),
+                        textStyle = theme.fonts.body,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showSubregionPicker = true },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Expand"
+                            )
+                        }
+                    )
+                    errors[BillingAddressFieldVM.Field.STATE]?.let { msg ->
+                        Text(
+                            text = msg,
+                            style = theme.fonts.caption,
+                            color = theme.colors.error,
+                            modifier = Modifier.padding(top = 4.dp, start = 16.dp)
+                        )
+                    }
+                } else {
+                    ValidatedTextField(
+                        value = address.state.orEmpty(),
+                        onValueChange = { v ->
+                            val limited = format.stateMaxLength?.let { v.take(it) } ?: v
+                            viewModel.updateAddress { it.copy(state = limited) }
+                        },
+                        prompt = format.stateLabel,
+                        error = errors[BillingAddressFieldVM.Field.STATE],
+                        characterLimit = format.stateMaxLength,
+                        inlineError = true,
+                        onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.STATE) }
+                    )
+                }
             }
         }
 
@@ -176,6 +217,18 @@ fun BillingAddressDetailView(
                 showCountryPicker = false
             },
             onDismiss = { showCountryPicker = false }
+        )
+    }
+
+    if (showSubregionPicker) {
+        SubregionPickerSheet(
+            countryCode = countryCode,
+            onSubregionSelected = { code ->
+                viewModel.setSubregion(code)
+                showSubregionPicker = false
+            },
+            onDismiss = { showSubregionPicker = false },
+            title = format.stateLabel
         )
     }
 }

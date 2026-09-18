@@ -24,6 +24,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.validation.DateOfBirthFormatter
 import com.framepayments.frameonboarding.viewmodels.CustomerInformationFieldVM
+import com.framepayments.framesdk_ui.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.ContinueButtonStyle
+import com.framepayments.framesdk_ui.reusable.PhoneNumberTextField
+import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 private val isoDobRegex = Regex("""^(\d{4})-(\d{1,2})-(\d{1,2})$""")

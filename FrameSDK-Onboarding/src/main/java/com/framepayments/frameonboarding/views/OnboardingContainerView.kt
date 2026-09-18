@@ -16,7 +16,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingResult
@@ -50,7 +49,6 @@ fun OnboardingContainerView(
     val onboardingData by viewModel.onboardingData.collectAsState()
     val savedPaymentMethods by viewModel.savedPaymentMethods.collectAsState()
     val savedPayoutMethods by viewModel.savedPayoutMethods.collectAsState()
-    val context = LocalContext.current
 
     // Authenticate every onboarding request with the onboarding-session token while this flow is
     // on screen, scoping it to a single account. Only flows that began a session end one, so a
@@ -79,6 +77,7 @@ fun OnboardingContainerView(
     LaunchedEffect(result) {
         when (val r = result) {
             is OnboardingResult.Completed -> onResult(r)
+            is OnboardingResult.FinishedUnverified -> onResult(r)
             is OnboardingResult.Cancelled -> onResult(r)
             else -> Unit
         }
@@ -101,8 +100,7 @@ fun OnboardingContainerView(
             viewModel.navigationState.currentStep == OnboardingStep.VerifyYourCard &&
             config.requiredCapabilities.contains(Capabilities.CARD_VERIFICATION)
         ) {
-            // TODO: Re-enable 3DS when card verification flow is ready.
-            // viewModel.initialize3DS()
+            viewModel.initialize3DS()
             viewModel.moveNext()
         }
     }
@@ -124,8 +122,7 @@ fun OnboardingContainerView(
                         config = config,
                         savedPaymentMethods = savedPaymentMethods,
                         savedPayoutMethods = savedPayoutMethods,
-                        onboardingData = onboardingData,
-                        context = context
+                        onboardingData = onboardingData
                     )
                 }
             }
