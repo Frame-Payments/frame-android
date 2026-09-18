@@ -16,6 +16,12 @@ sealed class ConfigurationEndpoints : FrameNetworkingEndpoints {
     /** Requests the Sift configuration from `GET /v1/config/sift`. */
     object GetSiftConfiguration: ConfigurationEndpoints()
 
+    /** Requests Frame's legal document URLs from `GET /v1/config/legal`. */
+    object GetLegalConfiguration : ConfigurationEndpoints()
+
+    /** Requests the Mapbox address-autocomplete configuration from `GET /v1/config/mapbox`. */
+    object GetMapboxConfiguration : ConfigurationEndpoints()
+
     override val endpointURL: String
         get() = when (this) {
             is GetEvervaultConfiguration ->
@@ -24,6 +30,10 @@ sealed class ConfigurationEndpoints : FrameNetworkingEndpoints {
                 "/v1/config/fingerprint"
             is GetSiftConfiguration ->
                 "/v1/config/sift"
+            is GetLegalConfiguration ->
+                "/v1/config/legal"
+            is GetMapboxConfiguration ->
+                "/v1/config/mapbox"
         }
 
     override val httpMethod: String = "GET"

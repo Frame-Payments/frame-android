@@ -1,13 +1,13 @@
 package com.framepayments.frameonboarding.validation
 
+import com.framepayments.framesdk.AddressSubregions
 import com.framepayments.frameonboarding.classes.AddressFormat
-import com.framepayments.frameonboarding.classes.AddressSubregions
 
 /**
- * Onboarding-only validators that depend on onboarding domain types not available to
- * FrameSDK-UI ([AddressFormat], [AddressSubregions]). All other validators (1:1 ports of iOS
- * [Validators.swift]) live in [com.framepayments.framesdk_ui.validation.Validators] — see that
- * object's kdoc for why FieldKey/ValidationError typing wasn't extended to cover them.
+ * Onboarding-only validators that depend on [AddressFormat], an onboarding domain type not
+ * available to FrameSDK-UI. All other validators (1:1 ports of iOS [Validators.swift]) live in
+ * [com.framepayments.framesdk_ui.validation.Validators] — see that object's kdoc for why
+ * FieldKey/ValidationError typing wasn't extended to cover them.
  */
 object OnboardingValidators {
 

@@ -22,10 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.framepayments.framesdk_ui.reusable.AddressAutocompleteField
 import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
+import com.framepayments.framesdk.AddressSubregions
 import com.framepayments.frameonboarding.classes.AddressFormat
-import com.framepayments.frameonboarding.classes.AddressSubregions
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
@@ -65,13 +66,15 @@ fun BillingAddressDetailView(
             )
         }
 
-        ValidatedTextField(
+        AddressAutocompleteField(
             value = address.addressLine1.orEmpty(),
             onValueChange = { v -> viewModel.updateAddress { it.copy(addressLine1 = v) } },
             prompt = "Address Line 1",
             error = errors[BillingAddressFieldVM.Field.LINE1],
+            countryCode = countryCode,
             inlineError = true,
-            onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.LINE1) }
+            onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.LINE1) },
+            onSelect = { picked -> viewModel.applyAutocompletedAddress(picked) }
         )
 
         Spacer(Modifier.height(16.dp))

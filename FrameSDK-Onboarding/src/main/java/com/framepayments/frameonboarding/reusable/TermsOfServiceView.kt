@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
@@ -35,8 +36,8 @@ import com.framepayments.framesdk_ui.theme.FrameThemePreviews
  */
 @Composable
 fun TermsOfServiceView(
-    privacyPolicyUrl: String = "https://framepayments.com/privacy",
-    termsOfServiceUrl: String = "https://framepayments.com/terms",
+    privacyPolicyUrl: String = LegalConfiguration.privacyUrl,
+    termsOfServiceUrl: String = LegalConfiguration.termsUrl,
     textColor: Color = LocalFrameTheme.current.colors.textSecondary,
     linkColor: Color = LocalFrameTheme.current.colors.primaryButton,
     textAlign: TextAlign = TextAlign.Center,

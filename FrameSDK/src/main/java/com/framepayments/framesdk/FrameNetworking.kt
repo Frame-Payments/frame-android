@@ -5,6 +5,7 @@ import kotlin.reflect.KMutableProperty0
 import com.evervault.sdk.Evervault
 import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
+import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import com.framepayments.framesdk.managers.SiftManager
 import com.framepayments.framesdk.fingerprint.FingerprintManager
@@ -218,6 +219,10 @@ object FrameNetworking {
 
         sdkScope.launch {
             SiftManager.getPublicIp()
+        }
+
+        sdkScope.launch {
+            LegalConfiguration.prefetch()
         }
 
         // Initialize Sonar session as early as possible during SDK initialization

@@ -1,4 +1,4 @@
-package com.framepayments.frameonboarding.classes
+package com.framepayments.framesdk
 
 /**
  * A state, province, or territory that the Frame API accepts for a given country.

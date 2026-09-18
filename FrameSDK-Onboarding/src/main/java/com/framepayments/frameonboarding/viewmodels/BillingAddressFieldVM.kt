@@ -117,6 +117,22 @@ class BillingAddressFieldVM(
         clearError(Field.STATE)
     }
 
+    /** Fills the address from a picked autocomplete suggestion, clearing errors on every field it populated. */
+    fun applyAutocompletedAddress(picked: FrameObjects.BillingAddress) {
+        _address.update { current ->
+            current.copy(
+                addressLine1 = picked.addressLine1 ?: current.addressLine1,
+                city = picked.city ?: current.city,
+                state = picked.state ?: current.state,
+                postalCode = picked.postalCode ?: current.postalCode,
+                country = if (mode == BillingAddressMode.INTERNATIONAL) picked.country ?: current.country else current.country
+            )
+        }
+        _errors.update {
+            it - Field.LINE1 - Field.CITY - Field.STATE - Field.POSTAL - Field.COUNTRY
+        }
+    }
+
     /** Factory methods for constructing a [BillingAddressFieldVM] and its state [Saver]. */
     companion object {
         /** Saver for use with `rememberSaveable` so user typing survives config change. */
