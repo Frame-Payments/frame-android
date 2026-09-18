@@ -96,6 +96,25 @@ enum class Capabilities(val apiValue: String) {
     AGE_VERIFICATION("age_verification")
 }
 
+/** Mirrors the server's `Accounts::Capabilities::DependencyGraph::EDGES`. */
+private val capabilityDependencyEdges: Map<Capabilities, List<Capabilities>> = mapOf(
+    Capabilities.KYC_PREFILL to listOf(Capabilities.KYC, Capabilities.PHONE_VERIFICATION),
+    Capabilities.CREATOR_SHIELD to listOf(Capabilities.KYC, Capabilities.AGE_VERIFICATION),
+    Capabilities.KYC to listOf(Capabilities.PHONE_VERIFICATION)
+)
+
+/** Transitive closure of what these capabilities drag in with them, themselves included. */
+fun capabilitiesWithDependencies(capabilities: List<Capabilities>): Set<Capabilities> {
+    val reached = mutableSetOf<Capabilities>()
+    val pending = capabilities.toMutableList()
+    while (pending.isNotEmpty()) {
+        val capability = pending.removeAt(pending.size - 1)
+        if (!reached.add(capability)) continue
+        pending.addAll(capabilityDependencyEdges[capability].orEmpty())
+    }
+    return reached
+}
+
 /**
  */
 internal enum class OnboardingFlowSegment(val order: Int) {
@@ -206,6 +225,17 @@ sealed class OnboardingResult {
      */
     data class Completed(
         val paymentMethodId: String?
+    ) : OnboardingResult()
+
+    /**
+     * The flow ran to completion but the applicant was not approved.
+     *
+     * @property paymentMethodId ID of the payment method added during the flow, if any.
+     * @property outcome The applicant's actual verification status.
+     */
+    data class FinishedUnverified(
+        val paymentMethodId: String?,
+        val outcome: OnboardingOutcome
     ) : OnboardingResult()
 
     /**

@@ -3,7 +3,7 @@ package com.framepayments.frameonboarding.viewmodels
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import com.framepayments.frameonboarding.classes.BankAccountDraft
-import com.framepayments.frameonboarding.validation.OnboardingValidators
+import com.framepayments.framesdk_ui.validation.Validators
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,9 +71,9 @@ class BankAccountFieldVM(initial: BankAccountDraft = BankAccountDraft()) {
      */
     fun validate(): Boolean {
         val next = mutableMapOf<Field, String>()
-        OnboardingValidators.validateRoutingNumberUS(_draft.value.routingNumber)
+        Validators.validateRoutingNumberUS(_draft.value.routingNumber)
             ?.let { next[Field.ROUTING] = it }
-        OnboardingValidators.validateAccountNumberUS(_draft.value.accountNumber)
+        Validators.validateAccountNumberUS(_draft.value.accountNumber)
             ?.let { next[Field.ACCOUNT] = it }
         _errors.value = next
         return next.isEmpty()

@@ -38,7 +38,7 @@ class BillingAddressFieldVMTest {
         // Constructor seeds country to "US" if blank in international mode.
         val vm = BillingAddressFieldVM(
             FrameObjects.BillingAddress(
-                city = "X", country = null, state = "X", postalCode = "12345",
+                city = "X", country = null, state = "CA", postalCode = "12345",
                 addressLine1 = "1 Rd", addressLine2 = null
             ),
             BillingAddressMode.INTERNATIONAL

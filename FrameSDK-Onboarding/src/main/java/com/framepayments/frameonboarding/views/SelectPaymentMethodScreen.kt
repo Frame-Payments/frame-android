@@ -34,7 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
-import com.framepayments.frameonboarding.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.foundation.shape.RoundedCornerShape

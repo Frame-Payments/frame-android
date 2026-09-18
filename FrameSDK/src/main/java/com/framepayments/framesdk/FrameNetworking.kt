@@ -10,11 +10,16 @@ import com.framepayments.framesdk.managers.SiftManager
 import com.framepayments.framesdk.fingerprint.FingerprintManager
 import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -77,7 +82,9 @@ class DefaultURLSession(private val client: OkHttpClient) : URLSessionProtocol {
  */
 object FrameNetworking {
     /** Gson instance shared across all SDK API clients. */
-    val gson: Gson = Gson()
+    val gson: Gson = GsonBuilder()
+        .registerTypeAdapterFactory(LenientFieldTypeAdapterFactory)
+        .create()
 
     /** Shared OkHttp client configured with Frame's standard timeouts. */
     val okHttpClient: OkHttpClient by lazy {
@@ -97,6 +104,45 @@ object FrameNetworking {
 
     /** The current SDK version string, sourced from `BuildConfig`. */
     const val CURRENT_VERSION = BuildConfig.SDK_VERSION
+
+    /**
+     * The header naming this SDK build, sent on every Frame API request.
+     *
+     * Separate from the `User-Agent`, which stays the bare platform token: the API
+     * matches that token exactly in places (Sift's platform detector anchors on
+     * `/\AAndroid\z/`), so appending a version there would silently reclassify native
+     * traffic as a browser. Reporting the version beside it leaves that matching
+     * untouched.
+     *
+     * Nothing reads this server-side yet — it exists so the version is on the wire
+     * and available when something wants it.
+     */
+    private const val VERSION_HEADER = "X-Frame-SDK-Version"
+
+    /** The platform reported on emitted account events. Defaults to `"android"`; overridden by
+     * [setHostSDKInfo] when this build runs under a wrapper SDK. */
+    @Volatile var eventPlatform: String = "android"
+        private set
+
+    /** The wrapper SDK's version reported alongside emitted account events, if any. */
+    @Volatile var hostSDKVersion: String? = null
+        private set
+
+    /**
+     * Tags subsequent account events as originating from a wrapper SDK (e.g. frame-react-native)
+     * instead of directly from this SDK.
+     *
+     * Internal API — not for integrator use. A wrapper SDK's own initialize() calls this once,
+     * before this SDK's [initializeWithAPIKey], to override [eventPlatform] and attach a
+     * [hostSDKVersion] to every account event this SDK subsequently emits.
+     *
+     * @param platform The wrapper's platform identifier (e.g. `"react_native"`).
+     * @param version The wrapper SDK's own version.
+     */
+    fun setHostSDKInfo(platform: String, version: String) {
+        eventPlatform = platform
+        hostSDKVersion = version
+    }
 
     /** The secret key set during [initializeWithAPIKey]. Used as the Bearer token for most API calls. */
     var apiSecretKey: String = ""
@@ -205,6 +251,9 @@ object FrameNetworking {
     /** Returns the current Sonar session identifier, or `null` if Sonar has not been initialized. */
     fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()
 
+    /** Returns the SDK's [SonarSessionManager], or `null` if Sonar has not been initialized. */
+    fun sonarSessionManagerOrNull(): SonarSessionManager? = sonarSessionManager
+
     /**
      * Returns the application context stored during [initializeWithAPIKey].
      *
@@ -308,6 +357,7 @@ object FrameNetworking {
     private fun Request.Builder.applyFrameHeaders(ip: String?, auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {
         header("Authorization", "Bearer ${bearerToken(auth)}")
         header("User-Agent", "Android/$CURRENT_VERSION")
+        header(VERSION_HEADER, CURRENT_VERSION)
         ip?.let { header("ip_address", it) }
         return this
     }
@@ -722,7 +772,7 @@ object FrameNetworking {
         }
     }
 
-    private fun isUsableEvervaultConfig(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean {
+    internal fun isUsableEvervaultConfig(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean {
         val team = config?.teamId?.trim().orEmpty()
         val app = config?.appId?.trim().orEmpty()
         return team.isNotEmpty() && app.isNotEmpty()
@@ -749,7 +799,7 @@ object FrameNetworking {
 
     /**
      * Loads Evervault credentials from secure storage or the Frame API (callback-based variant).
-     * Prefer [ensureEvervaultReadyForCardInputs] from a coroutine when possible.
+     * Prefer [EvervaultConfigurator.ensureConfigured] from a coroutine when possible.
      */
     fun configureEvervault() {
         val config: ConfigurationResponses.GetEvervaultConfigurationResponse? =
@@ -774,5 +824,48 @@ object FrameNetworking {
             cfg = ConfigurationAPI.getEvervaultConfiguration()
         }
         applyEvervaultConfiguration(cfg)
+    }
+}
+
+/**
+ * Configures Evervault once and lets concurrent callers await that same work, mirroring iOS's
+ * `EvervaultConfigurator` actor.
+ *
+ * [FrameNetworking.configureEvervault] fetches credentials asynchronously before applying them,
+ * so a caller that kicks off configuration and encrypts on the next line can encrypt before the
+ * client exists. Awaiting [ensureConfigured] closes that window, and concurrent callers join the
+ * same in-flight fetch rather than firing duplicate requests.
+ */
+object EvervaultConfigurator {
+    private val mutex = Mutex()
+    private var inFlight: Deferred<Boolean>? = null
+
+    /**
+     * Configures Evervault if it is not already configured, joining any configuration already in
+     * progress rather than starting a second one.
+     *
+     * @return `true` once Evervault holds credentials, `false` if none could be resolved.
+     */
+    suspend fun ensureConfigured(): Boolean {
+        if (FrameNetworking.isEvervaultConfigured) return true
+
+        val deferred = mutex.withLock {
+            inFlight ?: CoroutineScope(Dispatchers.IO).async { configure() }.also { inFlight = it }
+        }
+
+        val configured = deferred.await()
+        mutex.withLock { if (inFlight === deferred) inFlight = null }
+        return configured
+    }
+
+    private suspend fun configure(): Boolean {
+        val fromApi = ConfigurationAPI.getEvervaultConfiguration()
+        if (FrameNetworking.isUsableEvervaultConfig(fromApi)) return FrameNetworking.applyEvervaultConfiguration(fromApi)
+
+        val cached: ConfigurationResponses.GetEvervaultConfigurationResponse? =
+            SecureConfigurationStorage.retrieve(FrameNetworking.getContext(), "evervault")
+        if (FrameNetworking.isUsableEvervaultConfig(cached)) return FrameNetworking.applyEvervaultConfiguration(cached)
+
+        return false
     }
 }

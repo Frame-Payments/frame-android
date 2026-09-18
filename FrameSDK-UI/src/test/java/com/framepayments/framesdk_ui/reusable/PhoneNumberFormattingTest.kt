@@ -1,4 +1,4 @@
-package com.framepayments.frameonboarding.reusable
+package com.framepayments.framesdk_ui.reusable
 
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import org.junit.Assert.assertEquals

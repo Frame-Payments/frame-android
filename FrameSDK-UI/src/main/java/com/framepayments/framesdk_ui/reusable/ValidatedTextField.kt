@@ -1,4 +1,4 @@
-package com.framepayments.frameonboarding.reusable
+package com.framepayments.framesdk_ui.reusable
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

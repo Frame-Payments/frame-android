@@ -48,12 +48,12 @@ import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
-import com.framepayments.frameonboarding.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.CustomerInformationView
 import com.framepayments.frameonboarding.reusable.PhoneCountryPickerSheet
-import com.framepayments.frameonboarding.reusable.PhoneNumberTextField
+import com.framepayments.framesdk_ui.reusable.PhoneNumberTextField
 import com.framepayments.frameonboarding.reusable.TermsOfServiceView
-import com.framepayments.frameonboarding.reusable.ValidatedTextField
+import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.CustomerInformationFieldVM

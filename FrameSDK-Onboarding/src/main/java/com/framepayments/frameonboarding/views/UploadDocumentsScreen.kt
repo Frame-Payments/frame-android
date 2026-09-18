@@ -29,7 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.framepayments.frameonboarding.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.framepayments.framesdk_ui.theme.FrameTheme

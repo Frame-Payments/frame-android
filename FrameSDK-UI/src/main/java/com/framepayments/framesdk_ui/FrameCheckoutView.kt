@@ -125,7 +125,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         }
 
         binding.payButton.setOnClickListener {
-            viewModel.checkoutWithSelectedPaymentMethod(binding.saveCard.isChecked)
+            viewModel.checkoutWithSelectedPaymentMethod(binding.saveCard.isChecked, context)
                 .observe(activity) { transfer ->
                     val id = transfer?.id ?: return@observe
                     didFinish = true

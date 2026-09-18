@@ -9,8 +9,9 @@ import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.BankAccountDraft
 import com.framepayments.frameonboarding.classes.OnboardingData
 import com.framepayments.frameonboarding.classes.PhoneCountrySelection
-import com.framepayments.frameonboarding.validation.OnboardingValidators
+import com.framepayments.framesdk_ui.validation.Validators
 import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
+import com.framepayments.frameonboarding.classes.OnboardingOutcome
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingState
 import com.framepayments.frameonboarding.classes.OnboardingStep
@@ -95,6 +96,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     /** Mirrors iOS `OnboardingContainerViewModel.requiredCapabilities` (shrinks as capabilities complete). */
     val requiredCapabilities: StateFlow<List<Capabilities>> = _requiredCapabilities.asStateFlow()
+
+    private var lastKnownCapabilities: List<CapabilityObjects.Capability> = emptyList()
 
     /** API string values for [_requiredCapabilities] (e.g. `"kyc_prefill"`). */
     private fun requiredCapabilityApiStrings(): List<String> =
@@ -362,7 +365,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         get() {
             val m = _dobMonth.value; val d = _dobDay.value; val y = _dobYear.value
             // Pad single-digit month/day so a user typing "5" for May still produces a
-            // well-formed `YYYY-MM-DD` ISO string for the backend. `OnboardingValidators`
+            // well-formed `YYYY-MM-DD` ISO string for the backend. `Validators`
             // is responsible for rejecting out-of-range values before this is read.
             return if (y.length == 4 && m.isNotEmpty() && d.isNotEmpty()) {
                 "$y-${m.padStart(2, '0')}-${d.padStart(2, '0')}"
@@ -410,10 +413,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     /** Validate the phone-auth screen. Errors in the [OnboardingFieldGroup.PHONE_AUTH] group only. */
     fun validateAllPhoneAuth(): Boolean {
         val errors = mutableMapOf<OnboardingField, String>()
-        OnboardingValidators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
+        Validators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
             ?.let { errors[OnboardingField.AUTH_PHONE] = it }
         if (_requiredCapabilities.value.contains(Capabilities.KYC_PREFILL)) {
-            OnboardingValidators.validateDateOfBirth(
+            Validators.validateDateOfBirth(
                 year = _dobYear.value,
                 month = _dobMonth.value,
                 day = _dobDay.value
@@ -496,6 +499,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     private suspend fun updateCapabilitiesBasedOnCompletion(accountCaps: List<CapabilityObjects.Capability>) {
+        lastKnownCapabilities = accountCaps
         val mutable = _requiredCapabilities.value.toMutableList()
         for (cap in accountCaps) {
             val enumCap = Capabilities.entries.find { it.apiValue == cap.name } ?: continue
@@ -549,11 +553,21 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun moveNext() {
         val i = orderedSteps.indexOf(navigationState.currentStep)
         if (i < 0 || i >= orderedSteps.size - 1) {
-            _result.value = OnboardingResult.Completed(
-                paymentMethodId = _onboardingData.value.selectedPaymentMethodId
-            )
+            viewModelScope.launch { finishOnboarding() }
         } else {
             navigationState.goTo(orderedSteps[i + 1])
+        }
+    }
+
+    /** Refetches capabilities before resolving the outcome — [lastKnownCapabilities] may be stale or never fetched. */
+    private suspend fun finishOnboarding() {
+        checkExistingAccount(updateCapabilities = true)
+        val paymentMethodId = _onboardingData.value.selectedPaymentMethodId
+        val outcome = OnboardingOutcome.resolve(lastKnownCapabilities, config.requiredCapabilities.toList())
+        _result.value = if (outcome.isSuccess) {
+            OnboardingResult.Completed(paymentMethodId = paymentMethodId)
+        } else {
+            OnboardingResult.FinishedUnverified(paymentMethodId = paymentMethodId, outcome = outcome)
         }
     }
 

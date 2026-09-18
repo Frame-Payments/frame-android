@@ -3,7 +3,7 @@ package com.framepayments.frameonboarding.viewmodels
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import com.framepayments.framesdk.FrameObjects
-import com.framepayments.frameonboarding.classes.AddressFormat
+import com.framepayments.framesdk_ui.validation.Validators
 import com.framepayments.frameonboarding.validation.OnboardingValidators
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +26,7 @@ enum class BillingAddressMode {
  * Mirrors iOS `BillingAddressViewModel`. In [BillingAddressMode.US_ONLY] mode the country is
  * pinned to "US" and zip uses the US 5-digit validator. In [BillingAddressMode.INTERNATIONAL]
  * mode the country is selectable and postal code validation uses
- * [OnboardingValidators.validatePostalCode] for the active country.
+ * [Validators.validatePostalCode] for the active country.
  *
  * @param initial Pre-populated billing address (country defaults to "US" if blank).
  * @param mode Validation behavior and country-field visibility mode.
@@ -100,7 +100,7 @@ class BillingAddressFieldVM(
     fun setCountry(alpha2: String) {
         _address.update { it.copy(country = alpha2.uppercase()) }
         if (_errors.value.containsKey(Field.POSTAL) && mode == BillingAddressMode.INTERNATIONAL) {
-            val updated = OnboardingValidators.validatePostalCode(
+            val updated = Validators.validatePostalCode(
                 _address.value.postalCode.orEmpty(),
                 alpha2.uppercase()
             )
@@ -109,6 +109,12 @@ class BillingAddressFieldVM(
                 else current + (Field.POSTAL to updated)
             }
         }
+    }
+
+    /** Sets the state/province code and clears any existing [Field.STATE] error. */
+    fun setSubregion(code: String) {
+        _address.update { it.copy(state = code) }
+        clearError(Field.STATE)
     }
 
     /** Factory methods for constructing a [BillingAddressFieldVM] and its state [Saver]. */
@@ -152,27 +158,26 @@ class BillingAddressFieldVM(
         val next = mutableMapOf<Field, String>()
         val addr = _address.value
 
-        OnboardingValidators.validateNonEmpty(addr.addressLine1.orEmpty(), "Address line 1")
+        Validators.validateNonEmpty(addr.addressLine1.orEmpty(), "Address line 1")
             ?.let { next[Field.LINE1] = it }
-        OnboardingValidators.validateNonEmpty(addr.city.orEmpty(), "City")
+        Validators.validateNonEmpty(addr.city.orEmpty(), "City")
             ?.let { next[Field.CITY] = it }
 
         val countryCode = addr.country?.takeIf { it.isNotBlank() } ?: "US"
-        val stateLabel = AddressFormat.format(countryCode).stateLabel
-        OnboardingValidators.validateNonEmpty(addr.state.orEmpty(), stateLabel)
+        OnboardingValidators.validateSubregion(addr.state.orEmpty(), countryCode)
             ?.let { next[Field.STATE] = it }
 
         when (mode) {
             BillingAddressMode.US_ONLY ->
-                OnboardingValidators.validateZipUS(addr.postalCode.orEmpty())
+                Validators.validateZipUS(addr.postalCode.orEmpty())
                     ?.let { next[Field.POSTAL] = it }
             BillingAddressMode.INTERNATIONAL ->
-                OnboardingValidators.validatePostalCode(addr.postalCode.orEmpty(), countryCode)
+                Validators.validatePostalCode(addr.postalCode.orEmpty(), countryCode)
                     ?.let { next[Field.POSTAL] = it }
         }
 
         if (mode == BillingAddressMode.INTERNATIONAL) {
-            OnboardingValidators.validateNonEmpty(addr.country.orEmpty(), "Country")
+            Validators.validateNonEmpty(addr.country.orEmpty(), "Country")
                 ?.let { next[Field.COUNTRY] = it }
         }
 

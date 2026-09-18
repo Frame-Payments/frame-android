@@ -79,6 +79,7 @@ fun OnboardingContainerView(
     LaunchedEffect(result) {
         when (val r = result) {
             is OnboardingResult.Completed -> onResult(r)
+            is OnboardingResult.FinishedUnverified -> onResult(r)
             is OnboardingResult.Cancelled -> onResult(r)
             else -> Unit
         }
@@ -101,8 +102,7 @@ fun OnboardingContainerView(
             viewModel.navigationState.currentStep == OnboardingStep.VerifyYourCard &&
             config.requiredCapabilities.contains(Capabilities.CARD_VERIFICATION)
         ) {
-            // TODO: Re-enable 3DS when card verification flow is ready.
-            // viewModel.initialize3DS()
+            viewModel.initialize3DS()
             viewModel.moveNext()
         }
     }
