@@ -136,6 +136,36 @@ object ConfigurationAPI {
         return null
     }
 
+    /**
+     * Fetches every configuration block in one request and caches each present block under the
+     * same storage key its individual endpoint uses, turning those fetches into cache hits. An
+     * omitted block is skipped rather than cleared, so a service that failed server-side keeps
+     * its cache.
+     *
+     * @return The parsed [ConfigurationResponses.GetAllConfigurationResponse], or `null` if the
+     *   request fails or the response cannot be parsed.
+     */
+    suspend fun getAllConfiguration(): ConfigurationResponses.GetAllConfigurationResponse? {
+        val endpoint = ConfigurationEndpoints.GetAllConfiguration
+        val (data, _) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+
+        val dataResponse = data?.let { FrameNetworking.parseResponse<ConfigurationResponses.GetAllConfigurationResponse>(it) }
+            ?: return null
+
+        cache(dataResponse.evervault, "evervault")
+        cache(dataResponse.fingerprint, "fingerprint")
+        cache(dataResponse.legal, "legal")
+        cache(dataResponse.mapbox, "mapbox")
+        cache(dataResponse.sift, "sift")
+
+        return dataResponse
+    }
+
+    private fun cache(block: Any?, key: String) {
+        if (block == null) return
+        SecureConfigurationStorage.save(context = FrameNetworking.getContext(), key = key, value = block)
+    }
+
     //MARK: Methods using callbacks
     /**
      * Fetches the Evervault configuration from the API and caches it locally, delivering the

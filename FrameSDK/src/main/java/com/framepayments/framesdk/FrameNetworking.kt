@@ -1,14 +1,17 @@
 package com.framepayments.framesdk
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import kotlin.reflect.KMutableProperty0
 import com.evervault.sdk.Evervault
+import com.framepayments.framesdk.accountevents.AccountEventQueue
 import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import com.framepayments.framesdk.managers.SiftManager
-import com.framepayments.framesdk.fingerprint.FingerprintManager
 import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -216,52 +219,57 @@ object FrameNetworking {
         debugMode = debug
         applicationContext = context.applicationContext
 
-        SiftManager.initializeSift(apiSecretKey)
+        // Must run on the main thread — ProcessLifecycleOwner.addObserver isn't thread-safe.
+        AccountEventQueue.shared.startObservingLifecycleIfNeeded()
 
-        // Evervault config first-launch reads `EncryptedSharedPreferences`, which lazily
-        // generates an AES master key in the Android Keystore — that takes hundreds of
-        // milliseconds on a cold start. Run it off the main thread so app launch isn't
-        // blocked. `EncryptedPaymentCardInput` polls `isEvervaultConfigured` before
-        // inflating, so a brief delay is safe; pre-Evervault checkout attempts simply
-        // wait through that poll.
+        // One /config/all marks every block fresh, so the consumers below resolve from cache
+        // instead of each firing their own request. Awaited before they start, otherwise they
+        // race it and miss the cache.
         sdkScope.launch {
-            configureEvervault()
-        }
+            ConfigurationAPI.getAllConfiguration()
 
-        sdkScope.launch {
-            SiftManager.getPublicIp()
-        }
+            SiftManager.initializeSift(apiSecretKey)
 
-        sdkScope.launch {
-            LegalConfiguration.prefetch()
-        }
+            // Evervault config first-launch reads `EncryptedSharedPreferences`, which lazily
+            // generates an AES master key in the Android Keystore — that takes hundreds of
+            // milliseconds on a cold start. Run it off the main thread so app launch isn't
+            // blocked. `EncryptedPaymentCardInput` polls `isEvervaultConfigured` before
+            // inflating, so a brief delay is safe; pre-Evervault checkout attempts simply
+            // wait through that poll.
+            sdkScope.launch { configureEvervault() }
 
-        // Initialize Sonar session as early as possible during SDK initialization
-        // using Fingerprint visitorId when available. If we cannot obtain a
-        // Fingerprint visitorId, we skip Sonar session initialization to match
-        // the iOS behavior.
-        sdkScope.launch {
-            val context = getContext()
-            FingerprintManager.getVisitorId(context) { fingerprintVisitorId ->
-                val visitorId = fingerprintVisitorId ?: run {
+            sdkScope.launch { SiftManager.getPublicIp() }
+
+            sdkScope.launch { LegalConfiguration.prefetch() }
+
+            // Initialize Sonar session as early as possible during SDK initialization.
+            // SessionManager identifies via Fingerprint itself, fresh on every request it
+            // makes — no presence gate here, since it degrades to an empty visitor id and no
+            // sealed result rather than failing when Fingerprint is unavailable.
+            sdkScope.launch {
+                try {
+                    val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), accountId)
+                    sonarSessionManager = manager
+                } catch (e: Exception) {
                     if (debugMode) {
-                        println("Fingerprint visitorId is null; skipping Sonar session initialization.")
-                    }
-                    return@getVisitorId
-                }
-
-                sdkScope.launch {
-                    try {
-                        val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), visitorId)
-                        sonarSessionManager = manager
-                    } catch (e: Exception) {
-                        if (debugMode) {
-                            println("Failed to initialize Sonar session: $e")
-                        }
+                        println("Failed to initialize Sonar session: $e")
                     }
                 }
             }
         }
+
+        // Must run on the main thread — ProcessLifecycleOwner.addObserver isn't thread-safe.
+        // Re-touches the Sonar session on foreground and stops its keep-alive while backgrounded;
+        // the session goes stale fastest while suspended, since timers don't fire then.
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                sdkScope.launch { sonarSessionManager?.resume() }
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                sonarSessionManager?.pause()
+            }
+        })
     }
 
     /** Returns the current Sonar session identifier, or `null` if Sonar has not been initialized. */

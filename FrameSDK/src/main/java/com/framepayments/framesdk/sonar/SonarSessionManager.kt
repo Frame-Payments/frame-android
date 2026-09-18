@@ -8,6 +8,8 @@ import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameNetworkingEndpoints
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.QueryItem
+import com.framepayments.framesdk.fingerprint.FingerprintIdentification
+import com.framepayments.framesdk.fingerprint.FingerprintManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -117,8 +119,15 @@ class SharedPreferencesSessionStorage(
  */
 class SessionManager(
     private var sessionId: SessionId?,
-    private val visitorId: String,
-    private val storage: SessionStorage
+    private val storage: SessionStorage,
+    /**
+     * Mints a fresh Fingerprint identification for a single request. Called again for every
+     * create, refresh, and keep-alive touch rather than held: a sealed result carries its own
+     * timestamp and the server rejects one stamped more than ten minutes from now in either
+     * direction, so a reused payload is a rejected payload — sharpest on a device that suspends
+     * and resumes hours later.
+     */
+    private val identify: suspend () -> FingerprintIdentification?
 ) {
     private val sdkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val inFlight = HashMap<String, Deferred<SessionId>>()
@@ -235,10 +244,18 @@ class SessionManager(
         return created
     }
 
+    private suspend fun requestBody(accountId: String?): SessionRequestBody {
+        val identification = identify()
+        return SessionRequestBody(
+            fingerprint_visitor_id = identification?.visitorId.orEmpty(),
+            account_id = accountId,
+            sealed_result = identification?.sealedResult
+        )
+    }
+
     private suspend fun createSession(accountId: String?): SessionId {
         return try {
-            val body = SessionRequestBody(fingerprint_visitor_id = visitorId, account_id = accountId)
-            val response = perform(SonarSessionEndpoints.Create, body)
+            val response = perform(SonarSessionEndpoints.Create, requestBody(accountId))
             store(response, accountId)
             response
         } catch (e: Exception) {
@@ -248,9 +265,8 @@ class SessionManager(
     }
 
     private suspend fun refreshSession(session: SessionId, accountId: String?): SessionId {
-        val body = SessionRequestBody(fingerprint_visitor_id = visitorId, account_id = accountId)
         return try {
-            perform(SonarSessionEndpoints.Update(session), body)
+            perform(SonarSessionEndpoints.Update(session), requestBody(accountId))
         } catch (e: Exception) {
             Log.w("SessionManager", "Failed to update session, creating new one", e)
             storage.clear(accountId)
@@ -281,18 +297,31 @@ class SessionManager(
         /** Shorter than [FRESHNESS_WINDOW_MS] so a refresh always lands before the window closes. */
         private const val KEEP_ALIVE_INTERVAL_MS = 10 * 60 * 1000L
 
-        suspend fun initializeWithFrameNetworking(context: Context, visitorId: String): SessionManager {
-            val prefs = context.getSharedPreferences("sonar_sessions", Context.MODE_PRIVATE)
+        /**
+         * Creates the SDK-wide session manager, establishing a session bound to [accountId] when
+         * it's known at init — matching iOS's `SessionManager.initializeSession(accountId:)` — or
+         * the legacy unscoped session otherwise.
+         *
+         * Fingerprint is identified fresh via [FingerprintManager.identify] for every request
+         * this manager makes, not just once here — see [SessionManager]'s `identify` parameter.
+         */
+        suspend fun initializeWithFrameNetworking(context: Context, accountId: String? = null): SessionManager {
+            val appContext = context.applicationContext
+            val prefs = appContext.getSharedPreferences("sonar_sessions", Context.MODE_PRIVATE)
             val storage = SharedPreferencesSessionStorage(prefs)
-            val existingSessionId = storage.get()
+            val existingSessionId = storage.get(accountId)
 
             val manager = SessionManager(
                 sessionId = existingSessionId,
-                visitorId = visitorId,
-                storage = storage
+                storage = storage,
+                identify = { FingerprintManager.identify(appContext) }
             )
 
-            manager.initialize()
+            if (accountId != null) {
+                manager.ensureSession(accountId)
+            } else {
+                manager.initialize()
+            }
             return manager
         }
     }
