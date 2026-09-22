@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BankAccountDetailView
 import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
-import com.framepayments.frameonboarding.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.viewmodels.BankAccountFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode

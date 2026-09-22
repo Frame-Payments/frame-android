@@ -21,6 +21,9 @@ class MainActivity : ComponentActivity() {
             context = applicationContext,
             secretKey = "INSERT_SANDBOX_SECRET_KEY",
             publishableKey = "INSERT_SANDBOX_PUBLISHABLE_KEY",
+            // Optional: an existing account this run belongs to, used to attribute account
+            // events. Leave null if you're onboarding a new account instead.
+            accountId = "INSERT_SANDBOX_ACCOUNT_ID",
             googlePayMerchantId = "BCR2DN4T_TEST_STUB",
             debug = true
         )

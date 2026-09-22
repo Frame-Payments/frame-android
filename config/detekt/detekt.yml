@@ -16,6 +16,7 @@ comments:
       - "**/sonar/**"
       - "**/fingerprint/**"
       - "**/managers/**"
+      - "**/accountevents/**"
   UndocumentedPublicFunction:
     active: true
     excludes:
@@ -24,6 +25,7 @@ comments:
       - "**/sonar/**"
       - "**/fingerprint/**"
       - "**/managers/**"
+      - "**/accountevents/**"
   UndocumentedPublicProperty:
     active: true
     excludes:
@@ -32,6 +34,7 @@ comments:
       - "**/sonar/**"
       - "**/fingerprint/**"
       - "**/managers/**"
+      - "**/accountevents/**"
       - "**/*Endpoints.kt"
   # All other comments rules off.
   AbsentOrWrongFileLicense:

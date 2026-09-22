@@ -2,6 +2,7 @@ package com.framepayments.framesdk.paymentmethods
 
 import com.evervault.sdk.Evervault
 import com.framepayments.framesdk.EmptyRequest
+import com.framepayments.framesdk.EvervaultConfigurator
 import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
@@ -9,6 +10,7 @@ import com.framepayments.framesdk.NetworkingError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Provides suspend and callback overloads for all payment method API operations.
@@ -81,8 +83,13 @@ object PaymentMethodsAPI {
      * @return A pair of the created payment method and a networking error.
      */
     suspend fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true): Pair<FrameObjects.PaymentMethod?, NetworkingError?> {
-        if (!FrameNetworking.isEvervaultConfigured && encryptData) {
-            FrameNetworking.configureEvervault()
+        if (encryptData) {
+            // Evervault.shared.encrypt() throws EvervaultException.InitializationError when no
+            // client is configured -- an unchecked exception that would otherwise escape this
+            // function's Pair<..., NetworkingError?> contract instead of reporting a failure.
+            if (!EvervaultConfigurator.ensureConfigured()) {
+                return Pair(null, NetworkingError.UnknownError)
+            }
         }
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
@@ -263,12 +270,15 @@ object PaymentMethodsAPI {
      * @param completionHandler Called on the main thread with the created payment method on success, or a [NetworkingError] on failure.
      */
     fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit) {
-        if (!FrameNetworking.isEvervaultConfigured) {
-            FrameNetworking.configureEvervault()
-        }
         val endpoint = PaymentMethodEndpoints.CreatePaymentMethod
 
         scope.launch(Dispatchers.IO) {
+            if (encryptData && !EvervaultConfigurator.ensureConfigured()) {
+                // Evervault.shared.encrypt() throws when unconfigured; without this check that
+                // exception would terminate this coroutine and completionHandler would never run.
+                withContext(Dispatchers.Main) { completionHandler(null, NetworkingError.UnknownError) }
+                return@launch
+            }
             val encryptedRequest = if (encryptData) request.copy(
                 cardNumber = Evervault.shared.encrypt(request.cardNumber) as String,
                 cvc = Evervault.shared.encrypt(request.cvc) as String

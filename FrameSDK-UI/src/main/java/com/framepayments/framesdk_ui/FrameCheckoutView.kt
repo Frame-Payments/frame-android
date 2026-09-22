@@ -19,6 +19,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.FrameResult
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
+import com.framepayments.framesdk_ui.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentMethodRowBinding
@@ -90,6 +94,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.closeButton.setOnClickListener {
             if (!didFinish) {
                 didFinish = true
+                AccountEventEmitter.emit(AccountEventName.CHECKOUT_CANCELLED, AccountEventScreen.PAYMENT_SHEET)
                 onResult?.invoke(FrameResult.Cancelled)
             }
             (context as Activity).finish()
@@ -125,7 +130,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         }
 
         binding.payButton.setOnClickListener {
-            viewModel.checkoutWithSelectedPaymentMethod(binding.saveCard.isChecked)
+            viewModel.checkoutWithSelectedPaymentMethod(binding.saveCard.isChecked, context)
                 .observe(activity) { transfer ->
                     val id = transfer?.id ?: return@observe
                     didFinish = true
@@ -275,7 +280,7 @@ class FrameCheckoutView @JvmOverloads constructor(
                 itemBinding.paymentCardSecondary.text =
                     if (accountType.isEmpty()) "Account" else "$accountType Account"
             } else {
-                itemBinding.paymentCardIcon.setImageResource(R.drawable.ic_card)
+                itemBinding.paymentCardIcon.setImageResource(cardBrandIcon(option.card?.brand.orEmpty()))
                 itemBinding.paymentCardPrimary.text =
                     "•••• ${option.card?.lastFourDigits.orEmpty()}"
                 itemBinding.paymentCardSecondary.text =

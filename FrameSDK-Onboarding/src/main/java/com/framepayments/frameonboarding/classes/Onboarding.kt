@@ -1,6 +1,5 @@
 package com.framepayments.frameonboarding.classes
 
-import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -41,20 +40,6 @@ sealed class OnboardingStep {
     data object SelectPayoutMethod: OnboardingStep()
     /** Screen for adding a new payout method (bank account). */
     data object AddPayoutMethod: OnboardingStep()
-    /** Screen listing the identity documents the customer must upload. */
-    data object UploadDocumentsList: OnboardingStep()
-    /** Camera screen for capturing the front of the customer's ID document. */
-    data object CaptureFrontPhoto: OnboardingStep()
-    /** Review screen for the front-of-ID photo before submission. */
-    data object ReviewFrontPhoto: OnboardingStep()
-    /** Camera screen for capturing the back of the customer's ID document. */
-    data object CaptureBackPhoto: OnboardingStep()
-    /** Review screen for the back-of-ID photo before submission. */
-    data object ReviewBackPhoto: OnboardingStep()
-    /** Camera screen for capturing a selfie. */
-    data object CaptureSelfie: OnboardingStep()
-    /** Review screen for the selfie photo before submission. */
-    data object ReviewSelfie: OnboardingStep()
     /** Confirmation screen shown after all verification data has been submitted. */
     data object VerificationSubmitted: OnboardingStep()
 }
@@ -96,14 +81,32 @@ enum class Capabilities(val apiValue: String) {
     AGE_VERIFICATION("age_verification")
 }
 
+/** Mirrors the server's `Accounts::Capabilities::DependencyGraph::EDGES`. */
+private val capabilityDependencyEdges: Map<Capabilities, List<Capabilities>> = mapOf(
+    Capabilities.KYC_PREFILL to listOf(Capabilities.KYC, Capabilities.PHONE_VERIFICATION),
+    Capabilities.CREATOR_SHIELD to listOf(Capabilities.KYC, Capabilities.AGE_VERIFICATION),
+    Capabilities.KYC to listOf(Capabilities.PHONE_VERIFICATION)
+)
+
+/** Transitive closure of what these capabilities drag in with them, themselves included. */
+fun capabilitiesWithDependencies(capabilities: List<Capabilities>): Set<Capabilities> {
+    val reached = mutableSetOf<Capabilities>()
+    val pending = capabilities.toMutableList()
+    while (pending.isNotEmpty()) {
+        val capability = pending.removeAt(pending.size - 1)
+        if (!reached.add(capability)) continue
+        pending.addAll(capabilityDependencyEdges[capability].orEmpty())
+    }
+    return reached
+}
+
 /**
  */
 internal enum class OnboardingFlowSegment(val order: Int) {
     PERSONAL_INFORMATION(0),
     CONFIRM_PAYMENT_METHOD(1),
     CONFIRM_PAYOUT_METHOD(2),
-    VERIFICATION_SUBMITTED(3),
-    UPLOAD_DOCUMENTS(4)
+    VERIFICATION_SUBMITTED(3)
 }
 
 internal fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
@@ -129,15 +132,6 @@ internal fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this)
     OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD -> listOf(
         OnboardingStep.SelectPayoutMethod,
         OnboardingStep.AddPayoutMethod
-    )
-    OnboardingFlowSegment.UPLOAD_DOCUMENTS -> listOf(
-        OnboardingStep.UploadDocumentsList,
-        OnboardingStep.CaptureFrontPhoto,
-        OnboardingStep.ReviewFrontPhoto,
-        OnboardingStep.CaptureBackPhoto,
-        OnboardingStep.ReviewBackPhoto,
-        OnboardingStep.CaptureSelfie,
-        OnboardingStep.ReviewSelfie
     )
     OnboardingFlowSegment.VERIFICATION_SUBMITTED -> listOf(OnboardingStep.VerificationSubmitted)
 }
@@ -181,13 +175,6 @@ internal fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this)
     OnboardingStep.VerifyYourCard -> OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD
     OnboardingStep.SelectPayoutMethod,
     OnboardingStep.AddPayoutMethod -> OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD
-    OnboardingStep.UploadDocumentsList,
-    OnboardingStep.CaptureFrontPhoto,
-    OnboardingStep.ReviewFrontPhoto,
-    OnboardingStep.CaptureBackPhoto,
-    OnboardingStep.ReviewBackPhoto,
-    OnboardingStep.CaptureSelfie,
-    OnboardingStep.ReviewSelfie -> OnboardingFlowSegment.UPLOAD_DOCUMENTS
     OnboardingStep.VerificationSubmitted -> OnboardingFlowSegment.VERIFICATION_SUBMITTED
 }
 
@@ -200,12 +187,29 @@ sealed class OnboardingResult {
     data object Cancelled : OnboardingResult()
 
     /**
-     * All required capability steps were completed.
+     * All required capability steps were completed and every one was granted.
      *
      * @property paymentMethodId ID of the payment method added during the flow, if any.
+     * @property accountId ID of the onboarded Frame account. Needed to scope follow-up calls,
+     *   and present even when no payment method was added.
      */
     data class Completed(
-        val paymentMethodId: String?
+        val paymentMethodId: String?,
+        val accountId: String? = null
+    ) : OnboardingResult()
+
+    /**
+     * The flow ran to completion but the applicant was not approved.
+     *
+     * @property paymentMethodId ID of the payment method added during the flow, if any.
+     * @property accountId ID of the onboarded Frame account. Still returned — the account
+     *   exists and the host needs it to scope a retry or a status check.
+     * @property outcome The applicant's actual verification status.
+     */
+    data class FinishedUnverified(
+        val paymentMethodId: String?,
+        val outcome: OnboardingOutcome,
+        val accountId: String? = null
     ) : OnboardingResult()
 
     /**
@@ -252,12 +256,6 @@ internal data class PaymentMethodSummary(
     val exp: String
 )
 
-internal enum class PhotoType {
-    FRONT,
-    BACK,
-    SELFIE
-}
-
 /**
  * Mutable draft state for the manual card entry form used when Evervault UI is unavailable.
  *
@@ -295,11 +293,6 @@ internal data class OnboardingData(
 
     // Step 3: Payout Methods
     val selectedPayoutMethodId: String? = null,
-
-    // Step 4: Document Upload
-    val frontPhotoUri: Uri? = null,
-    val backPhotoUri: Uri? = null,
-    val selfieUri: Uri? = null,
 
     // Personal information (collected in UserIdentificationView)
     val firstName: String? = null,

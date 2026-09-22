@@ -44,16 +44,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
-import com.framepayments.frameonboarding.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.CustomerInformationView
 import com.framepayments.frameonboarding.reusable.PhoneCountryPickerSheet
-import com.framepayments.frameonboarding.reusable.PhoneNumberTextField
+import com.framepayments.framesdk_ui.reusable.PhoneNumberTextField
 import com.framepayments.frameonboarding.reusable.TermsOfServiceView
-import com.framepayments.frameonboarding.reusable.ValidatedTextField
+import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.CustomerInformationFieldVM
@@ -87,14 +90,15 @@ internal fun UserIdentificationView(
     val termsToken by viewModel.termsOfServiceToken.collectAsState()
     val onboardingData by viewModel.onboardingData.collectAsState()
     val fieldErrors by viewModel.fieldErrors.collectAsState()
-    val requiredCapabilities by viewModel.requiredCapabilities.collectAsState()
     val personaInquiryToLaunch by viewModel.personaInquiryToLaunch.collectAsState()
     val isVerifyingGovId by viewModel.isVerifyingGovId.collectAsState()
     val context = LocalContext.current
 
-    // Show the no-SSN government-ID path only when KYC is required (the same gate as the SSN field).
-    val showGovIdVerification = requiredCapabilities.contains(Capabilities.KYC) ||
-        requiredCapabilities.contains(Capabilities.KYC_PREFILL)
+    // Show the no-SSN government-ID path only when KYC is required (the same gate as the SSN
+    // field). Keyed off what the host originally asked for, not the shrinking live list — the
+    // latter drops a capability the moment it's granted, hiding the field mid-flow.
+    val showGovIdVerification = viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC) ||
+        viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL)
 
     // Persona result launcher. Lifecycle-owned here (the VM can't launch an ActivityResult); the
     // callback forwards the (best-effort) client outcome to the VM, which confirms with the server.
@@ -112,6 +116,15 @@ internal fun UserIdentificationView(
     LaunchedEffect(showTermsOfService, termsToken) {
         if (showTermsOfService && termsToken == null) {
             viewModel.generateTermsOfServiceToken()
+        }
+    }
+
+    LaunchedEffect(subStep) {
+        if (subStep == VerifyIdSubStep.InformationForm) {
+            AccountEventEmitter.emit(
+                AccountEventName.PROFILE_STEP_STARTED,
+                AccountEventScreen.PERSONAL_INFORMATION
+            )
         }
     }
 
@@ -221,6 +234,7 @@ internal fun UserIdentificationView(
                                 digitCount = 6,
                                 showResendCode = false,
                                 embedInParentScaffold = true,
+                                emitsPhoneCodeEntry = verifyPhoneUi != VerifyPhoneUi.OtpForProve,
                                 onBack = { viewModel.goBackFromVerifyPhone() },
                                 onResendCode = { viewModel.resendVerificationCode() },
                                 onContinue = { code ->
@@ -384,7 +398,14 @@ internal fun UserIdentificationView(
                         else -> Unit
                     }
 
-                    if (showTermsOfService && subStep == VerifyIdSubStep.PhoneAuth) {
+                    val termsVisible = showTermsOfService && subStep == VerifyIdSubStep.PhoneAuth
+                    if (termsVisible) {
+                        LaunchedEffect(Unit) {
+                            AccountEventEmitter.emit(
+                                AccountEventName.TERMS_OF_SERVICE_SHOWN,
+                                AccountEventScreen.TERMS_OF_SERVICE
+                            )
+                        }
                         Spacer(Modifier.height(24.dp))
                         TermsOfServiceView()
                     }
@@ -396,6 +417,12 @@ internal fun UserIdentificationView(
                             when (subStep) {
                                 VerifyIdSubStep.PhoneAuth -> {
                                     if (viewModel.validateAllPhoneAuth()) {
+                                        if (termsVisible) {
+                                            AccountEventEmitter.emit(
+                                                AccountEventName.TERMS_OF_SERVICE_ACCEPTED,
+                                                AccountEventScreen.TERMS_OF_SERVICE
+                                            )
+                                        }
                                         viewModel.submitPhoneAuth(requiresDateOfBirth)
                                     }
                                 }
@@ -403,6 +430,13 @@ internal fun UserIdentificationView(
                                     val verifiedViaGovId = onboardingData.identityVerifiedViaGovId
                                     val infoOK = customerInfoVM.validate(ssnOptional = verifiedViaGovId)
                                     val addressOK = personalAddressVM.validate()
+                                    if (!infoOK || !addressOK) {
+                                        AccountEventEmitter.emit(
+                                            AccountEventName.PROFILE_VALIDATION_FAILED,
+                                            AccountEventScreen.PERSONAL_INFORMATION,
+                                            detail = "info valid: $infoOK, address valid: $addressOK"
+                                        )
+                                    }
                                     if (infoOK && addressOK) {
                                         val id = customerInfoVM.identity.value
                                         val addr = personalAddressVM.address.value

@@ -1,20 +1,30 @@
 package com.framepayments.framesdk
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import kotlin.reflect.KMutableProperty0
 import com.evervault.sdk.Evervault
+import com.framepayments.framesdk.accountevents.AccountEventQueue
 import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
+import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
+import com.framepayments.framesdk.transfers.TransferStatusAdapter
 import com.framepayments.framesdk.managers.SiftManager
-import com.framepayments.framesdk.fingerprint.FingerprintManager
 import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -77,7 +87,10 @@ class DefaultURLSession(private val client: OkHttpClient) : URLSessionProtocol {
  */
 object FrameNetworking {
     /** Gson instance shared across all SDK API clients. */
-    val gson: Gson = Gson()
+    val gson: Gson = GsonBuilder()
+        .registerTypeAdapterFactory(LenientFieldTypeAdapterFactory)
+        .registerTypeAdapterFactory(TransferStatusAdapter)
+        .create()
 
     /** Shared OkHttp client configured with Frame's standard timeouts. */
     val okHttpClient: OkHttpClient by lazy {
@@ -97,6 +110,45 @@ object FrameNetworking {
 
     /** The current SDK version string, sourced from `BuildConfig`. */
     const val CURRENT_VERSION = BuildConfig.SDK_VERSION
+
+    /**
+     * The header naming this SDK build, sent on every Frame API request.
+     *
+     * Separate from the `User-Agent`, which stays the bare platform token: the API
+     * matches that token exactly in places (Sift's platform detector anchors on
+     * `/\AAndroid\z/`), so appending a version there would silently reclassify native
+     * traffic as a browser. Reporting the version beside it leaves that matching
+     * untouched.
+     *
+     * Nothing reads this server-side yet — it exists so the version is on the wire
+     * and available when something wants it.
+     */
+    private const val VERSION_HEADER = "X-Frame-SDK-Version"
+
+    /** The platform reported on emitted account events. Defaults to `"android"`; overridden by
+     * [setHostSDKInfo] when this build runs under a wrapper SDK. */
+    @Volatile var eventPlatform: String = "android"
+        private set
+
+    /** The wrapper SDK's version reported alongside emitted account events, if any. */
+    @Volatile var hostSDKVersion: String? = null
+        private set
+
+    /**
+     * Tags subsequent account events as originating from a wrapper SDK (e.g. frame-react-native)
+     * instead of directly from this SDK.
+     *
+     * Internal API — not for integrator use. A wrapper SDK's own initialize() calls this once,
+     * before this SDK's [initializeWithAPIKey], to override [eventPlatform] and attach a
+     * [hostSDKVersion] to every account event this SDK subsequently emits.
+     *
+     * @param platform The wrapper's platform identifier (e.g. `"react_native"`).
+     * @param version The wrapper SDK's own version.
+     */
+    fun setHostSDKInfo(platform: String, version: String) {
+        eventPlatform = platform
+        hostSDKVersion = version
+    }
 
     /** The secret key set during [initializeWithAPIKey]. Used as the Bearer token for most API calls. */
     var apiSecretKey: String = ""
@@ -119,6 +171,29 @@ object FrameNetworking {
      */
     @Volatile private var onboardingSessionToken: String? = null
 
+    /**
+     * The Frame account this app run belongs to, set at [initializeWithAPIKey]. Read by
+     * [com.framepayments.framesdk.accountevents.AccountEventEmitter] to attribute account
+     * events; null until set, in which case events are silently dropped.
+     */
+    var accountId: String? = null
+        private set
+
+    /**
+     * Publishes an account resolved after [initializeWithAPIKey] — onboarding creates the
+     * account mid-flow, so a host that launched without one would otherwise emit nothing for
+     * the whole run.
+     *
+     * Ignores a blank id, and does not overwrite an account the host already named: within one
+     * app run the events belong to that account, and a flow resolving a different one must not
+     * silently re-point them.
+     */
+    fun setAccountIdIfUnset(accountId: String?) {
+        val resolved = accountId?.takeIf { it.isNotEmpty() } ?: return
+        if (this.accountId != null) return
+        this.accountId = resolved
+    }
+
     /** `true` once Evervault has been successfully configured; `false` until then. */
     var isEvervaultConfigured: Boolean = false
 
@@ -140,6 +215,7 @@ object FrameNetworking {
      * @param context The application context.
      * @param secretKey Your Frame secret key (`sk_...`). Server-only — avoid shipping this in an app binary. The SDK emits a one-time warning whenever the secret key is used.
      * @param publishableKey Your Frame publishable key (`pk_...`). Safe to embed in the app.
+     * @param accountId The Frame account this app run belongs to, if known at init. Used to attribute account events; leave null when the account isn't known yet (e.g. before onboarding creates one).
      * @param googlePayMerchantId Optional Google Pay merchant identifier. Required to show the Google Pay button in checkout.
      * @param debug When `true`, API requests and responses are logged to logcat.
      */
@@ -147,6 +223,7 @@ object FrameNetworking {
         context: Context,
         secretKey: String,
         publishableKey: String,
+        accountId: String? = null,
         googlePayMerchantId: String? = null,
         debug: Boolean = false,
     ) {
@@ -154,56 +231,69 @@ object FrameNetworking {
         if (secretKey.isNotEmpty()) warnOnce(::hasWarnedAboutSecretKeyConfig) { secretKeyWarning("configured via secretKey") }
         apiSecretKey = secretKey
         apiPublishableKey = publishableKey
+        this.accountId = accountId?.takeIf { it.isNotEmpty() }
         this.googlePayMerchantId = googlePayMerchantId
         debugMode = debug
         applicationContext = context.applicationContext
 
-        SiftManager.initializeSift(apiSecretKey)
+        // Must run on the main thread — ProcessLifecycleOwner.addObserver isn't thread-safe.
+        AccountEventQueue.shared.startObservingLifecycleIfNeeded()
 
-        // Evervault config first-launch reads `EncryptedSharedPreferences`, which lazily
-        // generates an AES master key in the Android Keystore — that takes hundreds of
-        // milliseconds on a cold start. Run it off the main thread so app launch isn't
-        // blocked. `EncryptedPaymentCardInput` polls `isEvervaultConfigured` before
-        // inflating, so a brief delay is safe; pre-Evervault checkout attempts simply
-        // wait through that poll.
+        // One /config/all marks every block fresh, so the consumers below resolve from cache
+        // instead of each firing their own request. Awaited before they start, otherwise they
+        // race it and miss the cache.
         sdkScope.launch {
-            configureEvervault()
-        }
+            ConfigurationAPI.getAllConfiguration()
 
-        sdkScope.launch {
-            SiftManager.getPublicIp()
-        }
+            SiftManager.initializeSift()
 
-        // Initialize Sonar session as early as possible during SDK initialization
-        // using Fingerprint visitorId when available. If we cannot obtain a
-        // Fingerprint visitorId, we skip Sonar session initialization to match
-        // the iOS behavior.
-        sdkScope.launch {
-            val context = getContext()
-            FingerprintManager.getVisitorId(context) { fingerprintVisitorId ->
-                val visitorId = fingerprintVisitorId ?: run {
+            // Evervault config first-launch reads `EncryptedSharedPreferences`, which lazily
+            // generates an AES master key in the Android Keystore — that takes hundreds of
+            // milliseconds on a cold start. Run it off the main thread so app launch isn't
+            // blocked. `EncryptedPaymentCardInput` polls `isEvervaultConfigured` before
+            // inflating, so a brief delay is safe; pre-Evervault checkout attempts simply
+            // wait through that poll.
+            sdkScope.launch { configureEvervault() }
+
+            sdkScope.launch { SiftManager.getPublicIp() }
+
+            sdkScope.launch { LegalConfiguration.prefetch() }
+
+            // Initialize Sonar session as early as possible during SDK initialization.
+            // SessionManager identifies via Fingerprint itself, fresh on every request it
+            // makes — no presence gate here, since it degrades to an empty visitor id and no
+            // sealed result rather than failing when Fingerprint is unavailable.
+            sdkScope.launch {
+                try {
+                    val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), accountId)
+                    sonarSessionManager = manager
+                } catch (e: Exception) {
                     if (debugMode) {
-                        println("Fingerprint visitorId is null; skipping Sonar session initialization.")
-                    }
-                    return@getVisitorId
-                }
-
-                sdkScope.launch {
-                    try {
-                        val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), visitorId)
-                        sonarSessionManager = manager
-                    } catch (e: Exception) {
-                        if (debugMode) {
-                            println("Failed to initialize Sonar session: $e")
-                        }
+                        println("Failed to initialize Sonar session: $e")
                     }
                 }
             }
         }
+
+        // Must run on the main thread — ProcessLifecycleOwner.addObserver isn't thread-safe.
+        // Re-touches the Sonar session on foreground and stops its keep-alive while backgrounded;
+        // the session goes stale fastest while suspended, since timers don't fire then.
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                sdkScope.launch { sonarSessionManager?.resume() }
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                sonarSessionManager?.pause()
+            }
+        })
     }
 
     /** Returns the current Sonar session identifier, or `null` if Sonar has not been initialized. */
     fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()
+
+    /** Returns the SDK's [SonarSessionManager], or `null` if Sonar has not been initialized. */
+    fun sonarSessionManagerOrNull(): SonarSessionManager? = sonarSessionManager
 
     /**
      * Returns the application context stored during [initializeWithAPIKey].
@@ -308,6 +398,7 @@ object FrameNetworking {
     private fun Request.Builder.applyFrameHeaders(ip: String?, auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {
         header("Authorization", "Bearer ${bearerToken(auth)}")
         header("User-Agent", "Android/$CURRENT_VERSION")
+        header(VERSION_HEADER, CURRENT_VERSION)
         ip?.let { header("ip_address", it) }
         return this
     }
@@ -722,7 +813,7 @@ object FrameNetworking {
         }
     }
 
-    private fun isUsableEvervaultConfig(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean {
+    internal fun isUsableEvervaultConfig(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean {
         val team = config?.teamId?.trim().orEmpty()
         val app = config?.appId?.trim().orEmpty()
         return team.isNotEmpty() && app.isNotEmpty()
@@ -749,7 +840,7 @@ object FrameNetworking {
 
     /**
      * Loads Evervault credentials from secure storage or the Frame API (callback-based variant).
-     * Prefer [ensureEvervaultReadyForCardInputs] from a coroutine when possible.
+     * Prefer [EvervaultConfigurator.ensureConfigured] from a coroutine when possible.
      */
     fun configureEvervault() {
         val config: ConfigurationResponses.GetEvervaultConfigurationResponse? =
@@ -774,5 +865,53 @@ object FrameNetworking {
             cfg = ConfigurationAPI.getEvervaultConfiguration()
         }
         applyEvervaultConfiguration(cfg)
+    }
+}
+
+/**
+ * Configures Evervault once and lets concurrent callers await that same work, mirroring iOS's
+ * `EvervaultConfigurator` actor.
+ *
+ * [FrameNetworking.configureEvervault] fetches credentials asynchronously before applying them,
+ * so a caller that kicks off configuration and encrypts on the next line can encrypt before the
+ * client exists. Awaiting [ensureConfigured] closes that window, and concurrent callers join the
+ * same in-flight fetch rather than firing duplicate requests.
+ */
+object EvervaultConfigurator {
+    private val mutex = Mutex()
+    private var inFlight: Deferred<Boolean>? = null
+
+    /**
+     * Configures Evervault if it is not already configured, joining any configuration already in
+     * progress rather than starting a second one.
+     *
+     * @return `true` once Evervault holds credentials, `false` if none could be resolved.
+     */
+    suspend fun ensureConfigured(): Boolean {
+        if (FrameNetworking.isEvervaultConfigured) return true
+
+        val deferred = mutex.withLock {
+            inFlight ?: CoroutineScope(Dispatchers.IO).async { configure() }.also { inFlight = it }
+        }
+
+        try {
+            return deferred.await()
+        } finally {
+            // configure() throwing must not leave a failed Deferred parked in inFlight — every
+            // later ensureConfigured() would join it and re-throw forever, with no retry ever
+            // possible for the rest of the process lifetime.
+            mutex.withLock { if (inFlight === deferred) inFlight = null }
+        }
+    }
+
+    private suspend fun configure(): Boolean {
+        val fromApi = ConfigurationAPI.getEvervaultConfiguration()
+        if (FrameNetworking.isUsableEvervaultConfig(fromApi)) return FrameNetworking.applyEvervaultConfiguration(fromApi)
+
+        val cached: ConfigurationResponses.GetEvervaultConfigurationResponse? =
+            SecureConfigurationStorage.retrieve(FrameNetworking.getContext(), "evervault")
+        if (FrameNetworking.isUsableEvervaultConfig(cached)) return FrameNetworking.applyEvervaultConfiguration(cached)
+
+        return false
     }
 }

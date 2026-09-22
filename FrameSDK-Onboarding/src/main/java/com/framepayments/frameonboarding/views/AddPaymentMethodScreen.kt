@@ -41,14 +41,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
-import com.framepayments.frameonboarding.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.PaymentCardForm
 import com.framepayments.frameonboarding.reusable.PaymentDivider
-import com.framepayments.frameonboarding.validation.OnboardingValidators
+import com.framepayments.framesdk_ui.validation.Validators
 import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk_ui.EncryptedPaymentCardInput
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
@@ -148,8 +151,13 @@ internal fun AddPaymentMethodScreen(
                             onResult = { result ->
                                 when (result) {
                                     is FrameGooglePayButton.Result.PaymentMethodCreated -> {
+                                        // appendNewlyAddedPaymentMethod() advances on its own
+                                        // (mirrors the card-entry path's own moveNext() call) —
+                                        // calling onBack() here raced that: in the onboarding-step
+                                        // router it moved backward instead of forward, and in the
+                                        // standalone view it could fire Cancelled before the
+                                        // reactive Completed effect ever saw the new state.
                                         viewModel.appendNewlyAddedPaymentMethod(result.paymentMethod)
-                                        onBack()
                                     }
                                     is FrameGooglePayButton.Result.Failure -> {
                                         // Transport failures already surfaced via FrameSnackbarController
@@ -263,7 +271,7 @@ internal fun AddPaymentMethodScreen(
                 onClick = {
                     val addressOK = billingVM.validate()
                     val cardOK = if (evervaultReady == true) {
-                        OnboardingValidators.validateCard(paymentCard).also { cardError = it } == null
+                        Validators.validateOnboardingCard(paymentCard).also { cardError = it } == null
                     } else {
                         // Manual fallback form: validate via the existing form-completeness check.
                         val ok = viewModel.isPaymentMethodFormComplete(
@@ -279,6 +287,12 @@ internal fun AddPaymentMethodScreen(
                     if (addressOK && cardOK) {
                         viewModel.updateCreatedBillingAddress { billingVM.address.value }
                         viewModel.submitNewPaymentMethod()
+                    } else {
+                        AccountEventEmitter.emit(
+                            AccountEventName.CARD_VALIDATION_FAILED,
+                            AccountEventScreen.PAYMENT_METHOD,
+                            detail = if (cardOK) "billing address" else (cardError ?: "card")
+                        )
                     }
                 }
             )

@@ -1,7 +1,7 @@
 package com.framepayments.frameonboarding.viewmodels
 
 import android.content.Context
-import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.framepayments.frameonboarding.classes.Capabilities
@@ -9,8 +9,9 @@ import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.BankAccountDraft
 import com.framepayments.frameonboarding.classes.OnboardingData
 import com.framepayments.frameonboarding.classes.PhoneCountrySelection
-import com.framepayments.frameonboarding.validation.OnboardingValidators
+import com.framepayments.framesdk_ui.validation.Validators
 import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
+import com.framepayments.frameonboarding.classes.OnboardingOutcome
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingState
 import com.framepayments.frameonboarding.classes.OnboardingStep
@@ -27,11 +28,13 @@ import com.framepayments.frameonboarding.persona.PersonaVerificationService
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
-import com.framepayments.framesdk.FileUpload
-import com.framepayments.framesdk.FileUploadFieldName
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.accountevents.AccountEventDetail
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.accounts.AccountObjects
 import com.framepayments.framesdk.accounts.AccountRequests
 import com.framepayments.framesdk.accounts.AccountsAPI
@@ -65,16 +68,13 @@ import java.time.Instant
 
 internal enum class VerifyIdSubStep { PhoneAuth, VerifyPhone, InformationForm }
 
-internal enum class OnboardingFieldGroup { PHONE_AUTH, DOCS }
+internal enum class OnboardingFieldGroup { PHONE_AUTH }
 
 internal enum class OnboardingField(val group: OnboardingFieldGroup) {
     AUTH_PHONE(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_MONTH(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_DAY(OnboardingFieldGroup.PHONE_AUTH),
     AUTH_BIRTH_YEAR(OnboardingFieldGroup.PHONE_AUTH),
-    DOC_FRONT(OnboardingFieldGroup.DOCS),
-    DOC_BACK(OnboardingFieldGroup.DOCS),
-    DOC_SELFIE(OnboardingFieldGroup.DOCS),
 }
 
 /** UI state for the phone verification step (Prove vs manual Frame confirm). */
@@ -95,6 +95,15 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     /** Mirrors iOS `OnboardingContainerViewModel.requiredCapabilities` (shrinks as capabilities complete). */
     val requiredCapabilities: StateFlow<List<Capabilities>> = _requiredCapabilities.asStateFlow()
+
+    /**
+     * What the host asked for, fixed for the life of the flow. Distinct from
+     * [requiredCapabilities], which shrinks as capabilities are granted: a UI gate or validator
+     * keyed off the shrinking list silently switches itself off mid-flow — that is what stopped
+     * the date-of-birth field being collected once `kyc_prefill` was satisfied. Mirrors iOS
+     * `originallyRequiredCapabilities`.
+     */
+    val originallyRequiredCapabilities: List<Capabilities> = config.requiredCapabilities.toList()
 
     /** API string values for [_requiredCapabilities] (e.g. `"kyc_prefill"`). */
     private fun requiredCapabilityApiStrings(): List<String> =
@@ -120,6 +129,22 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     // Resolved account ID (may start null if config has none, set after account creation)
     private val _resolvedAccountId = MutableStateFlow(config.accountId)
     val resolvedAccountId: StateFlow<String?> = _resolvedAccountId.asStateFlow()
+
+    init {
+        // A host that launches onboarding with an existing account named it before the SDK
+        // could have; publish it so events emitted before account creation still attribute.
+        FrameNetworking.setAccountIdIfUnset(config.accountId)
+    }
+
+    /**
+     * Records the account this flow resolved, publishing it to the SDK so account events
+     * emitted from here on are attributed. Onboarding creates the account mid-flow, so
+     * without this a host that launched without one emits nothing for the entire run.
+     */
+    private fun setResolvedAccountId(accountId: String) {
+        _resolvedAccountId.value = accountId
+        FrameNetworking.setAccountIdIfUnset(accountId)
+    }
 
     // Onboarding-session secret (`onb_sess_…`) minted locally when the host did not supply a
     // config.clientSecret. Retained so endpoints that carry client_secret in the body (e.g. IDV) can
@@ -246,7 +271,16 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(accountId = accountId)
         val (session, error) = OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey(request)
         if (error != null) reportUserError(userMessageForNetworkError(error))
-        val clientSecret = session?.clientSecret ?: return
+        val clientSecret = session?.clientSecret ?: run {
+            if (error != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_SESSION_START_FAILED,
+                    AccountEventScreen.ONBOARDING,
+                    detail = "$error"
+                )
+            }
+            return
+        }
         mintedOnboardingSessionSecret = clientSecret
         mintedOnboardingSessionAccountId = accountId
         FrameNetworking.beginOnboardingSession(clientSecret)
@@ -362,7 +396,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         get() {
             val m = _dobMonth.value; val d = _dobDay.value; val y = _dobYear.value
             // Pad single-digit month/day so a user typing "5" for May still produces a
-            // well-formed `YYYY-MM-DD` ISO string for the backend. `OnboardingValidators`
+            // well-formed `YYYY-MM-DD` ISO string for the backend. `Validators`
             // is responsible for rejecting out-of-range values before this is read.
             return if (y.length == 4 && m.isNotEmpty() && d.isNotEmpty()) {
                 "$y-${m.padStart(2, '0')}-${d.padStart(2, '0')}"
@@ -410,10 +444,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     /** Validate the phone-auth screen. Errors in the [OnboardingFieldGroup.PHONE_AUTH] group only. */
     fun validateAllPhoneAuth(): Boolean {
         val errors = mutableMapOf<OnboardingField, String>()
-        OnboardingValidators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
+        Validators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
             ?.let { errors[OnboardingField.AUTH_PHONE] = it }
+        // Matches iOS, which also reads the live list here: this runs on the phone-auth step,
+        // before any capability can have been granted and drained.
         if (_requiredCapabilities.value.contains(Capabilities.KYC_PREFILL)) {
-            OnboardingValidators.validateDateOfBirth(
+            Validators.validateDateOfBirth(
                 year = _dobYear.value,
                 month = _dobMonth.value,
                 day = _dobDay.value
@@ -424,16 +460,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             }
         }
         return applyValidation(OnboardingFieldGroup.PHONE_AUTH, errors)
-    }
-
-    /** Validate the documents-upload screen. Errors in the [OnboardingFieldGroup.DOCS] group only. */
-    fun validateAllDocs(): Boolean {
-        val errors = mutableMapOf<OnboardingField, String>()
-        val data = _onboardingData.value
-        if (data.frontPhotoUri == null) errors[OnboardingField.DOC_FRONT] = "Front of ID is required"
-        if (data.backPhotoUri == null) errors[OnboardingField.DOC_BACK] = "Back of ID is required"
-        if (data.selfieUri == null) errors[OnboardingField.DOC_SELFIE] = "Selfie is required"
-        return applyValidation(OnboardingFieldGroup.DOCS, errors)
     }
 
     // endregion
@@ -515,12 +541,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         beginOnboardingSessionIfNeeded()
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
         account?.id?.let { aid ->
-            _resolvedAccountId.value = aid
+            setResolvedAccountId(aid)
             _onboardingData.update { it.copy(resolvedAccountId = aid) }
         }
         existingAccountHasTOS = account?.termsOfService?.acceptedAt != null
-        val individual = account?.profile?.individual ?: return
-        refreshAccountProfileIntoOnboarding(accountId)
+        if (account?.profile?.individual == null) return
+        applyAccountProfileToOnboarding(accountId, account)
         if (!updateCapabilities) return
         val caps = account.capabilities ?: return
         val requiredNames = requiredCapabilityApiStrings().toSet()
@@ -549,17 +575,55 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun moveNext() {
         val i = orderedSteps.indexOf(navigationState.currentStep)
         if (i < 0 || i >= orderedSteps.size - 1) {
-            _result.value = OnboardingResult.Completed(
-                paymentMethodId = _onboardingData.value.selectedPaymentMethodId
-            )
+            viewModelScope.launch { finishOnboarding() }
         } else {
             navigationState.goTo(orderedSteps[i + 1])
+        }
+    }
+
+    /**
+     * Resolves the applicant's real outcome from a fresh account fetch.
+     *
+     * Deliberately not routed through [checkExistingAccount]: that returns early when the
+     * server withholds `profile` (it is PII-gated, so a publishable-key host never sees it)
+     * and again when capabilities aren't yet a superset, either of which would leave
+     * capabilities unread and make a passing run resolve as unverified. Capabilities are not
+     * PII-gated, so reading them directly always works. Mirrors iOS `resolveFinalOutcome()`.
+     */
+    private suspend fun resolveFinalOutcome(): OnboardingOutcome {
+        val accountId = _resolvedAccountId.value ?: return OnboardingOutcome.PendingReview
+        val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
+        val capabilities = account?.capabilities ?: return OnboardingOutcome.PendingReview
+        return OnboardingOutcome.resolve(capabilities, config.requiredCapabilities.toList())
+    }
+
+    private suspend fun finishOnboarding() {
+        val outcome = resolveFinalOutcome()
+        val paymentMethodId = _onboardingData.value.selectedPaymentMethodId
+        val accountId = _resolvedAccountId.value
+        _result.value = if (outcome.isSuccess) {
+            OnboardingResult.Completed(paymentMethodId = paymentMethodId, accountId = accountId)
+        } else {
+            OnboardingResult.FinishedUnverified(
+                paymentMethodId = paymentMethodId,
+                outcome = outcome,
+                accountId = accountId
+            )
         }
     }
 
     fun moveBack() {
         val i = orderedSteps.indexOf(navigationState.currentStep)
         if (i > 0) navigationState.goTo(orderedSteps[i - 1])
+    }
+
+    /**
+     * Exits the flow before completion. Android has no swipe-to-dismiss equivalent for a
+     * full-screen composable the way iOS's `.sheet` presentation does, so the container's header
+     * exposes an explicit close button that calls this instead.
+     */
+    fun cancel() {
+        _result.value = OnboardingResult.Cancelled
     }
 
     // endregion
@@ -598,15 +662,44 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         _dobDay.value = m.groupValues[3].padStart(2, '0').takeLast(2)
     }
 
+    /**
+     * Fetches [accountId] with a session bound first (so `profile` isn't PII-gated) and applies
+     * it to onboarding state via [applyAccountProfileToOnboarding].
+     *
+     * `profile` is PII-gated: the server withholds it unless the request carries a secret key or
+     * a matching onboarding session. Without a session bound first, a publishable-key host reads
+     * back a profile-less account and silently prefills nothing — which is what stopped Prove's
+     * KYC-prefill data reaching the form.
+     */
     private suspend fun refreshAccountProfileIntoOnboarding(accountId: String) {
+        beginOnboardingSessionIfNeeded()
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
+        applyAccountProfileToOnboarding(accountId, account)
+    }
+
+    /**
+     * Applies an already-fetched [account]'s profile to onboarding state. Split out of
+     * [refreshAccountProfileIntoOnboarding] so [checkExistingAccount] can reuse the account it
+     * already fetched instead of fetching it a second time, matching iOS's single-fetch shape.
+     */
+    private fun applyAccountProfileToOnboarding(accountId: String, account: AccountObjects.Account?) {
         val individual = account?.profile?.individual
         if (individual == null) {
+            if (FrameNetworking.debugMode) {
+                Log.w(
+                    "FrameSDK",
+                    "Account $accountId returned no profile, so there is nothing to prefill. The " +
+                        "profile is PII-gated — check that an onboarding session is active for this account."
+                )
+            }
             _onboardingData.update { it.copy(resolvedAccountId = account?.id ?: accountId) }
             return
         }
         val addr = individual.address
-        val phoneDigits = individual.phoneNumber?.filter(Char::isDigit)?.takeLast(10)
+        // The server returns a structured `phone` object; `phoneNumber` is a legacy flat fallback
+        // for responses that predate it.
+        val rawPhone = individual.phone?.number ?: individual.phoneNumber
+        val phoneDigits = rawPhone?.filter(Char::isDigit)?.takeLast(10)
         if (!phoneDigits.isNullOrEmpty()) {
             _phoneNumber.value = phoneDigits
         }
@@ -648,6 +741,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun submitPhoneAuth(requiresDateOfBirth: Boolean) {
         if (!beginAction()) return
+        AccountEventEmitter.emit(
+            AccountEventName.PHONE_VERIFICATION_STARTED,
+            AccountEventScreen.PHONE_VERIFICATION
+        )
         viewModelScope.launch {
             try {
                 val acctId = _resolvedAccountId.value ?: run {
@@ -671,7 +768,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                         reportUserError(userMessageForNetworkError(err))
                         null
                     } else {
-                        _resolvedAccountId.value = id
+                        setResolvedAccountId(id)
                         _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = id)
                         beginOnboardingSessionIfNeeded()
                         id
@@ -683,13 +780,29 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     phoneNumber = phoneNumberForVerification,
                     dateOfBirth = dateOfBirth
                 )
+                if (verifyErr != null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PHONE_CODE_SEND_FAILED,
+                        AccountEventScreen.PHONE_VERIFICATION,
+                        detail = "$verifyErr"
+                    )
+                }
                 _pendingVerificationId.value = result?.id
                 _pendingProveAuthToken.value = result?.proveAuthToken
                 proveAuthLaunchStarted = false
                 if (result?.id != null) {
                     _verifyPhoneUi.value = if (result.proveAuthToken != null) {
+                        AccountEventEmitter.emit(
+                            AccountEventName.SILENT_PHONE_AUTH_STARTED,
+                            AccountEventScreen.PHONE_VERIFICATION,
+                            detail = AccountEventDetail.PROVE_PROVIDER
+                        )
                         VerifyPhoneUi.LoadingProve
                     } else {
+                        AccountEventEmitter.emit(
+                            AccountEventName.PHONE_CODE_SENT,
+                            AccountEventScreen.PHONE_VERIFICATION
+                        )
                         VerifyPhoneUi.OtpFrameApi
                     }
                     _verifyIdSubStep.value = VerifyIdSubStep.VerifyPhone
@@ -712,7 +825,19 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     phoneNumber = phoneNumberForVerification,
                     dateOfBirth = dateOfBirth
                 )
-                if (err != null) reportUserError(userMessageForNetworkError(err))
+                if (err != null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PHONE_CODE_SEND_FAILED,
+                        AccountEventScreen.PHONE_VERIFICATION,
+                        detail = "$err"
+                    )
+                    reportUserError(userMessageForNetworkError(err))
+                } else {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PHONE_CODE_SENT,
+                        AccountEventScreen.PHONE_VERIFICATION
+                    )
+                }
             } finally {
                 endAction()
             }
@@ -765,13 +890,29 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             try {
                 val success = service.authenticateWith(authToken)
                 if (success) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.SILENT_PHONE_AUTH_COMPLETED,
+                        AccountEventScreen.PHONE_VERIFICATION,
+                        detail = AccountEventDetail.PROVE_PROVIDER
+                    )
                     _pendingVerificationId.value = null
                     _pendingProveAuthToken.value = null
                     finalizePhoneVerificationAndShowPersonalInfo(acctId)
+                } else {
+                    AccountEventEmitter.emit(
+                        AccountEventName.SILENT_PHONE_AUTH_FAILED,
+                        AccountEventScreen.PHONE_VERIFICATION,
+                        detail = AccountEventDetail.PROVE_PROVIDER
+                    )
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (err: Exception) {
+                AccountEventEmitter.emit(
+                    AccountEventName.SILENT_PHONE_AUTH_FALLBACK,
+                    AccountEventScreen.PHONE_VERIFICATION,
+                    detail = "$err"
+                )
                 synchronized(proveOtpLock) {
                     proveOtpDeferred?.cancel(CancellationException("Prove auth failed"))
                     proveOtpDeferred = null
@@ -798,10 +939,18 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 val verificationId = _pendingVerificationId.value ?: return@launch
                 val (_, err) = PhoneOTPVerificationAPI.confirmVerification(acctId, verificationId, code)
                 if (err == null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PHONE_VERIFIED,
+                        AccountEventScreen.PHONE_VERIFICATION
+                    )
                     _pendingVerificationId.value = null
                     _pendingProveAuthToken.value = null
                     finalizePhoneVerificationAndShowPersonalInfo(acctId)
                 } else {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PHONE_CODE_INCORRECT,
+                        AccountEventScreen.PHONE_VERIFICATION
+                    )
                     reportUserError(userMessageForNetworkError(err))
                 }
             } finally {
@@ -812,6 +961,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun goBackFromVerifyPhone() {
         synchronized(proveOtpLock) {
+            if (proveOtpDeferred != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.PHONE_CODE_ENTRY_CANCELLED,
+                    AccountEventScreen.PHONE_VERIFICATION
+                )
+            }
             proveOtpDeferred?.cancel(CancellationException("user navigated back"))
             proveOtpDeferred = null
         }
@@ -854,9 +1009,18 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 )
             )
             if (err != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.PROFILE_UPDATE_FAILED,
+                    AccountEventScreen.PERSONAL_INFORMATION,
+                    detail = "$err"
+                )
                 reportUserError(userMessageForNetworkError(err))
                 null
             } else {
+                AccountEventEmitter.emit(
+                    AccountEventName.PROFILE_UPDATED,
+                    AccountEventScreen.PERSONAL_INFORMATION
+                )
                 existing
             }
         } ?: run {
@@ -884,10 +1048,19 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             val (account, err) = AccountsAPI.createAccount(accountRequest)
             val newId = account?.id
             if (newId == null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.PROFILE_UPDATE_FAILED,
+                    AccountEventScreen.PERSONAL_INFORMATION,
+                    detail = "$err"
+                )
                 reportUserError(userMessageForNetworkError(err))
                 null
             } else {
-                _resolvedAccountId.value = newId
+                AccountEventEmitter.emit(
+                    AccountEventName.PROFILE_UPDATED,
+                    AccountEventScreen.PERSONAL_INFORMATION
+                )
+                setResolvedAccountId(newId)
                 _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = newId)
                 beginOnboardingSessionIfNeeded()
                 newId
@@ -1009,6 +1182,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             // outcome (not verified / error / null) falls through to the normal Persona flow.
             val (existing, existingErr) = IdvAPI.completeInquiry(clientSecret, inquiryId)
             if (existingErr == null && existing?.verified == true) {
+                AccountEventEmitter.emit(
+                    AccountEventName.STEP_UP_ALREADY_VERIFIED,
+                    AccountEventScreen.IDENTITY_VERIFICATION,
+                    detail = AccountEventDetail.STEP_UP_ALREADY_VERIFIED_SHORT_CIRCUIT
+                )
                 _onboardingData.update {
                     it.copy(
                         identityVerifiedViaGovId = true,
@@ -1069,6 +1247,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             reportUserError("Verification is unavailable for this session.")
             return
         }
+        AccountEventEmitter.emit(
+            AccountEventName.STEP_UP_STARTED,
+            AccountEventScreen.IDENTITY_VERIFICATION,
+            detail = AccountEventDetail.PERSONA_PROVIDER
+        )
         viewModelScope.launch {
             try {
                 val outcome = personaService.awaitResult(inquiryId, launcher)
@@ -1077,6 +1260,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                         // Server response — not the Persona callback — decides verification.
                         val (complete, err) = IdvAPI.completeInquiry(clientSecret, outcome.inquiryId)
                         if (complete?.verified == true) {
+                            AccountEventEmitter.emit(
+                                AccountEventName.STEP_UP_COMPLETED,
+                                AccountEventScreen.IDENTITY_VERIFICATION
+                            )
                             _onboardingData.update {
                                 it.copy(
                                     identityVerifiedViaGovId = true,
@@ -1084,19 +1271,40 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                                 )
                             }
                         } else if (err != null && !err.isTransport) {
+                            AccountEventEmitter.emit(
+                                AccountEventName.STEP_UP_UNAVAILABLE,
+                                AccountEventScreen.IDENTITY_VERIFICATION,
+                                detail = "${AccountEventDetail.STEP_UP_CATEGORY_TRANSIENT_PROVIDER_ERROR} — $err"
+                            )
                             reportUserError(userMessageForNetworkError(err))
                         } else {
                             // Pending (JSON variant not live yet / transient) — leave unverified.
                             // Names the SSN fallback like Frame-iOS does; "try again" alone is a
                             // dead end for an applicant who has no SSN to fall back on.
+                            AccountEventEmitter.emit(
+                                AccountEventName.STEP_UP_FAILED,
+                                AccountEventScreen.IDENTITY_VERIFICATION,
+                                detail = "generic bucket — not verified, no category returned"
+                            )
                             reportUserError(
                                 "We couldn't verify your identity. Please try again or enter your Social Security Number."
                             )
                         }
                     }
-                    is PersonaVerificationResult.Cancelled -> Unit
-                    is PersonaVerificationResult.Failure ->
+                    is PersonaVerificationResult.Cancelled ->
+                        AccountEventEmitter.emit(
+                            AccountEventName.STEP_UP_CANCELLED,
+                            AccountEventScreen.IDENTITY_VERIFICATION,
+                            detail = AccountEventDetail.STEP_UP_CANCELLED_BY_USER
+                        )
+                    is PersonaVerificationResult.Failure -> {
+                        AccountEventEmitter.emit(
+                            AccountEventName.STEP_UP_FAILED,
+                            AccountEventScreen.IDENTITY_VERIFICATION,
+                            detail = AccountEventDetail.PERSONA_PROVIDER
+                        )
                         reportUserError(outcome.message ?: "Identity verification failed. Please try again.")
+                    }
                 }
             } finally {
                 _isVerifyingGovId.value = false
@@ -1146,10 +1354,19 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             val (account, err) = AccountsAPI.createAccount(accountRequest)
             val id = account?.id
             if (id != null) {
-                _resolvedAccountId.value = id
+                AccountEventEmitter.emit(
+                    AccountEventName.PROFILE_UPDATED,
+                    AccountEventScreen.PERSONAL_INFORMATION
+                )
+                setResolvedAccountId(id)
                 _onboardingData.update { o -> o.copy(resolvedAccountId = id) }
                 beginOnboardingSessionIfNeeded()
             } else {
+                AccountEventEmitter.emit(
+                    AccountEventName.PROFILE_UPDATE_FAILED,
+                    AccountEventScreen.PERSONAL_INFORMATION,
+                    detail = "$err"
+                )
                 reportUserError(userMessageForNetworkError(err))
             }
             } finally {
@@ -1193,7 +1410,19 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                         profile = AccountRequests.UpdateAccountProfile(individual = updateIndividual)
                     )
                 )
-                if (updateErr != null) reportUserError(userMessageForNetworkError(updateErr))
+                if (updateErr != null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PROFILE_UPDATE_FAILED,
+                        AccountEventScreen.PERSONAL_INFORMATION,
+                        detail = "$updateErr"
+                    )
+                    reportUserError(userMessageForNetworkError(updateErr))
+                } else {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PROFILE_UPDATED,
+                        AccountEventScreen.PERSONAL_INFORMATION
+                    )
+                }
             } finally {
                 endAction()
             }
@@ -1294,6 +1523,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 val (paymentMethod, pmErr) = PaymentMethodsAPI.createCardPaymentMethod(pmRequest, encryptData = encryptPayload)
                 val paymentMethodId = paymentMethod?.id
                 if (paymentMethod != null && paymentMethodId != null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PAYMENT_METHOD_ADDED,
+                        AccountEventScreen.PAYMENT_METHOD
+                    )
                     _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = paymentMethodId)
                     _savedPaymentMethods.value += PaymentMethodSummary(
                                         id = paymentMethodId,
@@ -1307,13 +1540,28 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                             PaymentMethodRequests.UpdatePaymentMethodRequest(billing = billingAddress)
                         )
                         if (billingErr != null) {
+                            AccountEventEmitter.emit(
+                                AccountEventName.BILLING_ADDRESS_UPDATE_FAILED,
+                                AccountEventScreen.PAYMENT_METHOD,
+                                detail = "$billingErr"
+                            )
                             reportUserError(userMessageForNetworkError(billingErr))
                             return@launch
                         }
+                        AccountEventEmitter.emit(
+                            AccountEventName.BILLING_ADDRESS_UPDATED,
+                            AccountEventScreen.PAYMENT_METHOD,
+                            detail = AccountEventDetail.BILLING_ADDRESS_ONLY_VERIFICATION_PATH
+                        )
                     }
                     clearAccountDetails()
                     moveNext()
                 } else {
+                    AccountEventEmitter.emit(
+                        AccountEventName.PAYMENT_METHOD_ADD_FAILED,
+                        AccountEventScreen.PAYMENT_METHOD,
+                        detail = "$pmErr"
+                    )
                     reportUserError(userMessageForNetworkError(pmErr))
                 }
             } finally {
@@ -1353,6 +1601,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             val (payoutMethod, achErr) = PaymentMethodsAPI.createACHPaymentMethod(achRequest)
             val payoutMethodId = payoutMethod?.id
             if (payoutMethod != null && payoutMethodId != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.PAYOUT_METHOD_ADDED,
+                    AccountEventScreen.PAYOUT_METHOD,
+                    detail = AccountEventDetail.PAYOUT_METHOD_MANUAL_ACH_PATH
+                )
                 _onboardingData.value = _onboardingData.value.copy(selectedPayoutMethodId = payoutMethodId)
                 _savedPayoutMethods.value += PaymentMethodSummary(
                                     id = payoutMethodId,
@@ -1363,6 +1616,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 clearAccountDetails()
                 moveNext()
             } else {
+                AccountEventEmitter.emit(
+                    AccountEventName.PAYOUT_METHOD_ADD_FAILED,
+                    AccountEventScreen.PAYOUT_METHOD,
+                    detail = "$achErr"
+                )
                 reportUserError(userMessageForNetworkError(achErr))
             }
             } finally {
@@ -1376,6 +1634,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun onPlaidDismissed() {
+        AccountEventEmitter.emit(
+            AccountEventName.BANK_LINK_CANCELLED,
+            AccountEventScreen.PAYOUT_METHOD,
+            detail = AccountEventDetail.PLAID_USER_DISMISSED
+        )
         _isPerformingAction.value = false
     }
 
@@ -1384,6 +1647,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         if (_plaidLinkToken.value != null) return
         if (_isPerformingAction.value) return
         _isPerformingAction.value = true
+        AccountEventEmitter.emit(
+            AccountEventName.BANK_LINK_STARTED,
+            AccountEventScreen.PAYOUT_METHOD,
+            detail = AccountEventDetail.PLAID_PROVIDER
+        )
         viewModelScope.launch {
             val service = buildPlaidService(accountId)
             service.fetchLinkToken()
@@ -1395,6 +1663,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             } else {
                 _isPerformingAction.value = false
                 val err = (service.result.value as? PlaidLinkResult.Failure)?.error
+                AccountEventEmitter.emit(
+                    AccountEventName.BANK_LINK_FAILED,
+                    AccountEventScreen.PAYOUT_METHOD,
+                    detail = "$err"
+                )
                 reportUserError(userMessageForNetworkError(err))
             }
         }
@@ -1414,6 +1687,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     @Suppress("USELESS_CAST")
                     val payoutMethodId = payoutMethod.id as String?
                     if (ach != null && payoutMethodId != null) {
+                        AccountEventEmitter.emit(
+                            AccountEventName.BANK_LINK_COMPLETED,
+                            AccountEventScreen.PAYOUT_METHOD,
+                            detail = AccountEventDetail.PLAID_PROVIDER
+                        )
                         _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethodId) }
                         _savedPayoutMethods.value += PaymentMethodSummary(
                             id = payoutMethodId,
@@ -1424,10 +1702,22 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                         clearAccountDetails()
                         moveNext()
                     } else {
+                        AccountEventEmitter.emit(
+                            AccountEventName.BANK_LINK_FAILED,
+                            AccountEventScreen.PAYOUT_METHOD,
+                            detail = AccountEventDetail.PLAID_PROVIDER
+                        )
                         reportUserError(userMessageForNetworkError(null))
                     }
                 }
-                is PlaidLinkResult.Failure -> reportUserError(userMessageForNetworkError(outcome.error))
+                is PlaidLinkResult.Failure -> {
+                    AccountEventEmitter.emit(
+                        AccountEventName.BANK_LINK_FAILED,
+                        AccountEventScreen.PAYOUT_METHOD,
+                        detail = "${outcome.error}"
+                    )
+                    reportUserError(userMessageForNetworkError(outcome.error))
+                }
                 else -> {}
             }
         }
@@ -1501,91 +1791,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     // endregion
 
-    // region Document upload
-
-    fun onFrontPhotoSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(frontPhotoUri = uri)
-    }
-
-    fun onBackPhotoSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(backPhotoUri = uri)
-    }
-
-    fun onSelfieSelected(uri: Uri?) {
-        _onboardingData.value = _onboardingData.value.copy(selfieUri = uri)
-    }
-
-    fun uploadIdentificationDocuments(context: Context) {
-        if (!beginAction()) return
-        viewModelScope.launch {
-            try {
-                performUploadIdentificationDocuments(context)
-            } finally {
-                endAction()
-            }
-        }
-    }
-
-    fun uploadIdentificationDocumentsThenContinue(context: Context) {
-        if (!beginAction()) return
-        viewModelScope.launch {
-            try {
-                if (performUploadIdentificationDocuments(context)) {
-                    moveNext()
-                }
-            } finally {
-                endAction()
-            }
-        }
-    }
-
-    private suspend fun performUploadIdentificationDocuments(context: Context): Boolean {
-        val identityId = effectiveCustomerIdentityId() ?: run {
-            reportUserError("Your profile isn't ready for document upload. Please try again.")
-            return false
-        }
-        val data = _onboardingData.value
-        val frontUri = data.frontPhotoUri ?: return false
-        val backUri = data.backPhotoUri ?: return false
-        val selfieUri = data.selfieUri ?: return false
-
-        fun uriToBitmap(uri: Uri): android.graphics.Bitmap? = try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                android.graphics.ImageDecoder.decodeBitmap(
-                    android.graphics.ImageDecoder.createSource(context.contentResolver, uri)
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                android.provider.MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-            }
-        } catch (e: Exception) { null }
-
-        val frontBitmap = uriToBitmap(frontUri)
-        val backBitmap = uriToBitmap(backUri)
-        val selfieBitmap = uriToBitmap(selfieUri)
-        if (frontBitmap == null || backBitmap == null || selfieBitmap == null) {
-            reportUserError("Couldn't read one or more photos. Please try again.")
-            return false
-        }
-
-        val uploads = listOf(
-            FileUpload(frontBitmap, FileUploadFieldName.FRONT),
-            FileUpload(backBitmap, FileUploadFieldName.BACK),
-            FileUpload(selfieBitmap, FileUploadFieldName.SELFIE)
-        )
-        frontBitmap.recycle()
-        backBitmap.recycle()
-        selfieBitmap.recycle()
-
-        val (updated, err) = CustomerIdentityAPI.uploadIdentityDocuments(identityId, uploads)
-        if (updated != null) {
-            _customerIdentity.value = updated
-            return true
-        }
-        reportUserError(userMessageForNetworkError(err))
-        return false
-    }
-
     fun submitCustomerIdentityForVerification() {
         if (!beginAction()) return
         viewModelScope.launch {
@@ -1599,7 +1804,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
     }
 
-    /// Append a wallet-created payment method (Google Pay) to the in-memory list and select it.
+    /// Append a wallet-created payment method (Google Pay) to the in-memory list, select it, and
+    /// advance — mirrors submitNewPaymentMethod()'s own explicit moveNext() after a successful
+    /// add, rather than leaving the caller to call onBack()/onContinue() itself. In the onboarding
+    /// step router that is what actually advances past this screen; in the standalone
+    /// FrameAddPaymentMethodView it is a no-op result nothing reads, since that host instead
+    /// reacts to onboardingData.selectedPaymentMethodId, set synchronously below.
     /// Used by `AddPaymentMethodScreen` after a successful `FrameGooglePayButton` AddToOwner flow.
     fun appendNewlyAddedPaymentMethod(paymentMethod: FrameObjects.PaymentMethod) {
         val paymentMethodId = paymentMethod.id ?: return
@@ -1611,13 +1821,21 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             exp = "${paymentMethod.card?.expirationMonth ?: ""}/${paymentMethod.card?.expirationYear?.takeLast(2) ?: ""}"
         )
         clearAccountDetails()
+        moveNext()
     }
 
     // endregion
 
     fun generateTermsOfServiceToken() {
         viewModelScope.launch {
-            val (r, _) = TermsOfServiceAPI.createToken()
+            val (r, err) = TermsOfServiceAPI.createToken()
+            if (err != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.TERMS_OF_SERVICE_TOKEN_FAILED,
+                    AccountEventScreen.TERMS_OF_SERVICE,
+                    detail = "$err"
+                )
+            }
             _termsOfServiceToken.value = r?.token
         }
     }
@@ -1675,17 +1893,19 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun checkIfCustomerCanContinueWithPayoutMethod(): Boolean =
         isPayoutMethodFormComplete(_bankAccountDraft.value, _createdBillingAddress.value)
 
-    fun checkIfCustomerCanContinueWithDocs(): Boolean {
-        val d = _onboardingData.value
-        return d.frontPhotoUri != null && d.backPhotoUri != null && d.selfieUri != null
-    }
-
     @Suppress("unused")
     fun createNewBusinessAccount() {}
 
     private fun loadPaymentMethods(accountId: String) {
         viewModelScope.launch {
-            val (list, _) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+            val (list, err) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+            if (err != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
+                    AccountEventScreen.PAYMENT_METHOD,
+                    detail = "$err"
+                )
+            }
             _savedPaymentMethods.value = list
                 ?.mapNotNull { pm ->
                     val pmId = pm.id ?: return@mapNotNull null

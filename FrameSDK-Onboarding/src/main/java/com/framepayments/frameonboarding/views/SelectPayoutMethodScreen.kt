@@ -27,6 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -34,8 +35,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
-import com.framepayments.frameonboarding.reusable.ContinueButton
-import com.framepayments.frameonboarding.reusable.cardBrandIcon
+import com.framepayments.framesdk.accountevents.AccountEventDetail
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
+import com.framepayments.framesdk_ui.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.framepayments.framesdk_ui.theme.FrameTheme
@@ -52,6 +57,13 @@ internal fun SelectPayoutMethodScreen(
     onContinue: () -> Unit
 ) {
     val canContinue = selectedId != null
+
+    LaunchedEffect(Unit) {
+        AccountEventEmitter.emit(
+            AccountEventName.PAYOUT_METHOD_STEP_STARTED,
+            AccountEventScreen.PAYOUT_METHOD
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -90,7 +102,13 @@ internal fun SelectPayoutMethodScreen(
                         SavedPayoutMethodRow(
                             pm = pm,
                             selected = selectedId == pm.id,
-                            onClick = { onSelect(pm.id) }
+                            onClick = {
+                                onSelect(pm.id)
+                                AccountEventEmitter.emit(
+                                    AccountEventName.SAVED_PAYOUT_METHOD_SELECTED,
+                                    AccountEventScreen.PAYOUT_METHOD
+                                )
+                            }
                         )
                         Spacer(Modifier.height(8.dp))
                     }
@@ -102,7 +120,14 @@ internal fun SelectPayoutMethodScreen(
                 AddPayoutMethodRow(
                     title = "Bank Account (ACH)",
                     subtitle = "Add Bank Account",
-                    onClick = onAddPayout
+                    onClick = {
+                        AccountEventEmitter.emit(
+                            AccountEventName.ADD_PAYOUT_METHOD_STARTED,
+                            AccountEventScreen.PAYOUT_METHOD,
+                            detail = AccountEventDetail.PAYOUT_METHOD_ADD_STARTED_MANUAL_OR_PLAID
+                        )
+                        onAddPayout()
+                    }
                 )
             }
 

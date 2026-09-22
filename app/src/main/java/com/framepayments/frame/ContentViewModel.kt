@@ -4,7 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
+import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.accounts.AccountRequests
 import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
@@ -46,8 +50,12 @@ sealed class OnboardingMintState {
     /** A mint is in flight; show a spinner. */
     object Loading : OnboardingMintState()
 
-    /** A token was minted; [clientSecret] is the `onb_sess_…` to launch the flow with. */
-    data class Ready(val clientSecret: String) : OnboardingMintState()
+    /**
+     * A token was minted; [clientSecret] is the `onb_sess_…` to launch the flow with, scoped to
+     * [accountId]. Onboarding must be launched with this same [accountId], or it creates a new
+     * account the session was never scoped to and every request after that gets PII-gated.
+     */
+    data class Ready(val clientSecret: String, val accountId: String) : OnboardingMintState()
 
     /** Minting failed; [message] explains why so the UI can offer a retry. */
     data class Error(val message: String) : OnboardingMintState()
@@ -71,6 +79,23 @@ class ContentViewModel : ViewModel() {
      */
     private val _onboardingMintState = MutableStateFlow<OnboardingMintState>(OnboardingMintState.Idle)
     val onboardingMintState: StateFlow<OnboardingMintState> = _onboardingMintState.asStateFlow()
+
+    /**
+     * The account every demo entry point acts on, mirroring the iOS example app's single
+     * `viewModel.accountId`: onboarding, the standalone entry-point demos (add payment method,
+     * add payout method, select payout method), Plaid, and Google Pay all read and write this
+     * one value instead of each resolving their own account independently.
+     *
+     * Seeded from [FrameNetworking.accountId] — the accountId passed to
+     * `initializeWithAPIKey`, if the host configured one — and otherwise starts blank, in which
+     * case onboarding a new applicant fills it in.
+     */
+    private val _accountId = MutableStateFlow(FrameNetworking.accountId.orEmpty())
+    val accountId: StateFlow<String> = _accountId.asStateFlow()
+
+    fun setAccountId(accountId: String) {
+        _accountId.value = accountId
+    }
 
     init {
         viewModelScope.launch {
@@ -109,8 +134,10 @@ class ContentViewModel : ViewModel() {
     }
 
     /**
-     * Demo/testing only: mints an onboarding-session token (`onb_sess_…`) for the first available
-     * account so the example app can exercise the onboarding flow end-to-end.
+     * Demo/testing only: mints an onboarding-session token (`onb_sess_…`) so the example app can
+     * exercise the onboarding flow end-to-end. Mirrors the iOS example app: a valid [accountId]
+     * resumes that account, otherwise (blank, or not a real account) a new individual account is
+     * created first — never a random pre-existing one.
      *
      * This is **not** the production path. Creating an onboarding session is a server-only operation
      * that requires your secret key (`sk_`). Production integrations mint the token from their
@@ -118,20 +145,21 @@ class ContentViewModel : ViewModel() {
      * example app does it inline only because it is configured with an `sk_`.
      */
     @Suppress("DEPRECATION")
-    fun mintOnboardingClientSecret() {
+    fun mintOnboardingClientSecret(accountIdInput: String?) {
         _onboardingMintState.value = OnboardingMintState.Loading
         viewModelScope.launch {
-            val (accountsResponse, accountsError) = AccountsAPI.getAccounts(perPage = 1, page = 1)
-            val accountId = accountsResponse?.data?.firstOrNull()?.id
-            if (accountId == null) {
-                _onboardingMintState.value = OnboardingMintState.Error(
-                    accountsError?.let { "Couldn't load an account to onboard: $it" }
-                        ?: "No accounts available to onboard. Create an account first."
-                )
-                return@launch
+            val resolvedAccountId = accountIdInput?.takeIf { it.isNotBlank() } ?: run {
+                val (account, err) = createEmptyIndividualAccount()
+                account?.id ?: run {
+                    _onboardingMintState.value = OnboardingMintState.Error(
+                        err?.let { "Couldn't create an account to onboard: $it" }
+                            ?: "Account creation did not return an account id."
+                    )
+                    return@launch
+                }
             }
             val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(
-                accountId = accountId,
+                accountId = resolvedAccountId,
                 steps = listOf(
                     OnboardingSessionRequests.OnboardingSessionStep.ID_VERIFICATION,
                     OnboardingSessionRequests.OnboardingSessionStep.GEO_COMPLIANCE,
@@ -141,7 +169,8 @@ class ContentViewModel : ViewModel() {
             val (session, sessionError) = OnboardingSessionsAPI.createOnboardingSession(request)
             val clientSecret = session?.clientSecret
             _onboardingMintState.value = if (clientSecret != null) {
-                OnboardingMintState.Ready(clientSecret)
+                _accountId.value = resolvedAccountId
+                OnboardingMintState.Ready(clientSecret, resolvedAccountId)
             } else {
                 OnboardingMintState.Error(
                     sessionError?.let { "Couldn't mint an onboarding session: $it" }
@@ -151,6 +180,17 @@ class ContentViewModel : ViewModel() {
         }
     }
 
+    /** Creates a blank individual account for the onboarding demo to fill in from scratch. */
+    private suspend fun createEmptyIndividualAccount(): Pair<AccountObjects.Account?, NetworkingError?> {
+        val request = AccountRequests.CreateAccountRequest(
+            type = AccountObjects.AccountType.INDIVIDUAL,
+            profile = AccountRequests.CreateAccountProfile(
+                individual = AccountRequests.CreateIndividualAccount(email = "newaccount@example.com")
+            )
+        )
+        return AccountsAPI.createAccount(request)
+    }
+
     /** Resets the mint flow to [OnboardingMintState.Idle] so the next launch mints a fresh token. */
     fun clearOnboardingClientSecret() {
         _onboardingMintState.value = OnboardingMintState.Idle
@@ -158,17 +198,14 @@ class ContentViewModel : ViewModel() {
 
     fun startPlaidLink() {
         if (_plaidService.value?.isConnecting?.value == true) return
+        val accountId = _accountId.value.takeIf { it.isNotBlank() } ?: run {
+            _plaidMessage.value = PlaidMessage(
+                title = "Plaid",
+                body = "No account set. Onboard or enter an account ID first."
+            )
+            return
+        }
         viewModelScope.launch {
-            val (accountsResponse, accountsErr) = AccountsAPI.getAccounts(perPage = 1, page = 1)
-            val account = accountsResponse?.data?.firstOrNull()
-            val accountId = account?.id
-            if (account == null || accountId == null) {
-                _plaidMessage.value = PlaidMessage(
-                    title = "Plaid",
-                    body = "No accounts found (${accountsErr ?: "empty list"})"
-                )
-                return@launch
-            }
             val service = PlaidLinkService(accountId)
             _plaidService.value = service
             service.fetchLinkToken()

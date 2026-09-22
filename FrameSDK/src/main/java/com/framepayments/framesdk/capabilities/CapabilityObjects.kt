@@ -43,9 +43,73 @@ object CapabilityObjects {
         @SerializedName("account_id") val accountId: String?,
         val status: String?,
         @SerializedName("disabled_reason") val disabledReason: String? = null,
+        /** Reason the account is ineligible to hold this capability, if applicable. */
+        @SerializedName("ineligible_reason") val ineligibleReason: String? = null,
+        /** Why this capability has not been granted, derived from the latest concluded identity-verification run. */
+        val errors: List<CapabilityError>? = null,
         @SerializedName("currently_due") val currentlyDue: List<String>? = null,
         val created: String?,
         val updated: String?,
         val disabled: Boolean? = null
     )
+
+    /**
+     * A server-derived conclusion about why a capability has not been granted.
+     *
+     * @property id Identifier for this derived conclusion.
+     * @property object The object type identifier returned by the API.
+     * @property code Frame's provider-neutral failure type, e.g. `identity_mismatch`, `verification_rejected`.
+     * @property message Display-ready explanation, preferred over client-side copy.
+     * @property requirementId The requirement this conclusion is attached to, if any.
+     */
+    data class CapabilityError(
+        val id: String?,
+        val `object`: String? = null,
+        val code: String? = null,
+        val message: String? = null,
+        @SerializedName("requirement_id") val requirementId: String? = null
+    )
+
+    /** Mapped from the wire string; an unrecognized value degrades to [UNKNOWN]. */
+    enum class CapabilityStatus {
+        /** Never requested for this account. */
+        UNREQUESTED,
+        /** Requested, but its requirements are not yet satisfied. */
+        PENDING,
+        /** Granted and in effect. */
+        ACTIVE,
+        /** Held but switched off. [Capability.disabledReason] says whether that was risk-borne. */
+        DISABLED,
+        /** The account type may not hold this capability. */
+        INELIGIBLE,
+        /** A status this SDK version does not know. */
+        UNKNOWN;
+
+        /** Factory for mapping a wire status string to [CapabilityStatus]. */
+        companion object {
+            /** Maps the wire string to a [CapabilityStatus], degrading anything unrecognized to [UNKNOWN]. */
+            fun from(status: String?): CapabilityStatus = when (status) {
+                "unrequested" -> UNREQUESTED
+                "pending" -> PENDING
+                "active" -> ACTIVE
+                "disabled" -> DISABLED
+                "ineligible" -> INELIGIBLE
+                else -> UNKNOWN
+            }
+        }
+    }
+
+    private const val PRODUCT_GRANT_REVOKED_REASON = "product_grant_revoked"
+
+    /** This capability's [status], degrading an unrecognized value to [CapabilityStatus.UNKNOWN]. */
+    val Capability.capabilityStatus: CapabilityStatus
+        get() = CapabilityStatus.from(status)
+
+    /** Mirrors the server's `Capability#blocks_activation?`. */
+    val Capability.isOutstanding: Boolean
+        get() = when (capabilityStatus) {
+            CapabilityStatus.ACTIVE, CapabilityStatus.UNREQUESTED, CapabilityStatus.INELIGIBLE -> false
+            CapabilityStatus.DISABLED -> disabledReason != PRODUCT_GRANT_REVOKED_REASON
+            CapabilityStatus.PENDING, CapabilityStatus.UNKNOWN -> true
+        }
 }

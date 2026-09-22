@@ -40,6 +40,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
@@ -53,11 +56,22 @@ internal fun VerifyCardScreen(
     digitCount: Int = 6,
     showResendCode: Boolean = false,
     embedInParentScaffold: Boolean = false,
+    /** True only on the Twilio phone-OTP path — the 3DS and Prove-OTP call sites do not emit. */
+    emitsPhoneCodeEntry: Boolean = false,
     onBack: () -> Unit,
     onResendCode: () -> Unit = {},
     onContinue: (String) -> Unit
 ) {
     var code by remember { mutableStateOf("") }
+
+    if (emitsPhoneCodeEntry) {
+        LaunchedEffect(Unit) {
+            AccountEventEmitter.emit(
+                AccountEventName.PHONE_CODE_ENTRY_STARTED,
+                AccountEventScreen.PHONE_VERIFICATION
+            )
+        }
+    }
     val focusRequesters = remember(digitCount) { List(digitCount) { FocusRequester() } }
     val canContinue = code.length == digitCount
     val digitTextStyle = LocalFrameTheme.current.fonts.heading.copy(

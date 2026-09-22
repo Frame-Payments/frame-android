@@ -19,9 +19,12 @@ object ConfigurationAPI {
      */
     suspend fun getEvervaultConfiguration(): ConfigurationResponses.GetEvervaultConfigurationResponse? {
         val endpoint = ConfigurationEndpoints.GetEvervaultConfiguration
-        val (data, _) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
 
-        if (data != null) {
+        // performDataTask still returns the error response body as `data` on a non-2xx status —
+        // every field here is nullable, so Gson happily parses an error envelope into a non-null,
+        // all-null "config" that would otherwise get cached and served as if it were real.
+        if (data != null && error == null) {
             val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetEvervaultConfigurationResponse>(data)
 
             if (dataResponse != null) {
@@ -44,9 +47,9 @@ object ConfigurationAPI {
      */
     suspend fun getFingerprintConfiguration(): ConfigurationResponses.GetFingerprintConfigurationResponse? {
         val endpoint = ConfigurationEndpoints.GetFingerprintConfiguration
-        val (data, _) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
 
-        if (data != null) {
+        if (data != null && error == null) {
             val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetFingerprintConfigurationResponse>(data)
 
             if (dataResponse != null) {
@@ -69,9 +72,9 @@ object ConfigurationAPI {
      */
     suspend fun getSiftConfiguration(): ConfigurationResponses.GetSiftConfigurationResponse? {
         val endpoint = ConfigurationEndpoints.GetSiftConfiguration
-        val (data, _) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
 
-        if (data != null) {
+        if (data != null && error == null) {
             val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetSiftConfigurationResponse>(data)
 
             if (dataResponse != null) {
@@ -84,6 +87,87 @@ object ConfigurationAPI {
             return dataResponse
         }
         return null
+    }
+
+    /**
+     * Fetches Frame's legal document URLs from the API and caches them locally.
+     *
+     * @return The parsed [ConfigurationResponses.GetLegalConfigurationResponse], or `null` if
+     *   the request fails or the response cannot be parsed.
+     */
+    suspend fun getLegalConfiguration(): ConfigurationResponses.GetLegalConfigurationResponse? {
+        val endpoint = ConfigurationEndpoints.GetLegalConfiguration
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+
+        if (data != null && error == null) {
+            val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetLegalConfigurationResponse>(data)
+
+            if (dataResponse != null) {
+                SecureConfigurationStorage.save(
+                    context = FrameNetworking.getContext(),
+                    key = "legal",
+                    value = dataResponse
+                )
+            }
+            return dataResponse
+        }
+        return null
+    }
+
+    /**
+     * Fetches the Mapbox address-autocomplete configuration from the API and caches it locally.
+     *
+     * @return The parsed [ConfigurationResponses.GetMapboxConfigurationResponse], or `null` if
+     *   the request fails or the response cannot be parsed.
+     */
+    suspend fun getMapboxConfiguration(): ConfigurationResponses.GetMapboxConfigurationResponse? {
+        val endpoint = ConfigurationEndpoints.GetMapboxConfiguration
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+
+        if (data != null && error == null) {
+            val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetMapboxConfigurationResponse>(data)
+
+            if (dataResponse != null) {
+                SecureConfigurationStorage.save(
+                    context = FrameNetworking.getContext(),
+                    key = "mapbox",
+                    value = dataResponse
+                )
+            }
+            return dataResponse
+        }
+        return null
+    }
+
+    /**
+     * Fetches every configuration block in one request and caches each present block under the
+     * same storage key its individual endpoint uses, turning those fetches into cache hits. An
+     * omitted block is skipped rather than cleared, so a service that failed server-side keeps
+     * its cache.
+     *
+     * @return The parsed [ConfigurationResponses.GetAllConfigurationResponse], or `null` if the
+     *   request fails or the response cannot be parsed.
+     */
+    suspend fun getAllConfiguration(): ConfigurationResponses.GetAllConfigurationResponse? {
+        val endpoint = ConfigurationEndpoints.GetAllConfiguration
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+        if (error != null) return null
+
+        val dataResponse = data?.let { FrameNetworking.parseResponse<ConfigurationResponses.GetAllConfigurationResponse>(it) }
+            ?: return null
+
+        cache(dataResponse.evervault, "evervault")
+        cache(dataResponse.fingerprint, "fingerprint")
+        cache(dataResponse.legal, "legal")
+        cache(dataResponse.mapbox, "mapbox")
+        cache(dataResponse.sift, "sift")
+
+        return dataResponse
+    }
+
+    private fun cache(block: Any?, key: String) {
+        if (block == null) return
+        SecureConfigurationStorage.save(context = FrameNetworking.getContext(), key = key, value = block)
     }
 
     //MARK: Methods using callbacks
@@ -99,7 +183,7 @@ object ConfigurationAPI {
         val endpoint = ConfigurationEndpoints.GetEvervaultConfiguration
 
         FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
-            if (data != null) {
+            if (data != null && error == null) {
                 val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetEvervaultConfigurationResponse>(data)
 
                 if (dataResponse != null) {
@@ -128,7 +212,7 @@ object ConfigurationAPI {
         val endpoint = ConfigurationEndpoints.GetFingerprintConfiguration
 
         FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
-            if (data != null) {
+            if (data != null && error == null) {
                 val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetFingerprintConfigurationResponse>(data)
 
                 if (dataResponse != null) {
@@ -157,7 +241,7 @@ object ConfigurationAPI {
         val endpoint = ConfigurationEndpoints.GetSiftConfiguration
 
         FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
-            if (data != null) {
+            if (data != null && error == null) {
                 val dataResponse = FrameNetworking.parseResponse<ConfigurationResponses.GetSiftConfigurationResponse>(data)
 
                 if (dataResponse != null) {

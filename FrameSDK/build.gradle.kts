@@ -47,6 +47,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.appcompat)
     implementation(libs.evervault.core)
     implementation(libs.evervault.inputs)
@@ -56,6 +57,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.gson)
     implementation(libs.androidx.security.crypto)
+    implementation(libs.kotlin.reflect)
     implementation("com.fingerprint.android:pro:2.13.1")
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver)
