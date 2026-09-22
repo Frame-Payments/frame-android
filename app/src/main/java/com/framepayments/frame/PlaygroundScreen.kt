@@ -20,7 +20,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -257,7 +256,7 @@ fun PlaygroundScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Onboard an applicant or enter an account ID above first.",
+                        text = "Onboard an applicant first, or pass an accountId to initializeWithAPIKey.",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
                     )
@@ -318,51 +317,12 @@ fun PlaygroundScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // The account every demo below acts on, matching FrameExample-iOS's single shared
-            // viewModel.accountId: blank creates a new applicant on "Show Onboarding Flow", a
-            // typed ID resumes it, and completing onboarding writes the resolved id back here.
-            OutlinedTextField(
-                value = accountId,
-                onValueChange = viewModel::setAccountId,
-                label = { Text("Account ID (blank = new applicant)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            PlaygroundButton(text = "Show Onboarding Flow") {
-                // Demo/testing only: mint an onboarding-session token (onb_sess_…) from the
-                // configured sk_ before launching. In production your backend mints this token and
-                // hands it to the app as the clientSecret — see ContentViewModel. A blank account
-                // ID creates a new applicant; a typed one resumes that account, matching
-                // FrameExample-iOS — never a random pre-existing account.
-                viewModel.mintOnboardingClientSecret(accountId)
-                showOnboarding = true
-            }
-            PlaygroundButton(
-                text = if (isConnectingPlaid) "Connecting to Plaid…" else "Test Plaid Link",
-                enabled = !isConnectingPlaid,
-                onClick = { viewModel.startPlaidLink() }
-            )
-            PlaygroundButton(text = "Checkout") {
-                val intent = Intent(context, CartTestActivity::class.java).apply {
-                    if (accountId.isNotBlank()) putExtra("accountId", accountId)
-                }
-                context.startActivity(intent)
-            }
-            PlaygroundButton(text = "Add Payment Method (standalone)") {
-                pendingStandaloneView = StandaloneView.ADD_PAYMENT_METHOD
-            }
-            PlaygroundButton(text = "Add Payout Method (standalone)") {
-                pendingStandaloneView = StandaloneView.ADD_PAYOUT_METHOD
-            }
-            PlaygroundButton(text = "Select Payout Method (standalone)") {
-                pendingStandaloneView = StandaloneView.SELECT_PAYOUT_METHOD
-            }
             if (accountId.isNotBlank()) {
-                // Matches FrameExample-iOS's Apple Pay button: always visible when an account is
-                // set, visibility of the button itself gated by Google Pay device/config readiness.
-                // Keyed on accountId so configure() (which re-checks device/config readiness over
-                // the network) only re-runs when the account actually changes, not on every
-                // unrelated recomposition of this screen.
+                // Matches FrameExample-iOS's Apple Pay button placement: the wallet button leads,
+                // ahead of the rest of the demo actions. Visibility of the button itself is gated
+                // by Google Pay device/config readiness. Keyed on accountId so configure() (which
+                // re-checks readiness over the network) only re-runs when the account actually
+                // changes, not on every unrelated recomposition of this screen.
                 key(accountId) {
                     AndroidView(
                         factory = { ctx ->
@@ -385,7 +345,38 @@ fun PlaygroundScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
+            }
+            PlaygroundButton(text = "Show Onboarding Flow") {
+                // Demo/testing only: mint an onboarding-session token (onb_sess_…) from the
+                // configured sk_ before launching. In production your backend mints this token and
+                // hands it to the app as the clientSecret — see ContentViewModel. Onboards the
+                // account passed to initializeWithAPIKey when one was configured there; otherwise
+                // creates a new applicant, matching FrameExample-iOS — never a random pre-existing
+                // account.
+                viewModel.mintOnboardingClientSecret(accountId)
+                showOnboarding = true
+            }
+            PlaygroundButton(
+                text = if (isConnectingPlaid) "Connecting to Plaid…" else "Test Plaid Link",
+                enabled = !isConnectingPlaid,
+                onClick = { viewModel.startPlaidLink() }
+            )
+            PlaygroundButton(text = "Checkout") {
+                val intent = Intent(context, CartTestActivity::class.java).apply {
+                    if (accountId.isNotBlank()) putExtra("accountId", accountId)
+                }
+                context.startActivity(intent)
+            }
+            PlaygroundButton(text = "Add Payment Method (standalone)") {
+                pendingStandaloneView = StandaloneView.ADD_PAYMENT_METHOD
+            }
+            PlaygroundButton(text = "Add Payout Method (standalone)") {
+                pendingStandaloneView = StandaloneView.ADD_PAYOUT_METHOD
+            }
+            PlaygroundButton(text = "Select Payout Method (standalone)") {
+                pendingStandaloneView = StandaloneView.SELECT_PAYOUT_METHOD
             }
             PlaygroundButton(
                 text = "View All Customers",

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
+import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountObjects
@@ -81,12 +82,15 @@ class ContentViewModel : ViewModel() {
 
     /**
      * The account every demo entry point acts on, mirroring the iOS example app's single
-     * `viewModel.accountId`: the account-ID field, onboarding, the standalone entry-point demos
-     * (add payment method, add payout method, select payout method), Plaid, and Google Pay all
-     * read and write this one value instead of each resolving their own account independently.
-     * Starts blank; onboarding a new applicant (or typing a valid id) fills it in.
+     * `viewModel.accountId`: onboarding, the standalone entry-point demos (add payment method,
+     * add payout method, select payout method), Plaid, and Google Pay all read and write this
+     * one value instead of each resolving their own account independently.
+     *
+     * Seeded from [FrameNetworking.accountId] — the accountId passed to
+     * `initializeWithAPIKey`, if the host configured one — and otherwise starts blank, in which
+     * case onboarding a new applicant fills it in.
      */
-    private val _accountId = MutableStateFlow("")
+    private val _accountId = MutableStateFlow(FrameNetworking.accountId.orEmpty())
     val accountId: StateFlow<String> = _accountId.asStateFlow()
 
     fun setAccountId(accountId: String) {
