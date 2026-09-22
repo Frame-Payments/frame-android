@@ -177,6 +177,21 @@ object FrameNetworking {
     var accountId: String? = null
         private set
 
+    /**
+     * Publishes an account resolved after [initializeWithAPIKey] — onboarding creates the
+     * account mid-flow, so a host that launched without one would otherwise emit nothing for
+     * the whole run.
+     *
+     * Ignores a blank id, and does not overwrite an account the host already named: within one
+     * app run the events belong to that account, and a flow resolving a different one must not
+     * silently re-point them.
+     */
+    fun setAccountIdIfUnset(accountId: String?) {
+        val resolved = accountId?.takeIf { it.isNotEmpty() } ?: return
+        if (this.accountId != null) return
+        this.accountId = resolved
+    }
+
     /** `true` once Evervault has been successfully configured; `false` until then. */
     var isEvervaultConfigured: Boolean = false
 

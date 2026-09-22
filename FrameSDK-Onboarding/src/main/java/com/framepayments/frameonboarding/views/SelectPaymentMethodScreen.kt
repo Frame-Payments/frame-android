@@ -27,6 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -34,8 +35,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk_ui.reusable.ContinueButton
-import com.framepayments.frameonboarding.reusable.cardBrandIcon
+import com.framepayments.framesdk_ui.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.framepayments.framesdk_ui.theme.FrameTheme
@@ -52,6 +56,13 @@ internal fun SelectPaymentMethodScreen(
     onContinue: () -> Unit
 ) {
     val canContinue = selectedId != null
+
+    LaunchedEffect(Unit) {
+        AccountEventEmitter.emit(
+            AccountEventName.PAYMENT_METHOD_STEP_STARTED,
+            AccountEventScreen.PAYMENT_METHOD
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -90,7 +101,13 @@ internal fun SelectPaymentMethodScreen(
                         SavedPaymentMethodRow(
                             pm = pm,
                             selected = selectedId == pm.id,
-                            onClick = { onSelect(pm.id) }
+                            onClick = {
+                                onSelect(pm.id)
+                                AccountEventEmitter.emit(
+                                    AccountEventName.SAVED_PAYMENT_METHOD_SELECTED,
+                                    AccountEventScreen.PAYMENT_METHOD
+                                )
+                            }
                         )
                         Spacer(Modifier.height(8.dp))
                     }
@@ -102,7 +119,13 @@ internal fun SelectPaymentMethodScreen(
                 AddPaymentMethodRow(
                     title = "Debit/Credit Card",
                     subtitle = "Add New Payment Method",
-                    onClick = onAddCard
+                    onClick = {
+                        AccountEventEmitter.emit(
+                            AccountEventName.ADD_PAYMENT_METHOD_STARTED,
+                            AccountEventScreen.PAYMENT_METHOD
+                        )
+                        onAddCard()
+                    }
                 )
             }
 

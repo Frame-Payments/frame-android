@@ -4,8 +4,13 @@ import android.content.Context
 import androidx.lifecycle.*
 import com.evervault.sdk.input.model.card.PaymentCardData
 import com.framepayments.framesdk.FrameCheckoutError
+import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.accountevents.AccountEventDetail
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntentConfirmation
 import com.framepayments.framesdk.chargeintents.FrameChargeIntentError
@@ -71,6 +76,11 @@ class FrameCheckoutViewModel : ViewModel() {
     /** Sets [selectedAccountPaymentOption] and recomputes [hasUsablePaymentInput]. */
     fun setSelectedAccountPaymentOption(method: FrameObjects.PaymentMethod?) {
         _selectedAccountPaymentOption.value = method
+        AccountEventEmitter.emit(
+            AccountEventName.CHECKOUT_PAYMENT_METHOD_SELECTED,
+            AccountEventScreen.PAYMENT_SHEET,
+            if (method != null) AccountEventDetail.CHECKOUT_SAVED_PAYMENT_METHOD else AccountEventDetail.CHECKOUT_NEW_PAYMENT_METHOD
+        )
         recomputeUsablePaymentInput()
     }
 
@@ -143,6 +153,10 @@ class FrameCheckoutViewModel : ViewModel() {
         require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccountDetails requires a non-empty accountId" }
         this.amount = amount
         currentAccountId = accountId
+        // Checkout is often the first surface a host shows, so this may be the SDK's first
+        // sighting of the account — publish it before emitting, or the event is dropped.
+        FrameNetworking.setAccountIdIfUnset(accountId)
+        AccountEventEmitter.emit(AccountEventName.CHECKOUT_STARTED, AccountEventScreen.PAYMENT_SHEET)
 
         viewModelScope.launch(Dispatchers.IO) {
             val (account, accountError) = AccountsAPI.getAccountWith(accountId)
@@ -162,6 +176,13 @@ class FrameCheckoutViewModel : ViewModel() {
             }
 
             val (paymentMethods, paymentMethodsError) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+            if (paymentMethodsError != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
+                    AccountEventScreen.PAYMENT_SHEET,
+                    "$paymentMethodsError"
+                )
+            }
             reportError(paymentMethodsError)
             withContext(Dispatchers.Main) {
                 _accountPaymentOptions.value = paymentMethods
@@ -262,10 +283,20 @@ class FrameCheckoutViewModel : ViewModel() {
             return@liveData
         }
         _isPerformingAction.postValue(true)
+        AccountEventEmitter.emit(
+            AccountEventName.CHECKOUT_PAYMENT_STARTED,
+            AccountEventScreen.PAYMENT_SHEET,
+            AccountEventDetail.CHECKOUT_PAY_BUTTON_TAPPED
+        )
         try {
             val usingSavedCard = _selectedAccountPaymentOption.value != null
             val errors = validateAll(forSavedCard = usingSavedCard)
             if (errors.isNotEmpty()) {
+                AccountEventEmitter.emit(
+                    AccountEventName.CHECKOUT_VALIDATION_FAILED,
+                    AccountEventScreen.PAYMENT_SHEET,
+                    errors.keys.joinToString(", ") { "$it" }
+                )
                 _fieldErrors.postValue(errors)
                 emit(null)
                 return@liveData
@@ -277,6 +308,11 @@ class FrameCheckoutViewModel : ViewModel() {
             val paymentMethodId = _selectedAccountPaymentOption.value?.id ?: run {
                 val (pmId, pmError) = createPaymentMethod(accountId)
                 if (pmError != null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.CHECKOUT_PAYMENT_FAILED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        "$pmError"
+                    )
                     reportError(pmError)
                     emit(null)
                     return@liveData
@@ -302,6 +338,11 @@ class FrameCheckoutViewModel : ViewModel() {
 
             val (transfer, transferError) = TransfersAPI.createTransfer(request)
             if (transferError != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.CHECKOUT_PAYMENT_FAILED,
+                    AccountEventScreen.PAYMENT_SHEET,
+                    "$transferError"
+                )
                 reportError(transferError)
                 emit(null)
                 return@liveData
@@ -312,6 +353,7 @@ class FrameCheckoutViewModel : ViewModel() {
             }
 
             if (transfer.status != TransferStatus.REQUIRES_CONFIRMATION && transfer.status != TransferStatus.REQUIRES_THREE_D_SECURE) {
+                AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
                 emit(transfer)
                 return@liveData
             }
@@ -336,18 +378,33 @@ class FrameCheckoutViewModel : ViewModel() {
 
         return try {
             when (val outcome = confirmation.confirm(clientSecret)) {
-                is FrameChargeIntentOutcome.Succeeded -> transfer
+                is FrameChargeIntentOutcome.Succeeded -> {
+                    AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
+                    transfer
+                }
                 is FrameChargeIntentOutcome.Failed -> {
-                    FrameSnackbarController.emit(FrameCheckoutError.Declined(outcome.reason?.message).toastMessage())
+                    val declined = FrameCheckoutError.Declined(outcome.reason?.message)
+                    AccountEventEmitter.emit(
+                        AccountEventName.CHECKOUT_PAYMENT_DECLINED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        declined.toastMessage()
+                    )
+                    FrameSnackbarController.emit(declined.toastMessage())
                     null
                 }
                 is FrameChargeIntentOutcome.TimedOut -> {
                     // The charge may still settle, so this is not reported as a decline.
+                    AccountEventEmitter.emit(
+                        AccountEventName.CHECKOUT_PAYMENT_FAILED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        "$outcome"
+                    )
                     FrameSnackbarController.emit(FrameCheckoutError.Unresolved().toastMessage())
                     null
                 }
             }
         } catch (e: FrameChargeIntentError) {
+            AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_FAILED, AccountEventScreen.PAYMENT_SHEET, "$e")
             FrameSnackbarController.emit(FrameCheckoutError.ThreeDSecureUnavailable().toastMessage())
             null
         }
@@ -388,6 +445,15 @@ class FrameCheckoutViewModel : ViewModel() {
             billing = billingAddress
         )
         val (pm, pmError) = PaymentMethodsAPI.createCardPaymentMethod(pmReq, encryptData = false)
+        if (pmError != null) {
+            AccountEventEmitter.emit(
+                AccountEventName.CARD_TOKENIZATION_FAILED,
+                AccountEventScreen.PAYMENT_SHEET,
+                "$pmError"
+            )
+        } else {
+            AccountEventEmitter.emit(AccountEventName.CARD_TOKENIZED, AccountEventScreen.PAYMENT_SHEET)
+        }
         return Pair(pm?.id, pmError)
     }
 }

@@ -14,14 +14,23 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
+import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
 import com.framepayments.frameonboarding.classes.OnboardingResult
 import com.framepayments.frameonboarding.classes.OnboardingStep
+import com.framepayments.frameonboarding.classes.toFlowSegment
+import com.framepayments.frameonboarding.classes.OnboardingOutcome
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.accountevents.AccountEventDetail
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
@@ -74,11 +83,70 @@ fun OnboardingContainerView(
         }
     }
 
+    LaunchedEffect(Unit) {
+        AccountEventEmitter.emit(AccountEventName.ONBOARDING_STARTED, AccountEventScreen.ONBOARDING)
+    }
+
+    var previousStep by remember { mutableStateOf(viewModel.navigationState.currentStep) }
+    LaunchedEffect(viewModel.navigationState.currentStep) {
+        val step = viewModel.navigationState.currentStep
+        // Only a forward move completes a step; going back re-views one without completing it.
+        val movedForward = viewModel.orderedSteps.indexOf(step) > viewModel.orderedSteps.indexOf(previousStep)
+        if (step != previousStep) {
+            if (movedForward) {
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_STEP_COMPLETED,
+                    previousStep.accountEventScreen(),
+                    detail = previousStep.toString()
+                )
+            }
+            previousStep = step
+        }
+        AccountEventEmitter.emit(
+            AccountEventName.ONBOARDING_STEP_VIEWED,
+            step.accountEventScreen(),
+            detail = step.toString()
+        )
+    }
+
     LaunchedEffect(result) {
         when (val r = result) {
-            is OnboardingResult.Completed -> onResult(r)
-            is OnboardingResult.FinishedUnverified -> onResult(r)
-            is OnboardingResult.Cancelled -> onResult(r)
+            is OnboardingResult.Completed -> {
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_COMPLETED,
+                    AccountEventScreen.ONBOARDING,
+                    detail = AccountEventDetail.ONBOARDING_COMPLETED_APPROVED
+                )
+                onResult(r)
+            }
+            is OnboardingResult.FinishedUnverified -> {
+                when (val outcome = r.outcome) {
+                    is OnboardingOutcome.Declined -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_DECLINED,
+                        AccountEventScreen.ONBOARDING,
+                        detail = outcome.message ?: "declined"
+                    )
+                    is OnboardingOutcome.ActionRequired -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_ACTION_REQUIRED,
+                        AccountEventScreen.ONBOARDING,
+                        detail = outcome.message ?: "action required"
+                    )
+                    else -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_NEEDS_REVIEW,
+                        AccountEventScreen.ONBOARDING
+                    )
+                }
+                onResult(r)
+            }
+            is OnboardingResult.Cancelled -> {
+                val step = viewModel.navigationState.currentStep
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_CANCELLED,
+                    step.accountEventScreen(),
+                    detail = "last step reached: $step"
+                )
+                onResult(r)
+            }
             else -> Unit
         }
     }
@@ -128,6 +196,14 @@ fun OnboardingContainerView(
             }
         }
     }
+}
+
+/** Mirrors iOS `OnboardingFlow.accountEventScreenName`, which maps at segment granularity. */
+private fun OnboardingStep.accountEventScreen(): AccountEventScreen = when (toFlowSegment()) {
+    OnboardingFlowSegment.PERSONAL_INFORMATION -> AccountEventScreen.PERSONAL_INFORMATION
+    OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD -> AccountEventScreen.PAYMENT_METHOD
+    OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD -> AccountEventScreen.PAYOUT_METHOD
+    OnboardingFlowSegment.VERIFICATION_SUBMITTED -> AccountEventScreen.ONBOARDING
 }
 
 @FrameThemePreviews

@@ -44,6 +44,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
@@ -113,6 +116,15 @@ internal fun UserIdentificationView(
     LaunchedEffect(showTermsOfService, termsToken) {
         if (showTermsOfService && termsToken == null) {
             viewModel.generateTermsOfServiceToken()
+        }
+    }
+
+    LaunchedEffect(subStep) {
+        if (subStep == VerifyIdSubStep.InformationForm) {
+            AccountEventEmitter.emit(
+                AccountEventName.PROFILE_STEP_STARTED,
+                AccountEventScreen.PERSONAL_INFORMATION
+            )
         }
     }
 
@@ -222,6 +234,7 @@ internal fun UserIdentificationView(
                                 digitCount = 6,
                                 showResendCode = false,
                                 embedInParentScaffold = true,
+                                emitsPhoneCodeEntry = verifyPhoneUi != VerifyPhoneUi.OtpForProve,
                                 onBack = { viewModel.goBackFromVerifyPhone() },
                                 onResendCode = { viewModel.resendVerificationCode() },
                                 onContinue = { code ->
@@ -385,7 +398,14 @@ internal fun UserIdentificationView(
                         else -> Unit
                     }
 
-                    if (showTermsOfService && subStep == VerifyIdSubStep.PhoneAuth) {
+                    val termsVisible = showTermsOfService && subStep == VerifyIdSubStep.PhoneAuth
+                    if (termsVisible) {
+                        LaunchedEffect(Unit) {
+                            AccountEventEmitter.emit(
+                                AccountEventName.TERMS_OF_SERVICE_SHOWN,
+                                AccountEventScreen.TERMS_OF_SERVICE
+                            )
+                        }
                         Spacer(Modifier.height(24.dp))
                         TermsOfServiceView()
                     }
@@ -397,6 +417,12 @@ internal fun UserIdentificationView(
                             when (subStep) {
                                 VerifyIdSubStep.PhoneAuth -> {
                                     if (viewModel.validateAllPhoneAuth()) {
+                                        if (termsVisible) {
+                                            AccountEventEmitter.emit(
+                                                AccountEventName.TERMS_OF_SERVICE_ACCEPTED,
+                                                AccountEventScreen.TERMS_OF_SERVICE
+                                            )
+                                        }
                                         viewModel.submitPhoneAuth(requiresDateOfBirth)
                                     }
                                 }
@@ -404,6 +430,13 @@ internal fun UserIdentificationView(
                                     val verifiedViaGovId = onboardingData.identityVerifiedViaGovId
                                     val infoOK = customerInfoVM.validate(ssnOptional = verifiedViaGovId)
                                     val addressOK = personalAddressVM.validate()
+                                    if (!infoOK || !addressOK) {
+                                        AccountEventEmitter.emit(
+                                            AccountEventName.PROFILE_VALIDATION_FAILED,
+                                            AccountEventScreen.PERSONAL_INFORMATION,
+                                            detail = "info valid: $infoOK, address valid: $addressOK"
+                                        )
+                                    }
                                     if (infoOK && addressOK) {
                                         val id = customerInfoVM.identity.value
                                         val addr = personalAddressVM.address.value

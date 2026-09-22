@@ -49,6 +49,9 @@ import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
 import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk_ui.EncryptedPaymentCardInput
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
@@ -279,6 +282,12 @@ internal fun AddPaymentMethodScreen(
                     if (addressOK && cardOK) {
                         viewModel.updateCreatedBillingAddress { billingVM.address.value }
                         viewModel.submitNewPaymentMethod()
+                    } else {
+                        AccountEventEmitter.emit(
+                            AccountEventName.CARD_VALIDATION_FAILED,
+                            AccountEventScreen.PAYMENT_METHOD,
+                            detail = if (cardOK) "billing address" else (cardError ?: "card")
+                        )
                     }
                 }
             )

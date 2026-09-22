@@ -26,10 +26,6 @@ import com.framepayments.framesdk_ui.theme.LocalFrameTheme
  * Renders a single selectable payment method row: brand or bank icon, masked account number,
  * and expiration or account-type details. Shows a selection indicator when [isSelected].
  *
- * Uses generic card/bank icons rather than per-card-brand ones (iOS shows the brand logo): the
- * per-brand drawable set lives only in FrameSDK-Onboarding's resources, and this row needs to
- * be usable outside that module.
- *
  * @param paymentMethod The payment method whose details are rendered.
  * @param isSelected Pass true to render the row in its selected state.
  * @param onTap Called when the user taps the row.
@@ -44,7 +40,7 @@ fun FramePaymentMethodRow(
     val theme = LocalFrameTheme.current
     val isAch = paymentMethod.type == FrameObjects.PaymentMethodType.ACH
 
-    val icon = if (isAch) R.drawable.ic_bank else R.drawable.ic_card
+    val icon = if (isAch) R.drawable.ic_bank else cardBrandIcon(paymentMethod.card?.brand.orEmpty())
     val primaryText = if (isAch) {
         "•••• ${paymentMethod.ach?.lastFour.orEmpty()}"
     } else {

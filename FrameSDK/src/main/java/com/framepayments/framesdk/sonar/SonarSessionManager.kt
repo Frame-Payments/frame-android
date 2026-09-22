@@ -8,6 +8,10 @@ import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameNetworkingEndpoints
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.QueryItem
+import com.framepayments.framesdk.accountevents.AccountEventDetail
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.fingerprint.FingerprintIdentification
 import com.framepayments.framesdk.fingerprint.FingerprintManager
 import kotlinx.coroutines.CoroutineScope
@@ -143,7 +147,9 @@ class SessionManager(
      */
     suspend fun initialize(): SessionId {
         return if (sessionId == null) {
-            createSession(accountId = null)
+            val created = createSession(accountId = null)
+            AccountEventEmitter.emit(AccountEventName.FRAUD_SESSION_STARTED, AccountEventScreen.CHECKOUT)
+            created
         } else {
             updateSession(accountId = null)
         }
@@ -236,11 +242,17 @@ class SessionManager(
             // Leaving the legacy slot readable would let the next account on this device adopt
             // the same session.
             storage.clear(accountId = null)
+            AccountEventEmitter.emit(
+                AccountEventName.FRAUD_SESSION_ADOPTED,
+                AccountEventScreen.CHECKOUT,
+                AccountEventDetail.FRAUD_SESSION_ADOPTED_FROM_ANONYMOUS
+            )
             return adopted
         }
 
         val created = createSession(accountId)
         store(created, accountId)
+        AccountEventEmitter.emit(AccountEventName.FRAUD_SESSION_STARTED, AccountEventScreen.CHECKOUT)
         return created
     }
 
@@ -266,11 +278,20 @@ class SessionManager(
 
     private suspend fun refreshSession(session: SessionId, accountId: String?): SessionId {
         return try {
-            perform(SonarSessionEndpoints.Update(session), requestBody(accountId))
+            val refreshed = perform(SonarSessionEndpoints.Update(session), requestBody(accountId))
+            AccountEventEmitter.emit(AccountEventName.FRAUD_SESSION_REFRESHED, AccountEventScreen.CHECKOUT)
+            refreshed
         } catch (e: Exception) {
+            // The server no longer recognises this session, so replace it rather than fail the payment.
             Log.w("SessionManager", "Failed to update session, creating new one", e)
             storage.clear(accountId)
-            createSession(accountId)
+            val recreated = createSession(accountId)
+            AccountEventEmitter.emit(
+                AccountEventName.FRAUD_SESSION_RECREATED,
+                AccountEventScreen.CHECKOUT,
+                AccountEventDetail.FRAUD_SESSION_REFRESH_FELL_BACK_TO_RECREATE
+            )
+            recreated
         }
     }
 
@@ -282,9 +303,21 @@ class SessionManager(
     }
 
     private suspend fun perform(endpoint: SonarSessionEndpoints, body: SessionRequestBody): SessionId {
+        // Failures here are swallowed by every caller (the payment path independently calls
+        // ensureSession) — this is the one place to surface them without disturbing that swallow.
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.Publishable)
-        if (error != null) throw error
-        val response = FrameNetworking.parseResponse<SessionResponse>(data) ?: throw NetworkingError.DecodingFailed
+        if (error != null) {
+            AccountEventEmitter.emit(AccountEventName.SONAR_SESSION_FAILED, AccountEventScreen.CHECKOUT, "$error")
+            throw error
+        }
+        val response = FrameNetworking.parseResponse<SessionResponse>(data) ?: run {
+            AccountEventEmitter.emit(
+                AccountEventName.SONAR_SESSION_FAILED,
+                AccountEventScreen.CHECKOUT,
+                "${NetworkingError.DecodingFailed}"
+            )
+            throw NetworkingError.DecodingFailed
+        }
         return response.sonar_session_id
     }
 

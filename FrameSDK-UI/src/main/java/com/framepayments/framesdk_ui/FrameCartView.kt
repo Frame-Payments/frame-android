@@ -10,6 +10,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk_ui.databinding.ItemCartBinding
 import com.framepayments.framesdk_ui.databinding.ViewFrameCartBinding
 import com.framepayments.framesdk_ui.theme.FrameTheme
@@ -50,19 +51,29 @@ class FrameCartView @JvmOverloads constructor(
     }
 
     /**
-     * Configure the cart. [accountId] is not consumed directly by the cart UI, but is
-     * required because the cart flow always feeds into [FrameCheckoutView], which is
-     * account-scoped — surfacing the requirement here forces callers to acknowledge it
-     * before mounting the cart instead of crashing later at checkout time.
+     * The account this cart was configured for. Read it when handing off to
+     * [FrameCheckoutView], which is account-scoped, so the same account carries through the
+     * whole cart-to-checkout flow.
+     */
+    var accountId: String? = null
+        private set
+
+    /**
+     * Configure the cart. [accountId] is not consumed by the cart UI itself, but the cart
+     * flow always feeds into [FrameCheckoutView], which is account-scoped — so it is retained
+     * here and published to the SDK, which is what lets account events emitted from the cart
+     * onward be attributed.
      */
     fun configure(
-        @Suppress("UNUSED_PARAMETER") accountId: String,
+        accountId: String,
         items: List<FrameCartItem>,
         shippingCents: Int,
         onCheckout: (Int) -> Unit,
         appearance: FrameCartAppearance? = null
     ) {
         require(accountId.isNotEmpty()) { "FrameCartView.configure requires a non-empty accountId" }
+        this.accountId = accountId
+        FrameNetworking.setAccountIdIfUnset(accountId)
         explicitAppearance = appearance
         this.appearance = theme?.toCartAppearance(overlay = appearance) ?: appearance
         listener = onCheckout

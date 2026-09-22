@@ -32,6 +32,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.frameonboarding.networking.geocompliance.GeocomplianceAPI
 import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceBlockReason
 import com.framepayments.frameonboarding.networking.geocompliance.GeoComplianceStatus
@@ -55,9 +58,17 @@ internal fun GeolocationVerificationScreen(
     var state by remember { mutableStateOf(GeolocationState.CHECKING) }
 
     LaunchedEffect(Unit) {
+        AccountEventEmitter.emit(
+            AccountEventName.COMPLIANCE_CHECK_STARTED,
+            AccountEventScreen.COMPLIANCE
+        )
         val id = accountId
         if (id == null) {
             state = GeolocationState.VERIFIED
+            AccountEventEmitter.emit(
+                AccountEventName.COMPLIANCE_CHECK_PASSED,
+                AccountEventScreen.COMPLIANCE
+            )
             return@LaunchedEffect
         }
         val (response, _) = GeocomplianceAPI.getAccountGeoComplianceStatus(id)
@@ -66,6 +77,17 @@ internal fun GeolocationVerificationScreen(
             response.status == GeoComplianceStatus.CLEAR -> GeolocationState.VERIFIED
             response.reason == GeoComplianceBlockReason.VPN_DETECTED -> GeolocationState.VPN_DETECTED
             else -> GeolocationState.VERIFIED
+        }
+        if (state == GeolocationState.VPN_DETECTED) {
+            AccountEventEmitter.emit(
+                AccountEventName.COMPLIANCE_CHECK_VPN_DETECTED,
+                AccountEventScreen.COMPLIANCE
+            )
+        } else {
+            AccountEventEmitter.emit(
+                AccountEventName.COMPLIANCE_CHECK_PASSED,
+                AccountEventScreen.COMPLIANCE
+            )
         }
     }
 
@@ -89,7 +111,13 @@ internal fun GeolocationVerificationScreen(
                 GeolocationState.CHECKING -> CheckingLocationView()
                 GeolocationState.VERIFIED -> LocationVerifiedView()
                 GeolocationState.VPN_DETECTED -> VpnDetectedView(
-                    onContinue = onContinue,
+                    onContinue = {
+                        AccountEventEmitter.emit(
+                            AccountEventName.COMPLIANCE_CHECK_VPN_BYPASSED,
+                            AccountEventScreen.COMPLIANCE
+                        )
+                        onContinue()
+                    },
                     onDisableVpn = onDisableVpn
                 )
             }
