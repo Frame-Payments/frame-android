@@ -687,7 +687,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             return
         }
         val addr = individual.address
-        val phoneDigits = individual.phoneNumber?.filter(Char::isDigit)?.takeLast(10)
+        // The server returns a structured `phone` object; `phoneNumber` is a legacy flat fallback
+        // for responses that predate it.
+        val rawPhone = individual.phone?.number ?: individual.phoneNumber
+        val phoneDigits = rawPhone?.filter(Char::isDigit)?.takeLast(10)
         if (!phoneDigits.isNullOrEmpty()) {
             _phoneNumber.value = phoneDigits
         }

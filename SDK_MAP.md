@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2038 public symbols** across 180 files in 3 modules.
+**2039 public symbols** across 180 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -55,12 +55,12 @@ reverse is never true.
 | Objects | 129 |
 | Type aliases | 3 |
 | Functions | 351 |
-| Properties (val) | 996 |
+| Properties (val) | 997 |
 | Properties (var) | 21 |
 | Enum entries | 161 |
-| **Total** | **2038** |
+| **Total** | **2039** |
 
-### `FrameSDK` — 1632 public symbols
+### `FrameSDK` — 1633 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
@@ -508,7 +508,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-#### com/framepayments/framesdk/accounts (191)
+#### com/framepayments/framesdk/accounts (192)
 
 <details><summary><code>AccountEndpoints.kt</code> — 27 symbols</summary>
 
@@ -546,7 +546,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-<details><summary><code>AccountObjects.kt</code> — 74 symbols</summary>
+<details><summary><code>AccountObjects.kt</code> — 75 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt)
 
@@ -589,43 +589,44 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `AccountObjects.IndividualAccountName.middleName` | val | `val middleName: String? = null,` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L124) |
 | `AccountObjects.IndividualAccountName.lastName` | val | `val lastName: String? = null,` | [125](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L125) |
 | `AccountObjects.IndividualAccountName.suffix` | val | `val suffix: String? = null` | [126](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L126) |
-| `AccountObjects.IndividualAccount` | data class | `data class IndividualAccount(` | [141](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L141) |
-| `AccountObjects.IndividualAccount.name` | val | `val name: IndividualAccountName? = null,` | [142](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L142) |
-| `AccountObjects.IndividualAccount.email` | val | `val email: String? = null,` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L143) |
-| `AccountObjects.IndividualAccount.ssnLastFour` | val | `val ssnLastFour: String? = null,` | [144](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L144) |
-| `AccountObjects.IndividualAccount.phoneNumber` | val | `val phoneNumber: String? = null,` | [145](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L145) |
-| `AccountObjects.IndividualAccount.phoneCountryCode` | val | `val phoneCountryCode: String? = null,` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L146) |
-| `AccountObjects.IndividualAccount.address` | val | `val address: AccountBillingAddress? = null,` | [147](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L147) |
-| `AccountObjects.IndividualAccount.birthdate` | val | `val birthdate: String? = null,` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L148) |
-| `AccountObjects.IndividualAccount.ssn` | val | `val ssn: String? = null` | [149](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L149) |
-| `AccountObjects.AccountStep` | data class | `data class AccountStep(` | [161](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L161) |
-| `AccountObjects.AccountStep.key` | val | `val key: String?,` | [162](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L162) |
-| `AccountObjects.AccountStep.status` | val | `val status: String?,` | [163](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L163) |
-| `AccountObjects.AccountStep.label` | val | `val label: String?,` | [164](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L164) |
-| `AccountObjects.AccountStep.fields` | val | `val fields: List<String>?,` | [165](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L165) |
-| `AccountObjects.AccountStep.currentlyDue` | val | `val currentlyDue: List<String>?` | [166](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L166) |
-| `AccountObjects.Account` | data class | `data class Account(` | [186](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L186) |
-| `AccountObjects.Account.id` | val | `val id: String?,` | [187](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L187) |
-| `AccountObjects.Account.accountObject` | val | `val accountObject: String?,` | [188](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L188) |
-| `AccountObjects.Account.type` | val | `val type: AccountType?,` | [189](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L189) |
-| `AccountObjects.Account.status` | val | `val status: AccountStatus?,` | [190](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L190) |
-| `AccountObjects.Account.externalId` | val | `val externalId: String? = null,` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L191) |
-| `AccountObjects.Account.metadata` | val | `val metadata: Map<String, String>? = null,` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L192) |
-| `AccountObjects.Account.termsOfService` | val | `val termsOfService: AccountTermsOfService? = null,` | [193](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L193) |
-| `AccountObjects.Account.profile` | val | `val profile: AccountProfile? = null,` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L194) |
-| `AccountObjects.Account.capabilities` | val | `val capabilities: List<CapabilityObjects.Capability>? = null,` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L195) |
-| `AccountObjects.Account.steps` | val | `val steps: List<AccountStep>? = null,` | [196](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L196) |
-| `AccountObjects.Account.created` | val | `val created: Int?,` | [197](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L197) |
-| `AccountObjects.Account.updated` | val | `val updated: Int?,` | [198](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L198) |
-| `AccountObjects.Account.livemode` | val | `val livemode: Boolean?` | [199](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L199) |
-| `AccountObjects.PhoneVerification` | data class | `data class PhoneVerification(` | [213](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L213) |
-| `AccountObjects.PhoneVerification.id` | val | `val id: String?,` | [214](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L214) |
-| `AccountObjects.PhoneVerification.verificationObject` | val | `val verificationObject: String?,` | [215](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L215) |
-| `AccountObjects.PhoneVerification.accountId` | val | `val accountId: String?,` | [216](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L216) |
-| `AccountObjects.PhoneVerification.status` | val | `val status: String?,` | [217](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L217) |
-| `AccountObjects.PhoneVerification.created` | val | `val created: Int?,` | [218](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L218) |
-| `AccountObjects.PhoneVerification.updated` | val | `val updated: Int?,` | [219](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L219) |
-| `AccountObjects.PhoneVerification.livemode` | val | `val livemode: Boolean?` | [220](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L220) |
+| `AccountObjects.IndividualAccount` | data class | `data class IndividualAccount(` | [142](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L142) |
+| `AccountObjects.IndividualAccount.name` | val | `val name: IndividualAccountName? = null,` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L143) |
+| `AccountObjects.IndividualAccount.email` | val | `val email: String? = null,` | [144](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L144) |
+| `AccountObjects.IndividualAccount.ssnLastFour` | val | `val ssnLastFour: String? = null,` | [145](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L145) |
+| `AccountObjects.IndividualAccount.phone` | val | `val phone: AccountPhoneNumber? = null,` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L146) |
+| `AccountObjects.IndividualAccount.phoneNumber` | val | `val phoneNumber: String? = null,` | [147](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L147) |
+| `AccountObjects.IndividualAccount.phoneCountryCode` | val | `val phoneCountryCode: String? = null,` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L148) |
+| `AccountObjects.IndividualAccount.address` | val | `val address: AccountBillingAddress? = null,` | [149](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L149) |
+| `AccountObjects.IndividualAccount.birthdate` | val | `val birthdate: String? = null,` | [150](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L150) |
+| `AccountObjects.IndividualAccount.ssn` | val | `val ssn: String? = null` | [151](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L151) |
+| `AccountObjects.AccountStep` | data class | `data class AccountStep(` | [163](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L163) |
+| `AccountObjects.AccountStep.key` | val | `val key: String?,` | [164](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L164) |
+| `AccountObjects.AccountStep.status` | val | `val status: String?,` | [165](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L165) |
+| `AccountObjects.AccountStep.label` | val | `val label: String?,` | [166](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L166) |
+| `AccountObjects.AccountStep.fields` | val | `val fields: List<String>?,` | [167](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L167) |
+| `AccountObjects.AccountStep.currentlyDue` | val | `val currentlyDue: List<String>?` | [168](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L168) |
+| `AccountObjects.Account` | data class | `data class Account(` | [188](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L188) |
+| `AccountObjects.Account.id` | val | `val id: String?,` | [189](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L189) |
+| `AccountObjects.Account.accountObject` | val | `val accountObject: String?,` | [190](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L190) |
+| `AccountObjects.Account.type` | val | `val type: AccountType?,` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L191) |
+| `AccountObjects.Account.status` | val | `val status: AccountStatus?,` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L192) |
+| `AccountObjects.Account.externalId` | val | `val externalId: String? = null,` | [193](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L193) |
+| `AccountObjects.Account.metadata` | val | `val metadata: Map<String, String>? = null,` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L194) |
+| `AccountObjects.Account.termsOfService` | val | `val termsOfService: AccountTermsOfService? = null,` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L195) |
+| `AccountObjects.Account.profile` | val | `val profile: AccountProfile? = null,` | [196](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L196) |
+| `AccountObjects.Account.capabilities` | val | `val capabilities: List<CapabilityObjects.Capability>? = null,` | [197](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L197) |
+| `AccountObjects.Account.steps` | val | `val steps: List<AccountStep>? = null,` | [198](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L198) |
+| `AccountObjects.Account.created` | val | `val created: Int?,` | [199](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L199) |
+| `AccountObjects.Account.updated` | val | `val updated: Int?,` | [200](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L200) |
+| `AccountObjects.Account.livemode` | val | `val livemode: Boolean?` | [201](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L201) |
+| `AccountObjects.PhoneVerification` | data class | `data class PhoneVerification(` | [215](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L215) |
+| `AccountObjects.PhoneVerification.id` | val | `val id: String?,` | [216](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L216) |
+| `AccountObjects.PhoneVerification.verificationObject` | val | `val verificationObject: String?,` | [217](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L217) |
+| `AccountObjects.PhoneVerification.accountId` | val | `val accountId: String?,` | [218](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L218) |
+| `AccountObjects.PhoneVerification.status` | val | `val status: String?,` | [219](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L219) |
+| `AccountObjects.PhoneVerification.created` | val | `val created: Int?,` | [220](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L220) |
+| `AccountObjects.PhoneVerification.updated` | val | `val updated: Int?,` | [221](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L221) |
+| `AccountObjects.PhoneVerification.livemode` | val | `val livemode: Boolean?` | [222](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L222) |
 
 </details>
 

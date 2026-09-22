@@ -132,8 +132,9 @@ object AccountObjects {
      * @property name The account holder's name components.
      * @property email Contact email address.
      * @property ssnLastFour Last four digits of the Social Security Number.
-     * @property phoneNumber Contact phone number.
-     * @property phoneCountryCode ISO country calling code for the phone number.
+     * @property phone Structured phone number, as the server actually returns it.
+     * @property phoneNumber Legacy flat phone number, used when [phone] is not present.
+     * @property phoneCountryCode Legacy flat country calling code, paired with [phoneNumber].
      * @property address Residential address.
      * @property birthdate Date of birth in YYYY-MM-DD format.
      * @property ssn Full Social Security Number; omitted from most responses.
@@ -142,6 +143,7 @@ object AccountObjects {
         val name: IndividualAccountName? = null,
         val email: String? = null,
         @SerializedName("ssn_last_four") val ssnLastFour: String? = null,
+        val phone: AccountPhoneNumber? = null,
         @SerializedName("phone_number") val phoneNumber: String? = null,
         @SerializedName("phone_country_code") val phoneCountryCode: String? = null,
         val address: AccountBillingAddress? = null,

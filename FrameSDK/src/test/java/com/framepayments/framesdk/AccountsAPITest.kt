@@ -70,6 +70,24 @@ class AccountsAPITest {
     }
 
     @Test
+    fun testGetAccountWithStructuredPhone() = runBlocking {
+        // The server returns `phone` as a nested object ({"number":..., "country_code":...}),
+        // not the legacy flat `phone_number`/`phone_country_code` pair — regression coverage for
+        // a mapping gap that silently dropped phone from onboarding prefill.
+        val responseBody = """
+            {"id":"acc_123","object":"account","type":"individual","status":"active",
+             "created":1234567890,"updated":1234567890,"livemode":false,
+             "profile":{"individual":{"phone":{"number":"+12001001695","country_code":"1"}}}}
+        """.trimIndent()
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val (result, _) = AccountsAPI.getAccountWith("acc_123")
+
+        assertEquals("+12001001695", result?.profile?.individual?.phone?.number)
+        assertEquals("1", result?.profile?.individual?.phone?.countryCode)
+    }
+
+    @Test
     fun testGetAccounts() = runBlocking {
         val responseBody = """
             {
