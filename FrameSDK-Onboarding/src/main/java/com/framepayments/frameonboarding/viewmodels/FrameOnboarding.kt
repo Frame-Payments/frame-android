@@ -545,8 +545,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             _onboardingData.update { it.copy(resolvedAccountId = aid) }
         }
         existingAccountHasTOS = account?.termsOfService?.acceptedAt != null
-        val individual = account?.profile?.individual ?: return
-        refreshAccountProfileIntoOnboarding(accountId)
+        if (account?.profile?.individual == null) return
+        applyAccountProfileToOnboarding(accountId, account)
         if (!updateCapabilities) return
         val caps = account.capabilities ?: return
         val requiredNames = requiredCapabilityApiStrings().toSet()
@@ -653,13 +653,27 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         _dobDay.value = m.groupValues[3].padStart(2, '0').takeLast(2)
     }
 
+    /**
+     * Fetches [accountId] with a session bound first (so `profile` isn't PII-gated) and applies
+     * it to onboarding state via [applyAccountProfileToOnboarding].
+     *
+     * `profile` is PII-gated: the server withholds it unless the request carries a secret key or
+     * a matching onboarding session. Without a session bound first, a publishable-key host reads
+     * back a profile-less account and silently prefills nothing — which is what stopped Prove's
+     * KYC-prefill data reaching the form.
+     */
     private suspend fun refreshAccountProfileIntoOnboarding(accountId: String) {
-        // `profile` is PII-gated: the server withholds it unless the request carries a secret
-        // key or a matching onboarding session. Without a session bound first, a
-        // publishable-key host reads back a profile-less account and silently prefills
-        // nothing — which is what stopped Prove's KYC-prefill data reaching the form.
         beginOnboardingSessionIfNeeded()
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
+        applyAccountProfileToOnboarding(accountId, account)
+    }
+
+    /**
+     * Applies an already-fetched [account]'s profile to onboarding state. Split out of
+     * [refreshAccountProfileIntoOnboarding] so [checkExistingAccount] can reuse the account it
+     * already fetched instead of fetching it a second time, matching iOS's single-fetch shape.
+     */
+    private fun applyAccountProfileToOnboarding(accountId: String, account: AccountObjects.Account?) {
         val individual = account?.profile?.individual
         if (individual == null) {
             if (FrameNetworking.debugMode) {
