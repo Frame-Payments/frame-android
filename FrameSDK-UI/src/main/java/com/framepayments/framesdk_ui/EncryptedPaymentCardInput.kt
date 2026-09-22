@@ -124,11 +124,16 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
             // Every surface-family slot is overridden, not just `surface`: a text field draws
             // its container from `surfaceVariant` and its containers from `surfaceContainer*`,
             // all of which default to Material 3's purple-tinted baseline. Leaving them unset
-            // is what put a purple block behind the card input.
+            // is what put a purple block behind the card input. Evervault's RowsPaymentCard also
+            // draws its own row background from `primaryContainer` directly (not a surface slot,
+            // confirmed by decompiling RowsPaymentCard.kt:70 in evervault-inputs 1.13.1) — without
+            // overriding it too, that row stays purple even with every surface token set.
             val scheme = if (isDark) {
                 darkColorScheme(
                     primary = accentColor,
                     onPrimary = onAccentColor,
+                    primaryContainer = surfaceColor,
+                    onPrimaryContainer = textPrimaryColor,
                     secondary = accentColor,
                     onSecondary = onAccentColor,
                     tertiary = accentColor,
@@ -150,6 +155,8 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
                 lightColorScheme(
                     primary = accentColor,
                     onPrimary = onAccentColor,
+                    primaryContainer = surfaceColor,
+                    onPrimaryContainer = textPrimaryColor,
                     secondary = accentColor,
                     onSecondary = onAccentColor,
                     tertiary = accentColor,
