@@ -24,7 +24,10 @@ class CartTestActivity : BaseActivity() {
             FrameCartItem("2", "T-Shirt", 2599, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP2BAKInCCh3PZ5BwPdCBOk1v92vBLOgsgVw&s")
         )
 
-        val accountId = "INSERT_SANDBOX_ACCOUNT_ID"
+        // Matches FrameExample-iOS's FrameCartView(accountId: viewModel.accountId): the account
+        // just onboarded (or typed into the playground's account field) carries through to
+        // checkout, rather than checkout always acting on an unrelated hardcoded account.
+        val accountId = intent.getStringExtra("accountId") ?: "INSERT_SANDBOX_ACCOUNT_ID"
 
         val cartView = FrameCartView(this).apply {
             configure(

@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingResult
@@ -47,6 +49,7 @@ import com.framepayments.frameonboarding.views.FrameSelectPayoutMethodView
 import com.framepayments.frameonboarding.views.OnboardingContainerView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.framesdk.FrameResult
+import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.plaid.link.FastOpenPlaidLink
 import com.plaid.link.Plaid
 import com.plaid.link.PlaidHandler
@@ -54,7 +57,7 @@ import com.plaid.link.configuration.LinkTokenConfiguration
 import com.plaid.link.result.LinkExit
 import com.plaid.link.result.LinkSuccess
 
-/** Which standalone entry-point view to launch once [ContentViewModel.mintDemoAccount] resolves an account. */
+/** Which standalone entry-point view to launch, acting on [ContentViewModel.accountId]. */
 private enum class StandaloneView {
     ADD_PAYMENT_METHOD, ADD_PAYOUT_METHOD, SELECT_PAYOUT_METHOD
 }
@@ -75,7 +78,7 @@ fun PlaygroundScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val onboardingMintState by viewModel.onboardingMintState.collectAsState()
-    val demoAccountState by viewModel.demoAccountState.collectAsState()
+    val accountId by viewModel.accountId.collectAsState()
     val plaidService by viewModel.plaidService.collectAsState()
     val plaidMessage by viewModel.plaidMessage.collectAsState()
     val plaidToken by remember(plaidService) {
@@ -93,12 +96,9 @@ fun PlaygroundScreen(
     var showChargeIntents by remember { mutableStateOf(false) }
     var showRefunds by remember { mutableStateOf(false) }
     var showSubscriptionPhases by remember { mutableStateOf(false) }
-    // Which standalone entry-point demo to launch once mintDemoAccount() resolves an account.
+    // Which standalone entry-point demo to launch, acting on viewModel.accountId.
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
-    // Account to onboard, matching FrameExample-iOS: blank creates a new account, a typed ID
-    // resumes that one. Left blank, "Show Onboarding Flow" always starts a fresh applicant.
-    var onboardingAccountIdInput by remember { mutableStateOf("") }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
@@ -168,7 +168,7 @@ fun PlaygroundScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        Button(onClick = { viewModel.mintOnboardingClientSecret(onboardingAccountIdInput) }) {
+                        Button(onClick = { viewModel.mintOnboardingClientSecret(accountId) }) {
                             Text("Retry")
                         }
                         Spacer(modifier = Modifier.height(8.dp))
@@ -216,12 +216,19 @@ fun PlaygroundScreen(
                     // Clear the minted token so the next launch mints a fresh one.
                     viewModel.clearOnboardingClientSecret()
                     when (result) {
-                        is OnboardingResult.Completed ->
+                        is OnboardingResult.Completed -> {
+                            // Matches FrameExample-iOS's onResult handler: the account onboarding
+                            // just resolved becomes the account every other demo acts on next.
+                            result.accountId?.let(viewModel::setAccountId)
                             demoResultMessage = DemoResultMessage("Onboarding", "Completed: ${result.paymentMethodId}")
-                        is OnboardingResult.FinishedUnverified ->
+                        }
+                        is OnboardingResult.FinishedUnverified -> {
                             // The flow ran to the end but the applicant isn't verified — still worth
-                            // surfacing rather than treating it the same as a full success.
+                            // surfacing rather than treating it the same as a full success. The
+                            // account still exists and is still what follow-up demos should use.
+                            result.accountId?.let(viewModel::setAccountId)
                             demoResultMessage = DemoResultMessage("Onboarding", "Finished unverified: ${result.outcome}")
+                        }
                         is OnboardingResult.Cancelled -> Unit
                         is OnboardingResult.Failed ->
                             demoResultMessage = DemoResultMessage("Onboarding", "Failed: ${result.message}")
@@ -234,72 +241,55 @@ fun PlaygroundScreen(
 
     val standaloneView = pendingStandaloneView
     if (standaloneView != null) {
-        // Self-sufficient: mints whenever a standalone view becomes pending, regardless of
-        // whether the click site already called mintDemoAccount() — a stale Idle/Ready/Error
-        // from a previous session can never get stuck rendering nothing.
-        LaunchedEffect(standaloneView) {
-            viewModel.mintDemoAccount()
-        }
-        when (val accountState = demoAccountState) {
-            is DemoAccountState.Idle,
-            is DemoAccountState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-                return
-            }
-            is DemoAccountState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Couldn't resolve an account",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = accountState.message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        TextButton(onClick = {
-                            pendingStandaloneView = null
-                            viewModel.clearDemoAccount()
-                        }) {
-                            Text("Cancel")
-                        }
+        // Matches FrameExample-iOS: these views act on viewModel.accountId directly, with no
+        // separate session mint — FrameAddPaymentMethodView/etc. bind their own session
+        // internally, and a null clientSecret is the documented default for a standalone launch.
+        if (accountId.isBlank()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "No account set",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Onboard an applicant or enter an account ID above first.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    TextButton(onClick = { pendingStandaloneView = null }) {
+                        Text("Cancel")
                     }
                 }
-                return
             }
-            is DemoAccountState.Ready -> {
-                fun finish(message: DemoResultMessage) {
-                    pendingStandaloneView = null
-                    viewModel.clearDemoAccount()
-                    demoResultMessage = message
-                }
-                Box(modifier = Modifier.fillMaxSize()) {
-                    when (standaloneView) {
-                        StandaloneView.ADD_PAYMENT_METHOD -> FrameAddPaymentMethodView(
-                            accountId = accountState.accountId,
-                            clientSecret = accountState.clientSecret,
-                            onResult = { finish(it.toDemoMessage("Add Payment Method")) }
-                        )
-                        StandaloneView.ADD_PAYOUT_METHOD -> FrameAddPayoutMethodView(
-                            accountId = accountState.accountId,
-                            clientSecret = accountState.clientSecret,
-                            onResult = { finish(it.toDemoMessage("Add Payout Method")) }
-                        )
-                        StandaloneView.SELECT_PAYOUT_METHOD -> FrameSelectPayoutMethodView(
-                            accountId = accountState.accountId,
-                            clientSecret = accountState.clientSecret,
-                            onResult = { finish(it.toDemoMessage("Select Payout Method")) }
-                        )
-                    }
-                }
-                return
+            return
+        }
+        fun finish(message: DemoResultMessage) {
+            pendingStandaloneView = null
+            demoResultMessage = message
+        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (standaloneView) {
+                StandaloneView.ADD_PAYMENT_METHOD -> FrameAddPaymentMethodView(
+                    accountId = accountId,
+                    onResult = { finish(it.toDemoMessage("Add Payment Method")) }
+                )
+                StandaloneView.ADD_PAYOUT_METHOD -> FrameAddPayoutMethodView(
+                    accountId = accountId,
+                    onResult = { finish(it.toDemoMessage("Add Payout Method")) }
+                )
+                StandaloneView.SELECT_PAYOUT_METHOD -> FrameSelectPayoutMethodView(
+                    accountId = accountId,
+                    onResult = { finish(it.toDemoMessage("Select Payout Method")) }
+                )
             }
         }
+        return
     }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
@@ -328,9 +318,12 @@ fun PlaygroundScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
+            // The account every demo below acts on, matching FrameExample-iOS's single shared
+            // viewModel.accountId: blank creates a new applicant on "Show Onboarding Flow", a
+            // typed ID resumes it, and completing onboarding writes the resolved id back here.
             OutlinedTextField(
-                value = onboardingAccountIdInput,
-                onValueChange = { onboardingAccountIdInput = it },
+                value = accountId,
+                onValueChange = viewModel::setAccountId,
                 label = { Text("Account ID (blank = new applicant)") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -341,7 +334,7 @@ fun PlaygroundScreen(
                 // hands it to the app as the clientSecret — see ContentViewModel. A blank account
                 // ID creates a new applicant; a typed one resumes that account, matching
                 // FrameExample-iOS — never a random pre-existing account.
-                viewModel.mintOnboardingClientSecret(onboardingAccountIdInput)
+                viewModel.mintOnboardingClientSecret(accountId)
                 showOnboarding = true
             }
             PlaygroundButton(
@@ -350,20 +343,49 @@ fun PlaygroundScreen(
                 onClick = { viewModel.startPlaidLink() }
             )
             PlaygroundButton(text = "Checkout") {
-                val intent = Intent(context, CartTestActivity::class.java)
+                val intent = Intent(context, CartTestActivity::class.java).apply {
+                    if (accountId.isNotBlank()) putExtra("accountId", accountId)
+                }
                 context.startActivity(intent)
             }
             PlaygroundButton(text = "Add Payment Method (standalone)") {
-                viewModel.clearDemoAccount()
                 pendingStandaloneView = StandaloneView.ADD_PAYMENT_METHOD
             }
             PlaygroundButton(text = "Add Payout Method (standalone)") {
-                viewModel.clearDemoAccount()
                 pendingStandaloneView = StandaloneView.ADD_PAYOUT_METHOD
             }
             PlaygroundButton(text = "Select Payout Method (standalone)") {
-                viewModel.clearDemoAccount()
                 pendingStandaloneView = StandaloneView.SELECT_PAYOUT_METHOD
+            }
+            if (accountId.isNotBlank()) {
+                // Matches FrameExample-iOS's Apple Pay button: always visible when an account is
+                // set, visibility of the button itself gated by Google Pay device/config readiness.
+                // Keyed on accountId so configure() (which re-checks device/config readiness over
+                // the network) only re-runs when the account actually changes, not on every
+                // unrelated recomposition of this screen.
+                key(accountId) {
+                    AndroidView(
+                        factory = { ctx ->
+                            FrameGooglePayButton(ctx).apply {
+                                configure(
+                                    amountCents = 35000,
+                                    owner = FrameGooglePayButton.Owner.Account(accountId),
+                                    onResult = { result ->
+                                        when (result) {
+                                            is FrameGooglePayButton.Result.Success ->
+                                                demoResultMessage = DemoResultMessage("Google Pay", "Completed: ${result.id}")
+                                            is FrameGooglePayButton.Result.Failure ->
+                                                demoResultMessage = DemoResultMessage("Google Pay", "Failed: ${result.message}")
+                                            is FrameGooglePayButton.Result.Cancelled -> Unit
+                                            is FrameGooglePayButton.Result.PaymentMethodCreated -> Unit
+                                        }
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
             PlaygroundButton(
                 text = "View All Customers",

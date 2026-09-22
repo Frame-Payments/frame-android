@@ -38,18 +38,6 @@ data class ContentUiState(
 data class PlaidMessage(val title: String, val body: String)
 
 /**
- * State of the demo's "resolve an account to act on" flow, shared by the standalone entry-point
- * demos (add payment method, add payout method, select payout method). Mirrors
- * [OnboardingMintState]'s Loading/Ready/Error shape.
- */
-sealed class DemoAccountState {
-    object Idle : DemoAccountState()
-    object Loading : DemoAccountState()
-    data class Ready(val accountId: String, val clientSecret: String?) : DemoAccountState()
-    data class Error(val message: String) : DemoAccountState()
-}
-
-/**
  * State of the demo onboarding-session mint flow. The example app cannot launch onboarding until a
  * token is minted, so the UI gates on this: [Loading] shows a spinner, [Ready] launches the flow,
  * and [Error] shows an actionable retry instead of spinning forever when minting fails.
@@ -92,15 +80,18 @@ class ContentViewModel : ViewModel() {
     val onboardingMintState: StateFlow<OnboardingMintState> = _onboardingMintState.asStateFlow()
 
     /**
-     * State for the standalone entry-point demos ([FrameAddPaymentMethodView],
-     * [FrameAddPayoutMethodView], [FrameSelectPayoutMethodView]) — resolves the first available
-     * account and mints a session for it, same as [onboardingMintState] does for the full flow.
+     * The account every demo entry point acts on, mirroring the iOS example app's single
+     * `viewModel.accountId`: the account-ID field, onboarding, the standalone entry-point demos
+     * (add payment method, add payout method, select payout method), Plaid, and Google Pay all
+     * read and write this one value instead of each resolving their own account independently.
+     * Starts blank; onboarding a new applicant (or typing a valid id) fills it in.
      */
-    private val _demoAccountState = MutableStateFlow<DemoAccountState>(DemoAccountState.Idle)
-    val demoAccountState: StateFlow<DemoAccountState> = _demoAccountState.asStateFlow()
+    private val _accountId = MutableStateFlow("")
+    val accountId: StateFlow<String> = _accountId.asStateFlow()
 
-    /** Counts [mintDemoAccount] calls so a slow mint that resolves after a newer one started cannot clobber it. */
-    private var demoAccountRequestId = 0
+    fun setAccountId(accountId: String) {
+        _accountId.value = accountId
+    }
 
     init {
         viewModelScope.launch {
@@ -150,10 +141,10 @@ class ContentViewModel : ViewModel() {
      * example app does it inline only because it is configured with an `sk_`.
      */
     @Suppress("DEPRECATION")
-    fun mintOnboardingClientSecret(accountId: String?) {
+    fun mintOnboardingClientSecret(accountIdInput: String?) {
         _onboardingMintState.value = OnboardingMintState.Loading
         viewModelScope.launch {
-            val resolvedAccountId = accountId?.takeIf { it.isNotBlank() } ?: run {
+            val resolvedAccountId = accountIdInput?.takeIf { it.isNotBlank() } ?: run {
                 val (account, err) = createEmptyIndividualAccount()
                 account?.id ?: run {
                     _onboardingMintState.value = OnboardingMintState.Error(
@@ -174,6 +165,7 @@ class ContentViewModel : ViewModel() {
             val (session, sessionError) = OnboardingSessionsAPI.createOnboardingSession(request)
             val clientSecret = session?.clientSecret
             _onboardingMintState.value = if (clientSecret != null) {
+                _accountId.value = resolvedAccountId
                 OnboardingMintState.Ready(clientSecret, resolvedAccountId)
             } else {
                 OnboardingMintState.Error(
@@ -200,63 +192,16 @@ class ContentViewModel : ViewModel() {
         _onboardingMintState.value = OnboardingMintState.Idle
     }
 
-    /**
-     * Demo/testing only: resolves the first available account and mints an onboarding-session
-     * token for it, so the standalone entry-point demos (add payment method, add payout method,
-     * select payout method) have an `accountId` and `clientSecret` to launch with. Same caveat as
-     * [mintOnboardingClientSecret] — production integrations mint this token from their backend.
-     *
-     * Scoped to [OnboardingSessionStep.PAYMENT_METHOD] for all three demos: that's the only step
-     * this endpoint exposes that covers adding a funding source, and there's no separate payout
-     * step to request — Frame models a bank account as another payment-method type server-side.
-     */
-    fun mintDemoAccount() {
-        val requestId = ++demoAccountRequestId
-        _demoAccountState.value = DemoAccountState.Loading
-        viewModelScope.launch {
-            val (accountsResponse, accountsError) = AccountsAPI.getAccounts(perPage = 1, page = 1)
-            val accountId = accountsResponse?.data?.firstOrNull()?.id
-            if (accountId == null) {
-                if (requestId == demoAccountRequestId) {
-                    _demoAccountState.value = DemoAccountState.Error(
-                        accountsError?.let { "Couldn't load an account: $it" }
-                            ?: "No accounts available. Create an account first."
-                    )
-                }
-                return@launch
-            }
-            val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(
-                accountId = accountId,
-                steps = listOf(OnboardingSessionRequests.OnboardingSessionStep.PAYMENT_METHOD)
-            )
-            val (session, _) = OnboardingSessionsAPI.createOnboardingSession(request)
-            // A missing clientSecret isn't fatal here — these views fall back to the configured
-            // sk_/pk_ when clientSecret is null, unlike the full onboarding flow.
-            if (requestId == demoAccountRequestId) {
-                _demoAccountState.value = DemoAccountState.Ready(accountId, session?.clientSecret)
-            }
-        }
-    }
-
-    /** Resets the demo-account flow to [DemoAccountState.Idle] so the next launch mints a fresh session. */
-    fun clearDemoAccount() {
-        ++demoAccountRequestId
-        _demoAccountState.value = DemoAccountState.Idle
-    }
-
     fun startPlaidLink() {
         if (_plaidService.value?.isConnecting?.value == true) return
+        val accountId = _accountId.value.takeIf { it.isNotBlank() } ?: run {
+            _plaidMessage.value = PlaidMessage(
+                title = "Plaid",
+                body = "No account set. Onboard or enter an account ID first."
+            )
+            return
+        }
         viewModelScope.launch {
-            val (accountsResponse, accountsErr) = AccountsAPI.getAccounts(perPage = 1, page = 1)
-            val account = accountsResponse?.data?.firstOrNull()
-            val accountId = account?.id
-            if (account == null || accountId == null) {
-                _plaidMessage.value = PlaidMessage(
-                    title = "Plaid",
-                    body = "No accounts found (${accountsErr ?: "empty list"})"
-                )
-                return@launch
-            }
             val service = PlaidLinkService(accountId)
             _plaidService.value = service
             service.fetchLinkToken()
