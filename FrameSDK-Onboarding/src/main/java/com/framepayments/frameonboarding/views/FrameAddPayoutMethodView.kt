@@ -39,7 +39,10 @@ fun FrameAddPayoutMethodView(
     clientSecret: String? = null,
     onResult: (FrameResult) -> Unit = {}
 ) {
-    val viewModel = remember {
+    // Keyed on accountId/clientSecret: a keyless remember would keep the first VM instance (and
+    // its captured OnboardingConfig) across a recomposition that passes a different account,
+    // silently continuing to operate on the old one.
+    val viewModel = remember(accountId, clientSecret) {
         FrameOnboardingViewModel(OnboardingConfig(accountId = accountId, clientSecret = clientSecret))
     }
     val snackbarHostState = remember { SnackbarHostState() }

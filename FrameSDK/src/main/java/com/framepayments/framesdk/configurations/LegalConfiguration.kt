@@ -16,13 +16,27 @@ object LegalConfiguration {
     private const val FALLBACK_PLATFORM_AGREEMENT_URL = "https://framepayments.com/legal/platform-agreement"
     private const val FALLBACK_CBC_TERMS_URL = "https://framepayments.com/legal/cbc-terms-and-conditions"
 
+    // Memoized after the first successful read: `SecureConfigurationStorage.retrieve` rebuilds
+    // EncryptedSharedPreferences (and its Keystore-backed MasterKey) on every call, so reading it
+    // synchronously from every accessor below -- as these are commonly read during Compose
+    // composition -- repeated that cost on every recomposition instead of once.
+    @Volatile
+    private var memoized: ConfigurationResponses.GetLegalConfigurationResponse? = null
+
     /** Fetches and caches the legal configuration. Call once at SDK init so the accessors below have a warm cache. */
     suspend fun prefetch() {
-        ConfigurationAPI.getLegalConfiguration()
+        memoized = ConfigurationAPI.getLegalConfiguration() ?: memoized
     }
 
-    private fun cached(): ConfigurationResponses.GetLegalConfigurationResponse? =
-        SecureConfigurationStorage.retrieve(FrameNetworking.getContext(), "legal")
+    private fun cached(): ConfigurationResponses.GetLegalConfigurationResponse? {
+        memoized?.let { return it }
+        val fromStorage = SecureConfigurationStorage.retrieve<ConfigurationResponses.GetLegalConfigurationResponse>(
+            FrameNetworking.getContext(),
+            "legal"
+        )
+        if (fromStorage != null) memoized = fromStorage
+        return fromStorage
+    }
 
     private fun url(raw: String?, fallback: String): String = raw?.takeIf { it.isNotBlank() } ?: fallback
 

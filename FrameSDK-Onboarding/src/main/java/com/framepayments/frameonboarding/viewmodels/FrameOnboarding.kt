@@ -1804,7 +1804,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
     }
 
-    /// Append a wallet-created payment method (Google Pay) to the in-memory list and select it.
+    /// Append a wallet-created payment method (Google Pay) to the in-memory list, select it, and
+    /// advance — mirrors submitNewPaymentMethod()'s own explicit moveNext() after a successful
+    /// add, rather than leaving the caller to call onBack()/onContinue() itself. In the onboarding
+    /// step router that is what actually advances past this screen; in the standalone
+    /// FrameAddPaymentMethodView it is a no-op result nothing reads, since that host instead
+    /// reacts to onboardingData.selectedPaymentMethodId, set synchronously below.
     /// Used by `AddPaymentMethodScreen` after a successful `FrameGooglePayButton` AddToOwner flow.
     fun appendNewlyAddedPaymentMethod(paymentMethod: FrameObjects.PaymentMethod) {
         val paymentMethodId = paymentMethod.id ?: return
@@ -1816,6 +1821,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             exp = "${paymentMethod.card?.expirationMonth ?: ""}/${paymentMethod.card?.expirationYear?.takeLast(2) ?: ""}"
         )
         clearAccountDetails()
+        moveNext()
     }
 
     // endregion

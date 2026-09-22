@@ -151,8 +151,13 @@ internal fun AddPaymentMethodScreen(
                             onResult = { result ->
                                 when (result) {
                                     is FrameGooglePayButton.Result.PaymentMethodCreated -> {
+                                        // appendNewlyAddedPaymentMethod() advances on its own
+                                        // (mirrors the card-entry path's own moveNext() call) —
+                                        // calling onBack() here raced that: in the onboarding-step
+                                        // router it moved backward instead of forward, and in the
+                                        // standalone view it could fire Cancelled before the
+                                        // reactive Completed effect ever saw the new state.
                                         viewModel.appendNewlyAddedPaymentMethod(result.paymentMethod)
-                                        onBack()
                                     }
                                     is FrameGooglePayButton.Result.Failure -> {
                                         // Transport failures already surfaced via FrameSnackbarController

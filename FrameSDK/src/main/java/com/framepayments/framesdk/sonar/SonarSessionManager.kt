@@ -339,10 +339,15 @@ class SessionManager(
          * this manager makes, not just once here — see [SessionManager]'s `identify` parameter.
          */
         suspend fun initializeWithFrameNetworking(context: Context, accountId: String? = null): SessionManager {
+            // SharedPreferencesSessionStorage.key() already treats "" the same as null (both map
+            // to the legacy anonymous-session key) -- normalize here too, or a caller passing ""
+            // takes the account-scoped ensureSession("") path instead, starting an
+            // account-keep-alive session and sending account_id="" to the server.
+            val resolvedAccountId = accountId?.takeIf { it.isNotEmpty() }
             val appContext = context.applicationContext
             val prefs = appContext.getSharedPreferences("sonar_sessions", Context.MODE_PRIVATE)
             val storage = SharedPreferencesSessionStorage(prefs)
-            val existingSessionId = storage.get(accountId)
+            val existingSessionId = storage.get(resolvedAccountId)
 
             val manager = SessionManager(
                 sessionId = existingSessionId,
@@ -350,8 +355,8 @@ class SessionManager(
                 identify = { FingerprintManager.identify(appContext) }
             )
 
-            if (accountId != null) {
-                manager.ensureSession(accountId)
+            if (resolvedAccountId != null) {
+                manager.ensureSession(resolvedAccountId)
             } else {
                 manager.initialize()
             }
