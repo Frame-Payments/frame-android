@@ -187,23 +187,29 @@ sealed class OnboardingResult {
     data object Cancelled : OnboardingResult()
 
     /**
-     * All required capability steps were completed.
+     * All required capability steps were completed and every one was granted.
      *
      * @property paymentMethodId ID of the payment method added during the flow, if any.
+     * @property accountId ID of the onboarded Frame account. Needed to scope follow-up calls,
+     *   and present even when no payment method was added.
      */
     data class Completed(
-        val paymentMethodId: String?
+        val paymentMethodId: String?,
+        val accountId: String? = null
     ) : OnboardingResult()
 
     /**
      * The flow ran to completion but the applicant was not approved.
      *
      * @property paymentMethodId ID of the payment method added during the flow, if any.
+     * @property accountId ID of the onboarded Frame account. Still returned — the account
+     *   exists and the host needs it to scope a retry or a status check.
      * @property outcome The applicant's actual verification status.
      */
     data class FinishedUnverified(
         val paymentMethodId: String?,
-        val outcome: OnboardingOutcome
+        val outcome: OnboardingOutcome,
+        val accountId: String? = null
     ) : OnboardingResult()
 
     /**

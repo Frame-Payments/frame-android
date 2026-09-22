@@ -121,6 +121,10 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
             // onSurface are pulled from the FrameTheme tokens so customer overrides
             // (or the values-night dark variants) flow through to the input contents.
             val isDark = isSystemInDarkTheme()
+            // Every surface-family slot is overridden, not just `surface`: a text field draws
+            // its container from `surfaceVariant` and its containers from `surfaceContainer*`,
+            // all of which default to Material 3's purple-tinted baseline. Leaving them unset
+            // is what put a purple block behind the card input.
             val scheme = if (isDark) {
                 darkColorScheme(
                     primary = accentColor,
@@ -130,7 +134,15 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
                     tertiary = accentColor,
                     surface = surfaceColor,
                     onSurface = textPrimaryColor,
+                    surfaceVariant = surfaceColor,
                     onSurfaceVariant = textSecondaryColor,
+                    surfaceContainer = surfaceColor,
+                    surfaceContainerHigh = surfaceColor,
+                    surfaceContainerHighest = surfaceColor,
+                    surfaceContainerLow = surfaceColor,
+                    surfaceContainerLowest = surfaceColor,
+                    outline = surfaceStrokeColor,
+                    outlineVariant = surfaceStrokeColor,
                     background = surfaceColor,
                     onBackground = textPrimaryColor,
                 )
@@ -143,7 +155,15 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
                     tertiary = accentColor,
                     surface = surfaceColor,
                     onSurface = textPrimaryColor,
+                    surfaceVariant = surfaceColor,
                     onSurfaceVariant = textSecondaryColor,
+                    surfaceContainer = surfaceColor,
+                    surfaceContainerHigh = surfaceColor,
+                    surfaceContainerHighest = surfaceColor,
+                    surfaceContainerLow = surfaceColor,
+                    surfaceContainerLowest = surfaceColor,
+                    outline = surfaceStrokeColor,
+                    outlineVariant = surfaceStrokeColor,
                     background = surfaceColor,
                     onBackground = textPrimaryColor,
                 )

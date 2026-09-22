@@ -1,6 +1,7 @@
 package com.framepayments.frameonboarding.viewmodels
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.framepayments.frameonboarding.classes.Capabilities
@@ -91,7 +92,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     /** Mirrors iOS `OnboardingContainerViewModel.requiredCapabilities` (shrinks as capabilities complete). */
     val requiredCapabilities: StateFlow<List<Capabilities>> = _requiredCapabilities.asStateFlow()
 
-    private var lastKnownCapabilities: List<CapabilityObjects.Capability> = emptyList()
+    /**
+     * What the host asked for, fixed for the life of the flow. Distinct from
+     * [requiredCapabilities], which shrinks as capabilities are granted: a UI gate or validator
+     * keyed off the shrinking list silently switches itself off mid-flow — that is what stopped
+     * the date-of-birth field being collected once `kyc_prefill` was satisfied. Mirrors iOS
+     * `originallyRequiredCapabilities`.
+     */
+    val originallyRequiredCapabilities: List<Capabilities> = config.requiredCapabilities.toList()
 
     /** API string values for [_requiredCapabilities] (e.g. `"kyc_prefill"`). */
     private fun requiredCapabilityApiStrings(): List<String> =
@@ -409,6 +417,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         val errors = mutableMapOf<OnboardingField, String>()
         Validators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
             ?.let { errors[OnboardingField.AUTH_PHONE] = it }
+        // Matches iOS, which also reads the live list here: this runs on the phone-auth step,
+        // before any capability can have been granted and drained.
         if (_requiredCapabilities.value.contains(Capabilities.KYC_PREFILL)) {
             Validators.validateDateOfBirth(
                 year = _dobYear.value,
@@ -483,7 +493,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     private suspend fun updateCapabilitiesBasedOnCompletion(accountCaps: List<CapabilityObjects.Capability>) {
-        lastKnownCapabilities = accountCaps
         val mutable = _requiredCapabilities.value.toMutableList()
         for (cap in accountCaps) {
             val enumCap = Capabilities.entries.find { it.apiValue == cap.name } ?: continue
@@ -543,15 +552,34 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
     }
 
-    /** Refetches capabilities before resolving the outcome — [lastKnownCapabilities] may be stale or never fetched. */
+    /**
+     * Resolves the applicant's real outcome from a fresh account fetch.
+     *
+     * Deliberately not routed through [checkExistingAccount]: that returns early when the
+     * server withholds `profile` (it is PII-gated, so a publishable-key host never sees it)
+     * and again when capabilities aren't yet a superset, either of which would leave
+     * capabilities unread and make a passing run resolve as unverified. Capabilities are not
+     * PII-gated, so reading them directly always works. Mirrors iOS `resolveFinalOutcome()`.
+     */
+    private suspend fun resolveFinalOutcome(): OnboardingOutcome {
+        val accountId = _resolvedAccountId.value ?: return OnboardingOutcome.PendingReview
+        val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
+        val capabilities = account?.capabilities ?: return OnboardingOutcome.PendingReview
+        return OnboardingOutcome.resolve(capabilities, config.requiredCapabilities.toList())
+    }
+
     private suspend fun finishOnboarding() {
-        checkExistingAccount(updateCapabilities = true)
+        val outcome = resolveFinalOutcome()
         val paymentMethodId = _onboardingData.value.selectedPaymentMethodId
-        val outcome = OnboardingOutcome.resolve(lastKnownCapabilities, config.requiredCapabilities.toList())
+        val accountId = _resolvedAccountId.value
         _result.value = if (outcome.isSuccess) {
-            OnboardingResult.Completed(paymentMethodId = paymentMethodId)
+            OnboardingResult.Completed(paymentMethodId = paymentMethodId, accountId = accountId)
         } else {
-            OnboardingResult.FinishedUnverified(paymentMethodId = paymentMethodId, outcome = outcome)
+            OnboardingResult.FinishedUnverified(
+                paymentMethodId = paymentMethodId,
+                outcome = outcome,
+                accountId = accountId
+            )
         }
     }
 
@@ -597,9 +625,21 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     private suspend fun refreshAccountProfileIntoOnboarding(accountId: String) {
+        // `profile` is PII-gated: the server withholds it unless the request carries a secret
+        // key or a matching onboarding session. Without a session bound first, a
+        // publishable-key host reads back a profile-less account and silently prefills
+        // nothing — which is what stopped Prove's KYC-prefill data reaching the form.
+        beginOnboardingSessionIfNeeded()
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
         val individual = account?.profile?.individual
         if (individual == null) {
+            if (FrameNetworking.debugMode) {
+                Log.w(
+                    "FrameSDK",
+                    "Account $accountId returned no profile, so there is nothing to prefill. The " +
+                        "profile is PII-gated — check that an onboarding session is active for this account."
+                )
+            }
             _onboardingData.update { it.copy(resolvedAccountId = account?.id ?: accountId) }
             return
         }

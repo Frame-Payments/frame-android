@@ -93,10 +93,9 @@ fun FrameSelectPayoutMethodView(
                 SelectPayoutMethodScreen(
                     savedMethods = savedPayoutMethods,
                     selectedId = onboardingData.selectedPayoutMethodId,
-                    onSelect = { id ->
-                        viewModel.onPayoutMethodSelected(id)
-                        finish(FrameResult.Completed(id))
-                    },
+                    // Selecting only selects — the flow completes on Continue, so the applicant
+                    // can change their mind before committing.
+                    onSelect = { id -> viewModel.onPayoutMethodSelected(id) },
                     onAddPayout = { showAddPayout = true },
                     onBack = { finish(FrameResult.Cancelled) },
                     onContinue = {

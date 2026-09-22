@@ -87,14 +87,15 @@ internal fun UserIdentificationView(
     val termsToken by viewModel.termsOfServiceToken.collectAsState()
     val onboardingData by viewModel.onboardingData.collectAsState()
     val fieldErrors by viewModel.fieldErrors.collectAsState()
-    val requiredCapabilities by viewModel.requiredCapabilities.collectAsState()
     val personaInquiryToLaunch by viewModel.personaInquiryToLaunch.collectAsState()
     val isVerifyingGovId by viewModel.isVerifyingGovId.collectAsState()
     val context = LocalContext.current
 
-    // Show the no-SSN government-ID path only when KYC is required (the same gate as the SSN field).
-    val showGovIdVerification = requiredCapabilities.contains(Capabilities.KYC) ||
-        requiredCapabilities.contains(Capabilities.KYC_PREFILL)
+    // Show the no-SSN government-ID path only when KYC is required (the same gate as the SSN
+    // field). Keyed off what the host originally asked for, not the shrinking live list — the
+    // latter drops a capability the moment it's granted, hiding the field mid-flow.
+    val showGovIdVerification = viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC) ||
+        viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL)
 
     // Persona result launcher. Lifecycle-owned here (the VM can't launch an ActivityResult); the
     // callback forwards the (best-effort) client outcome to the VM, which confirms with the server.
