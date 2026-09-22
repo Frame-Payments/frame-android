@@ -1,7 +1,13 @@
 package com.framepayments.framesdk.transfers
 
 import com.framepayments.framesdk.FrameObjects
+import com.google.gson.TypeAdapter
+import com.google.gson.TypeAdapterFactory
 import com.google.gson.annotations.SerializedName
+import com.google.gson.reflect.TypeToken
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
+import com.google.gson.stream.JsonWriter
 
 /**
  * Represents the lifecycle status of a transfer.
@@ -54,7 +60,44 @@ enum class TransferStatus {
 
     /** Not an API status. Use [FRAUD_DECLINED] or [FAILED]. Retained so existing call sites keep compiling. */
     @Deprecated("Not an API status. Use FRAUD_DECLINED or FAILED.")
-    @SerializedName("blocked") BLOCKED
+    @SerializedName("blocked") BLOCKED;
+
+    /** Lookup support for [TransferStatusAdapter]. */
+    companion object {
+        private val byWireValue: Map<String, TransferStatus> = entries.associateBy { status ->
+            TransferStatus::class.java.getField(status.name)
+                .getAnnotation(SerializedName::class.java)?.value ?: status.name
+        }
+
+        /** Resolves a wire value to its status, or [UNKNOWN] when unrecognized or null. */
+        internal fun fromWireValue(value: String?): TransferStatus =
+            value?.let { byWireValue[it] } ?: UNKNOWN
+    }
+}
+
+/**
+ * Maps unrecognized [TransferStatus] wire values to [TransferStatus.UNKNOWN] instead of letting
+ * Gson's default enum adapter deserialize them as null — a status this SDK version doesn't
+ * recognize must still read as "not a known success/confirm state" everywhere status is checked.
+ */
+internal object TransferStatusAdapter : TypeAdapterFactory {
+    override fun <T> create(gson: com.google.gson.Gson, type: TypeToken<T>): TypeAdapter<T>? {
+        if (type.rawType != TransferStatus::class.java) return null
+        @Suppress("UNCHECKED_CAST")
+        return object : TypeAdapter<TransferStatus>() {
+            override fun write(out: JsonWriter, value: TransferStatus?) {
+                out.value(value?.name?.lowercase())
+            }
+
+            override fun read(input: JsonReader): TransferStatus {
+                if (input.peek() == JsonToken.NULL) {
+                    input.nextNull()
+                    return TransferStatus.UNKNOWN
+                }
+                return TransferStatus.fromWireValue(input.nextString())
+            }
+        } as TypeAdapter<T>
+    }
 }
 
 /**

@@ -173,48 +173,48 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAuthMode` | sealed class | `sealed class FrameAuthMode` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L49) |
-| `FrameAuthMode.Publishable` | object | `object Publishable : FrameAuthMode()` | [51](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L51) |
-| `FrameAuthMode.Secret` | object | `object Secret : FrameAuthMode()` | [54](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L54) |
-| `FrameAuthMode.ClientSecret` | data class | `data class ClientSecret(val token: String) : FrameAuthMode()` | [64](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L64) |
-| `DefaultURLSession` | class | `class DefaultURLSession(private val client: OkHttpClient) : URLSessionProtocol` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L68) |
-| `DefaultURLSession.execute` | fun | `fun execute(request: Request): Response = withContext(Dispatchers.IO)` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L69) |
-| `FrameNetworking` | object | `object FrameNetworking` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L87) |
-| `FrameNetworking.gson` | val | `val gson: Gson = GsonBuilder()` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L89) |
-| `FrameNetworking.okHttpClient` | val | `val okHttpClient: OkHttpClient by lazy` | [94](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L94) |
-| `FrameNetworking.asyncURLSession` | var | `var asyncURLSession: URLSessionProtocol = DefaultURLSession(okHttpClient)` | [104](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L104) |
-| `FrameNetworking.mainApiUrl` | var | `var mainApiUrl: String = NetworkingConstants.MAIN_API_URL` | [107](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L107) |
-| `FrameNetworking.CURRENT_VERSION` | val | `val CURRENT_VERSION = BuildConfig.SDK_VERSION` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L110) |
-| `FrameNetworking.eventPlatform` | var | `var eventPlatform: String =` | [128](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L128) |
-| `FrameNetworking.hostSDKVersion` | var | `var hostSDKVersion: String? = null` | [132](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L132) |
-| `FrameNetworking.setHostSDKInfo` | fun | `fun setHostSDKInfo(platform: String, version: String)` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L146) |
-| `FrameNetworking.apiSecretKey` | var | `var apiSecretKey: String =` | [152](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L152) |
-| `FrameNetworking.apiPublishableKey` | var | `var apiPublishableKey: String =` | [155](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L155) |
-| `FrameNetworking.debugMode` | var | `var debugMode: Boolean = false` | [158](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L158) |
-| `FrameNetworking.accountId` | var | `var accountId: String? = null` | [177](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L177) |
-| `FrameNetworking.setAccountIdIfUnset` | fun | `fun setAccountIdIfUnset(accountId: String?)` | [189](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L189) |
-| `FrameNetworking.isEvervaultConfigured` | var | `var isEvervaultConfigured: Boolean = false` | [196](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L196) |
-| `FrameNetworking.googlePayMerchantId` | var | `var googlePayMerchantId: String? = null` | [202](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L202) |
-| `FrameNetworking.initializeWithAPIKey` | fun | `fun initializeWithAPIKey( context: Context, secretKey: String, publishableKey: String, accountId: String? = null, googlePayMerchantId: String? = null, debug: B…` | [220](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L220) |
-| `FrameNetworking.currentSonarSessionId` | fun | `fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()` | [291](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L291) |
-| `FrameNetworking.sonarSessionManagerOrNull` | fun | `fun sonarSessionManagerOrNull(): SonarSessionManager? = sonarSessionManager` | [294](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L294) |
-| `FrameNetworking.getContext` | fun | `fun getContext(): Context` | [301](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L301) |
-| `FrameNetworking.beginOnboardingSession` | fun | `fun beginOnboardingSession(clientSecret: String)` | [330](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L330) |
-| `FrameNetworking.endOnboardingSession` | fun | `fun endOnboardingSession(clientSecret: String? = null)` | [353](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L353) |
-| `FrameNetworking.hasActiveOnboardingSession` | val | `val hasActiveOnboardingSession: Boolean` | [363](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L363) |
-| `FrameNetworking.<reified T> parseResponse(data: ByteArra` | fun | `fun <reified T> parseResponse(data: ByteArray?): T?` | [425](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L425) |
-| `FrameNetworking.<reified T> parseListResponse(data: Byte` | fun | `fun <reified T> parseListResponse(data: ByteArray?): List<T>?` | [443](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L443) |
-| `FrameNetworking.performDataTask` | fun | `fun performDataTask( endpoint: FrameNetworkingEndpoints, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray?, NetworkingError?>` | [462](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L462) |
-| `FrameNetworking.performDataTaskWithRequest` | fun | `fun performDataTaskWithRequest( endpoint: FrameNetworkingEndpoints, request: Any? = null, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray?, Networ…` | [516](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L516) |
-| `FrameNetworking.performMultipartDataTask` | fun | `fun performMultipartDataTask( endpoint: FrameNetworkingEndpoints, filesToUpload: List<FileUpload>, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray…` | [589](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L589) |
-| `FrameNetworking.performMultipartDataTask` | fun | `fun performMultipartDataTask( endpoint: FrameNetworkingEndpoints, filesToUpload: List<FileUpload>, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (dat…` | [645](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L645) |
-| `FrameNetworking.performDataTask` | fun | `fun performDataTask( endpoint: FrameNetworkingEndpoints, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (data: ByteArray?, error: NetworkingError?) ->…` | [697](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L697) |
-| `FrameNetworking.<T> performDataTaskWithRequest( endpoint` | fun | `fun <T> performDataTaskWithRequest( endpoint: FrameNetworkingEndpoints, request: T? = null, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (data: Byte…` | [747](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L747) |
-| `FrameNetworking.applyEvervaultConfiguration` | fun | `fun applyEvervaultConfiguration(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean` | [824](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L824) |
-| `FrameNetworking.configureEvervault` | fun | `fun configureEvervault()` | [843](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L843) |
-| `FrameNetworking.ensureEvervaultReadyForCardInputs` | fun | `fun ensureEvervaultReadyForCardInputs(): Boolean = withContext(Dispatchers.IO)` | [859](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L859) |
-| `EvervaultConfigurator` | object | `object EvervaultConfigurator` | [878](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L878) |
-| `EvervaultConfigurator.ensureConfigured` | fun | `fun ensureConfigured(): Boolean` | [888](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L888) |
+| `FrameAuthMode` | sealed class | `sealed class FrameAuthMode` | [50](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L50) |
+| `FrameAuthMode.Publishable` | object | `object Publishable : FrameAuthMode()` | [52](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L52) |
+| `FrameAuthMode.Secret` | object | `object Secret : FrameAuthMode()` | [55](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L55) |
+| `FrameAuthMode.ClientSecret` | data class | `data class ClientSecret(val token: String) : FrameAuthMode()` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L65) |
+| `DefaultURLSession` | class | `class DefaultURLSession(private val client: OkHttpClient) : URLSessionProtocol` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L69) |
+| `DefaultURLSession.execute` | fun | `fun execute(request: Request): Response = withContext(Dispatchers.IO)` | [70](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L70) |
+| `FrameNetworking` | object | `object FrameNetworking` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L88) |
+| `FrameNetworking.gson` | val | `val gson: Gson = GsonBuilder()` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L90) |
+| `FrameNetworking.okHttpClient` | val | `val okHttpClient: OkHttpClient by lazy` | [96](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L96) |
+| `FrameNetworking.asyncURLSession` | var | `var asyncURLSession: URLSessionProtocol = DefaultURLSession(okHttpClient)` | [106](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L106) |
+| `FrameNetworking.mainApiUrl` | var | `var mainApiUrl: String = NetworkingConstants.MAIN_API_URL` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L109) |
+| `FrameNetworking.CURRENT_VERSION` | val | `val CURRENT_VERSION = BuildConfig.SDK_VERSION` | [112](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L112) |
+| `FrameNetworking.eventPlatform` | var | `var eventPlatform: String =` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L130) |
+| `FrameNetworking.hostSDKVersion` | var | `var hostSDKVersion: String? = null` | [134](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L134) |
+| `FrameNetworking.setHostSDKInfo` | fun | `fun setHostSDKInfo(platform: String, version: String)` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L148) |
+| `FrameNetworking.apiSecretKey` | var | `var apiSecretKey: String =` | [154](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L154) |
+| `FrameNetworking.apiPublishableKey` | var | `var apiPublishableKey: String =` | [157](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L157) |
+| `FrameNetworking.debugMode` | var | `var debugMode: Boolean = false` | [160](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L160) |
+| `FrameNetworking.accountId` | var | `var accountId: String? = null` | [179](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L179) |
+| `FrameNetworking.setAccountIdIfUnset` | fun | `fun setAccountIdIfUnset(accountId: String?)` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L191) |
+| `FrameNetworking.isEvervaultConfigured` | var | `var isEvervaultConfigured: Boolean = false` | [198](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L198) |
+| `FrameNetworking.googlePayMerchantId` | var | `var googlePayMerchantId: String? = null` | [204](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L204) |
+| `FrameNetworking.initializeWithAPIKey` | fun | `fun initializeWithAPIKey( context: Context, secretKey: String, publishableKey: String, accountId: String? = null, googlePayMerchantId: String? = null, debug: B…` | [222](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L222) |
+| `FrameNetworking.currentSonarSessionId` | fun | `fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()` | [293](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L293) |
+| `FrameNetworking.sonarSessionManagerOrNull` | fun | `fun sonarSessionManagerOrNull(): SonarSessionManager? = sonarSessionManager` | [296](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L296) |
+| `FrameNetworking.getContext` | fun | `fun getContext(): Context` | [303](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L303) |
+| `FrameNetworking.beginOnboardingSession` | fun | `fun beginOnboardingSession(clientSecret: String)` | [332](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L332) |
+| `FrameNetworking.endOnboardingSession` | fun | `fun endOnboardingSession(clientSecret: String? = null)` | [355](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L355) |
+| `FrameNetworking.hasActiveOnboardingSession` | val | `val hasActiveOnboardingSession: Boolean` | [365](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L365) |
+| `FrameNetworking.<reified T> parseResponse(data: ByteArra` | fun | `fun <reified T> parseResponse(data: ByteArray?): T?` | [427](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L427) |
+| `FrameNetworking.<reified T> parseListResponse(data: Byte` | fun | `fun <reified T> parseListResponse(data: ByteArray?): List<T>?` | [445](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L445) |
+| `FrameNetworking.performDataTask` | fun | `fun performDataTask( endpoint: FrameNetworkingEndpoints, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray?, NetworkingError?>` | [464](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L464) |
+| `FrameNetworking.performDataTaskWithRequest` | fun | `fun performDataTaskWithRequest( endpoint: FrameNetworkingEndpoints, request: Any? = null, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray?, Networ…` | [518](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L518) |
+| `FrameNetworking.performMultipartDataTask` | fun | `fun performMultipartDataTask( endpoint: FrameNetworkingEndpoints, filesToUpload: List<FileUpload>, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray…` | [591](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L591) |
+| `FrameNetworking.performMultipartDataTask` | fun | `fun performMultipartDataTask( endpoint: FrameNetworkingEndpoints, filesToUpload: List<FileUpload>, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (dat…` | [647](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L647) |
+| `FrameNetworking.performDataTask` | fun | `fun performDataTask( endpoint: FrameNetworkingEndpoints, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (data: ByteArray?, error: NetworkingError?) ->…` | [699](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L699) |
+| `FrameNetworking.<T> performDataTaskWithRequest( endpoint` | fun | `fun <T> performDataTaskWithRequest( endpoint: FrameNetworkingEndpoints, request: T? = null, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (data: Byte…` | [749](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L749) |
+| `FrameNetworking.applyEvervaultConfiguration` | fun | `fun applyEvervaultConfiguration(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean` | [826](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L826) |
+| `FrameNetworking.configureEvervault` | fun | `fun configureEvervault()` | [845](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L845) |
+| `FrameNetworking.ensureEvervaultReadyForCardInputs` | fun | `fun ensureEvervaultReadyForCardInputs(): Boolean = withContext(Dispatchers.IO)` | [861](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L861) |
+| `EvervaultConfigurator` | object | `object EvervaultConfigurator` | [880](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L880) |
+| `EvervaultConfigurator.ensureConfigured` | fun | `fun ensureConfigured(): Boolean` | [890](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L890) |
 
 </details>
 
@@ -244,8 +244,8 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `LenientFieldTypeAdapterFactory` | object | `object LenientFieldTypeAdapterFactory : TypeAdapterFactory` | [22](FrameSDK/src/main/java/com/framepayments/framesdk/LenientFieldTypeAdapterFactory.kt#L22) |
-| `LenientFieldTypeAdapterFactory.<T> create(gson: Gson, type: TypeToken<T` | fun | `fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>?` | [23](FrameSDK/src/main/java/com/framepayments/framesdk/LenientFieldTypeAdapterFactory.kt#L23) |
+| `LenientFieldTypeAdapterFactory` | object | `object LenientFieldTypeAdapterFactory : TypeAdapterFactory` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/LenientFieldTypeAdapterFactory.kt#L32) |
+| `LenientFieldTypeAdapterFactory.<T> create(gson: Gson, type: TypeToken<T` | fun | `fun <T> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>?` | [33](FrameSDK/src/main/java/com/framepayments/framesdk/LenientFieldTypeAdapterFactory.kt#L33) |
 
 </details>
 
@@ -453,8 +453,8 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `AccountEventQueue` | class | `class AccountEventQueue(` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventQueue.kt#L32) |
-| `shared` | val | `val shared = AccountEventQueue()` | [46](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventQueue.kt#L46) |
+| `AccountEventQueue` | class | `class AccountEventQueue(` | [33](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventQueue.kt#L33) |
+| `shared` | val | `val shared = AccountEventQueue()` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventQueue.kt#L47) |
 
 </details>
 
@@ -941,13 +941,13 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameThreeDSecureChallengeResult` | enum | `enum FrameThreeDSecureChallengeResult` | [6](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L6) |
-| `FrameThreeDSecureChallengeResult.COMPLETED` | entry | `entry COMPLETED` | [8](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L8) |
-| `FrameThreeDSecureChallengeResult.FAILED` | entry | `entry FAILED` | [11](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L11) |
-| `FrameThreeDSecureChallengeResult.UNAVAILABLE` | entry | `entry UNAVAILABLE` | [14](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L14) |
-| `FrameThreeDSecureChallengePresenting` | interface | `interface FrameThreeDSecureChallengePresenting` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L18) |
-| `FrameThreeDSecureChallengePresenting.presentChallenge` | fun | `fun presentChallenge(challenge: UseFrameSDK, intent: ChargeIntent): FrameThreeDSecureChallengeResult` | [20](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L20) |
-| `ChargeIntentConfirmation` | class | `class ChargeIntentConfirmation(` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L29) |
+| `FrameThreeDSecureChallengeResult` | enum | `enum FrameThreeDSecureChallengeResult` | [7](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L7) |
+| `FrameThreeDSecureChallengeResult.COMPLETED` | entry | `entry COMPLETED` | [9](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L9) |
+| `FrameThreeDSecureChallengeResult.FAILED` | entry | `entry FAILED` | [12](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L12) |
+| `FrameThreeDSecureChallengeResult.UNAVAILABLE` | entry | `entry UNAVAILABLE` | [15](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L15) |
+| `FrameThreeDSecureChallengePresenting` | interface | `interface FrameThreeDSecureChallengePresenting` | [19](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L19) |
+| `FrameThreeDSecureChallengePresenting.presentChallenge` | fun | `fun presentChallenge(challenge: UseFrameSDK, intent: ChargeIntent): FrameThreeDSecureChallengeResult` | [21](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L21) |
+| `ChargeIntentConfirmation` | class | `class ChargeIntentConfirmation(` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentConfirmation.kt#L30) |
 
 </details>
 
@@ -1745,10 +1745,10 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `SiftManager` | object | `object SiftManager` | [12](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L12) |
 | `SiftManager.userId` | var | `var userId: String =` | [13](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L13) |
 | `SiftManager.collectLoginEvent` | fun | `fun collectLoginEvent(customerId: String, email: String)` | [15](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L15) |
-| `SiftManager.initializeSift` | fun | `fun initializeSift(userId: String)` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L26) |
-| `SiftManager.getPublicIp` | fun | `fun getPublicIp(): String?` | [67](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L67) |
-| `SiftManager.getIPAddress` | fun | `fun getIPAddress(): String? = getPublicIp()` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L84) |
-| `SiftManager.getCachedIPAddress` | fun | `fun getCachedIPAddress(): String? = cachedPublicIp` | [93](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L93) |
+| `SiftManager.initializeSift` | fun | `fun initializeSift()` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L26) |
+| `SiftManager.getPublicIp` | fun | `fun getPublicIp(): String?` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L65) |
+| `SiftManager.getIPAddress` | fun | `fun getIPAddress(): String? = getPublicIp()` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L82) |
+| `SiftManager.getCachedIPAddress` | fun | `fun getCachedIPAddress(): String? = cachedPublicIp` | [91](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L91) |
 
 </details>
 
@@ -2631,30 +2631,30 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `TransferStatus` | enum | `enum TransferStatus` | [9](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L9) |
-| `TransferStatus.UNKNOWN` | entry | `entry UNKNOWN` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L49) |
-| `Transfer` | data class | `data class Transfer(` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L85) |
-| `Transfer.id` | val | `val id: String?,` | [86](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L86) |
-| `Transfer.status` | val | `val status: TransferStatus?,` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L87) |
-| `Transfer.amount` | val | `val amount: Int?,` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L88) |
-| `Transfer.currency` | val | `val currency: String?,` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L89) |
-| `Transfer.description` | val | `val description: String?,` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L90) |
-| `Transfer.payout` | val | `val payout: String?,` | [91](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L91) |
-| `Transfer.metadata` | val | `val metadata: Map<String, String>?,` | [92](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L92) |
-| `Transfer.livemode` | val | `val livemode: Boolean?,` | [93](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L93) |
-| `Transfer.created` | val | `val created: Int?,` | [94](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L94) |
-| `Transfer.transferObject` | val | `val transferObject: String?,` | [95](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L95) |
-| `Transfer.platformFee` | val | `val platformFee: Int?,` | [96](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L96) |
-| `Transfer.frameFee` | val | `val frameFee: Int?,` | [97](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L97) |
-| `Transfer.totalFees` | val | `val totalFees: Int?,` | [98](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L98) |
-| `Transfer.grossAmount` | val | `val grossAmount: Int?,` | [99](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L99) |
-| `Transfer.netAmount` | val | `val netAmount: Int?,` | [100](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L100) |
-| `Transfer.failureReason` | val | `val failureReason: String?,` | [101](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L101) |
-| `Transfer.chargeIntent` | val | `val chargeIntent: String?,` | [102](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L102) |
-| `Transfer.billingAgreement` | val | `val billingAgreement: String?,` | [103](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L103) |
-| `Transfer.sourcePaymentMethod` | val | `val sourcePaymentMethod: FrameObjects.PaymentMethod?,` | [104](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L104) |
-| `Transfer.destinationPaymentMethod` | val | `val destinationPaymentMethod: FrameObjects.PaymentMethod?,` | [105](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L105) |
-| `Transfer.clientSecret` | val | `val clientSecret: String? = null` | [106](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L106) |
+| `TransferStatus` | enum | `enum TransferStatus` | [15](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L15) |
+| `TransferStatus.UNKNOWN` | entry | `entry UNKNOWN` | [55](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L55) |
+| `Transfer` | data class | `data class Transfer(` | [128](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L128) |
+| `Transfer.id` | val | `val id: String?,` | [129](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L129) |
+| `Transfer.status` | val | `val status: TransferStatus?,` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L130) |
+| `Transfer.amount` | val | `val amount: Int?,` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L131) |
+| `Transfer.currency` | val | `val currency: String?,` | [132](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L132) |
+| `Transfer.description` | val | `val description: String?,` | [133](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L133) |
+| `Transfer.payout` | val | `val payout: String?,` | [134](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L134) |
+| `Transfer.metadata` | val | `val metadata: Map<String, String>?,` | [135](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L135) |
+| `Transfer.livemode` | val | `val livemode: Boolean?,` | [136](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L136) |
+| `Transfer.created` | val | `val created: Int?,` | [137](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L137) |
+| `Transfer.transferObject` | val | `val transferObject: String?,` | [138](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L138) |
+| `Transfer.platformFee` | val | `val platformFee: Int?,` | [139](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L139) |
+| `Transfer.frameFee` | val | `val frameFee: Int?,` | [140](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L140) |
+| `Transfer.totalFees` | val | `val totalFees: Int?,` | [141](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L141) |
+| `Transfer.grossAmount` | val | `val grossAmount: Int?,` | [142](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L142) |
+| `Transfer.netAmount` | val | `val netAmount: Int?,` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L143) |
+| `Transfer.failureReason` | val | `val failureReason: String?,` | [144](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L144) |
+| `Transfer.chargeIntent` | val | `val chargeIntent: String?,` | [145](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L145) |
+| `Transfer.billingAgreement` | val | `val billingAgreement: String?,` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L146) |
+| `Transfer.sourcePaymentMethod` | val | `val sourcePaymentMethod: FrameObjects.PaymentMethod?,` | [147](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L147) |
+| `Transfer.destinationPaymentMethod` | val | `val destinationPaymentMethod: FrameObjects.PaymentMethod?,` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L148) |
+| `Transfer.clientSecret` | val | `val clientSecret: String? = null` | [149](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferObjects.kt#L149) |
 
 </details>
 
@@ -2859,8 +2859,8 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameThreeDSecureChallengePresenter` | class | `class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameThreeDSecureChallengePresenting` | [27](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/ThreeDSecureChallengeDialog.kt#L27) |
-| `FrameThreeDSecureChallengePresenter.presentChallenge` | fun | `fun presentChallenge(challenge: UseFrameSDK, intent: ChargeIntent): FrameThreeDSecureChallengeResult` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/ThreeDSecureChallengeDialog.kt#L38) |
+| `FrameThreeDSecureChallengePresenter` | class | `class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameThreeDSecureChallengePresenting` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/ThreeDSecureChallengeDialog.kt#L30) |
+| `FrameThreeDSecureChallengePresenter.presentChallenge` | fun | `fun presentChallenge(challenge: UseFrameSDK, intent: ChargeIntent): FrameThreeDSecureChallengeResult` | [41](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/ThreeDSecureChallengeDialog.kt#L41) |
 
 </details>
 
@@ -3135,26 +3135,26 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
 | `Validators` | object | `object Validators` | [20](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L20) |
-| `Validators.validateName` | fun | `fun validateName(value: String?): ValidationError?` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L30) |
-| `Validators.validateEmail` | fun | `fun validateEmail(value: String?): ValidationError?` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L43) |
-| `Validators.validateAddressLine1` | fun | `fun validateAddressLine1(value: String?): ValidationError? =` | [55](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L55) |
-| `Validators.validateCity` | fun | `fun validateCity(value: String?): ValidationError? =` | [64](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L64) |
-| `Validators.validateState` | fun | `fun validateState(value: String?): ValidationError? =` | [73](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L73) |
-| `Validators.validateZip` | fun | `fun validateZip(value: String?): ValidationError?` | [82](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L82) |
-| `Validators.validateCountry` | fun | `fun validateCountry(alpha2Code: String?): ValidationError? =` | [93](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L93) |
-| `Validators.validateCard` | fun | `fun validateCard(cardData: PaymentCardData?): ValidationError? =` | [102](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L102) |
-| `Validators.validateNonEmpty` | fun | `fun validateNonEmpty(value: String, fieldName: String): String? =` | [116](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L116) |
-| `Validators.validateFullName` | fun | `fun validateFullName(value: String): String?` | [125](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L125) |
-| `Validators.validateEmailAddress` | fun | `fun validateEmailAddress(value: String): String?` | [138](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L138) |
-| `Validators.validateZipUS` | fun | `fun validateZipUS(value: String): String?` | [150](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L150) |
-| `Validators.validateOnboardingCard` | fun | `fun validateOnboardingCard(data: PaymentCardData?): String?` | [162](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L162) |
-| `Validators.validateCardExpiry` | fun | `fun validateCardExpiry(month: String, year: String): String?` | [177](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L177) |
-| `Validators.validateSSNLast4` | fun | `fun validateSSNLast4(value: String): String?` | [197](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L197) |
-| `Validators.validateRoutingNumberUS` | fun | `fun validateRoutingNumberUS(value: String): String?` | [209](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L209) |
-| `Validators.validateAccountNumberUS` | fun | `fun validateAccountNumberUS(value: String, min: Int = 4, max: Int = 17): String?` | [229](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L229) |
-| `Validators.validateDateOfBirth` | fun | `fun validateDateOfBirth( year: String, month: String, day: String, minAge: Int = 18, maxAge: Int = 120 ): String?` | [248](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L248) |
-| `Validators.validatePostalCode` | fun | `fun validatePostalCode(value: String, countryCode: String): String?` | [306](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L306) |
-| `Validators.validatePhoneE164` | fun | `fun validatePhoneE164(raw: String, regionCode: String): String?` | [324](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L324) |
+| `Validators.validateName` | fun | `fun validateName(value: String?): ValidationError?` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L34) |
+| `Validators.validateEmail` | fun | `fun validateEmail(value: String?): ValidationError?` | [47](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L47) |
+| `Validators.validateAddressLine1` | fun | `fun validateAddressLine1(value: String?): ValidationError? =` | [59](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L59) |
+| `Validators.validateCity` | fun | `fun validateCity(value: String?): ValidationError? =` | [68](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L68) |
+| `Validators.validateState` | fun | `fun validateState(value: String?): ValidationError? =` | [77](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L77) |
+| `Validators.validateZip` | fun | `fun validateZip(value: String?): ValidationError?` | [86](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L86) |
+| `Validators.validateCountry` | fun | `fun validateCountry(alpha2Code: String?): ValidationError? =` | [97](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L97) |
+| `Validators.validateCard` | fun | `fun validateCard(cardData: PaymentCardData?): ValidationError? =` | [106](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L106) |
+| `Validators.validateNonEmpty` | fun | `fun validateNonEmpty(value: String, fieldName: String): String? =` | [120](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L120) |
+| `Validators.validateFullName` | fun | `fun validateFullName(value: String): String?` | [129](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L129) |
+| `Validators.validateEmailAddress` | fun | `fun validateEmailAddress(value: String): String?` | [142](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L142) |
+| `Validators.validateZipUS` | fun | `fun validateZipUS(value: String): String?` | [154](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L154) |
+| `Validators.validateOnboardingCard` | fun | `fun validateOnboardingCard(data: PaymentCardData?): String?` | [166](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L166) |
+| `Validators.validateCardExpiry` | fun | `fun validateCardExpiry(month: String, year: String): String?` | [181](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L181) |
+| `Validators.validateSSNLast4` | fun | `fun validateSSNLast4(value: String): String?` | [201](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L201) |
+| `Validators.validateRoutingNumberUS` | fun | `fun validateRoutingNumberUS(value: String): String?` | [213](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L213) |
+| `Validators.validateAccountNumberUS` | fun | `fun validateAccountNumberUS(value: String, min: Int = 4, max: Int = 17): String?` | [233](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L233) |
+| `Validators.validateDateOfBirth` | fun | `fun validateDateOfBirth( year: String, month: String, day: String, minAge: Int = 18, maxAge: Int = 120 ): String?` | [252](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L252) |
+| `Validators.validatePostalCode` | fun | `fun validatePostalCode(value: String, countryCode: String): String?` | [310](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L310) |
+| `Validators.validatePhoneE164` | fun | `fun validatePhoneE164(raw: String, regionCode: String): String?` | [328](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L328) |
 
 </details>
 

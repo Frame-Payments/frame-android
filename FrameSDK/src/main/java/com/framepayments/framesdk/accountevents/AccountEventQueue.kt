@@ -4,6 +4,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.framepayments.framesdk.NetworkingError
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -66,16 +67,24 @@ class AccountEventQueue(
     /** Test-only inspection of what is currently queued, without triggering a flush. */
     suspend fun pendingEventNamesForTesting(): List<String> = mutex.withLock { pending.map { it.name } }
 
-    /** Starts the size/time-based flush and app-backgrounding observers. Safe to call more than once. */
+    /**
+     * Starts the size/time-based flush and app-backgrounding observers. Safe to call more than
+     * once, and safe to call from any thread: `Lifecycle.addObserver` requires the main thread,
+     * so registration is dispatched there rather than trusting every caller (this is invoked
+     * from [com.framepayments.framesdk.FrameNetworking.initializeWithAPIKey], a plain function a
+     * host could call from a background thread).
+     */
     fun startObservingLifecycleIfNeeded() {
         startTimerIfNeeded()
         if (isObservingLifecycle) return
         isObservingLifecycle = true
-        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStop(owner: LifecycleOwner) {
-                scope.launch { handleAppBackgrounded() }
-            }
-        })
+        CoroutineScope(Dispatchers.Main.immediate).launch {
+            ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+                override fun onStop(owner: LifecycleOwner) {
+                    scope.launch { handleAppBackgrounded() }
+                }
+            })
+        }
     }
 
     /** Best-effort flush when the app goes to the background. Not guaranteed delivery — see the type documentation. */
@@ -109,7 +118,16 @@ class AccountEventQueue(
      * that is a contract violation, not a connectivity blip.
      */
     private suspend fun send(batch: List<AccountEventsRequests.Event>, attempt: Int) {
-        val (_, error) = flushHandler(batch)
+        // flushHandler is caller-injectable (tests supply their own), so it is not trusted to
+        // honor its documented Pair<..., NetworkingError?> contract — an uncaught throw here
+        // would violate this type's "never throws to the caller" guarantee.
+        val error = try {
+            flushHandler(batch).second
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return
+        }
         if (error == null || !error.isTransport || attempt >= MAX_TRANSPORT_RETRIES) return
         send(batch, attempt + 1)
     }

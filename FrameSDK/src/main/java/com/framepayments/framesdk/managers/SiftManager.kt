@@ -23,9 +23,7 @@ object SiftManager {
         }
     }
 
-    fun initializeSift(userId: String) {
-        Sift.setUserId(userId)
-
+    fun initializeSift() {
         fun openSift(config: ConfigurationResponses.GetSiftConfigurationResponse?) {
             Sift.open(FrameNetworking.getContext(), Sift.Config.Builder()
                 .withAccountId(config?.accountId)

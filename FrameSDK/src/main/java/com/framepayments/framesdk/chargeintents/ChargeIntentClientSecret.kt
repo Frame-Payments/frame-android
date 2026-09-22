@@ -20,12 +20,12 @@ class ChargeIntentClientSecret(
         }
 
         val marker = value.indexOf("_secret_")
-        val withoutSecret = if (marker > "ci_".length) value.substring(0, marker) else value
-        val id = withoutSecret.removePrefix("ci_")
-        if (id.isEmpty()) {
+        // Both parts are required: an id with no "_secret_" marker at all, and a marker with
+        // nothing after it, previously passed validation and failed later at the API instead.
+        if (marker <= "ci_".length || marker + "_secret_".length >= value.length) {
             throw FrameChargeIntentError.InvalidClientSecret()
         }
-        chargeIntentId = id
+        chargeIntentId = value.substring(0, marker).removePrefix("ci_")
     }
 }
 

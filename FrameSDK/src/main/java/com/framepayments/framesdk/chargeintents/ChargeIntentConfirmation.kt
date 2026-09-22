@@ -1,5 +1,6 @@
 package com.framepayments.framesdk.chargeintents
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
 /** Presents a 3D Secure challenge and reports how it ended. The result is a UI lifecycle signal, not a payment verdict. */
@@ -83,6 +84,8 @@ class ChargeIntentConfirmation(
                 if (intent != null) {
                     FrameChargeIntentOutcome.terminalOutcome(intent)?.let { return it }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 if (attempt == polling.maxAttempts) {
                     throw FrameChargeIntentError.StatusUnavailable(polling.maxAttempts, e)

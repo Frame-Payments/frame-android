@@ -3,6 +3,7 @@ package com.framepayments.framesdk_ui
 import android.app.Activity
 import android.app.Dialog
 import android.content.Context
+import android.content.ContextWrapper
 import android.graphics.Color
 import android.view.ViewGroup
 import android.webkit.WebResourceRequest
@@ -14,7 +15,9 @@ import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.FrameThreeDSecureChallengePresenting
 import com.framepayments.framesdk.chargeintents.FrameThreeDSecureChallengeResult
 import com.framepayments.framesdk.chargeintents.UseFrameSDK
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
 /**
@@ -37,11 +40,16 @@ class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameT
 
     override suspend fun presentChallenge(challenge: UseFrameSDK, intent: ChargeIntent): FrameThreeDSecureChallengeResult {
         val challengeUrl = challenge.challengeUrl ?: return FrameThreeDSecureChallengeResult.UNAVAILABLE
-        val activity = context as? Activity
-        if (activity != null && (activity.isFinishing || activity.isDestroyed)) {
+        // `context` is commonly a themed ContextWrapper (e.g. Compose's LocalContext), not the
+        // Activity itself — an `as?` cast leaves `activity` null and skips this guard entirely,
+        // then Dialog(context, ...) has no window token to show against.
+        val activity = context.findActivity()
+        if (activity == null || activity.isFinishing || activity.isDestroyed) {
             return FrameThreeDSecureChallengeResult.UNAVAILABLE
         }
-        return present(challengeUrl)
+        // WebView/Toolbar/Dialog construction requires the main thread; callers may invoke this
+        // from a background dispatcher (checkout runs on Dispatchers.IO).
+        return withContext(Dispatchers.Main) { present(challengeUrl) }
     }
 
     private suspend fun present(challengeUrl: String): FrameThreeDSecureChallengeResult =
@@ -95,4 +103,14 @@ class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameT
             webView.loadUrl(challengeUrl)
             dialog.show()
         }
+}
+
+/** Walks the [ContextWrapper] chain to find the host [Activity], as `LocalContext.current` and similar wrapped contexts are not the Activity itself. */
+private fun Context.findActivity(): Activity? {
+    var ctx: Context? = this
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return ctx as? Activity
 }

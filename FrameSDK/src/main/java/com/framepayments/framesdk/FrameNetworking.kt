@@ -11,6 +11,7 @@ import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
+import com.framepayments.framesdk.transfers.TransferStatusAdapter
 import com.framepayments.framesdk.managers.SiftManager
 import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
@@ -88,6 +89,7 @@ object FrameNetworking {
     /** Gson instance shared across all SDK API clients. */
     val gson: Gson = GsonBuilder()
         .registerTypeAdapterFactory(LenientFieldTypeAdapterFactory)
+        .registerTypeAdapterFactory(TransferStatusAdapter)
         .create()
 
     /** Shared OkHttp client configured with Frame's standard timeouts. */
@@ -243,7 +245,7 @@ object FrameNetworking {
         sdkScope.launch {
             ConfigurationAPI.getAllConfiguration()
 
-            SiftManager.initializeSift(apiSecretKey)
+            SiftManager.initializeSift()
 
             // Evervault config first-launch reads `EncryptedSharedPreferences`, which lazily
             // generates an AES master key in the Android Keystore — that takes hundreds of
@@ -892,9 +894,14 @@ object EvervaultConfigurator {
             inFlight ?: CoroutineScope(Dispatchers.IO).async { configure() }.also { inFlight = it }
         }
 
-        val configured = deferred.await()
-        mutex.withLock { if (inFlight === deferred) inFlight = null }
-        return configured
+        try {
+            return deferred.await()
+        } finally {
+            // configure() throwing must not leave a failed Deferred parked in inFlight — every
+            // later ensureConfigured() would join it and re-throw forever, with no retry ever
+            // possible for the rest of the process lifetime.
+            mutex.withLock { if (inFlight === deferred) inFlight = null }
+        }
     }
 
     private suspend fun configure(): Boolean {

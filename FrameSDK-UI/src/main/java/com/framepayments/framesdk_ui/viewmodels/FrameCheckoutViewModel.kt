@@ -352,13 +352,29 @@ class FrameCheckoutViewModel : ViewModel() {
                 return@liveData
             }
 
-            if (transfer.status != TransferStatus.REQUIRES_CONFIRMATION && transfer.status != TransferStatus.REQUIRES_THREE_D_SECURE) {
-                AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
-                emit(transfer)
-                return@liveData
+            when (transfer.status) {
+                TransferStatus.REQUIRES_CONFIRMATION, TransferStatus.REQUIRES_THREE_D_SECURE -> {
+                    emit(completeThreeDSecure(transfer, context))
+                }
+                TransferStatus.SUCCEEDED, TransferStatus.PROCESSING, TransferStatus.REQUIRES_CAPTURE -> {
+                    AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
+                    emit(transfer)
+                }
+                else -> {
+                    // FAILED, EXPIRED, CANCELED, FRAUD_DECLINED, UNKNOWN, and every other terminal
+                    // status that is not a successful outcome — an allowlist here, rather than the
+                    // previous "anything but the two confirm states" check, so a status this
+                    // outcome hasn't accounted for cannot silently read as a completed checkout.
+                    val declined = FrameCheckoutError.Declined(null)
+                    AccountEventEmitter.emit(
+                        AccountEventName.CHECKOUT_PAYMENT_DECLINED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        "${transfer.status}"
+                    )
+                    FrameSnackbarController.emit(declined.toastMessage())
+                    emit(null)
+                }
             }
-
-            emit(completeThreeDSecure(transfer, context))
         } finally {
             _isPerformingAction.postValue(false)
         }

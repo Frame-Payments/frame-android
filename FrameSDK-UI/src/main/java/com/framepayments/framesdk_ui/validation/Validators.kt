@@ -21,6 +21,10 @@ object Validators {
 
     private val EMAIL_REGEX = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
+    // `Char.isDigit()` accepts any Unicode decimal digit (e.g. fullwidth '１', Devanagari '१'),
+    // not just ASCII — a financial/identity field must reject those rather than silently pass.
+    private fun Char.isAsciiDigit(): Boolean = this in '0'..'9'
+
     /**
      * Validates that [value] contains at least a first and last name separated by whitespace.
      *
@@ -81,7 +85,7 @@ object Validators {
      */
     fun validateZip(value: String?): ValidationError? {
         val v = value.orEmpty()
-        return if (v.length == 5 && v.all { it.isDigit() }) null else ValidationError.ZIP_INVALID
+        return if (v.length == 5 && v.all { it.isAsciiDigit() }) null else ValidationError.ZIP_INVALID
     }
 
     /**
@@ -149,7 +153,7 @@ object Validators {
      */
     fun validateZipUS(value: String): String? {
         if (value.isEmpty()) return "Zip code is required"
-        val isValid = value.length == 5 && value.all { it.isDigit() }
+        val isValid = value.length == 5 && value.all { it.isAsciiDigit() }
         return if (isValid) null else "Enter a 5-digit zip code"
     }
 
@@ -196,7 +200,7 @@ object Validators {
      */
     fun validateSSNLast4(value: String): String? {
         if (value.isEmpty()) return "SSN is required"
-        val isValid = value.length == 4 && value.all { it.isDigit() }
+        val isValid = value.length == 4 && value.all { it.isAsciiDigit() }
         return if (isValid) null else "Enter last 4 digits of SSN"
     }
 
@@ -208,7 +212,7 @@ object Validators {
      */
     fun validateRoutingNumberUS(value: String): String? {
         if (value.isEmpty()) return "Routing number is required"
-        if (value.length != 9 || !value.all { it.isDigit() }) {
+        if (value.length != 9 || !value.all { it.isAsciiDigit() }) {
             return "Enter a 9-digit routing number"
         }
         val d = value.map { it.digitToInt() }
@@ -228,7 +232,7 @@ object Validators {
      */
     fun validateAccountNumberUS(value: String, min: Int = 4, max: Int = 17): String? {
         if (value.isEmpty()) return "Account number is required"
-        val isValid = value.all { it.isDigit() } && value.length in min..max
+        val isValid = value.all { it.isAsciiDigit() } && value.length in min..max
         return if (isValid) null else "Enter a valid account number"
     }
 
