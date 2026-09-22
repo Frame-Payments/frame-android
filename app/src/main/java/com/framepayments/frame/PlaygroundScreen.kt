@@ -189,6 +189,11 @@ fun PlaygroundScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             OnboardingContainerView(
                 config = OnboardingConfig(
+                    // The clientSecret is scoped to the account it was minted for (see
+                    // mintOnboardingClientSecret) — accountId must be passed too, or onboarding
+                    // creates a brand-new account the session was never scoped to, and every
+                    // request after that gets PII-gated (profile withheld, prefill silently fails).
+                    accountId = mintState.accountId,
                     // The onb_sess_… token minted from the configured sk_ (demo/testing only). In
                     // production your backend mints this (POST /v1/onboarding_sessions) and passes
                     // it in as the clientSecret, scoping every onboarding request to one account.

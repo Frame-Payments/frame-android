@@ -58,8 +58,12 @@ sealed class OnboardingMintState {
     /** A mint is in flight; show a spinner. */
     object Loading : OnboardingMintState()
 
-    /** A token was minted; [clientSecret] is the `onb_sess_…` to launch the flow with. */
-    data class Ready(val clientSecret: String) : OnboardingMintState()
+    /**
+     * A token was minted; [clientSecret] is the `onb_sess_…` to launch the flow with, scoped to
+     * [accountId]. Onboarding must be launched with this same [accountId], or it creates a new
+     * account the session was never scoped to and every request after that gets PII-gated.
+     */
+    data class Ready(val clientSecret: String, val accountId: String) : OnboardingMintState()
 
     /** Minting failed; [message] explains why so the UI can offer a retry. */
     data class Error(val message: String) : OnboardingMintState()
@@ -164,7 +168,7 @@ class ContentViewModel : ViewModel() {
             val (session, sessionError) = OnboardingSessionsAPI.createOnboardingSession(request)
             val clientSecret = session?.clientSecret
             _onboardingMintState.value = if (clientSecret != null) {
-                OnboardingMintState.Ready(clientSecret)
+                OnboardingMintState.Ready(clientSecret, accountId)
             } else {
                 OnboardingMintState.Error(
                     sessionError?.let { "Couldn't mint an onboarding session: $it" }
