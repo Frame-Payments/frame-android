@@ -182,6 +182,7 @@ fun OnboardingContainerView(
                 ProgressIndicator(
                     currentStep = viewModel.navigationState.currentStep,
                     flowSegments = viewModel.flowSegments,
+                    onClose = viewModel::cancel,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Box(modifier = Modifier.weight(1f)) {

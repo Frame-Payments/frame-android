@@ -617,6 +617,15 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         if (i > 0) navigationState.goTo(orderedSteps[i - 1])
     }
 
+    /**
+     * Exits the flow before completion. Android has no swipe-to-dismiss equivalent for a
+     * full-screen composable the way iOS's `.sheet` presentation does, so the container's header
+     * exposes an explicit close button that calls this instead.
+     */
+    fun cancel() {
+        _result.value = OnboardingResult.Cancelled
+    }
+
     // endregion
 
     // region Phone + DOB inputs
