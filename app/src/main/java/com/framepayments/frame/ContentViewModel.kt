@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.accounts.AccountRequests
 import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
@@ -136,8 +139,10 @@ class ContentViewModel : ViewModel() {
     }
 
     /**
-     * Demo/testing only: mints an onboarding-session token (`onb_sess_…`) for the first available
-     * account so the example app can exercise the onboarding flow end-to-end.
+     * Demo/testing only: mints an onboarding-session token (`onb_sess_…`) so the example app can
+     * exercise the onboarding flow end-to-end. Mirrors the iOS example app: a valid [accountId]
+     * resumes that account, otherwise (blank, or not a real account) a new individual account is
+     * created first — never a random pre-existing one.
      *
      * This is **not** the production path. Creating an onboarding session is a server-only operation
      * that requires your secret key (`sk_`). Production integrations mint the token from their
@@ -145,20 +150,21 @@ class ContentViewModel : ViewModel() {
      * example app does it inline only because it is configured with an `sk_`.
      */
     @Suppress("DEPRECATION")
-    fun mintOnboardingClientSecret() {
+    fun mintOnboardingClientSecret(accountId: String?) {
         _onboardingMintState.value = OnboardingMintState.Loading
         viewModelScope.launch {
-            val (accountsResponse, accountsError) = AccountsAPI.getAccounts(perPage = 1, page = 1)
-            val accountId = accountsResponse?.data?.firstOrNull()?.id
-            if (accountId == null) {
-                _onboardingMintState.value = OnboardingMintState.Error(
-                    accountsError?.let { "Couldn't load an account to onboard: $it" }
-                        ?: "No accounts available to onboard. Create an account first."
-                )
-                return@launch
+            val resolvedAccountId = accountId?.takeIf { it.isNotBlank() } ?: run {
+                val (account, err) = createEmptyIndividualAccount()
+                account?.id ?: run {
+                    _onboardingMintState.value = OnboardingMintState.Error(
+                        err?.let { "Couldn't create an account to onboard: $it" }
+                            ?: "Account creation did not return an account id."
+                    )
+                    return@launch
+                }
             }
             val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(
-                accountId = accountId,
+                accountId = resolvedAccountId,
                 steps = listOf(
                     OnboardingSessionRequests.OnboardingSessionStep.ID_VERIFICATION,
                     OnboardingSessionRequests.OnboardingSessionStep.GEO_COMPLIANCE,
@@ -168,7 +174,7 @@ class ContentViewModel : ViewModel() {
             val (session, sessionError) = OnboardingSessionsAPI.createOnboardingSession(request)
             val clientSecret = session?.clientSecret
             _onboardingMintState.value = if (clientSecret != null) {
-                OnboardingMintState.Ready(clientSecret, accountId)
+                OnboardingMintState.Ready(clientSecret, resolvedAccountId)
             } else {
                 OnboardingMintState.Error(
                     sessionError?.let { "Couldn't mint an onboarding session: $it" }
@@ -176,6 +182,17 @@ class ContentViewModel : ViewModel() {
                 )
             }
         }
+    }
+
+    /** Creates a blank individual account for the onboarding demo to fill in from scratch. */
+    private suspend fun createEmptyIndividualAccount(): Pair<AccountObjects.Account?, NetworkingError?> {
+        val request = AccountRequests.CreateAccountRequest(
+            type = AccountObjects.AccountType.INDIVIDUAL,
+            profile = AccountRequests.CreateAccountProfile(
+                individual = AccountRequests.CreateIndividualAccount(email = "newaccount@example.com")
+            )
+        )
+        return AccountsAPI.createAccount(request)
     }
 
     /** Resets the mint flow to [OnboardingMintState.Idle] so the next launch mints a fresh token. */

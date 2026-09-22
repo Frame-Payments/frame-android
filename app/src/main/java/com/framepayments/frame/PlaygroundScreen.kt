@@ -20,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -95,6 +96,9 @@ fun PlaygroundScreen(
     // Which standalone entry-point demo to launch once mintDemoAccount() resolves an account.
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
+    // Account to onboard, matching FrameExample-iOS: blank creates a new account, a typed ID
+    // resumes that one. Left blank, "Show Onboarding Flow" always starts a fresh applicant.
+    var onboardingAccountIdInput by remember { mutableStateOf("") }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
@@ -164,7 +168,7 @@ fun PlaygroundScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(24.dp))
-                        Button(onClick = { viewModel.mintOnboardingClientSecret() }) {
+                        Button(onClick = { viewModel.mintOnboardingClientSecret(onboardingAccountIdInput) }) {
                             Text("Retry")
                         }
                         Spacer(modifier = Modifier.height(8.dp))
@@ -324,11 +328,20 @@ fun PlaygroundScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
+            OutlinedTextField(
+                value = onboardingAccountIdInput,
+                onValueChange = { onboardingAccountIdInput = it },
+                label = { Text("Account ID (blank = new applicant)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             PlaygroundButton(text = "Show Onboarding Flow") {
                 // Demo/testing only: mint an onboarding-session token (onb_sess_…) from the
                 // configured sk_ before launching. In production your backend mints this token and
-                // hands it to the app as the clientSecret — see ContentViewModel.
-                viewModel.mintOnboardingClientSecret()
+                // hands it to the app as the clientSecret — see ContentViewModel. A blank account
+                // ID creates a new applicant; a typed one resumes that account, matching
+                // FrameExample-iOS — never a random pre-existing account.
+                viewModel.mintOnboardingClientSecret(onboardingAccountIdInput)
                 showOnboarding = true
             }
             PlaygroundButton(
