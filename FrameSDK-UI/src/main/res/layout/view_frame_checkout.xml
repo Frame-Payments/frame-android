@@ -87,7 +87,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/newCardContainer"
+            android:id="@+id/customerInfoContainer"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -138,6 +138,15 @@
                 android:background="@android:color/transparent"/>
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/newCardContainer"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+
         <TextView
             android:id="@+id/card_information"
             android:text="@string/card_information"
@@ -177,109 +186,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_marginTop="8dp"
-        android:padding="0dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/border_background">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/address1Layout"
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/billingAddressCompose"
+            android:layout_marginTop="8dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/address_1"
-                android:hint="@string/address_line_1"
-                android:textColorHint="@color/frame_text_secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"/>
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/address2Layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/address_2"
-                android:hint="@string/address_line_2"
-                android:textColorHint="@color/frame_text_secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"/>
-        </com.google.android.material.textfield.TextInputLayout>
-
-    <LinearLayout
-        android:baselineAligned="false"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/cityLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" >
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/city"
-                android:hint="@string/city"
-                android:textColorHint="@color/frame_text_secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"/>
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/stateLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/state"
-                android:hint="@string/state"
-                android:textColorHint="@color/frame_text_secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                />
-        </com.google.android.material.textfield.TextInputLayout>
-    </LinearLayout>
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/countryInputLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/countryInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                android:focusable="false"
-                android:clickable="true"
-                android:cursorVisible="false"
-                android:inputType="none"
-                android:textStyle="bold"
-                android:hint="Select Country" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/zipLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:boxBackgroundMode="outline">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/zip"
-                android:hint="@string/zip"
-                android:textColorHint="@color/frame_text_secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                />
-        </com.google.android.material.textfield.TextInputLayout>
-    </LinearLayout>
+            android:layout_height="wrap_content"/>
         </LinearLayout>
         <CheckBox
             android:id="@+id/saveCard"

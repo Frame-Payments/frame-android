@@ -9,7 +9,7 @@ internal object AccountEventsAPI {
     /**
      * Submits a batch of events to the backend.
      *
-     * Authenticates with [FrameAuthMode.Publishable] regardless of any active onboarding
+     * Authenticates with [FrameAuthMode.PublishableOnly] regardless of any active onboarding
      * session: the endpoint only ever accepts `pk_`, and the event already names the end-user
      * account by `account_id` in the body.
      */
@@ -18,7 +18,7 @@ internal object AccountEventsAPI {
         val (data, error) = FrameNetworking.performDataTaskWithRequest(
             AccountEventsEndpoints.Record,
             request,
-            FrameAuthMode.Publishable
+            FrameAuthMode.PublishableOnly
         )
         return Pair(data?.let { FrameNetworking.parseResponse<RecordResponse>(it) }, error)
     }

@@ -30,21 +30,30 @@ class FrameCheckoutViewModelTest {
     }
 
     private fun fillValidAddress() {
-        vm.customerAddressLine1.value = "123 Main St"
-        vm.customerCity.value = "Burbank"
-        vm.customerState.value = "California"
-        vm.customerZipCode.value = "75115"
+        vm.billingAddress.updateAddress {
+            it.copy(
+                addressLine1 = "123 Main St",
+                city = "Burbank",
+                state = "CA",
+                postalCode = "75115"
+            )
+        }
+    }
+
+    /** Address errors live on the shared [BillingAddressFieldVM], not in [FrameCheckoutViewModel]'s FieldKey map. */
+    private fun addressErrors(): Map<BillingAddressFieldVM.Field, String> {
+        vm.billingAddress.validate()
+        return vm.billingAddress.errors.value
     }
 
     @Test fun required_blankAddress_populatesErrors() {
         vm.addressMode = AddressMode.REQUIRED
         fillValidCustomerInfo()
-        // New-card path triggers full validation (card + address).
-        val errors = vm.validateAll(forSavedCard = false)
-        assertEquals(ValidationError.ADDRESS_REQUIRED, errors[FieldKey.ADDRESS_LINE_1])
-        assertEquals(ValidationError.CITY_REQUIRED, errors[FieldKey.CITY])
-        assertEquals(ValidationError.STATE_REQUIRED, errors[FieldKey.STATE])
-        assertEquals(ValidationError.ZIP_INVALID, errors[FieldKey.ZIP])
+        val errors = addressErrors()
+        assertNotNull(errors[BillingAddressFieldVM.Field.LINE1])
+        assertNotNull(errors[BillingAddressFieldVM.Field.CITY])
+        assertNotNull(errors[BillingAddressFieldVM.Field.STATE])
+        assertNotNull(errors[BillingAddressFieldVM.Field.POSTAL])
     }
 
     @Test fun optional_allBlank_isValid() {
@@ -59,22 +68,50 @@ class FrameCheckoutViewModelTest {
     @Test fun optional_partialAddress_failsValidation() {
         vm.addressMode = AddressMode.OPTIONAL
         fillValidCustomerInfo()
-        vm.customerCity.value = "Burbank"
+        vm.billingAddress.updateAddress { it.copy(city = "Burbank") }
         // Partial address input is all-or-nothing in optional mode (new-card path only).
-        val errors = vm.validateAll(forSavedCard = false)
-        assertEquals(ValidationError.ADDRESS_REQUIRED, errors[FieldKey.ADDRESS_LINE_1])
-        assertEquals(ValidationError.STATE_REQUIRED, errors[FieldKey.STATE])
-        assertEquals(ValidationError.ZIP_INVALID, errors[FieldKey.ZIP])
+        val errors = addressErrors()
+        assertNotNull(errors[BillingAddressFieldVM.Field.LINE1])
+        assertNotNull(errors[BillingAddressFieldVM.Field.STATE])
+        assertNotNull(errors[BillingAddressFieldVM.Field.POSTAL])
     }
 
     @Test fun hidden_neverValidatesAddress() {
         vm.addressMode = AddressMode.HIDDEN
         fillValidCustomerInfo()
-        vm.customerCity.value = "x"
-        vm.customerZipCode.value = "1"
+        vm.billingAddress.updateAddress { it.copy(city = "x", postalCode = "1") }
         val errors = vm.validateAll(forSavedCard = true)
         assertNull(errors[FieldKey.ZIP])
         assertNull(errors[FieldKey.CITY])
+    }
+
+    @Test fun customerInfoRequired_defaultsTrueBeforeAccountLoad() {
+        // The fields must not be assumed present before the profile has had a chance to fill them.
+        assertTrue(vm.customerInfoRequired.value == true)
+    }
+
+    @Test fun customerInfoRequired_falseWhenProfileSuppliedBoth() {
+        fillValidCustomerInfo()
+        vm.refreshCustomerInfoRequired()
+        assertEquals(false, vm.customerInfoRequired.value)
+    }
+
+    @Test fun customerInfoRequired_trueWhenProfileSuppliedNeither() {
+        vm.refreshCustomerInfoRequired()
+        assertEquals(true, vm.customerInfoRequired.value)
+    }
+
+    @Test fun customerInfoRequired_trueWhenOnlyNameSupplied() {
+        // A single-word profile name also fails validateName, so a partial profile must still ask.
+        vm.customerName.value = "Tester McTest"
+        vm.refreshCustomerInfoRequired()
+        assertEquals(true, vm.customerInfoRequired.value)
+    }
+
+    @Test fun customerInfoRequired_trueWhenOnlyEmailSupplied() {
+        vm.customerEmail.value = "tester@example.com"
+        vm.refreshCustomerInfoRequired()
+        assertEquals(true, vm.customerInfoRequired.value)
     }
 
     @Test fun invalidEmail_failsValidation() {
@@ -89,10 +126,8 @@ class FrameCheckoutViewModelTest {
         vm.addressMode = AddressMode.REQUIRED
         fillValidCustomerInfo()
         fillValidAddress()
-        vm.customerZipCode.value = "1234"
-        // New-card path runs address validation.
-        val errors = vm.validateAll(forSavedCard = false)
-        assertEquals(ValidationError.ZIP_INVALID, errors[FieldKey.ZIP])
+        vm.billingAddress.updateAddress { it.copy(postalCode = "1234") }
+        assertNotNull(addressErrors()[BillingAddressFieldVM.Field.POSTAL])
     }
 
     @Test fun savedCard_skipsCardValidation() {
@@ -127,7 +162,7 @@ class FrameCheckoutViewModelTest {
         vm.addressMode = AddressMode.OPTIONAL
         vm.customerName.value = "Tester McTest"
         vm.customerEmail.value = "tester@example.com"
-        vm.customerCity.value = "Burbank"
+        vm.billingAddress.updateAddress { it.copy(city = "Burbank") }
         val errors = vm.validateAll(forSavedCard = true)
         assertNull(errors[FieldKey.ADDRESS_LINE_1])
         assertNull(errors[FieldKey.ZIP])
@@ -137,13 +172,13 @@ class FrameCheckoutViewModelTest {
         vm.addressMode = AddressMode.REQUIRED
         vm.customerName.value = "Tester McTest"
         vm.customerEmail.value = "tester@example.com"
-        // Saved path: no address errors.
-        val savedErrors = vm.validateAll(forSavedCard = true)
-        assertNull(savedErrors[FieldKey.ADDRESS_LINE_1])
-        // New-card path: address required.
-        val newErrors = vm.validateAll(forSavedCard = false)
-        assertNotNull(newErrors[FieldKey.ADDRESS_LINE_1])
-        assertNotNull(newErrors[FieldKey.ZIP])
+        // Saved path leaves the address form untouched — nothing validated, no errors raised.
+        assertNull(vm.validateAll(forSavedCard = true)[FieldKey.ADDRESS_LINE_1])
+        assertTrue(vm.billingAddress.errors.value.isEmpty())
+        // New-card path: the address form is validated and reports its own errors.
+        val addressErrors = addressErrors()
+        assertNotNull(addressErrors[BillingAddressFieldVM.Field.LINE1])
+        assertNotNull(addressErrors[BillingAddressFieldVM.Field.POSTAL])
     }
 
     @Test fun clearNewCardFieldErrors_clearsOnlyNewCardKeys() {

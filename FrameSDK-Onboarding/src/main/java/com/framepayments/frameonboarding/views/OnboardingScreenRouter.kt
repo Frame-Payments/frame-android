@@ -1,6 +1,9 @@
 package com.framepayments.frameonboarding.views
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingData
@@ -90,7 +93,14 @@ internal fun OnboardingScreenRouter(
         }
 
         OnboardingStep.VerificationSubmitted -> {
-            VerificationSubmittedScreen(onDone = { viewModel.moveNext() })
+            val finalOutcome by viewModel.finalOutcome.collectAsState()
+            val isResolvingOutcome by viewModel.isResolvingOutcome.collectAsState()
+            LaunchedEffect(Unit) { viewModel.resolveFinalOutcomeIfNeeded() }
+            VerificationSubmittedScreen(
+                onDone = { viewModel.moveNext() },
+                outcome = finalOutcome,
+                isResolving = isResolvingOutcome
+            )
         }
     }
 }

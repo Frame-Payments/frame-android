@@ -226,6 +226,29 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private val _result = MutableStateFlow<OnboardingResult?>(null)
     val result: StateFlow<OnboardingResult?> = _result.asStateFlow()
 
+    /** How onboarding ended, for the final screen to render from. Null until resolved. */
+    private val _finalOutcome = MutableStateFlow<OnboardingOutcome?>(null)
+    val finalOutcome: StateFlow<OnboardingOutcome?> = _finalOutcome.asStateFlow()
+
+    private val _isResolvingOutcome = MutableStateFlow(false)
+    val isResolvingOutcome: StateFlow<Boolean> = _isResolvingOutcome.asStateFlow()
+
+    /**
+     * Resolves the outcome on arrival at the final screen. Capability status settles after the
+     * applicant's last answer, so this resolves fresh rather than reusing earlier state.
+     */
+    fun resolveFinalOutcomeIfNeeded() {
+        if (_finalOutcome.value != null || _isResolvingOutcome.value) return
+        viewModelScope.launch {
+            _isResolvingOutcome.value = true
+            try {
+                resolveFinalOutcome()?.let { _finalOutcome.value = it }
+            } finally {
+                _isResolvingOutcome.value = false
+            }
+        }
+    }
+
     private val _userErrorMessage = MutableStateFlow<String?>(null)
     val userErrorMessage: StateFlow<String?> = _userErrorMessage.asStateFlow()
 
@@ -261,11 +284,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private suspend fun beginOnboardingSessionIfNeeded() {
         if (config.clientSecret != null) return
         val accountId = _resolvedAccountId.value ?: return
-        // Only skip when *this* flow already holds a session for *this* account.
-        // FrameNetworking.hasActiveOnboardingSession alone is not enough: a locally minted session is
-        // never ended on dispose (OnboardingContainerView only ends host-supplied ones), so a second
-        // flow for a different account would see a stale global token, skip minting, and end up with
-        // no secret it can use for the body-authenticated IDV endpoints.
+        // FrameNetworking.hasActiveOnboardingSession is process-global and says nothing about which
+        // account the live token belongs to, so skip only when this flow holds one for this account.
         if (mintedOnboardingSessionSecret != null && mintedOnboardingSessionAccountId == accountId) return
 
         val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(accountId = accountId)
@@ -284,6 +304,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         mintedOnboardingSessionSecret = clientSecret
         mintedOnboardingSessionAccountId = accountId
         FrameNetworking.beginOnboardingSession(clientSecret)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        mintedOnboardingSessionSecret?.let { FrameNetworking.endOnboardingSession(it) }
     }
 
     // Phone OTP step state
@@ -589,16 +614,22 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      * and again when capabilities aren't yet a superset, either of which would leave
      * capabilities unread and make a passing run resolve as unverified. Capabilities are not
      * PII-gated, so reading them directly always works. Mirrors iOS `resolveFinalOutcome()`.
+     *
+     * Returns null when the account lookup fails or there's no account to look up yet, rather
+     * than a [OnboardingOutcome.PendingReview] sentinel — a failed lookup is not a verified
+     * outcome, and callers must not cache it as one.
      */
-    private suspend fun resolveFinalOutcome(): OnboardingOutcome {
-        val accountId = _resolvedAccountId.value ?: return OnboardingOutcome.PendingReview
+    private suspend fun resolveFinalOutcome(): OnboardingOutcome? {
+        val accountId = _resolvedAccountId.value ?: return null
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
-        val capabilities = account?.capabilities ?: return OnboardingOutcome.PendingReview
+        val capabilities = account?.capabilities ?: return null
         return OnboardingOutcome.resolve(capabilities, config.requiredCapabilities.toList())
     }
 
     private suspend fun finishOnboarding() {
-        val outcome = resolveFinalOutcome()
+        // Reuse what the final screen resolved, so the host is never told something the applicant
+        // was not shown. Retry the lookup if it hasn't resolved yet (or previously failed).
+        val outcome = _finalOutcome.value ?: resolveFinalOutcome() ?: OnboardingOutcome.PendingReview
         val paymentMethodId = _onboardingData.value.selectedPaymentMethodId
         val accountId = _resolvedAccountId.value
         _result.value = if (outcome.isSuccess) {

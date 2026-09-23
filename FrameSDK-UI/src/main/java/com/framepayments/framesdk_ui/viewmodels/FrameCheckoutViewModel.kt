@@ -56,18 +56,43 @@ class FrameCheckoutViewModel : ViewModel() {
     val customerName = MutableLiveData("")
     /** Customer's email address entered in the checkout form. */
     val customerEmail = MutableLiveData("")
+
+    private val _customerInfoRequired = MutableLiveData(true)
+    /**
+     * Whether the customer name/email fields must be shown. They are always validated, but the
+     * account profile normally supplies both — it is PII-gated, so a publishable-key host may
+     * receive neither, and the fields would otherwise stay hidden on the saved-payment-method
+     * path while still blocking the pay button.
+     */
+    val customerInfoRequired: LiveData<Boolean> = _customerInfoRequired
+
+    /**
+     * Evaluates [customerInfoRequired] once the account load settles. Deliberately not re-run on
+     * every keystroke: the fields would vanish mid-typing the moment the input became valid.
+     */
+    internal fun refreshCustomerInfoRequired() {
+        _customerInfoRequired.value =
+            Validators.validateName(customerName.value) != null ||
+                Validators.validateEmail(customerEmail.value) != null
+    }
+
     /** Customer's primary street address entered in the checkout form. */
-    val customerAddressLine1 = MutableLiveData("")
-    /** Customer's secondary address line (apartment, suite, etc.) entered in the checkout form. */
-    val customerAddressLine2 = MutableLiveData("")
-    /** Customer's city entered in the checkout form. */
-    val customerCity = MutableLiveData("")
-    /** Customer's state or province entered in the checkout form. */
-    val customerState = MutableLiveData("")
-    /** Customer's selected country from the checkout country picker. */
-    var customerCountry: AvailableCountry = AvailableCountries.defaultCountry
-    /** Customer's ZIP or postal code entered in the checkout form. */
-    val customerZipCode = MutableLiveData("")
+    /**
+     * Billing address state, shared with onboarding rather than duplicated here. Drives the
+     * [com.framepayments.framesdk_ui.reusable.BillingAddressDetailView] hosted in the checkout
+     * form, so checkout gets Mapbox autocomplete and per-country validation for free.
+     */
+    val billingAddress = BillingAddressFieldVM(
+        initial = FrameObjects.BillingAddress(
+            city = null,
+            country = null,
+            state = null,
+            postalCode = null,
+            addressLine1 = null,
+            addressLine2 = null
+        ),
+        mode = BillingAddressMode.INTERNATIONAL
+    )
 
     private val _selectedAccountPaymentOption = MutableLiveData<FrameObjects.PaymentMethod?>(null)
     /** The payment method selected from [accountPaymentOptions]; null when entering a new card. */
@@ -174,6 +199,7 @@ class FrameCheckoutViewModel : ViewModel() {
                     if (composedEmail.isNotEmpty()) customerEmail.value = composedEmail
                 }
             }
+            withContext(Dispatchers.Main) { refreshCustomerInfoRequired() }
 
             val (paymentMethods, paymentMethodsError) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
             if (paymentMethodsError != null) {
@@ -220,12 +246,13 @@ class FrameCheckoutViewModel : ViewModel() {
         _fieldErrors.postValue(current - key)
     }
 
-    private fun hasAnyAddressInput(): Boolean =
-        !customerAddressLine1.value.isNullOrEmpty() ||
-            !customerAddressLine2.value.isNullOrEmpty() ||
-            !customerCity.value.isNullOrEmpty() ||
-            !customerState.value.isNullOrEmpty() ||
-            !customerZipCode.value.isNullOrEmpty()
+    private fun hasAnyAddressInput(): Boolean = with(billingAddress.address.value) {
+        !addressLine1.isNullOrEmpty() ||
+            !addressLine2.isNullOrEmpty() ||
+            !city.isNullOrEmpty() ||
+            !state.isNullOrEmpty() ||
+            !postalCode.isNullOrEmpty()
+    }
 
     private fun shouldValidateAddress(): Boolean = when (addressMode) {
         AddressMode.REQUIRED -> true
@@ -247,16 +274,9 @@ class FrameCheckoutViewModel : ViewModel() {
             Validators.validateCard(cardData)?.let { errors[FieldKey.CARD] = it }
         }
 
-        if (!forSavedCard && shouldValidateAddress()) {
-            Validators.validateAddressLine1(customerAddressLine1.value)?.let { errors[FieldKey.ADDRESS_LINE_1] = it }
-            Validators.validateCity(customerCity.value)?.let { errors[FieldKey.CITY] = it }
-            Validators.validateState(customerState.value)?.let { errors[FieldKey.STATE] = it }
-            Validators.validateZip(customerZipCode.value)?.let { errors[FieldKey.ZIP] = it }
-            Validators.validateCountry(customerCountry.alpha2Code)?.let { errors[FieldKey.COUNTRY] = it }
-        }
-
         return errors
     }
+
 
     /**
      * Validates inputs and submits the checkout.
@@ -291,11 +311,14 @@ class FrameCheckoutViewModel : ViewModel() {
         try {
             val usingSavedCard = _selectedAccountPaymentOption.value != null
             val errors = validateAll(forSavedCard = usingSavedCard)
-            if (errors.isNotEmpty()) {
+            val addressOk =
+                if (!usingSavedCard && shouldValidateAddress()) billingAddress.validate() else true
+            if (errors.isNotEmpty() || !addressOk) {
                 AccountEventEmitter.emit(
                     AccountEventName.CHECKOUT_VALIDATION_FAILED,
                     AccountEventScreen.PAYMENT_SHEET,
-                    errors.keys.joinToString(", ") { "$it" }
+                    (errors.keys.map { "$it" } + billingAddress.errors.value.keys.map { "$it" })
+                        .joinToString(", ")
                 )
                 _fieldErrors.postValue(errors)
                 emit(null)
@@ -440,16 +463,8 @@ class FrameCheckoutViewModel : ViewModel() {
     private suspend fun createPaymentMethod(accountId: String): Pair<String?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
 
-        val billingAddress: FrameObjects.BillingAddress? = if (shouldValidateAddress()) {
-            FrameObjects.BillingAddress(
-                city = customerCity.value.orEmpty(),
-                country = customerCountry.alpha2Code,
-                state = customerState.value.orEmpty(),
-                postalCode = customerZipCode.value.orEmpty(),
-                addressLine1 = customerAddressLine1.value.orEmpty(),
-                addressLine2 = customerAddressLine2.value.orEmpty()
-            )
-        } else null
+        val billingAddress: FrameObjects.BillingAddress? =
+            if (shouldValidateAddress()) this.billingAddress.address.value else null
 
         val pmReq = PaymentMethodRequests.CreateCardPaymentMethodRequest(
             cardNumber = cardData.card.number,

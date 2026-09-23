@@ -1,6 +1,9 @@
 import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 
-val sdkVersion = project.findProperty("SDK_VERSION") as String? ?: "unspecified"
+val sdkVersion = project.findProperty("SDK_VERSION") as String?
+    ?: providers.exec {
+        commandLine("git", "describe", "--tags", "--always", "--dirty")
+    }.standardOutput.asText.get().trim().removePrefix("v")
 
 plugins {
     alias(libs.plugins.android.library)

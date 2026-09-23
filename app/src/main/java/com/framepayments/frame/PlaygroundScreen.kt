@@ -135,160 +135,169 @@ fun PlaygroundScreen(
     }
 
     if (showOnboarding) {
-        // Wait for the onboarding-session token to be minted before launching the flow. Rendering
-        // OnboardingContainerView with a null clientSecret would start onboarding requests (e.g. the
-        // ToS token) before beginOnboardingSession runs, leaving those early requests unscoped to the
-        // account. Gating on the minted token guarantees the session is active before the first call.
-        val mintState = onboardingMintState
-        when (mintState) {
-            is OnboardingMintState.Loading, OnboardingMintState.Idle -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-                return
-            }
-            is OnboardingMintState.Error -> {
-                // Minting failed — show why and let the user retry or back out, instead of
-                // spinning forever on the gate above.
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Couldn't start onboarding",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = mintState.message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Button(onClick = { viewModel.mintOnboardingClientSecret(accountId) }) {
-                            Text("Retry")
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        TextButton(onClick = {
-                            showOnboarding = false
-                            viewModel.clearOnboardingClientSecret()
-                        }) {
-                            Text("Cancel")
+        val dismissOnboarding = {
+            showOnboarding = false
+            // Clear the minted token so the next launch mints a fresh one.
+            viewModel.clearOnboardingClientSecret()
+        }
+        val onboardingSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = dismissOnboarding,
+            sheetState = onboardingSheetState
+        ) {
+            // Fills the sheet so the multi-step flow gets the height it expects; without it the
+            // sheet wraps its content and each step resizes the sheet as the user advances.
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Wait for the onboarding-session token to be minted before launching the flow.
+                // Rendering OnboardingContainerView with a null clientSecret would start onboarding
+                // requests (e.g. the ToS token) before beginOnboardingSession runs, leaving those
+                // early requests unscoped to the account. Gating on the minted token guarantees the
+                // session is active before the first call.
+                when (val mintState = onboardingMintState) {
+                    is OnboardingMintState.Loading, OnboardingMintState.Idle -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
                         }
                     }
-                }
-                return
-            }
-            is OnboardingMintState.Ready -> Unit // fall through to launch the flow below
-        }
-        val clientSecret = mintState.clientSecret
-
-        // Demo: show how a host app overrides the SDK theme. The override is shared
-        // with CartTestActivity / CheckoutActivity so onboarding, cart, and checkout
-        // all render with the same custom branding while running the playground.
-        val customTheme = rememberDemoTheme()
-        Box(modifier = Modifier.fillMaxSize()) {
-            OnboardingContainerView(
-                config = OnboardingConfig(
-                    // The clientSecret is scoped to the account it was minted for (see
-                    // mintOnboardingClientSecret) — accountId must be passed too, or onboarding
-                    // creates a brand-new account the session was never scoped to, and every
-                    // request after that gets PII-gated (profile withheld, prefill silently fails).
-                    accountId = mintState.accountId,
-                    // The onb_sess_… token minted from the configured sk_ (demo/testing only). In
-                    // production your backend mints this (POST /v1/onboarding_sessions) and passes
-                    // it in as the clientSecret, scoping every onboarding request to one account.
-                    clientSecret = clientSecret,
-                    requiredCapabilities = listOf(
-                        Capabilities.KYC_PREFILL,
-                        Capabilities.CARD_VERIFICATION,
-                        Capabilities.BANK_ACCOUNT_VERIFICATION,
-                        Capabilities.AGE_VERIFICATION,
-                        Capabilities.PHONE_VERIFICATION
-                    ),
-                    theme = customTheme
-                ),
-                onResult = { result ->
-                    showOnboarding = false
-                    // Clear the minted token so the next launch mints a fresh one.
-                    viewModel.clearOnboardingClientSecret()
-                    when (result) {
-                        is OnboardingResult.Completed -> {
-                            // Matches FrameExample-iOS's onResult handler: the account onboarding
-                            // just resolved becomes the account every other demo acts on next.
-                            result.accountId?.let(viewModel::setAccountId)
-                            demoResultMessage = DemoResultMessage("Onboarding", "Completed: ${result.paymentMethodId}")
+                    is OnboardingMintState.Error -> {
+                        // Minting failed — show why and let the user retry or back out, instead of
+                        // spinning forever on the gate above.
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Couldn't start onboarding",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = mintState.message,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Button(onClick = { viewModel.mintOnboardingClientSecret(accountId) }) {
+                                    Text("Retry")
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TextButton(onClick = dismissOnboarding) {
+                                    Text("Cancel")
+                                }
+                            }
                         }
-                        is OnboardingResult.FinishedUnverified -> {
-                            // The flow ran to the end but the applicant isn't verified — still worth
-                            // surfacing rather than treating it the same as a full success. The
-                            // account still exists and is still what follow-up demos should use.
-                            result.accountId?.let(viewModel::setAccountId)
-                            demoResultMessage = DemoResultMessage("Onboarding", "Finished unverified: ${result.outcome}")
-                        }
-                        is OnboardingResult.Cancelled -> Unit
-                        is OnboardingResult.Failed ->
-                            demoResultMessage = DemoResultMessage("Onboarding", "Failed: ${result.message}")
+                    }
+                    is OnboardingMintState.Ready -> {
+                        // Demo: show how a host app overrides the SDK theme. The override is shared
+                        // with CartTestActivity / CheckoutActivity so onboarding, cart, and checkout
+                        // all render with the same custom branding while running the playground.
+                        val customTheme = rememberDemoTheme()
+                        OnboardingContainerView(
+                            config = OnboardingConfig(
+                                // The clientSecret is scoped to the account it was minted for (see
+                                // mintOnboardingClientSecret) — accountId must be passed too, or onboarding
+                                // creates a brand-new account the session was never scoped to, and every
+                                // request after that gets PII-gated (profile withheld, prefill silently fails).
+                                accountId = mintState.accountId,
+                                // The onb_sess_… token minted from the configured sk_ (demo/testing only). In
+                                // production your backend mints this (POST /v1/onboarding_sessions) and passes
+                                // it in as the clientSecret, scoping every onboarding request to one account.
+                                clientSecret = mintState.clientSecret,
+                                requiredCapabilities = listOf(
+                                    Capabilities.KYC_PREFILL,
+                                    Capabilities.AGE_VERIFICATION,
+                                    Capabilities.PHONE_VERIFICATION
+                                ),
+                                theme = customTheme
+                            ),
+                            onResult = { result ->
+                                dismissOnboarding()
+                                when (result) {
+                                    is OnboardingResult.Completed -> {
+                                        // Matches FrameExample-iOS's onResult handler: the account onboarding
+                                        // just resolved becomes the account every other demo acts on next.
+                                        result.accountId?.let(viewModel::setAccountId)
+                                        demoResultMessage = DemoResultMessage("Onboarding", "Completed: ${result.paymentMethodId}")
+                                    }
+                                    is OnboardingResult.FinishedUnverified -> {
+                                        // The flow ran to the end but the applicant isn't verified — still worth
+                                        // surfacing rather than treating it the same as a full success. The
+                                        // account still exists and is still what follow-up demos should use.
+                                        result.accountId?.let(viewModel::setAccountId)
+                                        demoResultMessage = DemoResultMessage("Onboarding", "Finished unverified: ${result.outcome}")
+                                    }
+                                    is OnboardingResult.Cancelled -> Unit
+                                    is OnboardingResult.Failed ->
+                                        demoResultMessage = DemoResultMessage("Onboarding", "Failed: ${result.message}")
+                                }
+                            }
+                        )
                     }
                 }
-            )
+            }
         }
-        return
     }
 
     val standaloneView = pendingStandaloneView
     if (standaloneView != null) {
-        // Matches FrameExample-iOS: these views act on viewModel.accountId directly, with no
-        // separate session mint — FrameAddPaymentMethodView/etc. bind their own session
-        // internally, and a null clientSecret is the documented default for a standalone launch.
-        if (accountId.isBlank()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "No account set",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Onboard an applicant first, or pass an accountId to initializeWithAPIKey.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    TextButton(onClick = { pendingStandaloneView = null }) {
-                        Text("Cancel")
+        val standaloneSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { pendingStandaloneView = null },
+            sheetState = standaloneSheetState
+        ) {
+            // Fills the sheet so these flows get the height they expect; without it the sheet
+            // wraps its content and resizes as the user advances.
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Matches FrameExample-iOS: these views act on viewModel.accountId directly, with no
+                // separate session mint — FrameAddPaymentMethodView/etc. bind their own session
+                // internally, and a null clientSecret is the documented default for a standalone launch.
+                if (accountId.isBlank()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "No account set",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Onboard an applicant first, or pass an accountId to initializeWithAPIKey.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                            TextButton(onClick = { pendingStandaloneView = null }) {
+                                Text("Cancel")
+                            }
+                        }
+                    }
+                } else {
+                    val finish = { message: DemoResultMessage ->
+                        pendingStandaloneView = null
+                        demoResultMessage = message
+                    }
+                    when (standaloneView) {
+                        StandaloneView.ADD_PAYMENT_METHOD -> FrameAddPaymentMethodView(
+                            accountId = accountId,
+                            onResult = { finish(it.toDemoMessage("Add Payment Method")) }
+                        )
+                        StandaloneView.ADD_PAYOUT_METHOD -> FrameAddPayoutMethodView(
+                            accountId = accountId,
+                            onResult = { finish(it.toDemoMessage("Add Payout Method")) }
+                        )
+                        StandaloneView.SELECT_PAYOUT_METHOD -> FrameSelectPayoutMethodView(
+                            accountId = accountId,
+                            onResult = { finish(it.toDemoMessage("Select Payout Method")) }
+                        )
                     }
                 }
             }
-            return
         }
-        fun finish(message: DemoResultMessage) {
-            pendingStandaloneView = null
-            demoResultMessage = message
-        }
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (standaloneView) {
-                StandaloneView.ADD_PAYMENT_METHOD -> FrameAddPaymentMethodView(
-                    accountId = accountId,
-                    onResult = { finish(it.toDemoMessage("Add Payment Method")) }
-                )
-                StandaloneView.ADD_PAYOUT_METHOD -> FrameAddPayoutMethodView(
-                    accountId = accountId,
-                    onResult = { finish(it.toDemoMessage("Add Payout Method")) }
-                )
-                StandaloneView.SELECT_PAYOUT_METHOD -> FrameSelectPayoutMethodView(
-                    accountId = accountId,
-                    onResult = { finish(it.toDemoMessage("Select Payout Method")) }
-                )
-            }
-        }
-        return
     }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->

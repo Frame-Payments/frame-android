@@ -1,4 +1,4 @@
-package com.framepayments.frameonboarding.reusable
+package com.framepayments.framesdk_ui.reusable
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,9 +26,9 @@ import com.framepayments.framesdk_ui.reusable.AddressAutocompleteField
 import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk.AddressSubregions
-import com.framepayments.frameonboarding.classes.AddressFormat
-import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
-import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
+import com.framepayments.framesdk_ui.classes.AddressFormat
+import com.framepayments.framesdk_ui.viewmodels.BillingAddressFieldVM
+import com.framepayments.framesdk_ui.viewmodels.BillingAddressMode
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 /**

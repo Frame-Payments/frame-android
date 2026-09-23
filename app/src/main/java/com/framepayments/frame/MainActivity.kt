@@ -17,13 +17,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         // Supply sandbox keys via local.properties / BuildConfig before running the example.
         // Do not commit real keys.
+        val sandboxAccountId = "INSERT_SANDBOX_ACCOUNT_ID"
         FrameNetworking.initializeWithAPIKey(
             context = applicationContext,
             secretKey = "INSERT_SANDBOX_SECRET_KEY",
             publishableKey = "INSERT_SANDBOX_PUBLISHABLE_KEY",
             // Optional: an existing account this run belongs to, used to attribute account
             // events. Leave null if you're onboarding a new account instead.
-            accountId = "INSERT_SANDBOX_ACCOUNT_ID",
+            accountId = sandboxAccountId.takeIf { it != "INSERT_SANDBOX_ACCOUNT_ID" },
             googlePayMerchantId = "BCR2DN4T_TEST_STUB",
             debug = true
         )

@@ -143,13 +143,36 @@ class FrameNetworkingTest {
     }
 
     @Test
-    fun explicitPublishableAuthWinsOverOnboardingSession() = runBlocking {
-        // Merchant-level, publishable-only endpoints (terms_of_service, device_attestation, …)
-        // reject the onb_sess_ token, so an explicit .Publishable request must use the pk_ even
-        // while a session is active. Precedence: ClientSecret > Publishable > session > Secret.
+    fun explicitPublishableOnlyAuthWinsOverOnboardingSession() = runBlocking {
+        // Merchant-level endpoints (terms_of_service, sonar, configuration, …) reject the
+        // onb_sess_ token, so a .PublishableOnly request must use the pk_ even while a session is
+        // active. Precedence: ClientSecret > PublishableOnly > session > Publishable > Secret.
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
 
         FrameNetworking.beginOnboardingSession("onb_sess_abc123")
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.PublishableOnly)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer pk_test_key", recorded.getHeader("Authorization"))
+    }
+
+    @Test
+    fun onboardingSessionOverridesPublishableAuth() = runBlocking {
+        // Account-scoped reads tagged .Publishable (e.g. getAccountWith) must authenticate as the
+        // session while one is active, or the server withholds PII-gated fields such as `profile`.
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
+
+        FrameNetworking.beginOnboardingSession("onb_sess_abc123")
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Publishable)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer onb_sess_abc123", recorded.getHeader("Authorization"))
+    }
+
+    @Test
+    fun publishableAuthUsesPublishableKeyOutsideOnboardingSession() = runBlocking {
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
+
         FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Publishable)
 
         val recorded = mockWebServer.takeRequest()
