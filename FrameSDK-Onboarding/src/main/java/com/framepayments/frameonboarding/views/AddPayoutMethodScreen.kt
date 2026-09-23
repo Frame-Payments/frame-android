@@ -108,7 +108,9 @@ internal fun AddPayoutMethodScreen(
                 )
             }
             is LinkExit -> {
-                viewModel.onPlaidDismissed()
+                val errorMsg = result.error?.displayMessage
+                    ?: result.error?.errorCode?.toString()
+                viewModel.onPlaidDismissed(errorMessage = errorMsg)
                 result.error?.let { android.util.Log.w("Plaid", "Plaid exited: ${it.displayMessage}") }
             }
             else -> {

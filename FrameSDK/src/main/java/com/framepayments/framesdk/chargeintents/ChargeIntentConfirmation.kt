@@ -1,5 +1,8 @@
 package com.framepayments.framesdk.chargeintents
 
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 
@@ -95,6 +98,11 @@ class ChargeIntentConfirmation(
             sleep(polling.intervalMillis)
         }
 
+        AccountEventEmitter.emit(
+            AccountEventName.CHARGE_INTENT_CONFIRMATION_POLLING_EXHAUSTED,
+            AccountEventScreen.CHECKOUT,
+            detail = "exhausted ${polling.maxAttempts} attempts at ${polling.intervalMillis}ms apart"
+        )
         return FrameChargeIntentOutcome.TimedOut
     }
 }

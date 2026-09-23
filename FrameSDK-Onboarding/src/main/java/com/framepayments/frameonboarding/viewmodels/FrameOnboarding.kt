@@ -22,6 +22,7 @@ import com.framepayments.frameonboarding.classes.computeFlowSegments
 import com.framepayments.frameonboarding.classes.computeOrderedSteps
 import com.framepayments.frameonboarding.classes.toFlowSegment
 import com.framepayments.frameonboarding.networking.idv.IdvAPI
+import com.framepayments.frameonboarding.networking.idv.IdvCompletionRouting
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
 import com.framepayments.frameonboarding.persona.PersonaInquiry
 import com.framepayments.frameonboarding.persona.PersonaVerificationResult
@@ -29,6 +30,7 @@ import com.framepayments.frameonboarding.persona.PersonaVerificationService
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
+import com.framepayments.frameonboarding.prove.ProveAuthServiceError
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
@@ -43,6 +45,8 @@ import com.framepayments.framesdk.capabilities.CapabilitiesAPI
 import com.framepayments.framesdk.capabilities.CapabilityRequests
 import com.framepayments.framesdk.capabilities.CapabilityObjects.actionableRequirements
 import com.framepayments.framesdk.capabilities.CapabilityObjects.capabilityStatus
+import com.framepayments.framesdk.capabilities.CapabilityObjects.hasActionableRequirements
+import com.framepayments.framesdk.capabilities.CapabilityObjects.isOutstanding
 import com.framepayments.framesdk.customeridentity.CustomerIdentityAPI
 import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
@@ -119,17 +123,30 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         _requiredCapabilities.value.map { it.apiValue }
 
     private var _orderedSteps: List<OnboardingStep> = run {
-        var steps = computeOrderedSteps(_requiredCapabilities.value)
+        var steps = computeOrderedSteps(_requiredCapabilities.value, originallyRequiredCapabilities)
         if (!config.showIntroScreen) steps = steps.filter { it != OnboardingStep.VerificationWelcome }
         if (!config.showCompletionScreen) steps = steps.filter { it != OnboardingStep.VerificationSubmitted }
         steps
     }
-    private var _flowSegments: List<OnboardingFlowSegment> = computeFlowSegments(_requiredCapabilities.value)
+    private var _flowSegments: List<OnboardingFlowSegment> = computeFlowSegments(
+        _requiredCapabilities.value,
+        originallyRequiredCapabilities
+    )
 
     val orderedSteps: List<OnboardingStep> get() = _orderedSteps
     val flowSegments: List<OnboardingFlowSegment> get() = _flowSegments
 
     val navigationState = OnboardingState(_orderedSteps.first())
+
+    private val _isExistingAccountReady = MutableStateFlow(
+        config.accountId == null || config.skipInitNetwork
+    )
+    /** False until a pre-existing account has been fetched, so intro Continue cannot race the load. */
+    val isExistingAccountReady: StateFlow<Boolean> = _isExistingAccountReady.asStateFlow()
+
+    private val _onlyAddressVerification = MutableStateFlow(false)
+    /** Saved-card path: collect billing address only (do not create a new card). */
+    val onlyAddressVerification: StateFlow<Boolean> = _onlyAddressVerification.asStateFlow()
 
     // Onboarding data
     private val _onboardingData = MutableStateFlow(OnboardingData())
@@ -277,13 +294,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     private fun userMessageForNetworkError(err: NetworkingError?): String {
         if (err == null) return "Something went wrong. Please try again."
-        return when (err) {
-            is NetworkingError.ServerError ->
-                err.errorDescription.ifBlank { "Request failed (${err.statusCode})." }
-            NetworkingError.DecodingFailed -> "Invalid response from server. Please try again."
-            NetworkingError.InvalidURL -> "Configuration error. Please try again later."
-            NetworkingError.UnknownError -> "Something went wrong. Please try again."
-        }
+        return err.toastMessage()
     }
 
     /**
@@ -356,8 +367,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     val verifyPhoneUi: StateFlow<VerifyPhoneUi?> = _verifyPhoneUi.asStateFlow()
 
     private val proveOtpLock = Any()
-    private var proveOtpDeferred: CompletableDeferred<String>? = null
+    private var proveOtpDeferred: CompletableDeferred<String?>? = null
     private var proveAuthLaunchStarted: Boolean = false
+    private var activeProveAuthService: ProveAuthService? = null
 
     /** True while fetching GET account after phone verification succeeds (before personal info step). */
     private val _awaitingAccountProfileRefresh = MutableStateFlow(false)
@@ -549,11 +561,15 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun updateOnboardingFlow() {
         val caps = _requiredCapabilities.value
-        var steps = computeOrderedSteps(caps)
+        var steps = computeOrderedSteps(caps, originallyRequiredCapabilities)
         if (!config.showIntroScreen) steps = steps.filter { it != OnboardingStep.VerificationWelcome }
         if (!config.showCompletionScreen) steps = steps.filter { it != OnboardingStep.VerificationSubmitted }
         _orderedSteps = steps
-        _flowSegments = computeFlowSegments(caps)
+        _flowSegments = computeFlowSegments(caps, originallyRequiredCapabilities)
+        if (steps.isEmpty()) {
+            viewModelScope.launch { finishOnboarding() }
+            return
+        }
         if (navigationState.currentStep !in _orderedSteps) {
             navigationState.goTo(_orderedSteps.first())
         }
@@ -624,7 +640,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun launchCheckExistingAccount(updateCapabilities: Boolean) {
         viewModelScope.launch {
-            checkExistingAccount(updateCapabilities = updateCapabilities)
+            try {
+                checkExistingAccount(updateCapabilities = updateCapabilities)
+            } finally {
+                _isExistingAccountReady.value = true
+            }
         }
     }
 
@@ -751,6 +771,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         beginOnboardingSessionIfNeeded()
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
         applyAccountProfileToOnboarding(accountId, account)
+        // Phone verification can satisfy KYC-prefill and surface step-up flags; re-read them so
+        // the SSN field hides (or shows) before the applicant reaches personal info.
+        updateStepUpRequirements(account?.capabilities)
     }
 
     /**
@@ -943,7 +966,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 return@launch
             }
             val otpProvider: suspend () -> String? = {
-                val deferred = CompletableDeferred<String>()
+                val deferred = CompletableDeferred<String?>()
                 synchronized(proveOtpLock) {
                     proveOtpDeferred = deferred
                 }
@@ -969,6 +992,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 },
                 otpProvider = otpProvider
             )
+            activeProveAuthService = service
             try {
                 val success = service.authenticateWith(authToken)
                 if (success) {
@@ -985,13 +1009,16 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 }
             } catch (e: CancellationException) {
                 throw e
+            } catch (err: ProveAuthServiceError.Cancelled) {
+                // Applicant dismissed OTP; the Prove session is already released.
             } catch (err: Exception) {
                 synchronized(proveOtpLock) {
-                    proveOtpDeferred?.cancel(CancellationException("Prove auth failed"))
+                    proveOtpDeferred?.complete(null)
                     proveOtpDeferred = null
                 }
                 fallBackToTwilio(acctId, proveError = err)
             } finally {
+                activeProveAuthService = null
                 proveAuthLaunchStarted = false
             }
         }
@@ -1083,17 +1110,19 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun goBackFromVerifyPhone() {
+        proveOtpCancelledByUser = true
         synchronized(proveOtpLock) {
             if (proveOtpDeferred != null) {
                 AccountEventEmitter.emit(
                     AccountEventName.PHONE_CODE_ENTRY_CANCELLED,
                     AccountEventScreen.PHONE_VERIFICATION
                 )
-                proveOtpCancelledByUser = true
             }
-            proveOtpDeferred?.cancel(CancellationException("user navigated back"))
+            proveOtpDeferred?.complete(null)
             proveOtpDeferred = null
         }
+        activeProveAuthService?.cancel()
+        activeProveAuthService = null
         proveAuthLaunchStarted = false
         _verifyPhoneUi.value = null
         _verifyIdSubStep.value = VerifyIdSubStep.PhoneAuth
@@ -1110,7 +1139,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         dob: String,
         ssnLastFour: String,
         billingAddress: FrameObjects.BillingAddress
-    ): String? {
+    ): AccountObjects.Account? {
         return _resolvedAccountId.value?.let { existing ->
             val updateIndividual = AccountRequests.UpdateIndividualAccount(
                 name = AccountRequests.UpdateAccountInfo(
@@ -1148,7 +1177,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     AccountEventScreen.PERSONAL_INFORMATION
                 )
                 updateStepUpRequirements(updated?.capabilities)
-                existing
+                updated ?: AccountsAPI.getAccountWith(existing, forTesting = false).first
             }
         } ?: run {
             val accountRequest = AccountRequests.CreateAccountRequest(
@@ -1191,7 +1220,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = newId)
                 updateStepUpRequirements(account.capabilities)
                 beginOnboardingSessionIfNeeded()
-                newId
+                account
             }
         }
     }
@@ -1274,8 +1303,13 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     addressLine1 = addressLine1,
                     addressLine2 = addressLine2
                 )
-                upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
+                val account = upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
                     ?: return@launch
+                // Nothing left the applicant can act on — don't advance into dead-end steps.
+                blockedOutcome(account)?.let { outcome ->
+                    concludeOnboarding(outcome)
+                    return@launch
+                }
                 // Customer identity creation is deferred — handled by createCustomerIdentity()
                 // separately in the flow once the account is established.
                 val data = _onboardingData.value
@@ -1291,6 +1325,56 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     // region Government-ID (Persona) no-SSN verification
+
+    /**
+     * Ends onboarding early when the account has nothing left for the applicant to act on.
+     * Truncates the flow to the terminal screen (or finishes immediately when the host opted out
+     * of the completion screen), mirroring iOS `concludeOnboarding(with:)`.
+     *
+     * @return `true` when the terminal screen is showing; `false` when the host takes over.
+     */
+    @Suppress("UnusedReturnValue")
+    private fun concludeOnboarding(outcome: OnboardingOutcome): Boolean {
+        _finalOutcome.value = outcome
+        val finalStep = if (config.showCompletionScreen) {
+            OnboardingStep.VerificationSubmitted
+        } else {
+            navigationState.currentStep
+        }
+        _orderedSteps = listOf(finalStep)
+        _flowSegments = listOf(finalStep.toFlowSegment())
+        navigationState.goTo(finalStep)
+        if (!config.showCompletionScreen) {
+            viewModelScope.launch { finishOnboarding() }
+            return false
+        }
+        return true
+    }
+
+    /**
+     * The outcome to end on when this account has no road left, or `null` while one remains —
+     * a dead end is a capability that still blocks onboarding but lists no work the applicant can do.
+     */
+    private fun blockedOutcome(account: AccountObjects.Account): OnboardingOutcome? {
+        val capabilities = account.capabilities ?: return null
+        val outstanding = capabilities.filter { it.isOutstanding }
+        if (outstanding.isEmpty()) return null
+        if (!outstanding.all { !it.hasActionableRequirements }) return null
+
+        val outcome = OnboardingOutcome.resolve(capabilities, originallyRequiredCapabilities)
+        return when (outcome) {
+            is OnboardingOutcome.Declined, is OnboardingOutcome.ActionRequired -> {
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_BLOCKED,
+                    AccountEventScreen.ONBOARDING,
+                    detail = AccountEventDetail.ONBOARDING_BLOCKED_NOTHING_ACTIONABLE
+                )
+                _finalOutcome.value = outcome
+                outcome
+            }
+            OnboardingOutcome.Approved, OnboardingOutcome.PendingReview -> null
+        }
+    }
 
     /**
      * Kicks off the no-SSN government-ID flow. Calls `POST /idv/session` to obtain a pre-created
@@ -1426,31 +1510,32 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                             reportUserError(userMessageForNetworkError(err))
                         } else {
                             // Pending (JSON variant not live yet / transient) — leave unverified.
-                            // Names the SSN fallback like Frame-iOS does; "try again" alone is a
-                            // dead end for an applicant who has no SSN to fall back on.
-                            AccountEventEmitter.emit(
-                                AccountEventName.STEP_UP_FAILED,
-                                AccountEventScreen.IDENTITY_VERIFICATION,
-                                detail = "generic bucket — not verified, no category returned"
-                            )
-                            reportUserError(
-                                "We couldn't verify your identity. Please try again or enter your Social Security Number."
-                            )
+                            // category/status decide which event and message; a terminally
+                            // declined applicant is told to contact support, not to retry a check
+                            // that cannot succeed.
+                            IdvCompletionRouting.emitStepUpFailure(complete)
+                            reportUserError(IdvCompletionRouting.idvFailureMessage(complete))
                         }
                     }
-                    is PersonaVerificationResult.Cancelled ->
+                    is PersonaVerificationResult.Cancelled -> {
                         AccountEventEmitter.emit(
                             AccountEventName.STEP_UP_CANCELLED,
                             AccountEventScreen.IDENTITY_VERIFICATION,
                             detail = AccountEventDetail.STEP_UP_CANCELLED_BY_USER
                         )
+                        // Required verification with a silent cancel leaves Continue looking dead.
+                        reportUserError("Identity verification was cancelled.")
+                    }
                     is PersonaVerificationResult.Failure -> {
                         AccountEventEmitter.emit(
                             AccountEventName.STEP_UP_FAILED,
                             AccountEventScreen.IDENTITY_VERIFICATION,
                             detail = AccountEventDetail.PERSONA_PROVIDER
                         )
-                        reportUserError(outcome.message ?: "Identity verification failed. Please try again.")
+                        // Never surface Persona's debugMessage to the applicant.
+                        reportUserError(
+                            "We couldn't verify your identity. Please try again or enter your Social Security Number."
+                        )
                     }
                 }
             } finally {
@@ -1618,6 +1703,87 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         _onboardingData.value = _onboardingData.value.copy(selectedPaymentMethodId = id)
     }
 
+    /**
+     * Continue on a saved payment method. When address verification is required and the selected
+     * card has no billing address, opens the address-only path instead of advancing.
+     * Checks the selected **card** (`selectedPaymentMethodId`), not the payout method — iOS
+     * historically read the wrong field here.
+     *
+     * @return `true` when the flow should advance to the next segment; `false` when the
+     *   address-only screen was opened instead.
+     */
+    fun continueWithSelectedPaymentMethod(): Boolean {
+        val selectedId = _onboardingData.value.selectedPaymentMethodId ?: return false
+        val needsAddress = originallyRequiredCapabilities.contains(Capabilities.ADDRESS_VERIFICATION)
+        val summary = _savedPaymentMethods.value.find { it.id == selectedId }
+        if (needsAddress && summary != null && !summary.hasBillingAddress) {
+            _onlyAddressVerification.value = true
+            // Move into AddPaymentMethod which renders address-only when the flag is set.
+            val addStep = orderedSteps.firstOrNull { it == OnboardingStep.AddPaymentMethod }
+            if (addStep != null) {
+                navigationState.goTo(addStep)
+            } else {
+                moveNext()
+            }
+            return false
+        }
+        _onlyAddressVerification.value = false
+        return true
+    }
+
+    fun clearOnlyAddressVerification() {
+        _onlyAddressVerification.value = false
+    }
+
+    /**
+     * Updates the selected payment method's billing address (address-only verification path for
+     * a saved card that is missing one).
+     */
+    fun updateSelectedPaymentMethodBillingAddress() {
+        val paymentMethodId = _onboardingData.value.selectedPaymentMethodId ?: return
+        if (!checkIfCustomerCanContinueWithPaymentMethod(onlyAddress = true)) {
+            reportUserError("Please enter a complete billing address.")
+            return
+        }
+        if (!beginAction()) return
+        viewModelScope.launch {
+            try {
+                val b = _createdBillingAddress.value
+                val billingAddress = FrameObjects.BillingAddress(
+                    city = b.city ?: "",
+                    country = b.country ?: "US",
+                    state = b.state ?: "",
+                    postalCode = b.postalCode,
+                    addressLine1 = b.addressLine1 ?: "",
+                    addressLine2 = b.addressLine2
+                )
+                val (_, err) = PaymentMethodsAPI.updatePaymentMethodWith(
+                    paymentMethodId,
+                    PaymentMethodRequests.UpdatePaymentMethodRequest(billing = billingAddress)
+                )
+                if (err != null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.BILLING_ADDRESS_UPDATE_FAILED,
+                        AccountEventScreen.PAYMENT_METHOD,
+                        detail = "$err"
+                    )
+                    reportUserError(userMessageForNetworkError(err))
+                    return@launch
+                }
+                AccountEventEmitter.emit(
+                    AccountEventName.BILLING_ADDRESS_UPDATED,
+                    AccountEventScreen.PAYMENT_METHOD,
+                    detail = AccountEventDetail.BILLING_ADDRESS_ONLY_VERIFICATION_PATH
+                )
+                _onlyAddressVerification.value = false
+                clearAccountDetails()
+                moveToNextSegment()
+            } finally {
+                endAction()
+            }
+        }
+    }
+
     fun onPayoutMethodSelected(id: String) {
         _onboardingData.value = _onboardingData.value.copy(selectedPayoutMethodId = id)
     }
@@ -1664,7 +1830,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun submitNewPaymentMethod() {
-        if (!checkIfCustomerCanContinueWithPaymentMethod(onlyAddress = false)) return
+        if (_onlyAddressVerification.value) {
+            updateSelectedPaymentMethodBillingAddress()
+            return
+        }
+        if (!checkIfCustomerCanContinueWithPaymentMethod(onlyAddress = false)) {
+            reportUserError("Please enter valid card details and a complete billing address.")
+            return
+        }
         val useEvervaultUi = _addPaymentUsesEvervaultCardUi.value
         val cardData = _paymentCardData.value
         val cardDraft = _paymentCardDraft.value
@@ -1685,8 +1858,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             expYear = cardDraft.expiryYear
             cvc = cardDraft.cvc
         }
-        val useForPayouts = cardDraft.useForPayouts
-        val payoutIdForBilling = _onboardingData.value.selectedPayoutMethodId
 
         if (!beginAction()) return
         viewModelScope.launch {
@@ -1722,28 +1893,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                                         id = paymentMethodId,
                                         brand = paymentMethod.card?.brand?.uppercase() ?: "",
                                         last4 = paymentMethod.card?.lastFourDigits ?: "",
-                                        exp = "${paymentMethod.card?.expirationMonth}/${paymentMethod.card?.expirationYear?.takeLast(2)}"
+                                        exp = "${paymentMethod.card?.expirationMonth}/${paymentMethod.card?.expirationYear?.takeLast(2)}",
+                                        hasBillingAddress = true
                                     )
-                    if (useForPayouts && payoutIdForBilling != null) {
-                        val (_, billingErr) = PaymentMethodsAPI.updatePaymentMethodWith(
-                            payoutIdForBilling,
-                            PaymentMethodRequests.UpdatePaymentMethodRequest(billing = billingAddress)
-                        )
-                        if (billingErr != null) {
-                            AccountEventEmitter.emit(
-                                AccountEventName.BILLING_ADDRESS_UPDATE_FAILED,
-                                AccountEventScreen.PAYMENT_METHOD,
-                                detail = "$billingErr"
-                            )
-                            reportUserError(userMessageForNetworkError(billingErr))
-                            return@launch
-                        }
-                        AccountEventEmitter.emit(
-                            AccountEventName.BILLING_ADDRESS_UPDATED,
-                            AccountEventScreen.PAYMENT_METHOD,
-                            detail = AccountEventDetail.BILLING_ADDRESS_ONLY_VERIFICATION_PATH
-                        )
-                    }
                     clearAccountDetails()
                     moveNext()
                 } else {
@@ -1825,12 +1977,20 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         _plaidLinkToken.value = null
     }
 
-    fun onPlaidDismissed() {
-        AccountEventEmitter.emit(
-            AccountEventName.BANK_LINK_CANCELLED,
-            AccountEventScreen.PAYOUT_METHOD,
-            detail = AccountEventDetail.PLAID_USER_DISMISSED
-        )
+    fun onPlaidDismissed(errorMessage: String? = null) {
+        if (errorMessage != null) {
+            AccountEventEmitter.emit(
+                AccountEventName.BANK_LINK_FAILED,
+                AccountEventScreen.PAYOUT_METHOD,
+                detail = errorMessage
+            )
+        } else {
+            AccountEventEmitter.emit(
+                AccountEventName.BANK_LINK_CANCELLED,
+                AccountEventScreen.PAYOUT_METHOD,
+                detail = AccountEventDetail.PLAID_USER_DISMISSED
+            )
+        }
         _isPerformingAction.value = false
     }
 
@@ -2113,7 +2273,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                             id = pmId,
                             brand = c.brand?.uppercase().orEmpty(),
                             last4 = c.lastFourDigits.orEmpty(),
-                            exp = "${c.expirationMonth.orEmpty()}/${c.expirationYear?.takeLast(2).orEmpty()}"
+                            exp = "${c.expirationMonth.orEmpty()}/${c.expirationYear?.takeLast(2).orEmpty()}",
+                            hasBillingAddress = !pm.billing?.addressLine1.isNullOrBlank()
                         )
                     }
                 }

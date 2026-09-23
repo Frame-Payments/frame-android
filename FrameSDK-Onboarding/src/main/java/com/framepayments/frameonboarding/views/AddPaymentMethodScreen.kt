@@ -11,12 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -67,6 +65,7 @@ internal fun AddPaymentMethodScreen(
     val paymentCard by viewModel.paymentCardData.collectAsState()
     val card by viewModel.paymentCardDraft.collectAsState()
     val billing by viewModel.createdBillingAddress.collectAsState()
+    val onlyAddress by viewModel.onlyAddressVerification.collectAsState()
 
     val isPreview = LocalInspectionMode.current
 
@@ -74,9 +73,10 @@ internal fun AddPaymentMethodScreen(
         mutableStateOf<Boolean?>(if (isPreview) false else null)
     }
 
-    LaunchedEffect(isPreview) {
-        if (isPreview) {
+    LaunchedEffect(isPreview, onlyAddress) {
+        if (isPreview || onlyAddress) {
             viewModel.setAddPaymentUsesEvervaultCardUi(false)
+            if (onlyAddress) evervaultReady = false
         } else {
             val ok = FrameNetworking.ensureEvervaultReadyForCardInputs()
             evervaultReady = ok
@@ -138,7 +138,7 @@ internal fun AddPaymentMethodScreen(
             // via Google's `isReadyToPay` check + Frame's wallet config + the merchant ID stored
             // on `FrameNetworking` (set once at SDK init). If the merchant ID isn't configured,
             // the button stays hidden — no host-app opt-in required here.
-            if (!isPreview) {
+            if (!isPreview && !onlyAddress) {
                 AndroidView(
                     modifier = Modifier.fillMaxWidth(),
                     factory = { ctx -> FrameGooglePayButton(ctx) },
@@ -176,100 +176,98 @@ internal fun AddPaymentMethodScreen(
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Card Details",
-                    style = LocalFrameTheme.current.fonts.label
-                )
-                cardError?.let { msg ->
-                    Text(
-                        text = msg,
-                        style = LocalFrameTheme.current.fonts.caption,
-                        color = LocalFrameTheme.current.colors.error
-                    )
-                }
-            }
-            if (isPreview) {
-                Box(
+            if (!onlyAddress) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 160.dp)
-                        .background(LocalFrameTheme.current.colors.surface.copy(alpha = 0.6f)),
-                    contentAlignment = Alignment.Center
+                        .padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "EncryptedPaymentCardInput (preview placeholder)",
-                        style = LocalFrameTheme.current.fonts.bodySmall,
-                        color = LocalFrameTheme.current.colors.textSecondary
+                        text = "Card Details",
+                        style = LocalFrameTheme.current.fonts.label
                     )
+                    cardError?.let { msg ->
+                        Text(
+                            text = msg,
+                            style = LocalFrameTheme.current.fonts.caption,
+                            color = LocalFrameTheme.current.colors.error
+                        )
+                    }
                 }
-            } else {
-                when (evervaultReady) {
-                    null -> Box(
+                if (isPreview) {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 160.dp),
+                            .heightIn(min = 160.dp)
+                            .background(LocalFrameTheme.current.colors.surface.copy(alpha = 0.6f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        Text(
+                            text = "EncryptedPaymentCardInput (preview placeholder)",
+                            style = LocalFrameTheme.current.fonts.bodySmall,
+                            color = LocalFrameTheme.current.colors.textSecondary
+                        )
                     }
-                    true -> AndroidView(
-                        modifier = Modifier.fillMaxWidth(),
-                        factory = { EncryptedPaymentCardInput(it) },
-                        update = { view ->
-                            view.onCardDataChange = { viewModel.onPaymentCardDataChange(it) }
+                } else {
+                    when (evervaultReady) {
+                        null -> Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 160.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
                         }
-                    )
-                    false -> PaymentCardForm(
-                        cardNumber = card.cardNumber,
-                        onCardNumberChange = { n -> viewModel.updatePaymentCardDraft { it.copy(cardNumber = n) } },
-                        expiryMonth = card.expiryMonth,
-                        expiryYear = card.expiryYear,
-                        onExpiryChange = { m, y -> viewModel.updatePaymentCardDraft { it.copy(expiryMonth = m, expiryYear = y) } },
-                        cvc = card.cvc,
-                        onCvcChange = { c -> viewModel.updatePaymentCardDraft { it.copy(cvc = c) } }
-                    )
+                        true -> AndroidView(
+                            modifier = Modifier.fillMaxWidth(),
+                            factory = { EncryptedPaymentCardInput(it) },
+                            update = { view ->
+                                view.onCardDataChange = { viewModel.onPaymentCardDataChange(it) }
+                            }
+                        )
+                        false -> PaymentCardForm(
+                            cardNumber = card.cardNumber,
+                            onCardNumberChange = { n -> viewModel.updatePaymentCardDraft { it.copy(cardNumber = n) } },
+                            expiryMonth = card.expiryMonth,
+                            expiryYear = card.expiryYear,
+                            onExpiryChange = { m, y -> viewModel.updatePaymentCardDraft { it.copy(expiryMonth = m, expiryYear = y) } },
+                            cvc = card.cvc,
+                            onCvcChange = { c -> viewModel.updatePaymentCardDraft { it.copy(cvc = c) } }
+                        )
+                    }
                 }
-            }
 
-            Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
+            }
 
             BillingAddressDetailView(
                 viewModel = billingVM,
                 headerTitle = "Billing Address"
             )
 
-            Spacer(Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = card.useForPayouts,
-                    onCheckedChange = { checked -> viewModel.updatePaymentCardDraft { it.copy(useForPayouts = checked) } }
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "Use this card for payouts if eligible",
-                    style = LocalFrameTheme.current.fonts.bodySmall
-                )
-            }
-
             Spacer(Modifier.height(24.dp))
 
             val isPerformingAction by viewModel.isPerformingAction.collectAsState()
             ContinueButton(
-                enabled = evervaultReady != null,
+                enabled = evervaultReady != null || onlyAddress,
                 isLoading = isPerformingAction,
                 onClick = {
                     val addressOK = billingVM.validate()
+                    if (onlyAddress) {
+                        if (addressOK) {
+                            viewModel.updateCreatedBillingAddress { billingVM.address.value }
+                            viewModel.submitNewPaymentMethod()
+                        } else {
+                            AccountEventEmitter.emit(
+                                AccountEventName.CARD_VALIDATION_FAILED,
+                                AccountEventScreen.PAYMENT_METHOD,
+                                detail = "billing address"
+                            )
+                        }
+                        return@ContinueButton
+                    }
                     val cardOK = if (evervaultReady == true) {
                         Validators.validateOnboardingCard(paymentCard).also { cardError = it } == null
                     } else {
@@ -293,6 +291,12 @@ internal fun AddPaymentMethodScreen(
                             AccountEventScreen.PAYMENT_METHOD,
                             detail = if (cardOK) "billing address" else (cardError ?: "card")
                         )
+                        // Surface a message when Continue is a no-op on a partially valid form.
+                        if (!cardOK && cardError != null) {
+                            // cardError is already shown inline next to "Card Details"
+                        } else if (!addressOK) {
+                            // BillingAddressDetailView already highlights invalid fields.
+                        }
                     }
                 }
             )

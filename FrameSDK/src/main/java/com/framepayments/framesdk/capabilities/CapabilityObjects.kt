@@ -113,12 +113,20 @@ object CapabilityObjects {
             CapabilityStatus.PENDING, CapabilityStatus.UNKNOWN -> true
         }
 
+    /**
+     * Whether work listed against this capability can still move it forward. The server blanks
+     * `currently_due` only for `ineligible`, so a disabled capability still publishes dead keys.
+     */
+    val Capability.hasActionableRequirements: Boolean
+        get() = when (capabilityStatus) {
+            CapabilityStatus.PENDING, CapabilityStatus.UNKNOWN -> true
+            CapabilityStatus.ACTIVE, CapabilityStatus.UNREQUESTED,
+            CapabilityStatus.DISABLED, CapabilityStatus.INELIGIBLE -> false
+        }
+
     /** `currently_due` keys the applicant can still resolve; a disabled capability publishes dead keys. */
     val Capability.actionableRequirements: List<String>
-        get() = when (capabilityStatus) {
-            CapabilityStatus.PENDING, CapabilityStatus.UNKNOWN -> currentlyDue.orEmpty()
-            else -> emptyList()
-        }
+        get() = if (hasActionableRequirements) currentlyDue.orEmpty() else emptyList()
 
     /** `currently_due` keys the onboarding flow acts on. */
     object CapabilityRequirementKey {
