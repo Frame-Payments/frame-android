@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.collectAsState
@@ -85,6 +86,7 @@ fun AddressAutocompleteField(
             error = error,
             inlineError = inlineError,
             onClearError = onClearError,
+            autofillContentType = ContentType.AddressStreet,
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { state ->

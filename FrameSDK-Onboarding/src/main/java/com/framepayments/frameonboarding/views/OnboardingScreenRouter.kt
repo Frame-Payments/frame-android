@@ -33,7 +33,7 @@ internal fun OnboardingScreenRouter(
         OnboardingStep.VerifyIdentification -> {
             UserIdentificationView(
                 viewModel = viewModel,
-                requiresDateOfBirth = config.requiredCapabilities.contains(Capabilities.KYC_PREFILL),
+            requiresDateOfBirth = viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL),
                 // Always show TOS on Android. iOS gates on geo_compliance; Android keeps the
                 // broader surface so every create/update path can attach an acceptance token
                 // (decision: Android is the correct one for now — M18).
