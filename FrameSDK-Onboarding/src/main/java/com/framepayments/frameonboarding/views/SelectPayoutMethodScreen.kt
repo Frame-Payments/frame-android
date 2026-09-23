@@ -105,6 +105,7 @@ internal fun SelectPayoutMethodScreen(
                             pm = pm,
                             selected = selectedId == pm.id,
                             isPrimary = primaryId == pm.id,
+                            enabled = !isLoading,
                             onClick = {
                                 onSelect(pm.id)
                                 AccountEventEmitter.emit(
@@ -130,7 +131,8 @@ internal fun SelectPayoutMethodScreen(
                             detail = AccountEventDetail.PAYOUT_METHOD_ADD_STARTED_MANUAL_OR_PLAID
                         )
                         onAddPayout()
-                    }
+                    },
+                    enabled = !isLoading
                 )
             }
 
@@ -148,12 +150,13 @@ private fun SavedPayoutMethodRow(
     pm: PaymentMethodSummary,
     selected: Boolean,
     isPrimary: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
     ) {
@@ -177,7 +180,7 @@ private fun SavedPayoutMethodRow(
                     style = LocalFrameTheme.current.fonts.bodySmall
                 )
             }
-            RadioButton(selected = selected, onClick = onClick)
+            RadioButton(selected = selected, onClick = onClick, enabled = enabled)
         }
     }
 }
@@ -186,12 +189,13 @@ private fun SavedPayoutMethodRow(
 private fun AddPayoutMethodRow(
     title: String,
     subtitle: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
     ) {

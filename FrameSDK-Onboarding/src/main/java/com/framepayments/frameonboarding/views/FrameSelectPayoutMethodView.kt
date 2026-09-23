@@ -61,7 +61,7 @@ fun FrameSelectPayoutMethodView(
     // The selection when Add opened; only a different id afterwards means a bank was added.
     var selectedIdWhenAddOpened by remember { mutableStateOf<String?>(null) }
 
-    DisposableEffect(clientSecret) {
+    DisposableEffect(viewModel, clientSecret) {
         clientSecret?.let { FrameNetworking.beginOnboardingSession(it) }
         // Seeds saved payout methods; onboarding gets this from its container.
         viewModel.launchCheckExistingAccount(updateCapabilities = false)

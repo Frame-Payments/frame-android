@@ -1270,9 +1270,20 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
     }
 
-    private fun updateStepUpRequirements(capabilities: List<CapabilityObjects.Capability>?) {
-        capabilities ?: return
-        val due = capabilities.flatMap { it.actionableRequirements }
+    /**
+     * Seeds step-up flags from the account's capability requirements.
+     *
+     * When the create/update response omits `capabilities`, refetches the account before deciding —
+     * otherwise [submitPersonalInfo] can advance without launching Persona for a backend step-up.
+     */
+    private suspend fun updateStepUpRequirements(
+        capabilities: List<CapabilityObjects.Capability>?,
+        accountId: String? = _resolvedAccountId.value
+    ) {
+        val caps = capabilities
+            ?: accountId?.let { AccountsAPI.getAccountWith(it, forTesting = false).first?.capabilities }
+            ?: return
+        val due = caps.flatMap { it.actionableRequirements }
         _onboardingData.update {
             it.copy(
                 identityDocumentRequired = CapabilityObjects.CapabilityRequirementKey.IDENTITY_DOCUMENT in due,
@@ -2013,7 +2024,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                                     last4 = payoutMethod.ach?.lastFour ?: "",
                                     exp = ""
                                 )
-                electPayoutMethod(payoutMethodId)
+                if (!electPayoutMethod(payoutMethodId)) return@launch
                 // Selected only after the election: the standalone views report Completed on this.
                 _onboardingData.value = _onboardingData.value.copy(selectedPayoutMethodId = payoutMethodId)
                 clearAccountDetails()
@@ -2119,7 +2130,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                             last4 = ach.lastFour ?: "",
                             exp = ""
                         )
-                        electPayoutMethod(payoutMethodId)
+                        if (!electPayoutMethod(payoutMethodId)) return@launch
                         _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethodId) }
                         clearAccountDetails()
                         moveNext()

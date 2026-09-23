@@ -98,10 +98,16 @@ internal fun UserIdentificationView(
     // field). Keyed off what the host originally asked for, not the shrinking live list — the
     // latter drops a capability the moment it's granted, hiding the field mid-flow. Hidden under a
     // step-up or when the host required idv, where Continue runs Persona itself.
+    val hostRequestedIdv = viewModel.originallyRequiredCapabilities.contains(Capabilities.IDV)
     val showGovIdVerification = !viewModel.governmentIdRequired && (
         viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC) ||
             viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL)
         )
+    // Host-requested IDV / identity-document step-up skips SSN so Continue can launch Persona;
+    // corrected-KYC overrides and keeps the SSN field required.
+    val skipsSsnEntry = !onboardingData.correctedKycDetailsRequired && (
+        onboardingData.skipsSsnEntry || viewModel.governmentIdRequired || hostRequestedIdv
+    )
 
     // Persona result launcher. Lifecycle-owned here (the VM can't launch an ActivityResult); the
     // callback forwards the (best-effort) client outcome to the VM, which confirms with the server.
@@ -386,8 +392,7 @@ internal fun UserIdentificationView(
                                 showGovIdVerification = showGovIdVerification,
                                 identityVerifiedViaGovId = onboardingData.identityVerifiedViaGovId &&
                                     !onboardingData.correctedKycDetailsRequired,
-                                showSsnField = !onboardingData.identityDocumentRequired ||
-                                    onboardingData.correctedKycDetailsRequired,
+                                showSsnField = !skipsSsnEntry,
                                 isVerifyingGovId = isVerifyingGovId,
                                 onVerifyWithoutSsn = { viewModel.verifyIdentityWithoutSsn() },
                                 onUseSsnInstead = { viewModel.resetIdentityVerification() }
@@ -434,7 +439,6 @@ internal fun UserIdentificationView(
                                     }
                                 }
                                 else -> {
-                                    val skipsSsnEntry = onboardingData.skipsSsnEntry
                                     val infoOK = customerInfoVM.validate(ssnOptional = skipsSsnEntry)
                                     val addressOK = personalAddressVM.validate()
                                     if (!infoOK || !addressOK) {

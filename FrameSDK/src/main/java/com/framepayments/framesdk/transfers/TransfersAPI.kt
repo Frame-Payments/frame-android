@@ -40,9 +40,10 @@ object TransfersAPI {
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
+            // Keep a caller-supplied session rather than blanking a still-valid one.
             null
         }
-        return request.copy(sonarSessionId = sessionId)
+        return if (sessionId != null) request.copy(sonarSessionId = sessionId) else request
     }
 
     /**
