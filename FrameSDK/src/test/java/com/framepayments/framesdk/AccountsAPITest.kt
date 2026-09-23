@@ -58,6 +58,28 @@ class AccountsAPITest {
     }
 
     @Test
+    fun testUpdateAccountSendsPermittedKeys() = runBlocking {
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"id":"acc_123"}"""))
+
+        val request = AccountRequests.UpdateAccountRequest(
+            profile = AccountRequests.UpdateAccountProfile(
+                individual = AccountRequests.UpdateIndividualAccount(
+                    phone = AccountObjects.AccountPhoneNumber("5551234567", "1"),
+                    ssnLast4 = "1234"
+                )
+            )
+        )
+        AccountsAPI.updateAccount("acc_123", request)
+
+        // The backend's strong params drop `ssn_last4` and flat `phone_number` without an error.
+        val body = mockWebServer.takeRequest().body.readUtf8()
+        assertTrue(body.contains("\"ssn_last_four\":\"1234\""))
+        assertTrue(body.contains("\"phone\":{\"number\":\"5551234567\",\"country_code\":\"1\"}"))
+        assertFalse(body.contains("ssn_last4"))
+        assertFalse(body.contains("phone_number"))
+    }
+
+    @Test
     fun testGetAccountWith() = runBlocking {
         val responseBody = """{"id":"acc_123","object":"account","type":"individual","status":"active","created":1234567890,"updated":1234567890,"livemode":false}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))

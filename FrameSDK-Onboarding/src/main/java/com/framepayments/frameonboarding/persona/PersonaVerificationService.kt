@@ -35,6 +35,17 @@ sealed class PersonaVerificationResult {
 }
 
 /**
+ * A pre-created Persona inquiry ready to launch, as returned by `POST /idv/session`.
+ *
+ * @property inquiryId The Persona inquiry id (`inq_…`).
+ * @property sessionToken Present only when the server resumed an existing inquiry.
+ */
+data class PersonaInquiry(
+    val inquiryId: String,
+    val sessionToken: String?
+)
+
+/**
  * Reusable service that launches the Persona mobile SDK against a **pre-created** inquiry id and
  * exposes the outcome as state. Mirrors [com.framepayments.frameonboarding.plaid.PlaidLinkService]
  * (owns a [StateFlow] result; callers react to it) and wraps the SDK's callback in a
@@ -65,18 +76,21 @@ class PersonaVerificationService {
      * [CompletableDeferred] completes when the host forwards the SDK callback to [onInquiryResult].
      *
      * @param inquiryId Pre-created Persona inquiry id (`inq_…`) from `POST /idv/session`.
+     * @param sessionToken Session token from `POST /idv/session`, required to reopen a resumed inquiry.
      * @param launcher A launcher registered via `registerForActivityResult(Inquiry.Contract())`.
      */
     fun launch(
         inquiryId: String,
+        sessionToken: String?,
         launcher: ActivityResultLauncher<Inquiry>
     ): CompletableDeferred<PersonaVerificationResult> {
         val deferred = CompletableDeferred<PersonaVerificationResult>()
         pending = deferred
         _result.value = null
 
-        val inquiry = Inquiry.fromInquiry(inquiryId).build()
-        launcher.launch(inquiry)
+        val builder = Inquiry.fromInquiry(inquiryId)
+        sessionToken?.let { builder.sessionToken(it) }
+        launcher.launch(builder.build())
         return deferred
     }
 
@@ -84,12 +98,14 @@ class PersonaVerificationService {
      * Launches the inquiry and suspends until the host forwards the SDK callback.
      *
      * @param inquiryId Pre-created Persona inquiry id (`inq_…`).
+     * @param sessionToken Session token from `POST /idv/session`, required to reopen a resumed inquiry.
      * @param launcher A launcher registered via `registerForActivityResult(Inquiry.Contract())`.
      */
     suspend fun awaitResult(
         inquiryId: String,
+        sessionToken: String?,
         launcher: ActivityResultLauncher<Inquiry>
-    ): PersonaVerificationResult = launch(inquiryId, launcher).await()
+    ): PersonaVerificationResult = launch(inquiryId, sessionToken, launcher).await()
 
     /**
      * Maps a Persona [InquiryResponse] to a [PersonaVerificationResult], stores it in [result], and

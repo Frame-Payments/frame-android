@@ -52,6 +52,8 @@ fun CustomerInformationView(
     showGovIdVerification: Boolean = false,
     /** When true, the SSN input and the button are hidden and a "Verified with government ID." line is shown. */
     identityVerifiedViaGovId: Boolean = false,
+    /** When false (a government-ID step-up is pending), neither the SSN input nor the button is shown. */
+    showSsnField: Boolean = true,
     /** When true, the government-ID button shows a spinner and is disabled (verification in flight). */
     isVerifyingGovId: Boolean = false,
     /** Invoked when the customer taps "I don't have a social security number". */
@@ -262,7 +264,7 @@ fun CustomerInformationView(
                     )
                 }
             }
-        } else {
+        } else if (showSsnField) {
             ValidatedTextField(
                 value = identity.ssn,
                 onValueChange = { v ->

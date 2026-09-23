@@ -1,5 +1,7 @@
 package com.framepayments.framesdk
 
+import com.framepayments.framesdk.configurations.ConfigurationEndpoints
+import com.framepayments.framesdk.fingerprint.FingerprintCapability
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
@@ -98,6 +100,16 @@ class FrameNetworkingTest {
 
         val recorded = mockWebServer.takeRequest()
         assertEquals("Bearer ci_123_secret_xyz", recorded.getHeader("Authorization"))
+    }
+
+    @Test
+    fun getRequestSendsEndpointAdditionalHeaders() = runBlocking {
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("{}"))
+
+        FrameNetworking.performDataTask(ConfigurationEndpoints.GetAllConfiguration, FrameAuthMode.Publishable)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals(FingerprintCapability.SEALED, recorded.getHeader(FingerprintCapability.HEADER))
     }
 
     @Test

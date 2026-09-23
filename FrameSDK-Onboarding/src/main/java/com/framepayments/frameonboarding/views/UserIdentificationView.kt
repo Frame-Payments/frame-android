@@ -96,9 +96,12 @@ internal fun UserIdentificationView(
 
     // Show the no-SSN government-ID path only when KYC is required (the same gate as the SSN
     // field). Keyed off what the host originally asked for, not the shrinking live list — the
-    // latter drops a capability the moment it's granted, hiding the field mid-flow.
-    val showGovIdVerification = viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC) ||
-        viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL)
+    // latter drops a capability the moment it's granted, hiding the field mid-flow. Hidden under a
+    // step-up or when the host required idv, where Continue runs Persona itself.
+    val showGovIdVerification = !viewModel.governmentIdRequired && (
+        viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC) ||
+            viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL)
+        )
 
     // Persona result launcher. Lifecycle-owned here (the VM can't launch an ActivityResult); the
     // callback forwards the (best-effort) client outcome to the VM, which confirms with the server.
@@ -106,10 +109,10 @@ internal fun UserIdentificationView(
         viewModel.onPersonaInquiryResult(response)
     }
 
-    // When /idv/session returns an inquiry id, launch the Persona SDK against it and confirm server-side.
+    // When /idv/session returns an inquiry, launch the Persona SDK against it and confirm server-side.
     LaunchedEffect(personaInquiryToLaunch) {
-        personaInquiryToLaunch?.let { inquiryId ->
-            viewModel.launchPersonaInquiry(inquiryId, personaLauncher)
+        personaInquiryToLaunch?.let { inquiry ->
+            viewModel.launchPersonaInquiry(inquiry, personaLauncher)
         }
     }
 
@@ -381,7 +384,10 @@ internal fun UserIdentificationView(
                                 viewModel = customerInfoVM,
                                 showHeader = false,
                                 showGovIdVerification = showGovIdVerification,
-                                identityVerifiedViaGovId = onboardingData.identityVerifiedViaGovId,
+                                identityVerifiedViaGovId = onboardingData.identityVerifiedViaGovId &&
+                                    !onboardingData.correctedKycDetailsRequired,
+                                showSsnField = !onboardingData.identityDocumentRequired ||
+                                    onboardingData.correctedKycDetailsRequired,
                                 isVerifyingGovId = isVerifyingGovId,
                                 onVerifyWithoutSsn = { viewModel.verifyIdentityWithoutSsn() },
                                 onUseSsnInstead = { viewModel.resetIdentityVerification() }
@@ -412,7 +418,8 @@ internal fun UserIdentificationView(
                     Spacer(Modifier.height(24.dp))
                     val isPerformingAction by viewModel.isPerformingAction.collectAsState()
                     ContinueButton(
-                        isLoading = isPerformingAction,
+                        // A step-up hands Continue off to Persona, which outlives the submit action.
+                        isLoading = isPerformingAction || isVerifyingGovId,
                         onClick = {
                             when (subStep) {
                                 VerifyIdSubStep.PhoneAuth -> {
@@ -427,8 +434,8 @@ internal fun UserIdentificationView(
                                     }
                                 }
                                 else -> {
-                                    val verifiedViaGovId = onboardingData.identityVerifiedViaGovId
-                                    val infoOK = customerInfoVM.validate(ssnOptional = verifiedViaGovId)
+                                    val skipsSsnEntry = onboardingData.skipsSsnEntry
+                                    val infoOK = customerInfoVM.validate(ssnOptional = skipsSsnEntry)
                                     val addressOK = personalAddressVM.validate()
                                     if (!infoOK || !addressOK) {
                                         AccountEventEmitter.emit(
@@ -441,13 +448,14 @@ internal fun UserIdentificationView(
                                         val id = customerInfoVM.identity.value
                                         val addr = personalAddressVM.address.value
                                         viewModel.onPhoneCountryChanged(customerInfoVM.phoneCountry.value)
+                                        viewModel.onPhoneNumberChanged(id.phoneNumber)
                                         viewModel.submitPersonalInfo(
                                             firstName = id.firstName,
                                             lastName = id.lastName,
                                             email = id.email,
                                             dobOverride = id.dateOfBirth.takeIf { it.isNotBlank() },
-                                            // Omit SSN when verified via government ID; upsert treats "" as null.
-                                            ssnLastFour = if (verifiedViaGovId) "" else id.ssn,
+                                            // Omit SSN on the government-ID path; upsert treats "" as null.
+                                            ssnLastFour = if (skipsSsnEntry) "" else id.ssn,
                                             addressLine1 = addr.addressLine1.orEmpty(),
                                             addressLine2 = addr.addressLine2,
                                             city = addr.city.orEmpty(),

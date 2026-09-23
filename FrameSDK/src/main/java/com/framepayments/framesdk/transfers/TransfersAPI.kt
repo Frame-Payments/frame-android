@@ -2,6 +2,7 @@ package com.framepayments.framesdk.transfers
 
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
+import kotlinx.coroutines.CancellationException
 
 /**
  * Provides suspend and callback-based functions for managing transfers.
@@ -18,8 +19,30 @@ object TransfersAPI {
      */
     suspend fun createTransfer(request: TransferRequests.CreateTransferRequest): Pair<Transfer?, NetworkingError?> {
         val endpoint = TransferEndpoints.CreateTransfer
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, withSonarSession(request))
         return Pair(data?.let { FrameNetworking.parseResponse<Transfer>(data) }, error)
+    }
+
+    /**
+     * Attaches the account's Sonar session to a charge-backed transfer, which the server rejects
+     * without a live one. Payouts are left alone: the API rejects the field on them. Establishes
+     * the session rather than reading the cache, since a stored but stale session no longer backs
+     * a payment.
+     */
+    private suspend fun withSonarSession(
+        request: TransferRequests.CreateTransferRequest
+    ): TransferRequests.CreateTransferRequest {
+        if (request.sourcePaymentMethodId == null) return request
+        val manager = FrameNetworking.sonarSessionManagerOrNull() ?: return request
+        // A failure must not block the transfer; the server's rejection is the authoritative answer.
+        val sessionId = try {
+            manager.ensureSession(request.accountId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
+        return request.copy(sonarSessionId = sessionId)
     }
 
     /**

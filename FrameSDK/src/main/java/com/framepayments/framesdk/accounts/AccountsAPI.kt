@@ -127,6 +127,23 @@ object AccountsAPI {
     }
 
     /**
+     * Elects a payment method as the account's payout destination (its primary bank).
+     *
+     * @param accountId The ID of the account.
+     * @param request The payment method to elect.
+     * @return A pair of the updated [AccountObjects.Account] and any [NetworkingError].
+     */
+    suspend fun electPayoutMethod(
+        accountId: String,
+        request: AccountRequests.ElectPayoutMethodRequest
+    ): Pair<AccountObjects.Account?, NetworkingError?> {
+        if (accountId.isEmpty()) return Pair(null, null)
+        val endpoint = AccountEndpoints.ElectPayoutMethod(accountId)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
+        return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
+    }
+
+    /**
      * Restricts an account, preventing it from processing payments.
      *
      * @param accountId The ID of the account to restrict.

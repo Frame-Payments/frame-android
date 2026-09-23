@@ -44,6 +44,7 @@ internal fun OnboardingScreenRouter(
         }
 
         OnboardingStep.SelectPaymentMethod -> {
+            LaunchedEffect(Unit) { viewModel.loadSavedPaymentMethods() }
             SelectPaymentMethodScreen(
                 savedMethods = savedPaymentMethods,
                 selectedId = onboardingData.selectedPaymentMethodId,
@@ -52,7 +53,7 @@ internal fun OnboardingScreenRouter(
                 onBack = { viewModel.moveBack() },
                 onContinue = {
                     if (onboardingData.selectedPaymentMethodId != null) {
-                        viewModel.moveNext()
+                        viewModel.moveToNextSegment()
                     }
                 }
             )
@@ -75,13 +76,18 @@ internal fun OnboardingScreenRouter(
         }
 
         OnboardingStep.SelectPayoutMethod -> {
+            LaunchedEffect(Unit) { viewModel.loadSavedPaymentMethods() }
+            val primaryPayoutMethodId by viewModel.primaryPayoutMethodId.collectAsState()
+            val isPerformingAction by viewModel.isPerformingAction.collectAsState()
             SelectPayoutMethodScreen(
                 savedMethods = savedPayoutMethods,
                 selectedId = onboardingData.selectedPayoutMethodId,
+                primaryId = primaryPayoutMethodId,
+                isLoading = isPerformingAction,
                 onSelect = { viewModel.onPayoutMethodSelected(it) },
                 onAddPayout = { viewModel.moveNext() },
                 onBack = { viewModel.moveBack() },
-                onContinue = { viewModel.moveNext() }
+                onContinue = { viewModel.electSelectedPayoutMethod { viewModel.moveToNextSegment() } }
             )
         }
 

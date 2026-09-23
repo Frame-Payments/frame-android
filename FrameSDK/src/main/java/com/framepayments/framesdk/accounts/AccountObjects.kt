@@ -181,6 +181,7 @@ object AccountObjects {
      * @property profile Business or individual profile data.
      * @property capabilities List of payment capabilities enabled for this account.
      * @property steps Outstanding onboarding or compliance steps.
+     * @property payoutPaymentMethodId The payment method elected as the account's payout destination.
      * @property created Unix timestamp of account creation.
      * @property updated Unix timestamp of the last account update.
      * @property livemode `true` when the account exists in the live environment.
@@ -196,6 +197,7 @@ object AccountObjects {
         val profile: AccountProfile? = null,
         val capabilities: List<CapabilityObjects.Capability>? = null,
         val steps: List<AccountStep>? = null,
+        @SerializedName("payout_payment_method_id") val payoutPaymentMethodId: String? = null,
         val created: Int?,
         val updated: Int?,
         val livemode: Boolean?

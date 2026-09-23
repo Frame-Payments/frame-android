@@ -6,9 +6,12 @@ import com.google.gson.annotations.SerializedName
  * Response from `POST /idv/session`.
  *
  * @property inquiryId The Persona inquiry id (`inq_…`) to launch the mobile SDK against.
+ * @property sessionToken Present only when the server resumed an existing inquiry; Persona will
+ *   not reopen a resumed inquiry without it.
  */
 data class IdvSessionResponse(
-    @SerializedName("inquiry_id") val inquiryId: String?
+    @SerializedName("inquiry_id") val inquiryId: String?,
+    @SerializedName("session_token") val sessionToken: String? = null
 )
 
 /**

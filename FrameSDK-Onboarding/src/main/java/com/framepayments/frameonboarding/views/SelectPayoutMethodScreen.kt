@@ -54,7 +54,9 @@ internal fun SelectPayoutMethodScreen(
     onSelect: (String) -> Unit,
     onAddPayout: () -> Unit,
     onBack: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    primaryId: String? = null,
+    isLoading: Boolean = false
 ) {
     val canContinue = selectedId != null
 
@@ -102,6 +104,7 @@ internal fun SelectPayoutMethodScreen(
                         SavedPayoutMethodRow(
                             pm = pm,
                             selected = selectedId == pm.id,
+                            isPrimary = primaryId == pm.id,
                             onClick = {
                                 onSelect(pm.id)
                                 AccountEventEmitter.emit(
@@ -133,6 +136,7 @@ internal fun SelectPayoutMethodScreen(
 
             ContinueButton(
                 enabled = canContinue,
+                isLoading = isLoading,
                 onClick = onContinue
             )
         }
@@ -143,6 +147,7 @@ internal fun SelectPayoutMethodScreen(
 private fun SavedPayoutMethodRow(
     pm: PaymentMethodSummary,
     selected: Boolean,
+    isPrimary: Boolean,
     onClick: () -> Unit
 ) {
     Surface(
@@ -167,7 +172,10 @@ private fun SavedPayoutMethodRow(
             Column(Modifier.weight(1f)) {
                 Text(text = "•••• ${pm.last4}", style = LocalFrameTheme.current.fonts.body)
                 Spacer(Modifier.height(2.dp))
-                Text(text = "Account", style = LocalFrameTheme.current.fonts.bodySmall)
+                Text(
+                    text = if (isPrimary) "Account · Primary" else "Account",
+                    style = LocalFrameTheme.current.fonts.bodySmall
+                )
             }
             RadioButton(selected = selected, onClick = onClick)
         }

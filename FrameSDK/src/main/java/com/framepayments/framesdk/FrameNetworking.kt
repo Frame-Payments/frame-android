@@ -499,6 +499,10 @@ object FrameNetworking {
             .url(httpUrl)
             .withFrameHeaders(auth)
 
+        for ((name, value) in endpoint.additionalHeaders) {
+            requestBuilder.header(name, value)
+        }
+
         val method = endpoint.httpMethod.uppercase()
         requestBuilder.method(method, null)
         val request = requestBuilder.build()
@@ -734,6 +738,10 @@ object FrameNetworking {
             val requestBuilder = Request.Builder()
                 .url(httpUrl)
                 .withFrameHeadersOnWorkerThread(auth)
+
+            for ((name, value) in endpoint.additionalHeaders) {
+                requestBuilder.header(name, value)
+            }
 
             val method = endpoint.httpMethod.uppercase()
             requestBuilder.method(method, null)

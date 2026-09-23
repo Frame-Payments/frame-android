@@ -43,6 +43,7 @@ fun FrameAddPaymentMethodView(
     val viewModel = remember(accountId, clientSecret) {
         FrameOnboardingViewModel(OnboardingConfig(accountId = accountId, clientSecret = clientSecret))
     }
+    DisposableEffect(viewModel) { onDispose { viewModel.close() } }
     val snackbarHostState = remember { SnackbarHostState() }
     val onboardingData by viewModel.onboardingData.collectAsState()
     val userError by viewModel.userErrorMessage.collectAsState()

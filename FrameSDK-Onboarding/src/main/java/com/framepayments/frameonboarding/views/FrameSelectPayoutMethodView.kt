@@ -22,11 +22,8 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *
  * Lists the account's saved ACH payout methods and lets the applicant add a new one.
  *
- * Note: unlike iOS's `FrameSelectPayoutMethodView`, this does not yet elect the chosen method as
- * the account's primary payout destination — Android has no `elect_payout_method` API call wired
- * anywhere in the SDK today. This mirrors what [com.framepayments.frameonboarding.views.OnboardingContainerView]'s
- * own select-payout step already does (select only); wire the election call here once it lands
- * elsewhere in the SDK.
+ * Continue elects the chosen method as the account's primary payout destination, as does adding
+ * a new bank; [FrameResult.Completed] is reported only after that.
  *
  * @param accountId The Frame account ID whose payout method is being selected.
  * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your server
@@ -34,7 +31,7 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *   request authenticates with this token, scoping it to a single account. Pass null only for
  *   legacy integrations that still authenticate with a secret key.
  * @param onResult Called with a [FrameResult] when the screen finishes or is cancelled. On
- *   [FrameResult.Completed] the id is the selected payout method.
+ *   [FrameResult.Completed] the id is the elected payout method.
  */
 @Composable
 fun FrameSelectPayoutMethodView(
@@ -48,18 +45,24 @@ fun FrameSelectPayoutMethodView(
     val viewModel = remember(accountId, clientSecret) {
         FrameOnboardingViewModel(OnboardingConfig(accountId = accountId, clientSecret = clientSecret))
     }
+    DisposableEffect(viewModel) { onDispose { viewModel.close() } }
     val snackbarHostState = remember { SnackbarHostState() }
     val onboardingData by viewModel.onboardingData.collectAsState()
     val savedPayoutMethods by viewModel.savedPayoutMethods.collectAsState()
     val userError by viewModel.userErrorMessage.collectAsState()
+    val primaryPayoutMethodId by viewModel.primaryPayoutMethodId.collectAsState()
+    val isPerformingAction by viewModel.isPerformingAction.collectAsState()
     // Guards against emitting Cancelled on dismiss once a selection has succeeded.
     var didFinish by remember { mutableStateOf(false) }
     var showAddPayout by remember { mutableStateOf(false) }
+    // The selection when Add opened; only a different id afterwards means a bank was added.
+    var selectedIdWhenAddOpened by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(clientSecret) {
         clientSecret?.let { FrameNetworking.beginOnboardingSession(it) }
         // Seeds saved payout methods; onboarding gets this from its container.
         viewModel.launchCheckExistingAccount(updateCapabilities = false)
+        viewModel.loadSavedPaymentMethods()
         onDispose {
             clientSecret?.let { FrameNetworking.endOnboardingSession(it) }
         }
@@ -73,7 +76,7 @@ fun FrameSelectPayoutMethodView(
 
     LaunchedEffect(showAddPayout, onboardingData.selectedPayoutMethodId) {
         val id = onboardingData.selectedPayoutMethodId
-        if (showAddPayout && id != null && !didFinish) {
+        if (showAddPayout && id != null && id != selectedIdWhenAddOpened && !didFinish) {
             didFinish = true
             onResult(FrameResult.Completed(id))
         }
@@ -96,14 +99,18 @@ fun FrameSelectPayoutMethodView(
                 SelectPayoutMethodScreen(
                     savedMethods = savedPayoutMethods,
                     selectedId = onboardingData.selectedPayoutMethodId,
+                    primaryId = primaryPayoutMethodId,
+                    isLoading = isPerformingAction,
                     // Selecting only selects — the flow completes on Continue, so the applicant
                     // can change their mind before committing.
                     onSelect = { id -> viewModel.onPayoutMethodSelected(id) },
-                    onAddPayout = { showAddPayout = true },
+                    onAddPayout = {
+                        selectedIdWhenAddOpened = onboardingData.selectedPayoutMethodId
+                        showAddPayout = true
+                    },
                     onBack = { finish(FrameResult.Cancelled) },
                     onContinue = {
-                        val id = onboardingData.selectedPayoutMethodId ?: return@SelectPayoutMethodScreen
-                        finish(FrameResult.Completed(id))
+                        viewModel.electSelectedPayoutMethod { id -> finish(FrameResult.Completed(id)) }
                     }
                 )
             }

@@ -57,6 +57,8 @@ enum class Capabilities(val apiValue: String) {
     KYC("kyc"),
     /** KYC with pre-filled identity data via Prove. */
     KYC_PREFILL("kyc_prefill"),
+    /** Government-issued photo ID verification via Persona. */
+    IDV("idv"),
     /** Phone number verification via OTP. */
     PHONE_VERIFICATION("phone_verification"),
     /** Creator Shield fraud-protection capability. */
@@ -110,7 +112,7 @@ internal enum class OnboardingFlowSegment(val order: Int) {
 }
 
 internal fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
-    Capabilities.KYC, Capabilities.KYC_PREFILL, Capabilities.PHONE_VERIFICATION, Capabilities.CREATOR_SHIELD,
+    Capabilities.KYC, Capabilities.KYC_PREFILL, Capabilities.IDV, Capabilities.PHONE_VERIFICATION, Capabilities.CREATOR_SHIELD,
     Capabilities.AGE_VERIFICATION, Capabilities.GEO_COMPLIANCE ->
         OnboardingFlowSegment.PERSONAL_INFORMATION
     Capabilities.CARD_VERIFICATION, Capabilities.CARD_SEND, Capabilities.CARD_RECEIVE, Capabilities.ADDRESS_VERIFICATION ->
@@ -312,10 +314,18 @@ internal data class OnboardingData(
     // omitted from account submit. [govIdInquiryId] is the Persona inquiry that produced it.
     val identityVerifiedViaGovId: Boolean = false,
     val govIdInquiryId: String? = null,
+    // Set from the account's capabilities: `individual.identity_document` (backend step-up, so
+    // Persona runs on Continue) and `individual.kyc` (rejected details the applicant must correct).
+    val identityDocumentRequired: Boolean = false,
+    val correctedKycDetailsRequired: Boolean = false,
     // IDs set after API calls
     val customerIdentityId: String? = null,
     val resolvedAccountId: String? = null,
-)
+) {
+    /** A demand for corrected details outranks both gov-ID signals — a hidden SSN field can't be fixed. */
+    val skipsSsnEntry: Boolean
+        get() = !correctedKycDetailsRequired && (identityVerifiedViaGovId || identityDocumentRequired)
+}
 
 internal interface OnboardingCoordinator {
     val config: OnboardingConfig

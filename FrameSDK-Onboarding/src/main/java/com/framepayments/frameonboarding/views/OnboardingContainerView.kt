@@ -52,6 +52,7 @@ fun OnboardingContainerView(
     onResult: (OnboardingResult) -> Unit
 ) {
     val viewModel = remember { FrameOnboardingViewModel(config) }
+    DisposableEffect(viewModel) { onDispose { viewModel.close() } }
     val snackbarHostState = remember { SnackbarHostState() }
     val result by viewModel.result.collectAsState()
     val userError by viewModel.userErrorMessage.collectAsState()
