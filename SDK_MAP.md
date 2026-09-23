@@ -619,18 +619,18 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `AccountObjects.Account.profile` | val | `val profile: AccountProfile? = null,` | [197](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L197) |
 | `AccountObjects.Account.capabilities` | val | `val capabilities: List<CapabilityObjects.Capability>? = null,` | [198](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L198) |
 | `AccountObjects.Account.steps` | val | `val steps: List<AccountStep>? = null,` | [199](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L199) |
-| `AccountObjects.Account.payoutPaymentMethodId` | val | `val payoutPaymentMethodId: String? = null,` | [200](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L200) |
-| `AccountObjects.Account.created` | val | `val created: Int?,` | [201](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L201) |
-| `AccountObjects.Account.updated` | val | `val updated: Int?,` | [202](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L202) |
-| `AccountObjects.Account.livemode` | val | `val livemode: Boolean?` | [203](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L203) |
-| `AccountObjects.PhoneVerification` | data class | `data class PhoneVerification(` | [217](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L217) |
-| `AccountObjects.PhoneVerification.id` | val | `val id: String?,` | [218](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L218) |
-| `AccountObjects.PhoneVerification.verificationObject` | val | `val verificationObject: String?,` | [219](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L219) |
-| `AccountObjects.PhoneVerification.accountId` | val | `val accountId: String?,` | [220](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L220) |
-| `AccountObjects.PhoneVerification.status` | val | `val status: String?,` | [221](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L221) |
-| `AccountObjects.PhoneVerification.created` | val | `val created: Int?,` | [222](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L222) |
-| `AccountObjects.PhoneVerification.updated` | val | `val updated: Int?,` | [223](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L223) |
-| `AccountObjects.PhoneVerification.livemode` | val | `val livemode: Boolean?` | [224](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L224) |
+| `AccountObjects.Account.created` | val | `val created: Int?,` | [200](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L200) |
+| `AccountObjects.Account.updated` | val | `val updated: Int?,` | [201](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L201) |
+| `AccountObjects.Account.livemode` | val | `val livemode: Boolean?,` | [202](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L202) |
+| `AccountObjects.Account.payoutPaymentMethodId` | val | `val payoutPaymentMethodId: String? = null` | [204](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L204) |
+| `AccountObjects.PhoneVerification` | data class | `data class PhoneVerification(` | [218](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L218) |
+| `AccountObjects.PhoneVerification.id` | val | `val id: String?,` | [219](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L219) |
+| `AccountObjects.PhoneVerification.verificationObject` | val | `val verificationObject: String?,` | [220](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L220) |
+| `AccountObjects.PhoneVerification.accountId` | val | `val accountId: String?,` | [221](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L221) |
+| `AccountObjects.PhoneVerification.status` | val | `val status: String?,` | [222](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L222) |
+| `AccountObjects.PhoneVerification.created` | val | `val created: Int?,` | [223](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L223) |
+| `AccountObjects.PhoneVerification.updated` | val | `val updated: Int?,` | [224](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L224) |
+| `AccountObjects.PhoneVerification.livemode` | val | `val livemode: Boolean?` | [225](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L225) |
 
 </details>
 
@@ -2709,11 +2709,11 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 |--------|------|-------------|------|
 | `TransfersAPI` | object | `object TransfersAPI` | [10](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L10) |
 | `TransfersAPI.createTransfer` | fun | `fun createTransfer(request: TransferRequests.CreateTransferRequest): Pair<Transfer?, NetworkingError?>` | [20](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L20) |
-| `TransfersAPI.getTransferWith` | fun | `fun getTransferWith(transferId: String): Pair<Transfer?, NetworkingError?>` | [54](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L54) |
-| `TransfersAPI.getTransfers` | fun | `fun getTransfers(perPage: Int? = null, page: Int? = null): Pair<TransferResponses.ListTransfersResponse?, NetworkingError?>` | [67](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L67) |
-| `TransfersAPI.createTransfer` | fun | `fun createTransfer(request: TransferRequests.CreateTransferRequest, completionHandler: (Transfer?, NetworkingError?) -> Unit)` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L81) |
-| `TransfersAPI.getTransferWith` | fun | `fun getTransferWith(transferId: String, completionHandler: (Transfer?, NetworkingError?) -> Unit)` | [95](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L95) |
-| `TransfersAPI.getTransfers` | fun | `fun getTransfers(perPage: Int?, page: Int?, completionHandler: (TransferResponses.ListTransfersResponse?, NetworkingError?) -> Unit)` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L110) |
+| `TransfersAPI.getTransferWith` | fun | `fun getTransferWith(transferId: String): Pair<Transfer?, NetworkingError?>` | [55](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L55) |
+| `TransfersAPI.getTransfers` | fun | `fun getTransfers(perPage: Int? = null, page: Int? = null): Pair<TransferResponses.ListTransfersResponse?, NetworkingError?>` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L68) |
+| `TransfersAPI.createTransfer` | fun | `fun createTransfer(request: TransferRequests.CreateTransferRequest, completionHandler: (Transfer?, NetworkingError?) -> Unit)` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L82) |
+| `TransfersAPI.getTransferWith` | fun | `fun getTransferWith(transferId: String, completionHandler: (Transfer?, NetworkingError?) -> Unit)` | [96](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L96) |
+| `TransfersAPI.getTransfers` | fun | `fun getTransfers(perPage: Int?, page: Int?, completionHandler: (TransferResponses.ListTransfersResponse?, NetworkingError?) -> Unit)` | [111](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransfersAPI.kt#L111) |
 
 </details>
 
