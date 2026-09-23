@@ -33,7 +33,7 @@ object OnboardingSessionsAPI {
         val (data, error) = FrameNetworking.performDataTaskWithRequest(
             endpoint,
             request,
-            auth = FrameAuthMode.Publishable
+            auth = FrameAuthMode.PublishableOnly
         )
         return Pair(
             data?.let { FrameNetworking.parseResponse<OnboardingSessionResponses.OnboardingSession>(it) },

@@ -242,7 +242,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         viewModelScope.launch {
             _isResolvingOutcome.value = true
             try {
-                _finalOutcome.value = resolveFinalOutcome()
+                resolveFinalOutcome()?.let { _finalOutcome.value = it }
             } finally {
                 _isResolvingOutcome.value = false
             }
@@ -614,18 +614,22 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      * and again when capabilities aren't yet a superset, either of which would leave
      * capabilities unread and make a passing run resolve as unverified. Capabilities are not
      * PII-gated, so reading them directly always works. Mirrors iOS `resolveFinalOutcome()`.
+     *
+     * Returns null when the account lookup fails or there's no account to look up yet, rather
+     * than a [OnboardingOutcome.PendingReview] sentinel — a failed lookup is not a verified
+     * outcome, and callers must not cache it as one.
      */
-    private suspend fun resolveFinalOutcome(): OnboardingOutcome {
-        val accountId = _resolvedAccountId.value ?: return OnboardingOutcome.PendingReview
+    private suspend fun resolveFinalOutcome(): OnboardingOutcome? {
+        val accountId = _resolvedAccountId.value ?: return null
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
-        val capabilities = account?.capabilities ?: return OnboardingOutcome.PendingReview
+        val capabilities = account?.capabilities ?: return null
         return OnboardingOutcome.resolve(capabilities, config.requiredCapabilities.toList())
     }
 
     private suspend fun finishOnboarding() {
         // Reuse what the final screen resolved, so the host is never told something the applicant
-        // was not shown.
-        val outcome = _finalOutcome.value ?: resolveFinalOutcome()
+        // was not shown. Retry the lookup if it hasn't resolved yet (or previously failed).
+        val outcome = _finalOutcome.value ?: resolveFinalOutcome() ?: OnboardingOutcome.PendingReview
         val paymentMethodId = _onboardingData.value.selectedPaymentMethodId
         val accountId = _resolvedAccountId.value
         _result.value = if (outcome.isSuccess) {
