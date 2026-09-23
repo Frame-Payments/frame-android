@@ -305,7 +305,7 @@ class SessionManager(
     private suspend fun perform(endpoint: SonarSessionEndpoints, body: SessionRequestBody): SessionId {
         // Failures here are swallowed by every caller (the payment path independently calls
         // ensureSession) — this is the one place to surface them without disturbing that swallow.
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.PublishableOnly)
         if (error != null) {
             AccountEventEmitter.emit(AccountEventName.SONAR_SESSION_FAILED, AccountEventScreen.CHECKOUT, "$error")
             throw error

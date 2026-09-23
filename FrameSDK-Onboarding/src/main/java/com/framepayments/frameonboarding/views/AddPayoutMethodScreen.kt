@@ -34,11 +34,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BankAccountDetailView
-import com.framepayments.frameonboarding.reusable.BillingAddressDetailView
+import com.framepayments.framesdk_ui.reusable.BillingAddressDetailView
 import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.viewmodels.BankAccountFieldVM
-import com.framepayments.frameonboarding.viewmodels.BillingAddressFieldVM
-import com.framepayments.frameonboarding.viewmodels.BillingAddressMode
+import com.framepayments.framesdk_ui.viewmodels.BillingAddressFieldVM
+import com.framepayments.framesdk_ui.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.plaid.link.FastOpenPlaidLink
 import com.plaid.link.Plaid

@@ -20,7 +20,7 @@ object WalletAPI {
      */
     suspend fun getGooglePayConfiguration(): Pair<WalletResponses.GetGooglePayConfigurationResponse?, NetworkingError?> {
         val endpoint = WalletEndpoints.GetGooglePayConfiguration
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly)
         return Pair(data?.let { FrameNetworking.parseResponse<WalletResponses.GetGooglePayConfigurationResponse>(data) }, error)
     }
 
@@ -36,7 +36,7 @@ object WalletAPI {
     fun getGooglePayConfiguration(completionHandler: (WalletResponses.GetGooglePayConfigurationResponse?, NetworkingError?) -> Unit) {
         val endpoint = WalletEndpoints.GetGooglePayConfiguration
 
-        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<WalletResponses.GetGooglePayConfigurationResponse>(data) }, error)
         }
     }

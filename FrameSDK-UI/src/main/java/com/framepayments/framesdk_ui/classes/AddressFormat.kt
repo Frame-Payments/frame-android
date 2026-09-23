@@ -1,4 +1,4 @@
-package com.framepayments.frameonboarding.classes
+package com.framepayments.framesdk_ui.classes
 
 import androidx.compose.ui.text.input.KeyboardType
 

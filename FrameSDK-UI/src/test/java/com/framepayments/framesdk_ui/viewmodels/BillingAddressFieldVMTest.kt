@@ -1,4 +1,4 @@
-package com.framepayments.frameonboarding.viewmodels
+package com.framepayments.framesdk_ui.viewmodels
 
 import com.framepayments.framesdk.FrameObjects
 import org.junit.Assert.assertFalse

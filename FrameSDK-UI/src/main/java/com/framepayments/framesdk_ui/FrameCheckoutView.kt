@@ -6,22 +6,20 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.FrameLayout
-import android.widget.Spinner
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.FrameResult
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
+import androidx.compose.runtime.mutableStateOf
+import com.framepayments.framesdk_ui.reusable.BillingAddressDetailView
 import com.framepayments.framesdk_ui.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
@@ -32,9 +30,7 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
-import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk_ui.viewmodels.FrameCheckoutViewModel
-import com.google.android.material.bottomsheet.BottomSheetDialog
 
 /**
  * Full-screen checkout surface that collects customer information, billing address, and card
@@ -84,7 +80,12 @@ class FrameCheckoutView @JvmOverloads constructor(
 
         toastBackgroundColor = theme.colors.toastBackground.toArgb()
         toastTextColor = theme.colors.toastText.toArgb()
+
+        // Held as Compose state so the hosted billing-address form re-themes on a later setTheme.
+        composeTheme.value = theme
     }
+
+    private val composeTheme = mutableStateOf(FrameTheme.default(context))
 
     init {
         val activity = (context as? AppCompatActivity)
@@ -156,6 +157,17 @@ class FrameCheckoutView @JvmOverloads constructor(
         }
         viewModel.didLoadAccountPaymentMethods.observe(activity) { refreshNewCardVisibility() }
 
+        // Shown only once the account load has settled, and only when the profile did not supply
+        // a usable name and email — otherwise the customer re-types what Frame already has.
+        fun refreshCustomerInfoVisibility() {
+            val loaded = viewModel.didLoadAccountPaymentMethods.value == true
+            val required = viewModel.customerInfoRequired.value != false
+            binding.customerInfoContainer.visibility =
+                if (loaded && required) View.VISIBLE else View.GONE
+        }
+        viewModel.customerInfoRequired.observe(activity) { refreshCustomerInfoVisibility() }
+        viewModel.didLoadAccountPaymentMethods.observe(activity) { refreshCustomerInfoVisibility() }
+
         // Bindings for customer information — also clear errors as the user edits.
         wireField(
             edit = binding.customerName,
@@ -171,46 +183,14 @@ class FrameCheckoutView @JvmOverloads constructor(
             validate = { Validators.validateEmail(it) },
             activity = activity
         )
-        wireField(
-            edit = binding.address1,
-            liveData = viewModel.customerAddressLine1,
-            field = FieldKey.ADDRESS_LINE_1,
-            validate = { Validators.validateAddressLine1(it) },
-            activity = activity
-        )
-        wireField(
-            edit = binding.address2,
-            liveData = viewModel.customerAddressLine2,
-            field = null,
-            validate = null,
-            activity = activity
-        )
-        wireField(
-            edit = binding.city,
-            liveData = viewModel.customerCity,
-            field = FieldKey.CITY,
-            validate = { Validators.validateCity(it) },
-            activity = activity
-        )
-        wireField(
-            edit = binding.state,
-            liveData = viewModel.customerState,
-            field = FieldKey.STATE,
-            validate = { Validators.validateState(it) },
-            activity = activity
-        )
-        wireField(
-            edit = binding.zip,
-            liveData = viewModel.customerZipCode,
-            field = FieldKey.ZIP,
-            validate = { Validators.validateZip(it) },
-            activity = activity
-        )
-        binding.countryInput.setOnClickListener {
-            showCountryPicker()
+        binding.billingAddressCompose.setContent {
+            FrameTheme(theme = composeTheme.value) {
+                BillingAddressDetailView(
+                    viewModel = viewModel.billingAddress,
+                    showHeader = false
+                )
+            }
         }
-
-        binding.countryInput.setText(viewModel.customerCountry.displayName)
 
         binding.encryptedCardInput.onCardDataChange = { data ->
             viewModel.cardData = data
@@ -220,11 +200,6 @@ class FrameCheckoutView @JvmOverloads constructor(
         viewModel.fieldErrors.observe(activity) { errors ->
             binding.customerNameLayout.error = errors[FieldKey.NAME]?.let { context.getString(it.messageRes) }
             binding.customerEmailLayout.error = errors[FieldKey.EMAIL]?.let { context.getString(it.messageRes) }
-            binding.address1Layout.error = errors[FieldKey.ADDRESS_LINE_1]?.let { context.getString(it.messageRes) }
-            binding.cityLayout.error = errors[FieldKey.CITY]?.let { context.getString(it.messageRes) }
-            binding.stateLayout.error = errors[FieldKey.STATE]?.let { context.getString(it.messageRes) }
-            binding.zipLayout.error = errors[FieldKey.ZIP]?.let { context.getString(it.messageRes) }
-            binding.countryInputLayout.error = errors[FieldKey.COUNTRY]?.let { context.getString(it.messageRes) }
             val cardErr = errors[FieldKey.CARD]
             if (cardErr == null) {
                 binding.cardErrorText.visibility = View.GONE
@@ -320,39 +295,6 @@ class FrameCheckoutView @JvmOverloads constructor(
             viewModel.setSelectedAccountPaymentOption(null)
         }
         binding.paymentOptionsContainer.addView(newRowBinding.root)
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun showCountryPicker() {
-        val activity = context as? FragmentActivity ?: return
-        val view = LayoutInflater.from(context).inflate(R.layout.country_picker_sheet, null)
-        val bottomSheetDialog = BottomSheetDialog(activity)
-        bottomSheetDialog.setContentView(view)
-
-        val spinner: Spinner = view.findViewById(R.id.countrySpinner)
-        val doneButton: TextView = view.findViewById(R.id.doneButton)
-
-        val countries = AvailableCountries.allCountries
-        val adapter = ArrayAdapter(
-            activity,
-            android.R.layout.simple_spinner_item,
-            countries.mapNotNull { it?.displayName }
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-
-        spinner.setSelection(countries.indexOfFirst { it == viewModel.customerCountry })
-
-        doneButton.setOnClickListener {
-            val selectedIndex = spinner.selectedItemPosition
-            viewModel.customerCountry = countries[selectedIndex]
-            binding.countryInput.setText(viewModel.customerCountry.displayName)
-            viewModel.setError(FieldKey.COUNTRY, Validators.validateCountry(viewModel.customerCountry.alpha2Code))
-            Toast.makeText(activity, "Selected: ${viewModel.customerCountry.displayName}", Toast.LENGTH_SHORT).show()
-            bottomSheetDialog.dismiss()
-        }
-
-        bottomSheetDialog.show()
     }
 
     /**

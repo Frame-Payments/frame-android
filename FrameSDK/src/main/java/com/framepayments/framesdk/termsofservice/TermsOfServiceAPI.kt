@@ -17,7 +17,7 @@ object TermsOfServiceAPI {
      */
     suspend fun createToken(): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?> {
         val endpoint = TermsOfServiceEndpoints.CreateToken
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, emptyMap<String, String>(), FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, emptyMap<String, String>(), FrameAuthMode.PublishableOnly)
         return Pair(data?.let { FrameNetworking.parseResponse<TermsOfServiceObjects.TermsOfServiceTokenResponse>(it) }, error)
     }
 
@@ -29,7 +29,7 @@ object TermsOfServiceAPI {
      */
     suspend fun update(request: TermsOfServiceRequests.UpdateRequest): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?> {
         val endpoint = TermsOfServiceEndpoints.Update
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.PublishableOnly)
         return Pair(data?.let { FrameNetworking.parseResponse<TermsOfServiceObjects.TermsOfServiceTokenResponse>(it) }, error)
     }
 
@@ -42,7 +42,7 @@ object TermsOfServiceAPI {
      */
     fun createToken(completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit) {
         val endpoint = TermsOfServiceEndpoints.CreateToken
-        FrameNetworking.performDataTaskWithRequest(endpoint, emptyMap<String, String>(), FrameAuthMode.Publishable) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, emptyMap<String, String>(), FrameAuthMode.PublishableOnly) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<TermsOfServiceObjects.TermsOfServiceTokenResponse>(it) }, error)
         }
     }
@@ -55,7 +55,7 @@ object TermsOfServiceAPI {
      */
     fun update(request: TermsOfServiceRequests.UpdateRequest, completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit) {
         val endpoint = TermsOfServiceEndpoints.Update
-        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.PublishableOnly) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<TermsOfServiceObjects.TermsOfServiceTokenResponse>(it) }, error)
         }
     }

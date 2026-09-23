@@ -1,6 +1,7 @@
 package com.framepayments.framesdk.accounts
 
 import com.framepayments.framesdk.EmptyRequest
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.managers.SiftManager
@@ -74,7 +75,7 @@ object AccountsAPI {
     suspend fun getAccountWith(accountId: String, forTesting: Boolean = false): Pair<AccountObjects.Account?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.GetAccountWith(accountId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
         val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
         if (!forTesting) {
             decodedResponse?.let {
@@ -262,7 +263,7 @@ object AccountsAPI {
     fun getAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit) {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.GetAccountWith(accountId)
-        FrameNetworking.performDataTask(endpoint) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
             val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
             decodedResponse?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""

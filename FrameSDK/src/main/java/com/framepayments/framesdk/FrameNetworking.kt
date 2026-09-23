@@ -48,8 +48,20 @@ import java.util.concurrent.TimeUnit
  *   SDK emits a one-time runtime warning the first time [Secret] is used.
  */
 sealed class FrameAuthMode {
-    /** Authenticate with the publishable key (`pk_`). Default for all client-safe endpoints. */
+    /**
+     * Authenticate with the publishable key (`pk_`), unless an onboarding session is active — the
+     * session token then takes precedence. Account-scoped client-safe reads use this: mid-session
+     * they need the session token for the server to return PII-gated fields such as `profile`.
+     */
     object Publishable : FrameAuthMode()
+
+    /**
+     * Authenticate with the publishable key (`pk_`) unconditionally, never overridden by an active
+     * onboarding session. Merchant-level endpoints (terms_of_service, sonar, configuration, wallet
+     * config) use this — they are not account-scoped and the backend rejects an `onb_sess_` token
+     * on them ("Client secret is not permitted for this endpoint.").
+     */
+    object PublishableOnly : FrameAuthMode()
 
     /** Authenticate with the secret key (`sk_`). Server-only — avoid shipping this in an app binary. */
     object Secret : FrameAuthMode()
@@ -366,33 +378,38 @@ object FrameNetworking {
         get() = onboardingSessionToken != null
 
     private fun bearerToken(auth: FrameAuthMode): String {
-        // An explicit .clientSecret always wins. An explicit .publishable also wins over any active
-        // onboarding session: merchant-level endpoints (terms_of_service, device_attestation, sonar,
-        // configuration, wallet config) opt into pk_ and the backend rejects an onb_sess_ token on
-        // them ("Client secret is not permitted for this endpoint."). Only after those explicit
-        // credentials does the onboarding-session token take precedence over the configured key.
+        // An explicit .clientSecret always wins. .PublishableOnly also wins over any active
+        // onboarding session, for merchant-level endpoints the backend rejects an onb_sess_ token on.
+        // Only then does the session token take precedence, so account-scoped .Publishable reads
+        // authenticate as the session and receive PII-gated fields such as `profile`.
         if (auth is FrameAuthMode.ClientSecret) return auth.token
-        if (auth is FrameAuthMode.Publishable) {
-            if (apiPublishableKey.isEmpty()) {
-                warnOnce(::hasWarnedAboutMissingPublishableKey) {
-                    "⚠️ Frame: a client-safe request was made but no publishable key (pk_) is configured. Call initializeWithAPIKey(...) first."
-                }
-            }
-            // Return the (possibly empty) publishable key rather than silently substituting the
-            // secret key — a missing pk_ must never cause sk_ to leave the device on a client-safe call.
-            return apiPublishableKey
-        }
+        if (auth is FrameAuthMode.PublishableOnly) return publishableKeyOrWarn()
         onboardingSessionToken?.let { return it }
         return when (auth) {
+            is FrameAuthMode.Publishable -> publishableKeyOrWarn()
             is FrameAuthMode.Secret -> {
                 warnOnce(::hasWarnedAboutSecretKeyRequest) { secretKeyWarning("used to authenticate a request from the app") }
                 apiSecretKey
             }
-            // Unreachable: .Publishable and .ClientSecret are handled by the early returns above.
-            // Kept so the compiler enforces exhaustiveness over FrameAuthMode.
-            is FrameAuthMode.Publishable -> apiPublishableKey
+            // Unreachable: handled by the early returns above. Kept so the compiler enforces
+            // exhaustiveness over FrameAuthMode.
+            is FrameAuthMode.PublishableOnly -> apiPublishableKey
             is FrameAuthMode.ClientSecret -> auth.token
         }
+    }
+
+    /**
+     * The publishable key, warning once when none is configured. Returns the (possibly empty) key
+     * rather than substituting the secret key — a missing pk_ must never cause sk_ to leave the
+     * device on a client-safe call.
+     */
+    private fun publishableKeyOrWarn(): String {
+        if (apiPublishableKey.isEmpty()) {
+            warnOnce(::hasWarnedAboutMissingPublishableKey) {
+                "⚠️ Frame: a client-safe request was made but no publishable key (pk_) is configured. Call initializeWithAPIKey(...) first."
+            }
+        }
+        return apiPublishableKey
     }
 
     private fun Request.Builder.applyFrameHeaders(ip: String?, auth: FrameAuthMode = FrameAuthMode.Secret): Request.Builder {

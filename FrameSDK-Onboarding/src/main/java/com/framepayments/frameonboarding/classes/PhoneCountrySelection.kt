@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.classes
 
+import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import java.util.Locale
 
@@ -28,9 +29,7 @@ data class PhoneCountrySelection(
     /** Factory methods, country list, and OFAC restriction set for the phone picker. */
     companion object {
         /** Countries excluded from address & phone pickers per OFAC compliance. Mirrors iOS. */
-        val OFAC_RESTRICTED: Set<String> = setOf(
-            "IR", "RU", "KP", "SY", "CU", "CD", "IQ", "LY", "ML", "NI", "SD", "VE", "YE"
-        )
+        val OFAC_RESTRICTED: Set<String> get() = AvailableCountries.OFAC_RESTRICTED
 
         private fun flagFor(alpha2: String): String {
             val base = 0x1F1A5

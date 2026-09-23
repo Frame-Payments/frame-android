@@ -15,6 +15,11 @@ class AvailableCountries {
             displayName = "United States"
         )
 
+        /** Countries excluded from address & phone pickers per OFAC compliance. Mirrors iOS. */
+        val OFAC_RESTRICTED: Set<String> = setOf(
+            "IR", "RU", "KP", "SY", "CU", "CD", "IQ", "LY", "ML", "NI", "SD", "VE", "YE"
+        )
+
         /**
          * Lazily built list of all ISO 3166-1 countries sorted by display name in the
          * device's default locale.

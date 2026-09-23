@@ -1,4 +1,4 @@
-package com.framepayments.frameonboarding.reusable
+package com.framepayments.framesdk_ui.reusable
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
-import com.framepayments.frameonboarding.classes.PhoneCountrySelection
 
 /**
  * Reusable modal country picker. Mirrors iOS `CountryPickerSheet` so any onboarding or
@@ -45,7 +44,7 @@ fun CountryPickerSheet(
     val countries = remember(excludeRestricted) {
         if (excludeRestricted) {
             AvailableCountries.allCountries.filter {
-                it.alpha2Code.uppercase() !in PhoneCountrySelection.OFAC_RESTRICTED
+                it.alpha2Code.uppercase() !in AvailableCountries.OFAC_RESTRICTED
             }
         } else {
             AvailableCountries.allCountries.toList()

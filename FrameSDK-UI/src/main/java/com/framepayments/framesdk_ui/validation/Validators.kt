@@ -1,6 +1,8 @@
 package com.framepayments.framesdk_ui.validation
 
 import com.evervault.sdk.input.model.card.PaymentCardData
+import com.framepayments.framesdk.AddressSubregions
+import com.framepayments.framesdk_ui.classes.AddressFormat
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
 import java.time.LocalDate
@@ -109,6 +111,23 @@ object Validators {
     // --- Onboarding validators (relocated from frameonboarding.validation.OnboardingValidators) ---
 
     private val ONBOARDING_EMAIL_REGEX = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
+
+    /**
+     * Validates [value] against the subregions the given [countryCode] accepts.
+     *
+     * Countries without a known subregion list are considered valid (returns null).
+     *
+     * @param value State/province/region string entered by the customer.
+     * @param countryCode ISO 3166-1 alpha-2 country code (case-insensitive).
+     * @return Null if valid or if the country has no known subregion list, a localized error string otherwise.
+     */
+    fun validateSubregion(value: String, countryCode: String): String? {
+        val label = AddressFormat.format(countryCode).stateLabel
+        val trimmed = value.trim()
+        if (trimmed.isEmpty()) return "$label is required"
+        val codes = AddressSubregions.codes(forCountry = countryCode) ?: return null
+        return if (codes.contains(trimmed.uppercase())) null else "Enter a valid 2-letter ${label.lowercase()}"
+    }
 
     /**
      * Validates that [value] is non-blank.

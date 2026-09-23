@@ -1,10 +1,9 @@
-package com.framepayments.frameonboarding.viewmodels
+package com.framepayments.framesdk_ui.viewmodels
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk_ui.validation.Validators
-import com.framepayments.frameonboarding.validation.OnboardingValidators
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -180,7 +179,7 @@ class BillingAddressFieldVM(
             ?.let { next[Field.CITY] = it }
 
         val countryCode = addr.country?.takeIf { it.isNotBlank() } ?: "US"
-        OnboardingValidators.validateSubregion(addr.state.orEmpty(), countryCode)
+        Validators.validateSubregion(addr.state.orEmpty(), countryCode)
             ?.let { next[Field.STATE] = it }
 
         when (mode) {
