@@ -239,6 +239,24 @@ class FrameNetworkingTest {
         assertEquals("Bearer pk_test_key", recorded.getHeader("Authorization"))
     }
 
+    @Test
+    fun toastMessage_mapsRiskCodes() {
+        val sonar = NetworkingError.ServerError(403, "sonar_session_required")
+        assertFalse(sonar.toastMessage().contains("sonar_session_required"))
+        assertTrue(sonar.toastMessage().contains("verify this device"))
+
+        val geo = NetworkingError.ServerError(403, """{"error_details":{"message":"geo_compliance_blocked"}}""")
+        assertFalse(geo.toastMessage().contains("geo_compliance"))
+        assertTrue(geo.toastMessage().contains("location"))
+    }
+
+    @Test
+    fun toastMessage_transportUsesFallbackNotConfigurationError() {
+        val msg = NetworkingError.InvalidURL.toastMessage()
+        assertTrue(msg.contains("Something went wrong"))
+        assertFalse(msg.contains("Configuration error"))
+    }
+
     class TestEndpoint(
         override val httpMethod: String,
         override val endpointURL: String,

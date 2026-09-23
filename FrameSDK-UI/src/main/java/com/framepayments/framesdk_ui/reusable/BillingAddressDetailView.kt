@@ -21,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.reusable.AddressAutocompleteField
 import com.framepayments.framesdk_ui.reusable.ValidatedTextField
@@ -86,7 +87,8 @@ fun BillingAddressDetailView(
             },
             prompt = "Address Line 2",
             error = null,
-            inlineError = true
+            inlineError = true,
+            autofillContentType = ContentType.AddressStreet
         )
 
         Spacer(Modifier.height(16.dp))
@@ -102,7 +104,8 @@ fun BillingAddressDetailView(
                     prompt = "City",
                     error = errors[BillingAddressFieldVM.Field.CITY],
                     inlineError = true,
-                    onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.CITY) }
+                    onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.CITY) },
+                    autofillContentType = ContentType.AddressLocality
                 )
             }
             Box(modifier = Modifier.weight(1f)) {
@@ -143,13 +146,16 @@ fun BillingAddressDetailView(
                         value = address.state.orEmpty(),
                         onValueChange = { v ->
                             val limited = format.stateMaxLength?.let { v.take(it) } ?: v
-                            viewModel.updateAddress { it.copy(state = limited) }
+                            viewModel.updateAddress {
+                                it.copy(state = AddressSubregions.normalize(limited, countryCode))
+                            }
                         },
                         prompt = format.stateLabel,
                         error = errors[BillingAddressFieldVM.Field.STATE],
                         characterLimit = format.stateMaxLength,
                         inlineError = true,
-                        onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.STATE) }
+                        onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.STATE) },
+                        autofillContentType = ContentType.AddressRegion
                     )
                 }
             }
@@ -170,7 +176,8 @@ fun BillingAddressDetailView(
             keyboardType = format.postalKeyboard,
             characterLimit = postalLimit,
             inlineError = true,
-            onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.POSTAL) }
+            onClearError = { viewModel.clearError(BillingAddressFieldVM.Field.POSTAL) },
+            autofillContentType = ContentType.PostalCode
         )
 
         if (isInternational) {

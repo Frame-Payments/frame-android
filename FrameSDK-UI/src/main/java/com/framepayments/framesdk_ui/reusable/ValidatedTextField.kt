@@ -14,6 +14,9 @@ import androidx.compose.runtime.Composable
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -27,6 +30,8 @@ import androidx.compose.ui.unit.dp
  * - [compactError] = true: error label suppressed (parent renders a header summary instead)
  *
  * Errors auto-clear via [onClearError] on every keystroke (matches iOS auto-clear behavior).
+ *
+ * @param autofillContentType Optional Autofill [ContentType] so the system can offer saved values.
  */
 @Composable
 fun ValidatedTextField(
@@ -40,7 +45,8 @@ fun ValidatedTextField(
     compactError: Boolean = false,
     inlineError: Boolean = false,
     errorSpacing: Dp = 4.dp,
-    onClearError: (() -> Unit)? = null
+    onClearError: (() -> Unit)? = null,
+    autofillContentType: ContentType? = null
 ) {
     val handleChange: (String) -> Unit = { newValue ->
         val limited = if (characterLimit != null && newValue.length > characterLimit) {
@@ -54,6 +60,11 @@ fun ValidatedTextField(
 
     val showError = error != null && !compactError
     val theme = LocalFrameTheme.current
+    val fieldModifier = if (autofillContentType != null) {
+        Modifier.semantics { contentType = autofillContentType }
+    } else {
+        Modifier
+    }
 
     if (inlineError) {
         Row(
@@ -67,7 +78,8 @@ fun ValidatedTextField(
                 placeholder = { Text(prompt) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(64.dp),
+                    .height(64.dp)
+                    .then(fieldModifier),
                 singleLine = true,
                 isError = showError,
                 textStyle = theme.fonts.body,
@@ -88,7 +100,9 @@ fun ValidatedTextField(
                 value = value,
                 onValueChange = handleChange,
                 placeholder = { Text(prompt) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(fieldModifier),
                 singleLine = true,
                 isError = showError,
                 textStyle = theme.fonts.body,

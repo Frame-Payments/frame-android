@@ -21,7 +21,11 @@ internal fun OnboardingScreenRouter(
 ) {
     when (viewModel.navigationState.currentStep) {
         OnboardingStep.VerificationWelcome -> {
+            val accountReady by viewModel.isExistingAccountReady.collectAsState()
             OnboardingIntroView(
+                // Block Continue while a pre-existing account is still loading so the flow
+                // cannot yank the applicant back once capabilities resolve.
+                continueEnabled = accountReady,
                 onContinue = { viewModel.moveNext() }
             )
         }
@@ -29,7 +33,10 @@ internal fun OnboardingScreenRouter(
         OnboardingStep.VerifyIdentification -> {
             UserIdentificationView(
                 viewModel = viewModel,
-                requiresDateOfBirth = config.requiredCapabilities.contains(Capabilities.KYC_PREFILL),
+            requiresDateOfBirth = viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL),
+                // Always show TOS on Android. iOS gates on geo_compliance; Android keeps the
+                // broader surface so every create/update path can attach an acceptance token
+                // (decision: Android is the correct one for now — M18).
                 showTermsOfService = true,
                 onBack = { viewModel.moveBack() }
             )
@@ -49,11 +56,16 @@ internal fun OnboardingScreenRouter(
                 savedMethods = savedPaymentMethods,
                 selectedId = onboardingData.selectedPaymentMethodId,
                 onSelect = { viewModel.onPaymentMethodSelected(it) },
-                onAddCard = { viewModel.moveNext() },
+                onAddCard = {
+                    viewModel.clearOnlyAddressVerification()
+                    viewModel.moveNext()
+                },
                 onBack = { viewModel.moveBack() },
                 onContinue = {
                     if (onboardingData.selectedPaymentMethodId != null) {
-                        viewModel.moveToNextSegment()
+                        if (viewModel.continueWithSelectedPaymentMethod()) {
+                            viewModel.moveToNextSegment()
+                        }
                     }
                 }
             )
@@ -62,17 +74,17 @@ internal fun OnboardingScreenRouter(
         OnboardingStep.AddPaymentMethod -> {
             AddPaymentMethodScreen(
                 viewModel = viewModel,
-                onBack = { viewModel.moveBack() }
+                onBack = {
+                    viewModel.clearOnlyAddressVerification()
+                    viewModel.moveBack()
+                }
             )
         }
 
+        // Kept for sealed-class exhaustiveness; removed from the ordered flow (M5). iOS no
+        // longer presents this orphan 3DS OTP screen.
         OnboardingStep.VerifyYourCard -> {
-            VerifyCardScreen(
-                showResendCode = true,
-                onBack = { viewModel.moveBack() },
-                onResendCode = { viewModel.resend3DS() },
-                onContinue = { viewModel.moveNext() }
-            )
+            LaunchedEffect(Unit) { viewModel.moveNext() }
         }
 
         OnboardingStep.SelectPayoutMethod -> {

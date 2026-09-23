@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.validation.DateOfBirthFormatter
@@ -120,6 +121,7 @@ fun CustomerInformationView(
                 error = errors[CustomerInformationFieldVM.Field.FIRST_NAME],
                 inlineError = true,
                 onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.FIRST_NAME) },
+                autofillContentType = ContentType.PersonFirstName,
                 modifier = Modifier.weight(1f)
             )
             ValidatedTextField(
@@ -129,6 +131,7 @@ fun CustomerInformationView(
                 error = errors[CustomerInformationFieldVM.Field.LAST_NAME],
                 inlineError = true,
                 onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.LAST_NAME) },
+                autofillContentType = ContentType.PersonLastName,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -142,7 +145,8 @@ fun CustomerInformationView(
             error = errors[CustomerInformationFieldVM.Field.EMAIL],
             keyboardType = KeyboardType.Email,
             inlineError = true,
-            onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.EMAIL) }
+            onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.EMAIL) },
+            autofillContentType = ContentType.EmailAddress
         )
 
         Spacer(Modifier.height(16.dp))
@@ -207,6 +211,7 @@ fun CustomerInformationView(
                 characterLimit = 2,
                 compactError = true,
                 onClearError = { viewModel.clearDateOfBirthErrors() },
+                autofillContentType = ContentType.BirthDateMonth,
                 modifier = Modifier.weight(1f)
             )
             ValidatedTextField(
@@ -221,6 +226,7 @@ fun CustomerInformationView(
                 characterLimit = 2,
                 compactError = true,
                 onClearError = { viewModel.clearDateOfBirthErrors() },
+                autofillContentType = ContentType.BirthDateDay,
                 modifier = Modifier.weight(1f)
             )
             ValidatedTextField(
@@ -235,6 +241,7 @@ fun CustomerInformationView(
                 characterLimit = 4,
                 compactError = true,
                 onClearError = { viewModel.clearDateOfBirthErrors() },
+                autofillContentType = ContentType.BirthDateYear,
                 modifier = Modifier.weight(2f)
             )
         }

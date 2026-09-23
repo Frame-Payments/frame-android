@@ -80,21 +80,23 @@ class ProveAuthService(
     private var authFinishStep: AuthFinishStep? = null
     private var otpStartStep: OtpStartStep? = null
     private var otpFinishStep: OtpFinishStep? = null
+    private var resultDeferred: CompletableDeferred<Result<Boolean>>? = null
 
     /**
      * Runs Prove mobile flow with the auth token from createVerification. Returns true on success
      * after [confirmHandler] completes. Call from a coroutine (e.g. viewModelScope.launch).
      */
     suspend fun authenticateWith(authToken: String): Boolean = withContext(Dispatchers.IO) {
-        val resultDeferred = CompletableDeferred<Result<Boolean>>()
+        val deferred = CompletableDeferred<Result<Boolean>>()
+        resultDeferred = deferred
 
         authFinishStep = AuthFinishStep { _ ->
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     confirmHandler(accountId, verificationId)
-                    resultDeferred.complete(Result.success(true))
+                    deferred.complete(Result.success(true))
                 } catch (e: Throwable) {
-                    resultDeferred.complete(Result.failure(e))
+                    deferred.complete(Result.failure(e))
                 } finally {
                     releaseRetainedSDKObjects()
                 }
@@ -115,6 +117,9 @@ class ProveAuthService(
                 if (otp != null) {
                     callback.onSuccess(OtpFinishInput(otp))
                 } else {
+                    // Applicant cancelled OTP entry — unblock authenticateWith rather than hanging.
+                    deferred.complete(Result.failure(ProveAuthServiceError.Cancelled))
+                    releaseRetainedSDKObjects()
                     callback.onError()
                 }
             }
@@ -130,10 +135,20 @@ class ProveAuthService(
             proveAuth!!.authenticate(authToken)
         } catch (e: Throwable) {
             releaseRetainedSDKObjects()
-            resultDeferred.complete(Result.failure(e))
+            deferred.complete(Result.failure(e))
         }
 
-        resultDeferred.await().getOrThrow()
+        deferred.await().getOrThrow()
+    }
+
+    /**
+     * Releases Prove SDK objects and unblocks [authenticateWith] when the applicant cancels
+     * (including during silent auth before OTP is requested).
+     */
+    fun cancel() {
+        resultDeferred?.complete(Result.failure(ProveAuthServiceError.Cancelled))
+        resultDeferred = null
+        releaseRetainedSDKObjects()
     }
 
     private fun releaseRetainedSDKObjects() {

@@ -20,9 +20,8 @@ import com.framepayments.framesdk.FrameNetworking
 fun Modifier.refreshesSonarSession(accountId: String? = null): Modifier = composed {
     LaunchedEffect(accountId) {
         val manager = FrameNetworking.sonarSessionManagerOrNull() ?: return@LaunchedEffect
-        val resolvedAccountId = accountId?.takeIf { it.isNotEmpty() } ?: return@LaunchedEffect
         try {
-            manager.ensureSession(resolvedAccountId)
+            manager.refreshOnFlowEntry(accountId)
         } catch (_: Exception) {
             // Fire-and-forget: failures here don't block presentation.
         }

@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.views
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -11,10 +12,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameResult
+import com.framepayments.framesdk_ui.reusable.refreshesSonarSession
 import com.framepayments.framesdk_ui.theme.FrameTheme
 
 /**
@@ -50,6 +53,14 @@ fun FrameAddPaymentMethodView(
     // Guards against emitting Cancelled on dismiss when a method was already added.
     var didFinish by remember { mutableStateOf(false) }
 
+    fun finishCancelled() {
+        if (didFinish) return
+        didFinish = true
+        onResult(FrameResult.Cancelled)
+    }
+
+    BackHandler { finishCancelled() }
+
     DisposableEffect(clientSecret) {
         clientSecret?.let { FrameNetworking.beginOnboardingSession(it) }
         onDispose {
@@ -72,15 +83,13 @@ fun FrameAddPaymentMethodView(
     }
 
     FrameTheme {
-        Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+        Scaffold(
+            modifier = Modifier.refreshesSonarSession(accountId = accountId),
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { padding ->
             AddPaymentMethodScreen(
                 viewModel = viewModel,
-                onBack = {
-                    if (!didFinish) {
-                        didFinish = true
-                        onResult(FrameResult.Cancelled)
-                    }
-                }
+                onBack = { finishCancelled() }
             )
         }
     }
