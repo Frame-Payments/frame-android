@@ -8,12 +8,14 @@ import com.google.gson.annotations.SerializedName
  * @property id Unique identifier for the verification attempt.
  * @property type The verification type (e.g. `"phone"`).
  * @property status Current status of the verification.
+ * @property provider The OTP provider that will handle this attempt (e.g. `"prove"`, `"twilio"`).
  * @property proveAuthToken Auth token for the Prove mobile SDK; null when using the Twilio OTP path.
  */
 data class PhoneOTPVerificationCreateResponse(
     val id: String?,
     val type: String?,
     val status: String?,
+    val provider: String? = null,
     @SerializedName("prove_auth_token") val proveAuthToken: String?
 )
 

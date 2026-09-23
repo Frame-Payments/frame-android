@@ -47,6 +47,8 @@ internal fun ProgressIndicator(
 ) {
     val theme = LocalFrameTheme.current
     val isDark = isSystemInDarkTheme()
+    // Intro is a pre-segment welcome screen — don't paint PERSONAL_INFORMATION as filled yet.
+    val showCapsules = currentStep != OnboardingStep.VerificationWelcome
     val segments = if (flowSegments.isEmpty()) listOf(OnboardingFlowSegment.PERSONAL_INFORMATION) else flowSegments
     val currentSegment = currentStep.toFlowSegment()
     val currentIndex = segments.indexOf(currentSegment).coerceAtLeast(0)
@@ -78,26 +80,28 @@ internal fun ProgressIndicator(
                 modifier = Modifier.size(20.dp)
             )
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 15.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            segments.forEachIndexed { index, _ ->
-                Box(
-                    modifier = Modifier
-                        .height(5.dp)
-                        .weight(1f)
-                        .background(
-                            color = capsuleColor(filled = index <= currentIndex),
-                            // 2.5.dp = half the 5.dp height, producing a true pill shape.
-                            // Intentionally not theme.radii.* — capsule geometry is derived
-                            // from height, not customizable corner radius.
-                            shape = RoundedCornerShape(2.5.dp)
-                        )
-                )
+        if (showCapsules) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 15.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                segments.forEachIndexed { index, _ ->
+                    Box(
+                        modifier = Modifier
+                            .height(5.dp)
+                            .weight(1f)
+                            .background(
+                                color = capsuleColor(filled = index <= currentIndex),
+                                // 2.5.dp = half the 5.dp height, producing a true pill shape.
+                                // Intentionally not theme.radii.* — capsule geometry is derived
+                                // from height, not customizable corner radius.
+                                shape = RoundedCornerShape(2.5.dp)
+                            )
+                    )
+                }
             }
         }
         HorizontalDivider(

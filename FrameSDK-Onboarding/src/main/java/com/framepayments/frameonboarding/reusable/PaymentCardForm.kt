@@ -12,6 +12,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
@@ -62,7 +65,9 @@ fun PaymentCardForm(
             },
             label = { Text("Card Number") },
             placeholder = { Text("4242 4242 4242 4242") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentType = ContentType.CreditCardNumber },
             textStyle = theme.fonts.body,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true
@@ -88,7 +93,9 @@ fun PaymentCardForm(
                 },
                 label = { Text("MM/YY") },
                 placeholder = { Text("MM/YY") },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { contentType = ContentType.CreditCardExpirationDate },
                 textStyle = theme.fonts.body,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true
@@ -103,7 +110,9 @@ fun PaymentCardForm(
                 },
                 label = { Text("CVC") },
                 placeholder = { Text("CVC") },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { contentType = ContentType.CreditCardSecurityCode },
                 textStyle = theme.fonts.body,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true

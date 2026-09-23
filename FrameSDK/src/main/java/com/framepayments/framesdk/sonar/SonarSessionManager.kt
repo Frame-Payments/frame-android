@@ -44,7 +44,7 @@ data class SessionResponse(
  * request looks the same as before sealed results existed.
  */
 data class SessionRequestBody(
-    val fingerprint_visitor_id: String,
+    val fingerprint_visitor_id: String? = null,
     val account_id: String? = null,
     val sealed_result: String? = null
 )
@@ -310,7 +310,8 @@ class SessionManager(
     private suspend fun requestBody(accountId: String?): SessionRequestBody {
         val identification = identify()
         return SessionRequestBody(
-            fingerprint_visitor_id = identification?.visitorId.orEmpty(),
+            // Omit rather than send "" — an empty visitor id is not a usable identifier.
+            fingerprint_visitor_id = identification?.visitorId?.takeIf { it.isNotEmpty() },
             account_id = accountId,
             sealed_result = identification?.sealedResult
         )

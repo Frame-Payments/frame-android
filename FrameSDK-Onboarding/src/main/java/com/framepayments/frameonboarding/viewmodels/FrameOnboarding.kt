@@ -18,6 +18,7 @@ import com.framepayments.frameonboarding.classes.OnboardingStep
 import com.evervault.sdk.input.model.card.PaymentCardData
 import com.framepayments.frameonboarding.classes.PaymentCardDraft
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
+import com.framepayments.frameonboarding.classes.capabilitiesWithDependencies
 import com.framepayments.frameonboarding.classes.computeFlowSegments
 import com.framepayments.frameonboarding.classes.computeOrderedSteps
 import com.framepayments.frameonboarding.classes.toFlowSegment
@@ -31,6 +32,7 @@ import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
 import com.framepayments.frameonboarding.prove.ProveAuthServiceError
+import com.framepayments.framesdk.AddressSubregions
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
@@ -507,9 +509,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         val errors = mutableMapOf<OnboardingField, String>()
         Validators.validatePhoneE164(_phoneNumber.value, _phoneCountry.value.alpha2)
             ?.let { errors[OnboardingField.AUTH_PHONE] = it }
-        // Matches iOS, which also reads the live list here: this runs on the phone-auth step,
-        // before any capability can have been granted and drained.
-        if (_requiredCapabilities.value.contains(Capabilities.KYC_PREFILL)) {
+        // Matches the intro screen gate, which uses the host's original list: shrinking
+        // requiredCapabilities would silently drop DOB validation once kyc_prefill is granted.
+        if (originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL)) {
             Validators.validateDateOfBirth(
                 year = _dobYear.value,
                 month = _dobMonth.value,
@@ -565,7 +567,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         if (!config.showIntroScreen) steps = steps.filter { it != OnboardingStep.VerificationWelcome }
         if (!config.showCompletionScreen) steps = steps.filter { it != OnboardingStep.VerificationSubmitted }
         _orderedSteps = steps
-        _flowSegments = computeFlowSegments(caps, originallyRequiredCapabilities)
+        var segments = computeFlowSegments(caps, originallyRequiredCapabilities)
+        // Keep progress capsules in sync with the screens that actually exist.
+        if (!config.showCompletionScreen) {
+            segments = segments.filter { it != OnboardingFlowSegment.VERIFICATION_SUBMITTED }
+        }
+        _flowSegments = segments
         if (steps.isEmpty()) {
             viewModelScope.launch { finishOnboarding() }
             return
@@ -589,7 +596,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             val enumCap = Capabilities.entries.find { it.apiValue == cap.name } ?: continue
             // idv declares no field keys, so it reports nothing due even before verification.
             if (enumCap == Capabilities.IDV && cap.capabilityStatus != CapabilityObjects.CapabilityStatus.ACTIVE) continue
-            if (cap.currentlyDue.isNullOrEmpty()) {
+            // Null currently_due means "not reported" — only an empty list means complete.
+            // Treating null as empty was skipping still-outstanding capabilities.
+            if (cap.currentlyDue?.isEmpty() == true) {
                 mutable.removeAll { it == enumCap }
             }
         }
@@ -627,12 +636,15 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         val accountNames = caps.map { it.name }.toSet()
         val hasSuperset = requiredNames.all { accountNames.contains(it) }
         if (!hasSuperset) {
-            if (depth >= 3) return
+            // One request + one recheck, matching iOS. Retrying in a loop can thrash the API
+            // without ever making progress when the merchant has not enabled the capability.
             CapabilitiesAPI.requestCapabilities(
                 accountId,
                 CapabilityRequests.RequestCapabilitiesRequest(capabilities = requiredCapabilityApiStrings())
             )
-            checkExistingAccount(updateCapabilities = true, depth = depth + 1)
+            if (depth == 0) {
+                checkExistingAccount(updateCapabilities = true, depth = 1)
+            }
             return
         }
         updateCapabilitiesBasedOnCompletion(caps)
@@ -709,7 +721,28 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun moveBack() {
-        val i = orderedSteps.indexOf(navigationState.currentStep)
+        val current = navigationState.currentStep
+        // From an Add screen, return to that segment's Select screen rather than the previous
+        // ordered step (which can be wrong after goTo/address-only or a rebuilt step list).
+        when (current) {
+            OnboardingStep.AddPaymentMethod -> {
+                clearOnlyAddressVerification()
+                val select = orderedSteps.firstOrNull { it == OnboardingStep.SelectPaymentMethod }
+                if (select != null) {
+                    navigationState.goTo(select)
+                    return
+                }
+            }
+            OnboardingStep.AddPayoutMethod -> {
+                val select = orderedSteps.firstOrNull { it == OnboardingStep.SelectPayoutMethod }
+                if (select != null) {
+                    navigationState.goTo(select)
+                    return
+                }
+            }
+            else -> Unit
+        }
+        val i = orderedSteps.indexOf(current)
         if (i > 0) navigationState.goTo(orderedSteps[i - 1])
     }
 
@@ -798,9 +831,16 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         // The server returns a structured `phone` object; `phoneNumber` is a legacy flat fallback
         // for responses that predate it.
         val rawPhone = individual.phone?.number ?: individual.phoneNumber
-        val phoneDigits = rawPhone?.filter(Char::isDigit)?.takeLast(10)
+        // Keep all digits — takeLast(10) dropped the country code and broke non-US numbers.
+        val phoneDigits = rawPhone?.filter(Char::isDigit)?.takeIf { it.isNotEmpty() }
         if (!phoneDigits.isNullOrEmpty()) {
             _phoneNumber.value = phoneDigits
+        }
+        individual.phone?.countryCode?.let { code ->
+            val dial = code.trim().let { if (it.startsWith("+")) it else "+$it" }
+            PhoneCountrySelection.all.find { it.dialCode == dial }?.let {
+                _phoneCountry.value = it
+            }
         }
         val birthOrDob = individual.birthdate?.takeIf { it.isNotBlank() }
         applyIsoDobToPhoneAuthFields(birthOrDob)
@@ -890,7 +930,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 _pendingProveAuthToken.value = result?.proveAuthToken
                 proveAuthLaunchStarted = false
                 if (result?.id != null) {
-                    _verifyPhoneUi.value = if (result.proveAuthToken != null) {
+                    val isProve = result.proveAuthToken != null ||
+                        result.provider.equals("prove", ignoreCase = true)
+                    _verifyPhoneUi.value = if (isProve && result.proveAuthToken != null) {
                         AccountEventEmitter.emit(
                             AccountEventName.SILENT_PHONE_AUTH_STARTED,
                             AccountEventScreen.PHONE_VERIFICATION,
@@ -900,7 +942,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     } else {
                         AccountEventEmitter.emit(
                             AccountEventName.PHONE_CODE_SENT,
-                            AccountEventScreen.PHONE_VERIFICATION
+                            AccountEventScreen.PHONE_VERIFICATION,
+                            detail = result.provider?.let { "provider: $it" }
                         )
                         VerifyPhoneUi.OtpFrameApi
                     }
@@ -1052,7 +1095,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             )
         }
         val retryId = retry?.id
-        if (retryId == null || retry.proveAuthToken != null) {
+        if (retryId == null || retry.proveAuthToken != null ||
+            retry.provider.equals("prove", ignoreCase = true)
+        ) {
             AccountEventEmitter.emit(
                 AccountEventName.SILENT_PHONE_AUTH_FAILED,
                 AccountEventScreen.PHONE_VERIFICATION,
@@ -1295,14 +1340,16 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         if (!beginAction()) return
         viewModelScope.launch {
             try {
+                val normalizedState = AddressSubregions.normalize(stateCode, country)
                 val billingAddress = FrameObjects.BillingAddress(
                     city = city,
                     country = country,
-                    state = stateCode,
+                    state = normalizedState,
                     postalCode = postalCode,
                     addressLine1 = addressLine1,
                     addressLine2 = addressLine2
                 )
+                _onboardingData.update { it.copy(stateCode = normalizedState) }
                 val account = upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
                     ?: return@launch
                 // Nothing left the applicant can act on — don't advance into dead-end steps.
@@ -1357,7 +1404,17 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      */
     private fun blockedOutcome(account: AccountObjects.Account): OnboardingOutcome? {
         val capabilities = account.capabilities ?: return null
-        val outstanding = capabilities.filter { it.isOutstanding }
+        // Only the host-required set (plus what it depends on) can block the flow — unrelated
+        // outstanding capabilities on the account must not end onboarding early.
+        val requiredNames = capabilitiesWithDependencies(originallyRequiredCapabilities)
+            .map { it.apiValue }
+            .toSet()
+        val relevant = if (requiredNames.isEmpty()) {
+            capabilities
+        } else {
+            capabilities.filter { requiredNames.contains(it.name) }
+        }
+        val outstanding = relevant.filter { it.isOutstanding }
         if (outstanding.isEmpty()) return null
         if (!outstanding.all { !it.hasActionableRequirements }) return null
 
@@ -1592,6 +1649,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 )
                 setResolvedAccountId(id)
                 _onboardingData.update { o -> o.copy(resolvedAccountId = id) }
+                updateStepUpRequirements(account?.capabilities)
                 beginOnboardingSessionIfNeeded()
             } else {
                 AccountEventEmitter.emit(
@@ -1637,7 +1695,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     birthdate = dob,
                     ssnLast4 = d.ssnLast4?.ifEmpty { null }
                 )
-                val (_, updateErr) = AccountsAPI.updateAccount(
+                val (updated, updateErr) = AccountsAPI.updateAccount(
                     existing,
                     AccountRequests.UpdateAccountRequest(
                         termsOfService = termsOfServiceForUpdate(),
@@ -1656,6 +1714,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                         AccountEventName.PROFILE_UPDATED,
                         AccountEventScreen.PERSONAL_INFORMATION
                     )
+                    updateStepUpRequirements(updated?.capabilities)
                 }
             } finally {
                 endAction()
@@ -2027,6 +2086,16 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun handlePlaidSuccess(publicToken: String, plaidAccountId: String, institutionName: String?, subtype: String?) {
         val accountId = _resolvedAccountId.value ?: return
+        if (plaidAccountId.isBlank()) {
+            AccountEventEmitter.emit(
+                AccountEventName.BANK_LINK_FAILED,
+                AccountEventScreen.PAYOUT_METHOD,
+                detail = "empty plaid account id"
+            )
+            reportUserError("We couldn't link that bank account. Please try again.")
+            _isPerformingAction.value = false
+            return
+        }
         viewModelScope.launch {
             _isPerformingAction.value = true
             val service = buildPlaidService(accountId)

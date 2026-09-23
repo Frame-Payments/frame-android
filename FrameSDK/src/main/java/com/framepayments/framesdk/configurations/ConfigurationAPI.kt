@@ -1,6 +1,9 @@
 package com.framepayments.framesdk.configurations
 import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Fetches and caches third-party service configurations from the Frame API.
@@ -8,8 +11,20 @@ import com.framepayments.framesdk.FrameNetworking
  * Each method retrieves a configuration object from the network, persists it to
  * [SecureConfigurationStorage], and returns the parsed response. Both coroutine
  * (suspend) and callback variants are provided for each service.
+ *
+ * After [getAllConfiguration] warms the cache (or any individual fetch succeeds), later
+ * callers of the per-service getters resolve from storage instead of firing duplicate
+ * network requests for the same launch.
  */
 object ConfigurationAPI {
+    private val allConfigMutex = Mutex()
+    private var allConfigInFlight: CompletableDeferred<ConfigurationResponses.GetAllConfigurationResponse?>? = null
+
+    private inline fun <reified T> cached(key: String): T? =
+        runCatching {
+            SecureConfigurationStorage.retrieve<T>(FrameNetworking.getContext(), key)
+        }.getOrNull()
+
     //MARK: Methods using coroutines
     /**
      * Fetches the Evervault configuration from the API and caches it locally.
@@ -18,6 +33,8 @@ object ConfigurationAPI {
      *   the request fails or the response cannot be parsed.
      */
     suspend fun getEvervaultConfiguration(): ConfigurationResponses.GetEvervaultConfigurationResponse? {
+        cached<ConfigurationResponses.GetEvervaultConfigurationResponse>("evervault")?.let { return it }
+
         val endpoint = ConfigurationEndpoints.GetEvervaultConfiguration
         val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly)
 
@@ -46,6 +63,8 @@ object ConfigurationAPI {
      *   the request fails or the response cannot be parsed.
      */
     suspend fun getFingerprintConfiguration(): ConfigurationResponses.GetFingerprintConfigurationResponse? {
+        cached<ConfigurationResponses.GetFingerprintConfigurationResponse>("fingerprint")?.let { return it }
+
         val endpoint = ConfigurationEndpoints.GetFingerprintConfiguration
         val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly)
 
@@ -71,6 +90,8 @@ object ConfigurationAPI {
      *   request fails or the response cannot be parsed.
      */
     suspend fun getSiftConfiguration(): ConfigurationResponses.GetSiftConfigurationResponse? {
+        cached<ConfigurationResponses.GetSiftConfigurationResponse>("sift")?.let { return it }
+
         val endpoint = ConfigurationEndpoints.GetSiftConfiguration
         val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly)
 
@@ -96,6 +117,8 @@ object ConfigurationAPI {
      *   the request fails or the response cannot be parsed.
      */
     suspend fun getLegalConfiguration(): ConfigurationResponses.GetLegalConfigurationResponse? {
+        cached<ConfigurationResponses.GetLegalConfigurationResponse>("legal")?.let { return it }
+
         val endpoint = ConfigurationEndpoints.GetLegalConfiguration
         val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly)
 
@@ -121,6 +144,8 @@ object ConfigurationAPI {
      *   the request fails or the response cannot be parsed.
      */
     suspend fun getMapboxConfiguration(): ConfigurationResponses.GetMapboxConfigurationResponse? {
+        cached<ConfigurationResponses.GetMapboxConfigurationResponse>("mapbox")?.let { return it }
+
         val endpoint = ConfigurationEndpoints.GetMapboxConfiguration
         val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly)
 
@@ -145,16 +170,45 @@ object ConfigurationAPI {
      * omitted block is skipped rather than cleared, so a service that failed server-side keeps
      * its cache.
      *
+     * Concurrent callers join a single in-flight request so a launch never fans out into
+     * duplicate `/config/all` round-trips.
+     *
      * @return The parsed [ConfigurationResponses.GetAllConfigurationResponse], or `null` if the
      *   request fails or the response cannot be parsed.
      */
     suspend fun getAllConfiguration(): ConfigurationResponses.GetAllConfigurationResponse? {
+        val (deferred, isLeader) = allConfigMutex.withLock {
+            allConfigInFlight?.let { it to false }
+                ?: CompletableDeferred<ConfigurationResponses.GetAllConfigurationResponse?>().let { created ->
+                    allConfigInFlight = created
+                    created to true
+                }
+        }
+
+        if (isLeader) {
+            try {
+                deferred.complete(fetchAllConfigurationFromNetwork())
+            } catch (t: Throwable) {
+                deferred.complete(null)
+                throw t
+            } finally {
+                allConfigMutex.withLock {
+                    if (allConfigInFlight === deferred) allConfigInFlight = null
+                }
+            }
+        }
+
+        return deferred.await()
+    }
+
+    private suspend fun fetchAllConfigurationFromNetwork(): ConfigurationResponses.GetAllConfigurationResponse? {
         val endpoint = ConfigurationEndpoints.GetAllConfiguration
         val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly)
         if (error != null) return null
 
-        val dataResponse = data?.let { FrameNetworking.parseResponse<ConfigurationResponses.GetAllConfigurationResponse>(it) }
-            ?: return null
+        val dataResponse = data?.let {
+            FrameNetworking.parseResponse<ConfigurationResponses.GetAllConfigurationResponse>(it)
+        } ?: return null
 
         cache(dataResponse.evervault, "evervault")
         cache(dataResponse.fingerprint, "fingerprint")
@@ -180,6 +234,11 @@ object ConfigurationAPI {
      *   or the response cannot be parsed.
      */
     fun getEvervaultConfiguration(completionHandler: (ConfigurationResponses.GetEvervaultConfigurationResponse?) -> Unit) {
+        cached<ConfigurationResponses.GetEvervaultConfigurationResponse>("evervault")?.let {
+            completionHandler(it)
+            return
+        }
+
         val endpoint = ConfigurationEndpoints.GetEvervaultConfiguration
 
         FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly) { data, error ->
@@ -209,6 +268,11 @@ object ConfigurationAPI {
      *   fails or the response cannot be parsed.
      */
     fun getFingerprintConfiguration(completionHandler: (ConfigurationResponses.GetFingerprintConfigurationResponse?) -> Unit) {
+        cached<ConfigurationResponses.GetFingerprintConfigurationResponse>("fingerprint")?.let {
+            completionHandler(it)
+            return
+        }
+
         val endpoint = ConfigurationEndpoints.GetFingerprintConfiguration
 
         FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly) { data, error ->
@@ -238,6 +302,11 @@ object ConfigurationAPI {
      *   the response cannot be parsed.
      */
     fun getSiftConfiguration(completionHandler: (ConfigurationResponses.GetSiftConfigurationResponse?) -> Unit) {
+        cached<ConfigurationResponses.GetSiftConfigurationResponse>("sift")?.let {
+            completionHandler(it)
+            return
+        }
+
         val endpoint = ConfigurationEndpoints.GetSiftConfiguration
 
         FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly) { data, error ->
@@ -258,4 +327,3 @@ object ConfigurationAPI {
         }
     }
 }
-

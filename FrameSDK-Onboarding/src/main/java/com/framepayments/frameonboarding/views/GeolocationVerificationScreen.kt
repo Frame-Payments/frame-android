@@ -46,7 +46,8 @@ import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 private enum class GeolocationState {
     CHECKING,
     VERIFIED,
-    VPN_DETECTED
+    VPN_DETECTED,
+    BLOCKED
 }
 
 @Composable
@@ -64,30 +65,41 @@ internal fun GeolocationVerificationScreen(
         )
         val id = accountId
         if (id == null) {
-            state = GeolocationState.VERIFIED
+            // Without an account the check cannot run — fail closed so geo-blocked applicants
+            // never slip through when this screen is later enabled in the flow.
+            state = GeolocationState.BLOCKED
             AccountEventEmitter.emit(
-                AccountEventName.COMPLIANCE_CHECK_PASSED,
-                AccountEventScreen.COMPLIANCE
+                AccountEventName.COMPLIANCE_CHECK_FAILED,
+                AccountEventScreen.COMPLIANCE,
+                detail = "missing account id"
             )
             return@LaunchedEffect
         }
-        val (response, _) = GeocomplianceAPI.getAccountGeoComplianceStatus(id)
+        val (response, err) = GeocomplianceAPI.getAccountGeoComplianceStatus(id)
         state = when {
-            response == null -> GeolocationState.VERIFIED
+            response == null -> GeolocationState.BLOCKED
             response.status == GeoComplianceStatus.CLEAR -> GeolocationState.VERIFIED
             response.reason == GeoComplianceBlockReason.VPN_DETECTED -> GeolocationState.VPN_DETECTED
-            else -> GeolocationState.VERIFIED
+            response.status == GeoComplianceStatus.BLOCKED -> GeolocationState.BLOCKED
+            else -> GeolocationState.BLOCKED
         }
-        if (state == GeolocationState.VPN_DETECTED) {
-            AccountEventEmitter.emit(
+        when (state) {
+            GeolocationState.VPN_DETECTED -> AccountEventEmitter.emit(
                 AccountEventName.COMPLIANCE_CHECK_VPN_DETECTED,
                 AccountEventScreen.COMPLIANCE
             )
-        } else {
-            AccountEventEmitter.emit(
+            GeolocationState.VERIFIED -> AccountEventEmitter.emit(
                 AccountEventName.COMPLIANCE_CHECK_PASSED,
                 AccountEventScreen.COMPLIANCE
             )
+            GeolocationState.BLOCKED -> AccountEventEmitter.emit(
+                AccountEventName.COMPLIANCE_CHECK_FAILED,
+                AccountEventScreen.COMPLIANCE,
+                detail = err?.toString()
+                    ?: response?.reason?.name?.lowercase()
+                    ?: "blocked"
+            )
+            GeolocationState.CHECKING -> Unit
         }
     }
 
@@ -120,6 +132,7 @@ internal fun GeolocationVerificationScreen(
                     },
                     onDisableVpn = onDisableVpn
                 )
+                GeolocationState.BLOCKED -> LocationBlockedView()
             }
         }
     }
@@ -270,6 +283,47 @@ private fun VpnDetectedView(
         ) {
             Text("Disable VPN")
         }
+    }
+}
+
+@Composable
+private fun LocationBlockedView() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            modifier = Modifier.size(96.dp),
+            color = LocalFrameTheme.current.colors.surface,
+            shape = RoundedCornerShape(LocalFrameTheme.current.radii.large)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Help,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = "Location not permitted",
+            style = LocalFrameTheme.current.fonts.heading.copy(fontWeight = FontWeight.Bold),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            text = "We can't verify your location for this application. If you're using a VPN, turn it off and try again from a supported region.",
+            style = LocalFrameTheme.current.fonts.bodySmall,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
