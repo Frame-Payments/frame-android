@@ -26,6 +26,7 @@ import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 @Composable
 internal fun OnboardingIntroView(
+    continueEnabled: Boolean = true,
     onContinue: () -> Unit
 ) {
     Scaffold { padding ->
@@ -69,6 +70,7 @@ internal fun OnboardingIntroView(
 
             Button(
                 modifier = Modifier.fillMaxWidth(),
+                enabled = continueEnabled,
                 onClick = onContinue,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = LocalFrameTheme.current.colors.primaryButton,

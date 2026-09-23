@@ -83,14 +83,24 @@ sealed class NetworkingError : Exception() {
      */
     fun toastMessage(fallback: String = "Something went wrong. Please try again."): String {
         val body = if (this is ServerError) {
-            extractEnvelopeMessage(errorDescription) ?: fallback
+            val extracted = extractEnvelopeMessage(errorDescription)
+            val candidate = extracted ?: errorDescription
+            riskMessage(candidate) ?: extracted ?: fallback
         } else {
             fallback
         }
         return "Error: $body"
     }
 
-    private companion object {
+    internal companion object {
+        /** Human copy for risk and geo-compliance rejections the server reports as bare codes. */
+        fun riskMessage(message: String): String? =
+            when (message.trim().lowercase()) {
+                "sonar_session_required" -> "We couldn't verify this device. Please try again."
+                "geo_compliance_blocked" -> "Payments aren't available in your location."
+                "geo_compliance_vpn_detected" -> "Please turn off your VPN or proxy and try again."
+                else -> null
+            }
         /// Pull a user-facing message from the Frame error envelope JSON. The server's
         /// `error_details` field is polymorphic — sometimes an object with a `message` key,
         /// sometimes a plain string (e.g. `"Card submitted is not a test card"` for 422

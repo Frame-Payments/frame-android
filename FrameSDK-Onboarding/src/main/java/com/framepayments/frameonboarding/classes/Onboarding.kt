@@ -104,11 +104,11 @@ fun capabilitiesWithDependencies(capabilities: List<Capabilities>): Set<Capabili
 
 /**
  */
-internal enum class OnboardingFlowSegment(val order: Int) {
-    PERSONAL_INFORMATION(0),
-    CONFIRM_PAYMENT_METHOD(1),
-    CONFIRM_PAYOUT_METHOD(2),
-    VERIFICATION_SUBMITTED(3)
+internal enum class OnboardingFlowSegment(val order: Int, val analyticsName: String) {
+    PERSONAL_INFORMATION(0, "personalInformation"),
+    CONFIRM_PAYMENT_METHOD(1, "confirmPaymentMethod"),
+    CONFIRM_PAYOUT_METHOD(2, "confirmBankAccount"),
+    VERIFICATION_SUBMITTED(3, "verificationSubmitted")
 }
 
 internal fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
@@ -128,8 +128,7 @@ internal fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this)
     )
     OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD -> listOf(
         OnboardingStep.SelectPaymentMethod,
-        OnboardingStep.AddPaymentMethod,
-        OnboardingStep.VerifyYourCard
+        OnboardingStep.AddPaymentMethod
     )
     OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD -> listOf(
         OnboardingStep.SelectPayoutMethod,
@@ -140,32 +139,36 @@ internal fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this)
 
 /**
  * Builds the ordered list of onboarding steps from required capabilities.
+ *
+ * [originallyRequiredCapabilities] is what the host asked for at launch. When the shrinking
+ * [requiredCapabilities] list is empty because every requested capability is already granted,
+ * the flow lands on the final screen rather than falling back to personal information.
+ * An empty host config (nothing requested) still starts at personal information.
  */
-internal fun computeFlowSegments(requiredCapabilities: List<Capabilities>): List<OnboardingFlowSegment> {
+internal fun computeFlowSegments(
+    requiredCapabilities: List<Capabilities>,
+    originallyRequiredCapabilities: List<Capabilities> = requiredCapabilities
+): List<OnboardingFlowSegment> {
     if (requiredCapabilities.isEmpty()) {
-        return listOf(
-            OnboardingFlowSegment.PERSONAL_INFORMATION,
-            OnboardingFlowSegment.VERIFICATION_SUBMITTED
-        )
+        return if (originallyRequiredCapabilities.isEmpty()) {
+            listOf(
+                OnboardingFlowSegment.PERSONAL_INFORMATION,
+                OnboardingFlowSegment.VERIFICATION_SUBMITTED
+            )
+        } else {
+            listOf(OnboardingFlowSegment.VERIFICATION_SUBMITTED)
+        }
     }
     val segmentSet = requiredCapabilities.map { it.toFlowSegment() }.toMutableSet()
     return (segmentSet.sortedBy { it.order } + OnboardingFlowSegment.VERIFICATION_SUBMITTED).distinct()
 }
 
-internal fun computeOrderedSteps(requiredCapabilities: List<Capabilities>): List<OnboardingStep> {
-    val needsCardVerification = requiredCapabilities.contains(Capabilities.CARD_VERIFICATION)
-    return computeFlowSegments(requiredCapabilities).flatMap { segment ->
-        when (segment) {
-            OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD -> {
-                if (needsCardVerification) {
-                    segment.toSteps()
-                } else {
-                    listOf(OnboardingStep.SelectPaymentMethod, OnboardingStep.AddPaymentMethod)
-                }
-            }
-            else -> segment.toSteps()
-        }
-    }
+internal fun computeOrderedSteps(
+    requiredCapabilities: List<Capabilities>,
+    originallyRequiredCapabilities: List<Capabilities> = requiredCapabilities
+): List<OnboardingStep> {
+    return computeFlowSegments(requiredCapabilities, originallyRequiredCapabilities)
+        .flatMap { it.toSteps() }
 }
 
 internal fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this) {
@@ -255,7 +258,8 @@ internal data class PaymentMethodSummary(
     val id: String,
     val brand: String,
     val last4: String,
-    val exp: String
+    val exp: String,
+    val hasBillingAddress: Boolean = true
 )
 
 /**
@@ -265,14 +269,12 @@ internal data class PaymentMethodSummary(
  * @property expiryMonth Two-digit expiration month (e.g. "01").
  * @property expiryYear Two- or four-digit expiration year (e.g. "26" or "2026").
  * @property cvc Three- or four-digit card security code.
- * @property useForPayouts When true, the customer intends to use this card for payouts as well.
  */
 data class PaymentCardDraft(
     val cardNumber: String = "",
     val expiryMonth: String = "",
     val expiryYear: String = "",
-    val cvc: String = "",
-    val useForPayouts: Boolean = false
+    val cvc: String = ""
 )
 
 /**
