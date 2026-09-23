@@ -1038,6 +1038,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             activeProveAuthService = service
             try {
                 val success = service.authenticateWith(authToken)
+                // goBackFromVerifyPhone may have cancelled while silent auth was still loading —
+                // before an OTP deferred existed — so ignore any late success or failure here.
+                if (proveOtpCancelledByUser) {
+                    proveOtpCancelledByUser = false
+                    return@launch
+                }
                 if (success) {
                     AccountEventEmitter.emit(
                         AccountEventName.SILENT_PHONE_AUTH_COMPLETED,
@@ -1053,11 +1059,16 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             } catch (e: CancellationException) {
                 throw e
             } catch (err: ProveAuthServiceError.Cancelled) {
-                // Applicant dismissed OTP; the Prove session is already released.
+                // Applicant dismissed OTP or went back; the Prove session is already released.
+                proveOtpCancelledByUser = false
             } catch (err: Exception) {
                 synchronized(proveOtpLock) {
                     proveOtpDeferred?.complete(null)
                     proveOtpDeferred = null
+                }
+                if (proveOtpCancelledByUser) {
+                    proveOtpCancelledByUser = false
+                    return@launch
                 }
                 fallBackToTwilio(acctId, proveError = err)
             } finally {
@@ -1155,6 +1166,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun goBackFromVerifyPhone() {
+        // Always set before cancelling: during LoadingProve there is no OTP deferred yet, and a
+        // late Prove failure must still see this flag so it does not create a Twilio fallback.
         proveOtpCancelledByUser = true
         synchronized(proveOtpLock) {
             if (proveOtpDeferred != null) {
@@ -1169,6 +1182,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         activeProveAuthService?.cancel()
         activeProveAuthService = null
         proveAuthLaunchStarted = false
+        _pendingProveAuthToken.value = null
         _verifyPhoneUi.value = null
         _verifyIdSubStep.value = VerifyIdSubStep.PhoneAuth
     }
