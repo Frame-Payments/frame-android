@@ -7,9 +7,11 @@ import com.prove.sdk.proveauth.OtpFinishInput
 import com.prove.sdk.proveauth.OtpStartStep
 import com.prove.sdk.proveauth.OtpStartInput
 import com.prove.sdk.proveauth.ProveAuth
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -80,23 +82,38 @@ class ProveAuthService(
     private var authFinishStep: AuthFinishStep? = null
     private var otpStartStep: OtpStartStep? = null
     private var otpFinishStep: OtpFinishStep? = null
+    private var resultDeferred: CompletableDeferred<Result<Boolean>>? = null
+    private val cancelLock = Any()
+    private var isCancelled = false
+    private var confirmJob: Job? = null
 
     /**
      * Runs Prove mobile flow with the auth token from createVerification. Returns true on success
      * after [confirmHandler] completes. Call from a coroutine (e.g. viewModelScope.launch).
      */
     suspend fun authenticateWith(authToken: String): Boolean = withContext(Dispatchers.IO) {
-        val resultDeferred = CompletableDeferred<Result<Boolean>>()
+        val deferred = CompletableDeferred<Result<Boolean>>()
+        // cancel() can run before this registers; without the flag Prove would start anyway.
+        synchronized(cancelLock) {
+            if (isCancelled) throw ProveAuthServiceError.Cancelled
+            resultDeferred = deferred
+        }
 
         authFinishStep = AuthFinishStep { _ ->
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    confirmHandler(accountId, verificationId)
-                    resultDeferred.complete(Result.success(true))
-                } catch (e: Throwable) {
-                    resultDeferred.complete(Result.failure(e))
-                } finally {
-                    releaseRetainedSDKObjects()
+            synchronized(cancelLock) {
+                if (isCancelled) return@AuthFinishStep
+                confirmJob = CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        confirmHandler(accountId, verificationId)
+                        deferred.complete(Result.success(true))
+                    } catch (e: CancellationException) {
+                        deferred.complete(Result.failure(ProveAuthServiceError.Cancelled))
+                        throw e
+                    } catch (e: Throwable) {
+                        deferred.complete(Result.failure(e))
+                    } finally {
+                        releaseRetainedSDKObjects()
+                    }
                 }
             }
         }
@@ -111,10 +128,17 @@ class ProveAuthService(
 
         otpFinishStep = OtpFinishStep { _, callback ->
             CoroutineScope(Dispatchers.Main).launch {
+                if (deferred.isCompleted) {
+                    callback.onError()
+                    return@launch
+                }
                 val otp = otpProvider?.invoke()
                 if (otp != null) {
                     callback.onSuccess(OtpFinishInput(otp))
                 } else {
+                    // Applicant cancelled OTP entry — unblock authenticateWith rather than hanging.
+                    deferred.complete(Result.failure(ProveAuthServiceError.Cancelled))
+                    releaseRetainedSDKObjects()
                     callback.onError()
                 }
             }
@@ -130,10 +154,25 @@ class ProveAuthService(
             proveAuth!!.authenticate(authToken)
         } catch (e: Throwable) {
             releaseRetainedSDKObjects()
-            resultDeferred.complete(Result.failure(e))
+            deferred.complete(Result.failure(e))
         }
 
-        resultDeferred.await().getOrThrow()
+        deferred.await().getOrThrow()
+    }
+
+    /**
+     * Releases Prove SDK objects and unblocks [authenticateWith] when the applicant cancels
+     * (including during silent auth before OTP is requested).
+     */
+    fun cancel() {
+        synchronized(cancelLock) {
+            isCancelled = true
+            resultDeferred?.complete(Result.failure(ProveAuthServiceError.Cancelled))
+            resultDeferred = null
+            confirmJob?.cancel()
+            confirmJob = null
+        }
+        releaseRetainedSDKObjects()
     }
 
     private fun releaseRetainedSDKObjects() {

@@ -2,6 +2,7 @@ package com.framepayments.framesdk_ui.viewmodels
 
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
+import com.framepayments.framesdk.AddressSubregions
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk_ui.validation.Validators
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -112,19 +113,25 @@ class BillingAddressFieldVM(
 
     /** Sets the state/province code and clears any existing [Field.STATE] error. */
     fun setSubregion(code: String) {
-        _address.update { it.copy(state = code) }
+        val country = _address.value.country?.takeIf { it.isNotBlank() } ?: "US"
+        _address.update { it.copy(state = AddressSubregions.normalize(code, country)) }
         clearError(Field.STATE)
     }
 
     /** Fills the address from a picked autocomplete suggestion, clearing errors on every field it populated. */
     fun applyAutocompletedAddress(picked: FrameObjects.BillingAddress) {
         _address.update { current ->
+            val country = when (mode) {
+                BillingAddressMode.INTERNATIONAL -> picked.country ?: current.country
+                BillingAddressMode.US_ONLY -> current.country
+            }?.takeIf { it.isNotBlank() } ?: "US"
+            val rawState = picked.state ?: current.state
             current.copy(
                 addressLine1 = picked.addressLine1 ?: current.addressLine1,
                 city = picked.city ?: current.city,
-                state = picked.state ?: current.state,
+                state = rawState?.let { AddressSubregions.normalize(it, country) },
                 postalCode = picked.postalCode ?: current.postalCode,
-                country = if (mode == BillingAddressMode.INTERNATIONAL) picked.country ?: current.country else current.country
+                country = if (mode == BillingAddressMode.INTERNATIONAL) country else current.country
             )
         }
         _errors.update {
@@ -194,6 +201,14 @@ class BillingAddressFieldVM(
         if (mode == BillingAddressMode.INTERNATIONAL) {
             Validators.validateNonEmpty(addr.country.orEmpty(), "Country")
                 ?.let { next[Field.COUNTRY] = it }
+        }
+
+        // Persist normalized codes so API payloads never see free-typed casing for validated countries.
+        if (next.isEmpty()) {
+            val normalized = AddressSubregions.normalize(addr.state.orEmpty(), countryCode)
+            if (normalized != addr.state) {
+                _address.update { it.copy(state = normalized.ifEmpty { null }) }
+            }
         }
 
         _errors.value = next

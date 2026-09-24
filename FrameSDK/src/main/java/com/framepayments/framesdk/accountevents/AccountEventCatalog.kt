@@ -88,6 +88,7 @@ enum class AccountEventName(val apiValue: String) {
 
     COMPLIANCE_CHECK_STARTED("compliance_check_started"),
     COMPLIANCE_CHECK_PASSED("compliance_check_passed"),
+    COMPLIANCE_CHECK_FAILED("compliance_check_failed"),
     COMPLIANCE_CHECK_VPN_DETECTED("compliance_check_vpn_detected"),
     COMPLIANCE_CHECK_VPN_BYPASSED("compliance_check_vpn_bypassed"),
 

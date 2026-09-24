@@ -25,7 +25,7 @@ object AccountRequests {
         val address: FrameObjects.BillingAddress? = null,
         val birthdate: String? = null,
         val ssn: String? = null,
-        @SerializedName("ssn_last4") val ssnLast4: String? = null,
+        @SerializedName("ssn_last_four") val ssnLast4: String? = null,
         @SerializedName("profile_url") val profileURL: String? = null
     )
 
@@ -79,8 +79,7 @@ object AccountRequests {
      *
      * @property name Updated name components.
      * @property email Updated contact email address.
-     * @property phoneNumber Updated contact phone number.
-     * @property phoneCountryCode ISO country calling code for the updated phone number.
+     * @property phone Updated contact phone number.
      * @property address Updated residential address.
      * @property birthdate Updated date of birth in YYYY-MM-DD format.
      * @property ssn Updated full Social Security Number.
@@ -90,12 +89,11 @@ object AccountRequests {
     data class UpdateIndividualAccount(
         val name: UpdateAccountInfo? = null,
         val email: String? = null,
-        @SerializedName("phone_number") val phoneNumber: String? = null,
-        @SerializedName("phone_country_code") val phoneCountryCode: String? = null,
+        val phone: AccountObjects.AccountPhoneNumber? = null,
         val address: FrameObjects.BillingAddress? = null,
         val birthdate: String? = null,
         val ssn: String? = null,
-        @SerializedName("ssn_last4") val ssnLast4: String? = null,
+        @SerializedName("ssn_last_four") val ssnLast4: String? = null,
         @SerializedName("profile_url") val profileURL: String? = null
     )
 
@@ -163,5 +161,14 @@ object AccountRequests {
      */
     data class ConfirmPhoneVerificationRequest(
         val code: String
+    )
+
+    /**
+     * Request body for electing an account's payout destination.
+     *
+     * @property paymentMethodId The ACH payment method to make the account's primary payout method.
+     */
+    data class ElectPayoutMethodRequest(
+        @SerializedName("payment_method_id") val paymentMethodId: String
     )
 }

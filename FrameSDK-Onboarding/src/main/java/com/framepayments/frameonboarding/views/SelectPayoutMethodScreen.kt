@@ -54,7 +54,9 @@ internal fun SelectPayoutMethodScreen(
     onSelect: (String) -> Unit,
     onAddPayout: () -> Unit,
     onBack: () -> Unit,
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    primaryId: String? = null,
+    isLoading: Boolean = false
 ) {
     val canContinue = selectedId != null
 
@@ -70,7 +72,7 @@ internal fun SelectPayoutMethodScreen(
             TopAppBar(
                 title = { Text("Select A Payout Method") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -102,6 +104,8 @@ internal fun SelectPayoutMethodScreen(
                         SavedPayoutMethodRow(
                             pm = pm,
                             selected = selectedId == pm.id,
+                            isPrimary = primaryId == pm.id,
+                            enabled = !isLoading,
                             onClick = {
                                 onSelect(pm.id)
                                 AccountEventEmitter.emit(
@@ -127,12 +131,14 @@ internal fun SelectPayoutMethodScreen(
                             detail = AccountEventDetail.PAYOUT_METHOD_ADD_STARTED_MANUAL_OR_PLAID
                         )
                         onAddPayout()
-                    }
+                    },
+                    enabled = !isLoading
                 )
             }
 
             ContinueButton(
                 enabled = canContinue,
+                isLoading = isLoading,
                 onClick = onContinue
             )
         }
@@ -143,12 +149,14 @@ internal fun SelectPayoutMethodScreen(
 private fun SavedPayoutMethodRow(
     pm: PaymentMethodSummary,
     selected: Boolean,
-    onClick: () -> Unit
+    isPrimary: Boolean,
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
     ) {
@@ -167,9 +175,12 @@ private fun SavedPayoutMethodRow(
             Column(Modifier.weight(1f)) {
                 Text(text = "•••• ${pm.last4}", style = LocalFrameTheme.current.fonts.body)
                 Spacer(Modifier.height(2.dp))
-                Text(text = "Account", style = LocalFrameTheme.current.fonts.bodySmall)
+                Text(
+                    text = if (isPrimary) "Account · Primary" else "Account",
+                    style = LocalFrameTheme.current.fonts.bodySmall
+                )
             }
-            RadioButton(selected = selected, onClick = onClick)
+            RadioButton(selected = selected, onClick = onClick, enabled = enabled)
         }
     }
 }
@@ -178,12 +189,13 @@ private fun SavedPayoutMethodRow(
 private fun AddPayoutMethodRow(
     title: String,
     subtitle: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(enabled = enabled, onClick = onClick),
         tonalElevation = 0.dp,
         shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
     ) {

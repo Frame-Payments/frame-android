@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * Builds and queues account/diagnostic events for the backend's merchant dashboard.
@@ -40,7 +41,7 @@ object AccountEventEmitter {
             platform = FrameNetworking.eventPlatform,
             sdkVersion = FrameNetworking.CURRENT_VERSION,
             hostSdkVersion = FrameNetworking.hostSDKVersion,
-            occurredAt = Instant.now().toString(),
+            occurredAt = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString(),
             detail = detail
         )
 

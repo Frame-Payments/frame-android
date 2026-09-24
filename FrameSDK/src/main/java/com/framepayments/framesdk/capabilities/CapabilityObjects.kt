@@ -112,4 +112,27 @@ object CapabilityObjects {
             CapabilityStatus.DISABLED -> disabledReason != PRODUCT_GRANT_REVOKED_REASON
             CapabilityStatus.PENDING, CapabilityStatus.UNKNOWN -> true
         }
+
+    /**
+     * Whether work listed against this capability can still move it forward. The server blanks
+     * `currently_due` only for `ineligible`, so a disabled capability still publishes dead keys.
+     */
+    val Capability.hasActionableRequirements: Boolean
+        get() = when (capabilityStatus) {
+            CapabilityStatus.PENDING, CapabilityStatus.UNKNOWN -> true
+            CapabilityStatus.ACTIVE, CapabilityStatus.UNREQUESTED,
+            CapabilityStatus.DISABLED, CapabilityStatus.INELIGIBLE -> false
+        }
+
+    /** `currently_due` keys the applicant can still resolve; a disabled capability publishes dead keys. */
+    val Capability.actionableRequirements: List<String>
+        get() = if (hasActionableRequirements) currentlyDue.orEmpty() else emptyList()
+
+    /** `currently_due` keys the onboarding flow acts on. */
+    object CapabilityRequirementKey {
+        /** The backend stepped the account up to a government-ID document check. */
+        const val IDENTITY_DOCUMENT = "individual.identity_document"
+        /** A KYC run rejected complete-but-wrong details (FRA-6552). */
+        const val KYC = "individual.kyc"
+    }
 }

@@ -41,6 +41,8 @@ sealed class AccountEndpoints : FrameNetworkingEndpoints {
     data class CreatePhoneVerification(val accountId: String) : AccountEndpoints()
     /** Endpoint for confirming a phone verification with a one-time code. */
     data class ConfirmPhoneVerification(val accountId: String, val verificationId: String) : AccountEndpoints()
+    /** `POST /v1/accounts/{id}/elect_payout_method`: makes a payment method the account's payout destination. */
+    data class ElectPayoutMethod(val accountId: String) : AccountEndpoints()
 
     override val endpointURL: String
         get() = when (this) {
@@ -54,12 +56,13 @@ sealed class AccountEndpoints : FrameNetworkingEndpoints {
             is GetPlaidLinkToken -> "/v1/accounts/${this.accountId}/plaid_link_token"
             is CreatePhoneVerification -> "/v1/accounts/${this.accountId}/phone_verifications"
             is ConfirmPhoneVerification -> "/v1/accounts/${this.accountId}/phone_verifications/${this.verificationId}/confirm"
+            is ElectPayoutMethod -> "/v1/accounts/${this.accountId}/elect_payout_method"
         }
 
     override val httpMethod: String
         get() = when (this) {
             is CreateAccount, is RestrictAccount, is UnrestrictAccount,
-            is CreatePhoneVerification, is ConfirmPhoneVerification -> "POST"
+            is CreatePhoneVerification, is ConfirmPhoneVerification, is ElectPayoutMethod -> "POST"
             is UpdateAccount -> "PATCH"
             is DeleteAccountWith -> "DELETE"
             else -> "GET"

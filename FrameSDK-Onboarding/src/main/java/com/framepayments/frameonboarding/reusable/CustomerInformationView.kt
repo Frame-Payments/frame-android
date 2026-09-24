@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.validation.DateOfBirthFormatter
@@ -52,12 +53,16 @@ fun CustomerInformationView(
     showGovIdVerification: Boolean = false,
     /** When true, the SSN input and the button are hidden and a "Verified with government ID." line is shown. */
     identityVerifiedViaGovId: Boolean = false,
+    /** When false (a government-ID step-up is pending), neither the SSN input nor the button is shown. */
+    showSsnField: Boolean = true,
     /** When true, the government-ID button shows a spinner and is disabled (verification in flight). */
     isVerifyingGovId: Boolean = false,
     /** Invoked when the customer taps "I don't have a social security number". */
     onVerifyWithoutSsn: () -> Unit = {},
     /** Invoked when the customer taps "Use SSN instead" to undo government-ID verification. */
-    onUseSsnInstead: () -> Unit = {}
+    onUseSsnInstead: () -> Unit = {},
+    /** When false (a government ID is required), "Use SSN instead" is hidden. */
+    allowSsnInstead: Boolean = true
 ) {
     val identity by viewModel.identity.collectAsState()
     val phoneCountry by viewModel.phoneCountry.collectAsState()
@@ -118,6 +123,7 @@ fun CustomerInformationView(
                 error = errors[CustomerInformationFieldVM.Field.FIRST_NAME],
                 inlineError = true,
                 onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.FIRST_NAME) },
+                autofillContentType = ContentType.PersonFirstName,
                 modifier = Modifier.weight(1f)
             )
             ValidatedTextField(
@@ -127,6 +133,7 @@ fun CustomerInformationView(
                 error = errors[CustomerInformationFieldVM.Field.LAST_NAME],
                 inlineError = true,
                 onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.LAST_NAME) },
+                autofillContentType = ContentType.PersonLastName,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -140,7 +147,8 @@ fun CustomerInformationView(
             error = errors[CustomerInformationFieldVM.Field.EMAIL],
             keyboardType = KeyboardType.Email,
             inlineError = true,
-            onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.EMAIL) }
+            onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.EMAIL) },
+            autofillContentType = ContentType.EmailAddress
         )
 
         Spacer(Modifier.height(16.dp))
@@ -205,6 +213,7 @@ fun CustomerInformationView(
                 characterLimit = 2,
                 compactError = true,
                 onClearError = { viewModel.clearDateOfBirthErrors() },
+                autofillContentType = ContentType.BirthDateMonth,
                 modifier = Modifier.weight(1f)
             )
             ValidatedTextField(
@@ -219,6 +228,7 @@ fun CustomerInformationView(
                 characterLimit = 2,
                 compactError = true,
                 onClearError = { viewModel.clearDateOfBirthErrors() },
+                autofillContentType = ContentType.BirthDateDay,
                 modifier = Modifier.weight(1f)
             )
             ValidatedTextField(
@@ -233,6 +243,7 @@ fun CustomerInformationView(
                 characterLimit = 4,
                 compactError = true,
                 onClearError = { viewModel.clearDateOfBirthErrors() },
+                autofillContentType = ContentType.BirthDateYear,
                 modifier = Modifier.weight(2f)
             )
         }
@@ -254,15 +265,17 @@ fun CustomerInformationView(
                     style = theme.fonts.bodySmall,
                     color = theme.colors.textPrimary
                 )
-                TextButton(onClick = onUseSsnInstead) {
-                    Text(
-                        text = "Use SSN instead",
-                        style = theme.fonts.caption,
-                        color = theme.colors.textSecondary
-                    )
+                if (allowSsnInstead) {
+                    TextButton(onClick = onUseSsnInstead) {
+                        Text(
+                            text = "Use SSN instead",
+                            style = theme.fonts.caption,
+                            color = theme.colors.textSecondary
+                        )
+                    }
                 }
             }
-        } else {
+        } else if (showSsnField) {
             ValidatedTextField(
                 value = identity.ssn,
                 onValueChange = { v ->

@@ -184,6 +184,7 @@ object AccountObjects {
      * @property created Unix timestamp of account creation.
      * @property updated Unix timestamp of the last account update.
      * @property livemode `true` when the account exists in the live environment.
+     * @property payoutPaymentMethodId The payment method elected as the account's payout destination.
      */
     data class Account(
         val id: String?,
@@ -198,7 +199,9 @@ object AccountObjects {
         val steps: List<AccountStep>? = null,
         val created: Int?,
         val updated: Int?,
-        val livemode: Boolean?
+        val livemode: Boolean?,
+        // Trailing so positional constructors that omit it keep `created`/`updated`/`livemode` in place.
+        @SerializedName("payout_payment_method_id") val payoutPaymentMethodId: String? = null
     )
 
     /**

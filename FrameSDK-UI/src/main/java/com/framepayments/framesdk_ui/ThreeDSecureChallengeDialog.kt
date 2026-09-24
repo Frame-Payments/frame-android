@@ -11,6 +11,10 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.LinearLayout
 import androidx.appcompat.widget.Toolbar
+import com.framepayments.framesdk.accountevents.AccountEventDetail
+import com.framepayments.framesdk.accountevents.AccountEventEmitter
+import com.framepayments.framesdk.accountevents.AccountEventName
+import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.chargeintents.ChargeIntent
 import com.framepayments.framesdk.chargeintents.FrameThreeDSecureChallengePresenting
 import com.framepayments.framesdk.chargeintents.FrameThreeDSecureChallengeResult
@@ -39,14 +43,31 @@ class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameT
     }
 
     override suspend fun presentChallenge(challenge: UseFrameSDK, intent: ChargeIntent): FrameThreeDSecureChallengeResult {
-        val challengeUrl = challenge.challengeUrl ?: return FrameThreeDSecureChallengeResult.UNAVAILABLE
+        val challengeUrl = challenge.challengeUrl ?: run {
+            AccountEventEmitter.emit(
+                AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE,
+                AccountEventScreen.PAYMENT_SHEET,
+                detail = AccountEventDetail.STEP_UP_CHALLENGE_NEVER_LOADED
+            )
+            return FrameThreeDSecureChallengeResult.UNAVAILABLE
+        }
         // `context` is commonly a themed ContextWrapper (e.g. Compose's LocalContext), not the
         // Activity itself — an `as?` cast leaves `activity` null and skips this guard entirely,
         // then Dialog(context, ...) has no window token to show against.
         val activity = context.findActivity()
         if (activity == null || activity.isFinishing || activity.isDestroyed) {
+            AccountEventEmitter.emit(
+                AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE,
+                AccountEventScreen.PAYMENT_SHEET,
+                detail = AccountEventDetail.STEP_UP_CHALLENGE_NEVER_LOADED
+            )
             return FrameThreeDSecureChallengeResult.UNAVAILABLE
         }
+        AccountEventEmitter.emit(
+            AccountEventName.STEP_UP_CHALLENGE_STARTED,
+            AccountEventScreen.PAYMENT_SHEET,
+            detail = AccountEventDetail.STEP_UP_CHALLENGE_IS_3DS
+        )
         // WebView/Toolbar/Dialog construction requires the main thread; callers may invoke this
         // from a background dispatcher (checkout runs on Dispatchers.IO).
         return withContext(Dispatchers.Main) { present(challengeUrl) }
@@ -61,6 +82,23 @@ class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameT
                 if (resumed) return
                 resumed = true
                 dialog.dismiss()
+                when (result) {
+                    FrameThreeDSecureChallengeResult.COMPLETED -> AccountEventEmitter.emit(
+                        AccountEventName.STEP_UP_CHALLENGE_COMPLETED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        detail = AccountEventDetail.STEP_UP_CHALLENGE_COMPLETED_CONTEXT
+                    )
+                    FrameThreeDSecureChallengeResult.FAILED -> AccountEventEmitter.emit(
+                        AccountEventName.STEP_UP_CHALLENGE_ABANDONED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        detail = AccountEventDetail.STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED
+                    )
+                    FrameThreeDSecureChallengeResult.UNAVAILABLE -> AccountEventEmitter.emit(
+                        AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        detail = AccountEventDetail.STEP_UP_CHALLENGE_NEVER_LOADED
+                    )
+                }
                 continuation.resume(result)
             }
 

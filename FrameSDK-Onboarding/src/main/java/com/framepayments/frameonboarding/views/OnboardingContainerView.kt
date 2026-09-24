@@ -31,6 +31,7 @@ import com.framepayments.framesdk.accountevents.AccountEventDetail
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
+import com.framepayments.framesdk_ui.reusable.refreshesSonarSession
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
@@ -52,12 +53,14 @@ fun OnboardingContainerView(
     onResult: (OnboardingResult) -> Unit
 ) {
     val viewModel = remember { FrameOnboardingViewModel(config) }
+    DisposableEffect(viewModel) { onDispose { viewModel.close() } }
     val snackbarHostState = remember { SnackbarHostState() }
     val result by viewModel.result.collectAsState()
     val userError by viewModel.userErrorMessage.collectAsState()
     val onboardingData by viewModel.onboardingData.collectAsState()
     val savedPaymentMethods by viewModel.savedPaymentMethods.collectAsState()
     val savedPayoutMethods by viewModel.savedPayoutMethods.collectAsState()
+    val resolvedAccountId by viewModel.resolvedAccountId.collectAsState()
 
     // Authenticate every onboarding request with the onboarding-session token while this flow is
     // on screen, scoping it to a single account. Only flows that began a session end one, so a
@@ -87,26 +90,36 @@ fun OnboardingContainerView(
         AccountEventEmitter.emit(AccountEventName.ONBOARDING_STARTED, AccountEventScreen.ONBOARDING)
     }
 
-    var previousStep by remember { mutableStateOf(viewModel.navigationState.currentStep) }
-    LaunchedEffect(viewModel.navigationState.currentStep) {
-        val step = viewModel.navigationState.currentStep
-        // Only a forward move completes a step; going back re-views one without completing it.
-        val movedForward = viewModel.orderedSteps.indexOf(step) > viewModel.orderedSteps.indexOf(previousStep)
-        if (step != previousStep) {
-            if (movedForward) {
+    // Emit step events at flow-segment granularity (matching iOS OnboardingFlow), not per
+    // sub-screen, so dashboards do not split the same step across platforms.
+    var previousSegment by remember { mutableStateOf<OnboardingFlowSegment?>(null) }
+    LaunchedEffect(viewModel.navigationState.currentStep, resolvedAccountId) {
+        // Events are dropped until an account exists; wait so the first segment is still recorded.
+        if (FrameNetworking.accountId == null) return@LaunchedEffect
+        val segment = viewModel.navigationState.currentStep.toFlowSegment()
+        val prev = previousSegment
+        if (prev == null) {
+            previousSegment = segment
+            AccountEventEmitter.emit(
+                AccountEventName.ONBOARDING_STEP_VIEWED,
+                segment.accountEventScreen(),
+                detail = segment.analyticsName
+            )
+        } else if (segment != prev) {
+            if (segment.order > prev.order) {
                 AccountEventEmitter.emit(
                     AccountEventName.ONBOARDING_STEP_COMPLETED,
-                    previousStep.accountEventScreen(),
-                    detail = previousStep.toString()
+                    prev.accountEventScreen(),
+                    detail = prev.analyticsName
                 )
             }
-            previousStep = step
+            previousSegment = segment
+            AccountEventEmitter.emit(
+                AccountEventName.ONBOARDING_STEP_VIEWED,
+                segment.accountEventScreen(),
+                detail = segment.analyticsName
+            )
         }
-        AccountEventEmitter.emit(
-            AccountEventName.ONBOARDING_STEP_VIEWED,
-            step.accountEventScreen(),
-            detail = step.toString()
-        )
     }
 
     LaunchedEffect(result) {
@@ -139,11 +152,11 @@ fun OnboardingContainerView(
                 onResult(r)
             }
             is OnboardingResult.Cancelled -> {
-                val step = viewModel.navigationState.currentStep
+                val segment = viewModel.navigationState.currentStep.toFlowSegment()
                 AccountEventEmitter.emit(
                     AccountEventName.ONBOARDING_CANCELLED,
-                    step.accountEventScreen(),
-                    detail = "last step reached: $step"
+                    segment.accountEventScreen(),
+                    detail = "last step reached: ${segment.analyticsName}"
                 )
                 onResult(r)
             }
@@ -163,19 +176,11 @@ fun OnboardingContainerView(
         }
     }
 
-    LaunchedEffect(viewModel.navigationState.currentStep, onboardingData.selectedPaymentMethodId) {
-        if (
-            viewModel.navigationState.currentStep == OnboardingStep.VerifyYourCard &&
-            config.requiredCapabilities.contains(Capabilities.CARD_VERIFICATION)
-        ) {
-            viewModel.initialize3DS()
-            viewModel.moveNext()
-        }
-    }
-
     FrameTheme(theme = config.theme ?: FrameTheme.default()) {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .refreshesSonarSession(accountId = resolvedAccountId),
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -200,7 +205,7 @@ fun OnboardingContainerView(
 }
 
 /** Mirrors iOS `OnboardingFlow.accountEventScreenName`, which maps at segment granularity. */
-private fun OnboardingStep.accountEventScreen(): AccountEventScreen = when (toFlowSegment()) {
+private fun OnboardingFlowSegment.accountEventScreen(): AccountEventScreen = when (this) {
     OnboardingFlowSegment.PERSONAL_INFORMATION -> AccountEventScreen.PERSONAL_INFORMATION
     OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD -> AccountEventScreen.PAYMENT_METHOD
     OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD -> AccountEventScreen.PAYOUT_METHOD

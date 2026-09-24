@@ -14,16 +14,19 @@ import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.fingerprint.FingerprintIdentification
 import com.framepayments.framesdk.fingerprint.FingerprintManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 typealias SessionId = String
 
@@ -44,7 +47,7 @@ data class SessionResponse(
  * request looks the same as before sealed results existed.
  */
 data class SessionRequestBody(
-    val fingerprint_visitor_id: String,
+    val fingerprint_visitor_id: String? = null,
     val account_id: String? = null,
     val sealed_result: String? = null
 )
@@ -165,8 +168,16 @@ class SessionManager(
         startKeepAlive()
 
         val existing = storage.get(accountId)
-        if (existing != null && isFresh(accountId)) return existing
+        if (existing != null && isFresh(accountId)) {
+            sessionId = existing
+            return existing
+        }
 
+        return establishCoalesced(accountId)
+    }
+
+    /** Refreshes or creates [accountId]'s session, joining any round trip already in flight for it. */
+    private suspend fun establishCoalesced(accountId: String): SessionId {
         val deferred = inFlightLock.withLock {
             inFlight[accountId] ?: sdkScope.async { establishSession(accountId) }.also { inFlight[accountId] = it }
         }
@@ -174,7 +185,9 @@ class SessionManager(
         try {
             return deferred.await()
         } finally {
-            inFlightLock.withLock { if (inFlight[accountId] === deferred) inFlight.remove(accountId) }
+            withContext(NonCancellable) {
+                inFlightLock.withLock { if (inFlight[accountId] === deferred) inFlight.remove(accountId) }
+            }
         }
     }
 
@@ -205,16 +218,63 @@ class SessionManager(
     }
 
     private suspend fun touchActiveSession() {
-        val accountId = activeAccountId ?: return
-        val deferred = inFlightLock.withLock {
-            inFlight[accountId] ?: sdkScope.async { establishSession(accountId) }.also { inFlight[accountId] = it }
+        val accountId = activeAccountId
+        if (accountId == null) {
+            // Pre-account warm-up session: refresh the anonymous slot so flow-entry keeps it fresh.
+            try {
+                storage.get(accountId = null)?.let { existing ->
+                    val refreshed = refreshSession(existing, accountId = null)
+                    store(refreshed, accountId = null)
+                } ?: run {
+                    val created = createSession(accountId = null)
+                    store(created, accountId = null)
+                }
+            } catch (_: Exception) {
+                // Swallowed deliberately — a missed keep-alive is recovered by the next ensureSession call.
+            }
+            return
         }
         try {
-            deferred.await()
+            establishCoalesced(accountId)
         } catch (_: Exception) {
             // Swallowed deliberately — a missed keep-alive is recovered by the next ensureSession call.
-        } finally {
-            inFlightLock.withLock { if (inFlight[accountId] === deferred) inFlight.remove(accountId) }
+        }
+    }
+
+    /**
+     * Records a Sonar device event when an SDK entry-point view is presented. Mirrors iOS
+     * `refreshOnFlowEntry(accountId:)`: opportunistic, never blocks presentation, and refreshes
+     * the pre-account session when [accountId] is null so adoption later preserves device history.
+     */
+    suspend fun refreshOnFlowEntry(accountId: String? = null) {
+        val resolved = accountId?.takeIf { it.isNotEmpty() }
+        if (resolved != null) {
+            activeAccountId = resolved
+            startKeepAlive()
+            try {
+                // Not ensureSession: a fresh session must still record this entry's device event.
+                establishCoalesced(resolved)
+            } catch (_: Exception) {
+                // Fire-and-forget.
+            }
+            return
+        }
+
+        val stored = storage.get(accountId = null)
+        if (stored != null) {
+            try {
+                val refreshed = refreshSession(stored, accountId = null)
+                store(refreshed, accountId = null)
+            } catch (_: Exception) {
+                // Fire-and-forget.
+            }
+        } else {
+            try {
+                val created = createSession(accountId = null)
+                store(created, accountId = null)
+            } catch (_: Exception) {
+                // Fire-and-forget.
+            }
         }
     }
 
@@ -259,7 +319,8 @@ class SessionManager(
     private suspend fun requestBody(accountId: String?): SessionRequestBody {
         val identification = identify()
         return SessionRequestBody(
-            fingerprint_visitor_id = identification?.visitorId.orEmpty(),
+            // Omit rather than send "" — an empty visitor id is not a usable identifier.
+            fingerprint_visitor_id = identification?.visitorId?.takeIf { it.isNotEmpty() },
             account_id = accountId,
             sealed_result = identification?.sealedResult
         )
@@ -281,6 +342,8 @@ class SessionManager(
             val refreshed = perform(SonarSessionEndpoints.Update(session), requestBody(accountId))
             AccountEventEmitter.emit(AccountEventName.FRAUD_SESSION_REFRESHED, AccountEventScreen.CHECKOUT)
             refreshed
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // The server no longer recognises this session, so replace it rather than fail the payment.
             Log.w("SessionManager", "Failed to update session, creating new one", e)
