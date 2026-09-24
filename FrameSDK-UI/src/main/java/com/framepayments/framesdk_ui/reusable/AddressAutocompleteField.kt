@@ -66,8 +66,6 @@ fun AddressAutocompleteField(
     var isFocused by remember { mutableStateOf(false) }
     // Suppresses the blur-clear while select() drops focus itself to fill the field.
     var isSelecting by remember { mutableStateOf(false) }
-    // Autofill sets the whole street at once; that value is kept on blur like a picked suggestion.
-    var autofilledValue by remember { mutableStateOf<String?>(null) }
 
     fun select(suggestion: AddressSuggestion) {
         scope.launch {
@@ -81,7 +79,6 @@ fun AddressAutocompleteField(
         ValidatedTextField(
             value = value,
             onValueChange = { newValue ->
-                if (newValue.length - value.length > 1) autofilledValue = newValue
                 onValueChange(newValue)
                 if (isFocused) controller.queryChanged(newValue, countryCode)
             },
@@ -99,7 +96,7 @@ fun AddressAutocompleteField(
                         controller.clear()
                         if (isSelecting) {
                             isSelecting = false
-                        } else if (value.isNotEmpty() && value != autofilledValue) {
+                        } else if (value.isNotEmpty()) {
                             // Left the field without picking a suggestion: hand-typed text never
                             // becomes a saved address, so drop it rather than let free text through.
                             onValueChange("")
