@@ -7,9 +7,11 @@ import com.prove.sdk.proveauth.OtpFinishInput
 import com.prove.sdk.proveauth.OtpStartStep
 import com.prove.sdk.proveauth.OtpStartInput
 import com.prove.sdk.proveauth.ProveAuth
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -83,6 +85,7 @@ class ProveAuthService(
     private var resultDeferred: CompletableDeferred<Result<Boolean>>? = null
     private val cancelLock = Any()
     private var isCancelled = false
+    private var confirmJob: Job? = null
 
     /**
      * Runs Prove mobile flow with the auth token from createVerification. Returns true on success
@@ -97,14 +100,20 @@ class ProveAuthService(
         }
 
         authFinishStep = AuthFinishStep { _ ->
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    confirmHandler(accountId, verificationId)
-                    deferred.complete(Result.success(true))
-                } catch (e: Throwable) {
-                    deferred.complete(Result.failure(e))
-                } finally {
-                    releaseRetainedSDKObjects()
+            synchronized(cancelLock) {
+                if (isCancelled) return@AuthFinishStep
+                confirmJob = CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        confirmHandler(accountId, verificationId)
+                        deferred.complete(Result.success(true))
+                    } catch (e: CancellationException) {
+                        deferred.complete(Result.failure(ProveAuthServiceError.Cancelled))
+                        throw e
+                    } catch (e: Throwable) {
+                        deferred.complete(Result.failure(e))
+                    } finally {
+                        releaseRetainedSDKObjects()
+                    }
                 }
             }
         }
@@ -160,6 +169,8 @@ class ProveAuthService(
             isCancelled = true
             resultDeferred?.complete(Result.failure(ProveAuthServiceError.Cancelled))
             resultDeferred = null
+            confirmJob?.cancel()
+            confirmJob = null
         }
         releaseRetainedSDKObjects()
     }

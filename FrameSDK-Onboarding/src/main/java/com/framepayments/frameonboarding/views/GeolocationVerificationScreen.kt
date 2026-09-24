@@ -97,12 +97,15 @@ internal fun GeolocationVerificationScreen(
                 AccountEventName.COMPLIANCE_CHECK_PASSED,
                 AccountEventScreen.COMPLIANCE
             )
-            GeolocationState.BLOCKED, GeolocationState.REQUEST_FAILED -> AccountEventEmitter.emit(
+            GeolocationState.BLOCKED -> AccountEventEmitter.emit(
                 AccountEventName.COMPLIANCE_CHECK_FAILED,
                 AccountEventScreen.COMPLIANCE,
-                detail = err?.toString()
-                    ?: response?.reason?.name?.lowercase()
-                    ?: "blocked"
+                detail = response?.reason?.name?.lowercase() ?: "blocked"
+            )
+            GeolocationState.REQUEST_FAILED -> AccountEventEmitter.emit(
+                AccountEventName.COMPLIANCE_CHECK_FAILED,
+                AccountEventScreen.COMPLIANCE,
+                detail = err?.toString() ?: "request_failed"
             )
             GeolocationState.CHECKING -> Unit
         }

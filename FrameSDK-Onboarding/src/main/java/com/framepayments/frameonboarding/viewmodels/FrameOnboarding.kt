@@ -436,7 +436,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun updateBankAccountDraft(transform: (BankAccountDraft) -> BankAccountDraft) {
+        val previous = _bankAccountDraft.value
         _bankAccountDraft.update(transform)
+        // Different details mean a different bank; don't elect the one whose election failed.
+        if (_bankAccountDraft.value != previous) unelectedPayoutMethodId = null
     }
 
     private fun effectiveCustomerIdentityId(): String? =

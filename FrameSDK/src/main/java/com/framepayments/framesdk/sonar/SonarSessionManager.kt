@@ -19,12 +19,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 typealias SessionId = String
 
@@ -183,7 +185,9 @@ class SessionManager(
         try {
             return deferred.await()
         } finally {
-            inFlightLock.withLock { if (inFlight[accountId] === deferred) inFlight.remove(accountId) }
+            withContext(NonCancellable) {
+                inFlightLock.withLock { if (inFlight[accountId] === deferred) inFlight.remove(accountId) }
+            }
         }
     }
 
