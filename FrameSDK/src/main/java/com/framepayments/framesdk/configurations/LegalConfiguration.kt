@@ -25,7 +25,6 @@ object LegalConfiguration {
 
     /** Fetches and caches the legal configuration. Call once at SDK init so the accessors below have a warm cache. */
     suspend fun prefetch() {
-        if (cached() != null) return
         memoized = ConfigurationAPI.getLegalConfiguration() ?: memoized
     }
 

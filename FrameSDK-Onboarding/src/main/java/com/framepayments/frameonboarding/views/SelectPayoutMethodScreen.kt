@@ -72,7 +72,7 @@ internal fun SelectPayoutMethodScreen(
             TopAppBar(
                 title = { Text("Select A Payout Method") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack, enabled = !isLoading) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"

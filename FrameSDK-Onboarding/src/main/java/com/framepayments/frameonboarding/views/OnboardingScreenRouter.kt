@@ -97,9 +97,16 @@ internal fun OnboardingScreenRouter(
                 primaryId = primaryPayoutMethodId,
                 isLoading = isPerformingAction,
                 onSelect = { viewModel.onPayoutMethodSelected(it) },
-                onAddPayout = { viewModel.moveNext() },
-                onBack = { viewModel.moveBack() },
-                onContinue = { viewModel.electSelectedPayoutMethod { viewModel.moveToNextSegment() } }
+                onAddPayout = { if (!isPerformingAction) viewModel.moveNext() },
+                onBack = { if (!isPerformingAction) viewModel.moveBack() },
+                onContinue = {
+                    viewModel.electSelectedPayoutMethod {
+                        // The applicant may have left (e.g. closed the flow) while the election ran.
+                        if (viewModel.navigationState.currentStep == OnboardingStep.SelectPayoutMethod) {
+                            viewModel.moveToNextSegment()
+                        }
+                    }
+                }
             )
         }
 

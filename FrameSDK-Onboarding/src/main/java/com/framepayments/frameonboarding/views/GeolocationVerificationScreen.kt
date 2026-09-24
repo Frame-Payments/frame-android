@@ -23,6 +23,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,7 +48,8 @@ private enum class GeolocationState {
     CHECKING,
     VERIFIED,
     VPN_DETECTED,
-    BLOCKED
+    BLOCKED,
+    REQUEST_FAILED
 }
 
 @Composable
@@ -57,8 +59,10 @@ internal fun GeolocationVerificationScreen(
     onDisableVpn: () -> Unit
 ) {
     var state by remember { mutableStateOf(GeolocationState.CHECKING) }
+    var attempt by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(attempt) {
+        state = GeolocationState.CHECKING
         AccountEventEmitter.emit(
             AccountEventName.COMPLIANCE_CHECK_STARTED,
             AccountEventScreen.COMPLIANCE
@@ -77,7 +81,8 @@ internal fun GeolocationVerificationScreen(
         }
         val (response, err) = GeocomplianceAPI.getAccountGeoComplianceStatus(id)
         state = when {
-            response == null -> GeolocationState.BLOCKED
+            // No answer is not a compliance decision; stay closed but let the applicant retry.
+            response == null -> GeolocationState.REQUEST_FAILED
             response.status == GeoComplianceStatus.CLEAR -> GeolocationState.VERIFIED
             response.reason == GeoComplianceBlockReason.VPN_DETECTED -> GeolocationState.VPN_DETECTED
             response.status == GeoComplianceStatus.BLOCKED -> GeolocationState.BLOCKED
@@ -92,7 +97,7 @@ internal fun GeolocationVerificationScreen(
                 AccountEventName.COMPLIANCE_CHECK_PASSED,
                 AccountEventScreen.COMPLIANCE
             )
-            GeolocationState.BLOCKED -> AccountEventEmitter.emit(
+            GeolocationState.BLOCKED, GeolocationState.REQUEST_FAILED -> AccountEventEmitter.emit(
                 AccountEventName.COMPLIANCE_CHECK_FAILED,
                 AccountEventScreen.COMPLIANCE,
                 detail = err?.toString()
@@ -133,6 +138,7 @@ internal fun GeolocationVerificationScreen(
                     onDisableVpn = onDisableVpn
                 )
                 GeolocationState.BLOCKED -> LocationBlockedView()
+                GeolocationState.REQUEST_FAILED -> LocationCheckFailedView(onRetry = { attempt++ })
             }
         }
     }
@@ -324,6 +330,60 @@ private fun LocationBlockedView() {
             style = LocalFrameTheme.current.fonts.bodySmall,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+@Composable
+private fun LocationCheckFailedView(onRetry: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            modifier = Modifier.size(96.dp),
+            color = LocalFrameTheme.current.colors.surface,
+            shape = RoundedCornerShape(LocalFrameTheme.current.radii.large)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Help,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+            text = "We couldn't check your location",
+            style = LocalFrameTheme.current.fonts.heading.copy(fontWeight = FontWeight.Bold),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        Text(
+            text = "Check your connection and try again.",
+            style = LocalFrameTheme.current.fonts.bodySmall,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(32.dp))
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onRetry,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = LocalFrameTheme.current.colors.primaryButton,
+                contentColor = LocalFrameTheme.current.colors.primaryButtonText
+            )
+        ) {
+            Text("Try Again")
+        }
     }
 }
 

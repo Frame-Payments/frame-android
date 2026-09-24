@@ -88,7 +88,7 @@ fun BillingAddressDetailView(
             prompt = "Address Line 2",
             error = null,
             inlineError = true,
-            autofillContentType = ContentType.AddressStreet
+            autofillContentType = ContentType.AddressAuxiliaryDetails
         )
 
         Spacer(Modifier.height(16.dp))

@@ -93,7 +93,9 @@ fun OnboardingContainerView(
     // Emit step events at flow-segment granularity (matching iOS OnboardingFlow), not per
     // sub-screen, so dashboards do not split the same step across platforms.
     var previousSegment by remember { mutableStateOf<OnboardingFlowSegment?>(null) }
-    LaunchedEffect(viewModel.navigationState.currentStep) {
+    LaunchedEffect(viewModel.navigationState.currentStep, resolvedAccountId) {
+        // Events are dropped until an account exists; wait so the first segment is still recorded.
+        if (FrameNetworking.accountId == null) return@LaunchedEffect
         val segment = viewModel.navigationState.currentStep.toFlowSegment()
         val prev = previousSegment
         if (prev == null) {

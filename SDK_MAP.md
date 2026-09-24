@@ -1109,16 +1109,16 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `ConfigurationAPI` | object | `object ConfigurationAPI` | [19](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L19) |
-| `ConfigurationAPI.getEvervaultConfiguration` | fun | `fun getEvervaultConfiguration(): ConfigurationResponses.GetEvervaultConfigurationResponse?` | [35](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L35) |
-| `ConfigurationAPI.getFingerprintConfiguration` | fun | `fun getFingerprintConfiguration(): ConfigurationResponses.GetFingerprintConfigurationResponse?` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L65) |
-| `ConfigurationAPI.getSiftConfiguration` | fun | `fun getSiftConfiguration(): ConfigurationResponses.GetSiftConfigurationResponse?` | [92](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L92) |
-| `ConfigurationAPI.getLegalConfiguration` | fun | `fun getLegalConfiguration(): ConfigurationResponses.GetLegalConfigurationResponse?` | [119](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L119) |
-| `ConfigurationAPI.getMapboxConfiguration` | fun | `fun getMapboxConfiguration(): ConfigurationResponses.GetMapboxConfigurationResponse?` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L146) |
-| `ConfigurationAPI.getAllConfiguration` | fun | `fun getAllConfiguration(): ConfigurationResponses.GetAllConfigurationResponse?` | [179](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L179) |
-| `ConfigurationAPI.getEvervaultConfiguration` | fun | `fun getEvervaultConfiguration(completionHandler: (ConfigurationResponses.GetEvervaultConfigurationResponse?) -> Unit)` | [236](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L236) |
-| `ConfigurationAPI.getFingerprintConfiguration` | fun | `fun getFingerprintConfiguration(completionHandler: (ConfigurationResponses.GetFingerprintConfigurationResponse?) -> Unit)` | [270](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L270) |
-| `ConfigurationAPI.getSiftConfiguration` | fun | `fun getSiftConfiguration(completionHandler: (ConfigurationResponses.GetSiftConfigurationResponse?) -> Unit)` | [304](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L304) |
+| `ConfigurationAPI` | object | `object ConfigurationAPI` | [23](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L23) |
+| `ConfigurationAPI.getEvervaultConfiguration` | fun | `fun getEvervaultConfiguration(): ConfigurationResponses.GetEvervaultConfigurationResponse?` | [79](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L79) |
+| `ConfigurationAPI.getFingerprintConfiguration` | fun | `fun getFingerprintConfiguration(): ConfigurationResponses.GetFingerprintConfigurationResponse?` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L89) |
+| `ConfigurationAPI.getSiftConfiguration` | fun | `fun getSiftConfiguration(): ConfigurationResponses.GetSiftConfigurationResponse?` | [99](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L99) |
+| `ConfigurationAPI.getLegalConfiguration` | fun | `fun getLegalConfiguration(): ConfigurationResponses.GetLegalConfigurationResponse?` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L109) |
+| `ConfigurationAPI.getMapboxConfiguration` | fun | `fun getMapboxConfiguration(): ConfigurationResponses.GetMapboxConfigurationResponse?` | [119](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L119) |
+| `ConfigurationAPI.getAllConfiguration` | fun | `fun getAllConfiguration(): ConfigurationResponses.GetAllConfigurationResponse?` | [135](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L135) |
+| `ConfigurationAPI.getEvervaultConfiguration` | fun | `fun getEvervaultConfiguration(completionHandler: (ConfigurationResponses.GetEvervaultConfigurationResponse?) -> Unit)` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L195) |
+| `ConfigurationAPI.getFingerprintConfiguration` | fun | `fun getFingerprintConfiguration(completionHandler: (ConfigurationResponses.GetFingerprintConfigurationResponse?) -> Unit)` | [207](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L207) |
+| `ConfigurationAPI.getSiftConfiguration` | fun | `fun getSiftConfiguration(completionHandler: (ConfigurationResponses.GetSiftConfigurationResponse?) -> Unit)` | [219](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/ConfigurationAPI.kt#L219) |
 
 </details>
 
@@ -1184,10 +1184,10 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 |--------|------|-------------|------|
 | `LegalConfiguration` | object | `object LegalConfiguration` | [13](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L13) |
 | `LegalConfiguration.prefetch` | fun | `fun prefetch()` | [27](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L27) |
-| `LegalConfiguration.privacyUrl` | val | `val privacyUrl: String` | [45](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L45) |
-| `LegalConfiguration.termsUrl` | val | `val termsUrl: String` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L49) |
-| `LegalConfiguration.platformAgreementUrl` | val | `val platformAgreementUrl: String` | [53](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L53) |
-| `LegalConfiguration.cbcTermsUrl` | val | `val cbcTermsUrl: String` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L57) |
+| `LegalConfiguration.privacyUrl` | val | `val privacyUrl: String` | [44](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L44) |
+| `LegalConfiguration.termsUrl` | val | `val termsUrl: String` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L48) |
+| `LegalConfiguration.platformAgreementUrl` | val | `val platformAgreementUrl: String` | [52](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L52) |
+| `LegalConfiguration.cbcTermsUrl` | val | `val cbcTermsUrl: String` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/configurations/LegalConfiguration.kt#L56) |
 
 </details>
 
@@ -2241,28 +2241,28 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `SessionId` | typealias | `typealias SessionId = String` | [28](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L28) |
-| `SessionResponse` | data class | `data class SessionResponse(` | [34](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L34) |
-| `SessionResponse.sonar_session_id` | val | `val sonar_session_id: String` | [35](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L35) |
-| `SessionRequestBody` | data class | `data class SessionRequestBody(` | [46](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L46) |
-| `SessionRequestBody.fingerprint_visitor_id` | val | `val fingerprint_visitor_id: String? = null,` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L47) |
-| `SessionRequestBody.account_id` | val | `val account_id: String? = null,` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L48) |
-| `SessionRequestBody.sealed_result` | val | `val sealed_result: String? = null` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L49) |
-| `SonarSessionEndpoints` | sealed class | `sealed class SonarSessionEndpoints : FrameNetworkingEndpoints` | [52](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L52) |
-| `SonarSessionEndpoints.Create` | object | `object Create : SonarSessionEndpoints()` | [53](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L53) |
-| `SonarSessionEndpoints.Update` | data class | `data class Update(val id: String) : SonarSessionEndpoints()` | [54](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L54) |
-| `SonarSessionEndpoints.endpointURL` | val | `val endpointURL: String` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L56) |
-| `SonarSessionEndpoints.httpMethod` | val | `val httpMethod: String` | [62](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L62) |
-| `SonarSessionEndpoints.queryItems` | val | `val queryItems: List<QueryItem>?` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L68) |
-| `SessionStorage` | interface | `interface SessionStorage` | [77](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L77) |
-| `SessionStorage.get` | fun | `fun get(accountId: String? = null): SessionId?` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L78) |
-| `SessionStorage.set` | fun | `fun set(value: SessionId, accountId: String? = null)` | [79](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L79) |
-| `SessionStorage.clear` | fun | `fun clear(accountId: String? = null)` | [80](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L80) |
-| `SessionStorage.lastRefresh` | fun | `fun lastRefresh(accountId: String? = null): Long?` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L81) |
-| `SessionStorage.setLastRefresh` | fun | `fun setLastRefresh(timestamp: Long, accountId: String? = null)` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L82) |
-| `SharedPreferencesSessionStorage` | class | `class SharedPreferencesSessionStorage(` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L89) |
-| `SessionManager` | class | `class SessionManager(` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L124) |
-| `initializeWithFrameNetworking` | fun | `fun initializeWithFrameNetworking(context: Context, accountId: String? = null): SessionManager` | [393](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L393) |
+| `SessionId` | typealias | `typealias SessionId = String` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L29) |
+| `SessionResponse` | data class | `data class SessionResponse(` | [35](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L35) |
+| `SessionResponse.sonar_session_id` | val | `val sonar_session_id: String` | [36](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L36) |
+| `SessionRequestBody` | data class | `data class SessionRequestBody(` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L47) |
+| `SessionRequestBody.fingerprint_visitor_id` | val | `val fingerprint_visitor_id: String? = null,` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L48) |
+| `SessionRequestBody.account_id` | val | `val account_id: String? = null,` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L49) |
+| `SessionRequestBody.sealed_result` | val | `val sealed_result: String? = null` | [50](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L50) |
+| `SonarSessionEndpoints` | sealed class | `sealed class SonarSessionEndpoints : FrameNetworkingEndpoints` | [53](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L53) |
+| `SonarSessionEndpoints.Create` | object | `object Create : SonarSessionEndpoints()` | [54](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L54) |
+| `SonarSessionEndpoints.Update` | data class | `data class Update(val id: String) : SonarSessionEndpoints()` | [55](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L55) |
+| `SonarSessionEndpoints.endpointURL` | val | `val endpointURL: String` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L57) |
+| `SonarSessionEndpoints.httpMethod` | val | `val httpMethod: String` | [63](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L63) |
+| `SonarSessionEndpoints.queryItems` | val | `val queryItems: List<QueryItem>?` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L69) |
+| `SessionStorage` | interface | `interface SessionStorage` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L78) |
+| `SessionStorage.get` | fun | `fun get(accountId: String? = null): SessionId?` | [79](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L79) |
+| `SessionStorage.set` | fun | `fun set(value: SessionId, accountId: String? = null)` | [80](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L80) |
+| `SessionStorage.clear` | fun | `fun clear(accountId: String? = null)` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L81) |
+| `SessionStorage.lastRefresh` | fun | `fun lastRefresh(accountId: String? = null): Long?` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L82) |
+| `SessionStorage.setLastRefresh` | fun | `fun setLastRefresh(timestamp: Long, accountId: String? = null)` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L83) |
+| `SharedPreferencesSessionStorage` | class | `class SharedPreferencesSessionStorage(` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L90) |
+| `SessionManager` | class | `class SessionManager(` | [125](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L125) |
+| `initializeWithFrameNetworking` | fun | `fun initializeWithFrameNetworking(context: Context, accountId: String? = null): SessionManager` | [400](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L400) |
 
 </details>
 
@@ -3795,7 +3795,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String? = null, onResult: (FrameResult) -> Unit =` | [38](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L38) |
+| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [39](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L39) |
 
 </details>
 
@@ -3805,7 +3805,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAddPayoutMethodView` | fun | `fun FrameAddPayoutMethodView( accountId: String, clientSecret: String? = null, onResult: (FrameResult) -> Unit =` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPayoutMethodView.kt#L40) |
+| `FrameAddPayoutMethodView` | fun | `fun FrameAddPayoutMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [41](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPayoutMethodView.kt#L41) |
 
 </details>
 
@@ -3815,7 +3815,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameSelectPayoutMethodView` | fun | `fun FrameSelectPayoutMethodView( accountId: String, clientSecret: String? = null, onResult: (FrameResult) -> Unit =` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameSelectPayoutMethodView.kt#L40) |
+| `FrameSelectPayoutMethodView` | fun | `fun FrameSelectPayoutMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [41](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameSelectPayoutMethodView.kt#L41) |
 
 </details>
 

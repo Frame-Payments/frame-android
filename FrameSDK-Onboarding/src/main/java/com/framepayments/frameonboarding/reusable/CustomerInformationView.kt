@@ -60,7 +60,9 @@ fun CustomerInformationView(
     /** Invoked when the customer taps "I don't have a social security number". */
     onVerifyWithoutSsn: () -> Unit = {},
     /** Invoked when the customer taps "Use SSN instead" to undo government-ID verification. */
-    onUseSsnInstead: () -> Unit = {}
+    onUseSsnInstead: () -> Unit = {},
+    /** When false (a government ID is required), "Use SSN instead" is hidden. */
+    allowSsnInstead: Boolean = true
 ) {
     val identity by viewModel.identity.collectAsState()
     val phoneCountry by viewModel.phoneCountry.collectAsState()
@@ -263,12 +265,14 @@ fun CustomerInformationView(
                     style = theme.fonts.bodySmall,
                     color = theme.colors.textPrimary
                 )
-                TextButton(onClick = onUseSsnInstead) {
-                    Text(
-                        text = "Use SSN instead",
-                        style = theme.fonts.caption,
-                        color = theme.colors.textSecondary
-                    )
+                if (allowSsnInstead) {
+                    TextButton(onClick = onUseSsnInstead) {
+                        Text(
+                            text = "Use SSN instead",
+                            style = theme.fonts.caption,
+                            color = theme.colors.textSecondary
+                        )
+                    }
                 }
             }
         } else if (showSsnField) {

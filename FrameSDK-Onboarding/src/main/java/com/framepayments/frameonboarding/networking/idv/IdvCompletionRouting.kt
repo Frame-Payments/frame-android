@@ -50,7 +50,7 @@ internal object IdvCompletionRouting {
         }
     }
 
-    fun idvFailureMessage(completion: IdvCompleteResponse?): String {
+    fun idvFailureMessage(completion: IdvCompleteResponse?, ssnAllowed: Boolean = true): String {
         when (completion?.category) {
             "terminal" -> return "We couldn't verify your identity. Please contact support if you think this is a mistake."
             "review" -> return "Your verification is in review. We'll be in touch once it's complete."
@@ -62,7 +62,14 @@ internal object IdvCompletionRouting {
         return when (completion?.status) {
             "declined", "failed" -> "We couldn't verify your identity. Please contact support if you think this is a mistake."
             "needs_review" -> "Your verification is in review. We'll be in touch once it's complete."
-            else -> "We couldn't verify your identity. Please try again or enter your Social Security Number."
+            else -> genericFailureMessage(ssnAllowed)
         }
     }
+
+    fun genericFailureMessage(ssnAllowed: Boolean): String =
+        if (ssnAllowed) {
+            "We couldn't verify your identity. Please try again or enter your Social Security Number."
+        } else {
+            "We couldn't verify your identity. Please try again."
+        }
 }

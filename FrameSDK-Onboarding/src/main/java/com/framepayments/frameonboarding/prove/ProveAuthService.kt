@@ -81,6 +81,8 @@ class ProveAuthService(
     private var otpStartStep: OtpStartStep? = null
     private var otpFinishStep: OtpFinishStep? = null
     private var resultDeferred: CompletableDeferred<Result<Boolean>>? = null
+    private val cancelLock = Any()
+    private var isCancelled = false
 
     /**
      * Runs Prove mobile flow with the auth token from createVerification. Returns true on success
@@ -88,7 +90,11 @@ class ProveAuthService(
      */
     suspend fun authenticateWith(authToken: String): Boolean = withContext(Dispatchers.IO) {
         val deferred = CompletableDeferred<Result<Boolean>>()
-        resultDeferred = deferred
+        // cancel() can run before this registers; without the flag Prove would start anyway.
+        synchronized(cancelLock) {
+            if (isCancelled) throw ProveAuthServiceError.Cancelled
+            resultDeferred = deferred
+        }
 
         authFinishStep = AuthFinishStep { _ ->
             CoroutineScope(Dispatchers.IO).launch {
@@ -113,6 +119,10 @@ class ProveAuthService(
 
         otpFinishStep = OtpFinishStep { _, callback ->
             CoroutineScope(Dispatchers.Main).launch {
+                if (deferred.isCompleted) {
+                    callback.onError()
+                    return@launch
+                }
                 val otp = otpProvider?.invoke()
                 if (otp != null) {
                     callback.onSuccess(OtpFinishInput(otp))
@@ -146,8 +156,11 @@ class ProveAuthService(
      * (including during silent auth before OTP is requested).
      */
     fun cancel() {
-        resultDeferred?.complete(Result.failure(ProveAuthServiceError.Cancelled))
-        resultDeferred = null
+        synchronized(cancelLock) {
+            isCancelled = true
+            resultDeferred?.complete(Result.failure(ProveAuthServiceError.Cancelled))
+            resultDeferred = null
+        }
         releaseRetainedSDKObjects()
     }
 

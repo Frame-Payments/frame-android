@@ -830,15 +830,22 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         val addr = individual.address
         // The server returns a structured `phone` object; `phoneNumber` is a legacy flat fallback
         // for responses that predate it.
-        val rawPhone = individual.phone?.number ?: individual.phoneNumber
-        // Keep all digits — takeLast(10) dropped the country code and broke non-US numbers.
-        val phoneDigits = rawPhone?.filter(Char::isDigit)?.takeIf { it.isNotEmpty() }
+        val rawPhone = (individual.phone?.number ?: individual.phoneNumber)?.trim()
+        val dial = (individual.phone?.countryCode ?: individual.phoneCountryCode)
+            ?.trim()?.takeIf { it.isNotEmpty() }
+            ?.let { if (it.startsWith("+")) it else "+$it" }
+        // An E.164 number carries its dial code; the form stores national digits only.
+        val nationalPhone = if (dial != null && rawPhone?.startsWith(dial) == true) {
+            rawPhone.removePrefix(dial)
+        } else {
+            rawPhone
+        }
+        val phoneDigits = nationalPhone?.filter(Char::isDigit)?.takeIf { it.isNotEmpty() }
         if (!phoneDigits.isNullOrEmpty()) {
             _phoneNumber.value = phoneDigits
         }
-        individual.phone?.countryCode?.let { code ->
-            val dial = code.trim().let { if (it.startsWith("+")) it else "+$it" }
-            PhoneCountrySelection.all.find { it.dialCode == dial }?.let {
+        dial?.let { code ->
+            PhoneCountrySelection.all.find { it.dialCode == code }?.let {
                 _phoneCountry.value = it
             }
         }
@@ -1596,7 +1603,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                             // declined applicant is told to contact support, not to retry a check
                             // that cannot succeed.
                             IdvCompletionRouting.emitStepUpFailure(complete)
-                            reportUserError(IdvCompletionRouting.idvFailureMessage(complete))
+                            reportUserError(
+                                IdvCompletionRouting.idvFailureMessage(complete, ssnAllowed = !governmentIdRequired)
+                            )
                         }
                     }
                     is PersonaVerificationResult.Cancelled -> {
@@ -1615,9 +1624,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                             detail = AccountEventDetail.PERSONA_PROVIDER
                         )
                         // Never surface Persona's debugMessage to the applicant.
-                        reportUserError(
-                            "We couldn't verify your identity. Please try again or enter your Social Security Number."
-                        )
+                        reportUserError(IdvCompletionRouting.genericFailureMessage(ssnAllowed = !governmentIdRequired))
                     }
                 }
             } finally {
@@ -1799,8 +1806,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun continueWithSelectedPaymentMethod(): Boolean {
         val selectedId = _onboardingData.value.selectedPaymentMethodId ?: return false
         val needsAddress = originallyRequiredCapabilities.contains(Capabilities.ADDRESS_VERIFICATION)
-        val summary = _savedPaymentMethods.value.find { it.id == selectedId }
-        if (needsAddress && summary != null && !summary.hasBillingAddress) {
+        val summary = _savedPaymentMethods.value.find { it.id == selectedId } ?: return false
+        if (needsAddress && !summary.hasBillingAddress) {
             _onlyAddressVerification.value = true
             // Move into AddPaymentMethod which renders address-only when the flag is set.
             val addStep = orderedSteps.firstOrNull { it == OnboardingStep.AddPaymentMethod }
@@ -1888,6 +1895,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
     }
 
+    // A bank added whose election failed; retried on the next add instead of creating a duplicate.
+    private var unelectedPayoutMethodId: String? = null
+
     // Callers hold beginAction(); it is not reentrant, so this doesn't take it.
     private suspend fun electPayoutMethod(paymentMethodId: String): Boolean {
         val accountId = _resolvedAccountId.value ?: return false
@@ -1910,6 +1920,29 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             detail = AccountEventDetail.PAYOUT_METHOD_SET_AS_PRIMARY
         )
         _primaryPayoutMethodId.value = account.payoutPaymentMethodId ?: paymentMethodId
+        unelectedPayoutMethodId = null
+        return true
+    }
+
+    private suspend fun electAddedPayoutMethod(payoutMethodId: String) {
+        unelectedPayoutMethodId = payoutMethodId
+        if (!electPayoutMethod(payoutMethodId)) return
+        // Selected only after the election: the standalone views report Completed on this.
+        _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethodId) }
+        clearAccountDetails()
+        moveNext()
+    }
+
+    private fun retryUnelectedPayoutMethod(): Boolean {
+        val id = unelectedPayoutMethodId ?: return false
+        if (!beginAction()) return true
+        viewModelScope.launch {
+            try {
+                electAddedPayoutMethod(id)
+            } finally {
+                endAction()
+            }
+        }
         return true
     }
 
@@ -1998,6 +2031,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     fun submitNewPayoutMethod() {
         if (!checkIfCustomerCanContinueWithPayoutMethod()) return
+        if (retryUnelectedPayoutMethod()) return
         val draft = _bankAccountDraft.value
         val b = _createdBillingAddress.value
         if (!beginAction()) return
@@ -2038,11 +2072,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                                     last4 = payoutMethod.ach?.lastFour ?: "",
                                     exp = ""
                                 )
-                if (!electPayoutMethod(payoutMethodId)) return@launch
-                // Selected only after the election: the standalone views report Completed on this.
-                _onboardingData.value = _onboardingData.value.copy(selectedPayoutMethodId = payoutMethodId)
-                clearAccountDetails()
-                moveNext()
+                electAddedPayoutMethod(payoutMethodId)
             } else {
                 AccountEventEmitter.emit(
                     AccountEventName.PAYOUT_METHOD_ADD_FAILED,
@@ -2081,6 +2111,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun fetchPlaidLinkToken() {
         val accountId = _resolvedAccountId.value ?: return
         if (_plaidLinkToken.value != null) return
+        if (retryUnelectedPayoutMethod()) return
         if (_isPerformingAction.value) return
         _isPerformingAction.value = true
         AccountEventEmitter.emit(
@@ -2123,49 +2154,49 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
         viewModelScope.launch {
             _isPerformingAction.value = true
-            val service = buildPlaidService(accountId)
-            service.connectBankAccount(publicToken, plaidAccountId, institutionName, subtype)
-            _isPerformingAction.value = false
-            when (val outcome = service.result.value) {
-                is PlaidLinkResult.Success -> {
-                    val payoutMethod = outcome.paymentMethod
-                    val ach = payoutMethod.ach
-                    @Suppress("USELESS_CAST")
-                    val payoutMethodId = payoutMethod.id as String?
-                    if (ach != null && payoutMethodId != null) {
-                        AccountEventEmitter.emit(
-                            AccountEventName.BANK_LINK_COMPLETED,
-                            AccountEventScreen.PAYOUT_METHOD,
-                            detail = AccountEventDetail.PLAID_PROVIDER
-                        )
-                        _savedPayoutMethods.value += PaymentMethodSummary(
-                            id = payoutMethodId,
-                            brand = "BANK",
-                            last4 = ach.lastFour ?: "",
-                            exp = ""
-                        )
-                        if (!electPayoutMethod(payoutMethodId)) return@launch
-                        _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethodId) }
-                        clearAccountDetails()
-                        moveNext()
-                    } else {
+            try {
+                val service = buildPlaidService(accountId)
+                service.connectBankAccount(publicToken, plaidAccountId, institutionName, subtype)
+                when (val outcome = service.result.value) {
+                    is PlaidLinkResult.Success -> {
+                        val payoutMethod = outcome.paymentMethod
+                        val ach = payoutMethod.ach
+                        @Suppress("USELESS_CAST")
+                        val payoutMethodId = payoutMethod.id as String?
+                        if (ach != null && payoutMethodId != null) {
+                            AccountEventEmitter.emit(
+                                AccountEventName.BANK_LINK_COMPLETED,
+                                AccountEventScreen.PAYOUT_METHOD,
+                                detail = AccountEventDetail.PLAID_PROVIDER
+                            )
+                            _savedPayoutMethods.value += PaymentMethodSummary(
+                                id = payoutMethodId,
+                                brand = "BANK",
+                                last4 = ach.lastFour ?: "",
+                                exp = ""
+                            )
+                            electAddedPayoutMethod(payoutMethodId)
+                        } else {
+                            AccountEventEmitter.emit(
+                                AccountEventName.BANK_LINK_FAILED,
+                                AccountEventScreen.PAYOUT_METHOD,
+                                detail = AccountEventDetail.PLAID_PROVIDER
+                            )
+                            reportUserError(userMessageForNetworkError(null))
+                        }
+                    }
+                    is PlaidLinkResult.Failure -> {
                         AccountEventEmitter.emit(
                             AccountEventName.BANK_LINK_FAILED,
                             AccountEventScreen.PAYOUT_METHOD,
-                            detail = AccountEventDetail.PLAID_PROVIDER
+                            detail = "${outcome.error}"
                         )
-                        reportUserError(userMessageForNetworkError(null))
+                        reportUserError(userMessageForNetworkError(outcome.error))
                     }
+                    else -> {}
                 }
-                is PlaidLinkResult.Failure -> {
-                    AccountEventEmitter.emit(
-                        AccountEventName.BANK_LINK_FAILED,
-                        AccountEventScreen.PAYOUT_METHOD,
-                        detail = "${outcome.error}"
-                    )
-                    reportUserError(userMessageForNetworkError(outcome.error))
-                }
-                else -> {}
+            } finally {
+                _isPerformingAction.value = false
             }
         }
     }

@@ -34,13 +34,14 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *   request authenticates with this token, scoping it to a single account. Pass null only for
  *   legacy integrations that still authenticate with a secret key.
  * @param onResult Called with a [FrameResult] when the screen finishes or is cancelled. On
- *   [FrameResult.Completed] the id is the elected payout method.
+ *   [FrameResult.Completed] the id is the elected payout method. When null, system Back on the
+ *   selection screen is left to the host.
  */
 @Composable
 fun FrameSelectPayoutMethodView(
     accountId: String,
     clientSecret: String? = null,
-    onResult: (FrameResult) -> Unit = {}
+    onResult: ((FrameResult) -> Unit)? = null
 ) {
     // Keyed on accountId/clientSecret: a keyless remember would keep the first VM instance (and
     // its captured OnboardingConfig) across a recomposition that passes a different account,
@@ -81,17 +82,24 @@ fun FrameSelectPayoutMethodView(
         val id = onboardingData.selectedPayoutMethodId
         if (showAddPayout && id != null && id != selectedIdWhenAddOpened && !didFinish) {
             didFinish = true
-            onResult(FrameResult.Completed(id))
+            onResult?.invoke(FrameResult.Completed(id))
         }
     }
 
     fun finish(result: FrameResult) {
         if (didFinish) return
         didFinish = true
-        onResult(result)
+        onResult?.invoke(result)
     }
 
-    BackHandler { finish(FrameResult.Cancelled) }
+    BackHandler(enabled = showAddPayout || (onResult != null && !didFinish)) {
+        when {
+            // An election in flight would otherwise be abandoned mid-request.
+            isPerformingAction -> Unit
+            showAddPayout -> showAddPayout = false
+            else -> finish(FrameResult.Cancelled)
+        }
+    }
 
     FrameTheme {
         Scaffold(
@@ -101,7 +109,7 @@ fun FrameSelectPayoutMethodView(
             if (showAddPayout) {
                 AddPayoutMethodScreen(
                     viewModel = viewModel,
-                    onBack = { showAddPayout = false }
+                    onBack = { if (!isPerformingAction) showAddPayout = false }
                 )
             } else {
                 SelectPayoutMethodScreen(

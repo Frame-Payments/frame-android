@@ -14,6 +14,7 @@ import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.fingerprint.FingerprintIdentification
 import com.framepayments.framesdk.fingerprint.FingerprintManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -165,8 +166,16 @@ class SessionManager(
         startKeepAlive()
 
         val existing = storage.get(accountId)
-        if (existing != null && isFresh(accountId)) return existing
+        if (existing != null && isFresh(accountId)) {
+            sessionId = existing
+            return existing
+        }
 
+        return establishCoalesced(accountId)
+    }
+
+    /** Refreshes or creates [accountId]'s session, joining any round trip already in flight for it. */
+    private suspend fun establishCoalesced(accountId: String): SessionId {
         val deferred = inFlightLock.withLock {
             inFlight[accountId] ?: sdkScope.async { establishSession(accountId) }.also { inFlight[accountId] = it }
         }
@@ -221,15 +230,10 @@ class SessionManager(
             }
             return
         }
-        val deferred = inFlightLock.withLock {
-            inFlight[accountId] ?: sdkScope.async { establishSession(accountId) }.also { inFlight[accountId] = it }
-        }
         try {
-            deferred.await()
+            establishCoalesced(accountId)
         } catch (_: Exception) {
             // Swallowed deliberately — a missed keep-alive is recovered by the next ensureSession call.
-        } finally {
-            inFlightLock.withLock { if (inFlight[accountId] === deferred) inFlight.remove(accountId) }
         }
     }
 
@@ -244,7 +248,8 @@ class SessionManager(
             activeAccountId = resolved
             startKeepAlive()
             try {
-                ensureSession(resolved)
+                // Not ensureSession: a fresh session must still record this entry's device event.
+                establishCoalesced(resolved)
             } catch (_: Exception) {
                 // Fire-and-forget.
             }
@@ -333,6 +338,8 @@ class SessionManager(
             val refreshed = perform(SonarSessionEndpoints.Update(session), requestBody(accountId))
             AccountEventEmitter.emit(AccountEventName.FRAUD_SESSION_REFRESHED, AccountEventScreen.CHECKOUT)
             refreshed
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             // The server no longer recognises this session, so replace it rather than fail the payment.
             Log.w("SessionManager", "Failed to update session, creating new one", e)

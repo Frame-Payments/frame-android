@@ -32,13 +32,14 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *   (`POST /v1/onboarding_sessions`) and handed to your app. While this screen is presented every
  *   request authenticates with this token, scoping it to a single account. Pass null only for
  *   legacy integrations that still authenticate with a secret key.
- * @param onResult Called with a [FrameResult] when the screen finishes or is cancelled.
+ * @param onResult Called with a [FrameResult] when the screen finishes or is cancelled. When
+ *   null, system Back is left to the host.
  */
 @Composable
 fun FrameAddPaymentMethodView(
     accountId: String,
     clientSecret: String? = null,
-    onResult: (FrameResult) -> Unit = {}
+    onResult: ((FrameResult) -> Unit)? = null
 ) {
     // Keyed on accountId/clientSecret: a keyless remember would keep the first VM instance (and
     // its captured OnboardingConfig) across a recomposition that passes a different account,
@@ -56,10 +57,10 @@ fun FrameAddPaymentMethodView(
     fun finishCancelled() {
         if (didFinish) return
         didFinish = true
-        onResult(FrameResult.Cancelled)
+        onResult?.invoke(FrameResult.Cancelled)
     }
 
-    BackHandler { finishCancelled() }
+    BackHandler(enabled = onResult != null && !didFinish) { finishCancelled() }
 
     DisposableEffect(clientSecret) {
         clientSecret?.let { FrameNetworking.beginOnboardingSession(it) }
@@ -72,7 +73,7 @@ fun FrameAddPaymentMethodView(
         val id = onboardingData.selectedPaymentMethodId
         if (id != null && !didFinish) {
             didFinish = true
-            onResult(FrameResult.Completed(id))
+            onResult?.invoke(FrameResult.Completed(id))
         }
     }
 

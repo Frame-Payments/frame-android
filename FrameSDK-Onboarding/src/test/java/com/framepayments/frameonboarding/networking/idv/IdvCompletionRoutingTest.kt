@@ -49,4 +49,13 @@ class IdvCompletionRoutingTest {
             IdvCompletionRouting.idvFailureMessage(null)
         )
     }
+
+    @Test
+    fun unknown_ssnNotAllowed_omitsSsnSuggestion() {
+        val msg = IdvCompletionRouting.idvFailureMessage(
+            IdvCompleteResponse(verified = false),
+            ssnAllowed = false
+        )
+        assertTrue(!msg.contains("Social Security Number"))
+    }
 }
