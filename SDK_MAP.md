@@ -2241,28 +2241,28 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `SessionId` | typealias | `typealias SessionId = String` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L29) |
-| `SessionResponse` | data class | `data class SessionResponse(` | [35](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L35) |
-| `SessionResponse.sonar_session_id` | val | `val sonar_session_id: String` | [36](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L36) |
-| `SessionRequestBody` | data class | `data class SessionRequestBody(` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L47) |
-| `SessionRequestBody.fingerprint_visitor_id` | val | `val fingerprint_visitor_id: String? = null,` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L48) |
-| `SessionRequestBody.account_id` | val | `val account_id: String? = null,` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L49) |
-| `SessionRequestBody.sealed_result` | val | `val sealed_result: String? = null` | [50](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L50) |
-| `SonarSessionEndpoints` | sealed class | `sealed class SonarSessionEndpoints : FrameNetworkingEndpoints` | [53](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L53) |
-| `SonarSessionEndpoints.Create` | object | `object Create : SonarSessionEndpoints()` | [54](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L54) |
-| `SonarSessionEndpoints.Update` | data class | `data class Update(val id: String) : SonarSessionEndpoints()` | [55](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L55) |
-| `SonarSessionEndpoints.endpointURL` | val | `val endpointURL: String` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L57) |
-| `SonarSessionEndpoints.httpMethod` | val | `val httpMethod: String` | [63](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L63) |
-| `SonarSessionEndpoints.queryItems` | val | `val queryItems: List<QueryItem>?` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L69) |
-| `SessionStorage` | interface | `interface SessionStorage` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L78) |
-| `SessionStorage.get` | fun | `fun get(accountId: String? = null): SessionId?` | [79](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L79) |
-| `SessionStorage.set` | fun | `fun set(value: SessionId, accountId: String? = null)` | [80](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L80) |
-| `SessionStorage.clear` | fun | `fun clear(accountId: String? = null)` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L81) |
-| `SessionStorage.lastRefresh` | fun | `fun lastRefresh(accountId: String? = null): Long?` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L82) |
-| `SessionStorage.setLastRefresh` | fun | `fun setLastRefresh(timestamp: Long, accountId: String? = null)` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L83) |
-| `SharedPreferencesSessionStorage` | class | `class SharedPreferencesSessionStorage(` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L90) |
-| `SessionManager` | class | `class SessionManager(` | [125](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L125) |
-| `initializeWithFrameNetworking` | fun | `fun initializeWithFrameNetworking(context: Context, accountId: String? = null): SessionManager` | [400](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L400) |
+| `SessionId` | typealias | `typealias SessionId = String` | [31](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L31) |
+| `SessionResponse` | data class | `data class SessionResponse(` | [37](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L37) |
+| `SessionResponse.sonar_session_id` | val | `val sonar_session_id: String` | [38](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L38) |
+| `SessionRequestBody` | data class | `data class SessionRequestBody(` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L49) |
+| `SessionRequestBody.fingerprint_visitor_id` | val | `val fingerprint_visitor_id: String? = null,` | [50](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L50) |
+| `SessionRequestBody.account_id` | val | `val account_id: String? = null,` | [51](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L51) |
+| `SessionRequestBody.sealed_result` | val | `val sealed_result: String? = null` | [52](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L52) |
+| `SonarSessionEndpoints` | sealed class | `sealed class SonarSessionEndpoints : FrameNetworkingEndpoints` | [55](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L55) |
+| `SonarSessionEndpoints.Create` | object | `object Create : SonarSessionEndpoints()` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L56) |
+| `SonarSessionEndpoints.Update` | data class | `data class Update(val id: String) : SonarSessionEndpoints()` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L57) |
+| `SonarSessionEndpoints.endpointURL` | val | `val endpointURL: String` | [59](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L59) |
+| `SonarSessionEndpoints.httpMethod` | val | `val httpMethod: String` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L65) |
+| `SonarSessionEndpoints.queryItems` | val | `val queryItems: List<QueryItem>?` | [71](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L71) |
+| `SessionStorage` | interface | `interface SessionStorage` | [80](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L80) |
+| `SessionStorage.get` | fun | `fun get(accountId: String? = null): SessionId?` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L81) |
+| `SessionStorage.set` | fun | `fun set(value: SessionId, accountId: String? = null)` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L82) |
+| `SessionStorage.clear` | fun | `fun clear(accountId: String? = null)` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L83) |
+| `SessionStorage.lastRefresh` | fun | `fun lastRefresh(accountId: String? = null): Long?` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L84) |
+| `SessionStorage.setLastRefresh` | fun | `fun setLastRefresh(timestamp: Long, accountId: String? = null)` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L85) |
+| `SharedPreferencesSessionStorage` | class | `class SharedPreferencesSessionStorage(` | [92](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L92) |
+| `SessionManager` | class | `class SessionManager(` | [127](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L127) |
+| `initializeWithFrameNetworking` | fun | `fun initializeWithFrameNetworking(context: Context, accountId: String? = null): SessionManager` | [404](FrameSDK/src/main/java/com/framepayments/framesdk/sonar/SonarSessionManager.kt#L404) |
 
 </details>
 
@@ -3651,21 +3651,21 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `ProveOtpProvider` | typealias | `typealias ProveOtpProvider = suspend () -> String?` | [17](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L17) |
-| `ProveConfirmHandler` | typealias | `typealias ProveConfirmHandler = suspend (String, String) -> Unit` | [20](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L20) |
-| `ProveUserInfo` | data class | `data class ProveUserInfo(` | [28](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L28) |
-| `ProveUserInfo.firstName` | val | `val firstName: String,` | [29](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L29) |
-| `ProveUserInfo.lastName` | val | `val lastName: String` | [30](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L30) |
-| `ProveAuthServiceError` | sealed class | `sealed class ProveAuthServiceError : Exception()` | [34](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L34) |
-| `ProveAuthServiceError.VerifyFailed` | data class | `data class VerifyFailed(` | [36](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L36) |
-| `ProveAuthServiceError.VerifyFailed.underlying` | val | `val underlying: Throwable` | [38](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L38) |
-| `ProveAuthServiceError.Cancelled` | object | `object Cancelled : ProveAuthServiceError()` | [41](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L41) |
-| `ProveAuthServiceError.SdkError` | data class | `data class SdkError(` | [43](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L43) |
-| `ProveAuthServiceError.SdkError.underlying` | val | `val underlying: Throwable` | [45](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L45) |
-| `ProveAuthServiceError.Unknown` | data class | `data class Unknown(` | [48](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L48) |
-| `ProveAuthServiceError.Unknown.underlying` | val | `val underlying: Throwable` | [50](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L50) |
-| `ProveAuthServiceError.message` | val | `val message: String?` | [53](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L53) |
-| `ProveAuthService` | class | `class ProveAuthService(` | [72](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L72) |
+| `ProveOtpProvider` | typealias | `typealias ProveOtpProvider = suspend () -> String?` | [19](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L19) |
+| `ProveConfirmHandler` | typealias | `typealias ProveConfirmHandler = suspend (String, String) -> Unit` | [22](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L22) |
+| `ProveUserInfo` | data class | `data class ProveUserInfo(` | [30](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L30) |
+| `ProveUserInfo.firstName` | val | `val firstName: String,` | [31](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L31) |
+| `ProveUserInfo.lastName` | val | `val lastName: String` | [32](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L32) |
+| `ProveAuthServiceError` | sealed class | `sealed class ProveAuthServiceError : Exception()` | [36](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L36) |
+| `ProveAuthServiceError.VerifyFailed` | data class | `data class VerifyFailed(` | [38](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L38) |
+| `ProveAuthServiceError.VerifyFailed.underlying` | val | `val underlying: Throwable` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L40) |
+| `ProveAuthServiceError.Cancelled` | object | `object Cancelled : ProveAuthServiceError()` | [43](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L43) |
+| `ProveAuthServiceError.SdkError` | data class | `data class SdkError(` | [45](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L45) |
+| `ProveAuthServiceError.SdkError.underlying` | val | `val underlying: Throwable` | [47](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L47) |
+| `ProveAuthServiceError.Unknown` | data class | `data class Unknown(` | [50](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L50) |
+| `ProveAuthServiceError.Unknown.underlying` | val | `val underlying: Throwable` | [52](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L52) |
+| `ProveAuthServiceError.message` | val | `val message: String?` | [55](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L55) |
+| `ProveAuthService` | class | `class ProveAuthService(` | [74](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/prove/ProveAuthService.kt#L74) |
 
 </details>
 
