@@ -13,10 +13,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import java.util.concurrent.CopyOnWriteArrayList
 
 @RunWith(RobolectricTestRunner::class)
 class AccountEventEmitterTest {
-    private val recorded = mutableListOf<AccountEventsRequests.Event>()
+    private val recorded = CopyOnWriteArrayList<AccountEventsRequests.Event>()
 
     @Before
     fun setUp() = runBlocking {

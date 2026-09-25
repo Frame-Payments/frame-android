@@ -202,9 +202,12 @@ object FrameNetworking {
      */
     fun setAccountIdIfUnset(accountId: String?) {
         val resolved = accountId?.takeIf { it.isNotEmpty() } ?: return
-        if (this.accountId != null) return
-        this.accountId = resolved
-        com.framepayments.framesdk.accountevents.AccountEventEmitter.onAccountIdResolved(resolved)
+        val didSet = synchronized(this) {
+            if (this.accountId != null) return@synchronized false
+            this.accountId = resolved
+            true
+        }
+        if (didSet) com.framepayments.framesdk.accountevents.AccountEventEmitter.onAccountIdResolved(resolved)
     }
 
     /** `true` once Evervault has been successfully configured; `false` until then. */

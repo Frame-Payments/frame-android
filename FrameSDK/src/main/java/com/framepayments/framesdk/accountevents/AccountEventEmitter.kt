@@ -53,7 +53,13 @@ object AccountEventEmitter {
             val accountId = pendingMutex.withLock {
                 val resolved = FrameNetworking.accountId
                 if (resolved == null) {
-                    if (pending.size >= MAX_PENDING) pending.removeAt(0)
+                    // occurredAt is captured before this coroutine is dispatched, so it reflects
+                    // true emission order even though coroutines can acquire this lock out of
+                    // that order — evict by it, not by buffer position, so overflow always drops
+                    // the actually-oldest event.
+                    if (pending.size >= MAX_PENDING) {
+                        pending.remove(pending.minBy { it.occurredAt })
+                    }
                     pending.add(PendingEvent(name.apiValue, screen.apiValue, occurredAt, detail))
                 }
                 resolved
@@ -77,27 +83,29 @@ object AccountEventEmitter {
     /** Flushes events buffered before [accountId] resolved, preserving each one's original `occurredAt`. */
     fun onAccountIdResolved(accountId: String) {
         scope.launch {
-            val flushed = pendingMutex.withLock {
+            // Held for the whole drain, not just the copy-and-clear, so a new emit() racing in
+            // right after resolution can't enqueue its event ahead of the buffered ones — it
+            // blocks on this same lock until the drain's enqueues below have gone out.
+            pendingMutex.withLock {
                 val taken = pending.toList()
                 pending.clear()
-                taken
-            }
-            if (flushed.isEmpty()) return@launch
-            flushed.forEach { pendingEvent ->
-                queue.enqueue(
-                    AccountEventsRequests.Event(
-                        accountId = accountId,
-                        name = pendingEvent.name,
-                        screen = pendingEvent.screen,
-                        platform = FrameNetworking.eventPlatform,
-                        sdkVersion = FrameNetworking.CURRENT_VERSION,
-                        hostSdkVersion = FrameNetworking.hostSDKVersion,
-                        occurredAt = pendingEvent.occurredAt,
-                        detail = pendingEvent.detail
+                if (taken.isEmpty()) return@withLock
+                taken.forEach { pendingEvent ->
+                    queue.enqueue(
+                        AccountEventsRequests.Event(
+                            accountId = accountId,
+                            name = pendingEvent.name,
+                            screen = pendingEvent.screen,
+                            platform = FrameNetworking.eventPlatform,
+                            sdkVersion = FrameNetworking.CURRENT_VERSION,
+                            hostSdkVersion = FrameNetworking.hostSDKVersion,
+                            occurredAt = pendingEvent.occurredAt,
+                            detail = pendingEvent.detail
+                        )
                     )
-                )
+                }
+                queue.flush()
             }
-            queue.flush()
         }
     }
 
