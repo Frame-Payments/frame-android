@@ -92,6 +92,11 @@ class AccountEventQueue(
         flushPending()
     }
 
+    /** Flushes immediately rather than waiting for [flushSizeThreshold] or the interval timer. */
+    suspend fun flush() {
+        flushPending()
+    }
+
     private fun startTimerIfNeeded() {
         if (timerJob != null) return
         timerJob = scope.launch {

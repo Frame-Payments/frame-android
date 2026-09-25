@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2056 public symbols** across 179 files in 3 modules.
+**2059 public symbols** across 179 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -54,13 +54,13 @@ reverse is never true.
 | Interfaces | 4 |
 | Objects | 130 |
 | Type aliases | 3 |
-| Functions | 352 |
+| Functions | 355 |
 | Properties (val) | 1008 |
 | Properties (var) | 20 |
 | Enum entries | 163 |
-| **Total** | **2056** |
+| **Total** | **2059** |
 
-### `FrameSDK` — 1645 public symbols
+### `FrameSDK` — 1648 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
@@ -194,28 +194,28 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `FrameNetworking.debugMode` | var | `var debugMode: Boolean = false` | [172](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L172) |
 | `FrameNetworking.accountId` | var | `var accountId: String? = null` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L191) |
 | `FrameNetworking.setAccountIdIfUnset` | fun | `fun setAccountIdIfUnset(accountId: String?)` | [203](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L203) |
-| `FrameNetworking.isEvervaultConfigured` | var | `var isEvervaultConfigured: Boolean = false` | [210](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L210) |
-| `FrameNetworking.googlePayMerchantId` | var | `var googlePayMerchantId: String? = null` | [216](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L216) |
-| `FrameNetworking.initializeWithAPIKey` | fun | `fun initializeWithAPIKey( context: Context, secretKey: String, publishableKey: String, accountId: String? = null, googlePayMerchantId: String? = null, debug: B…` | [234](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L234) |
-| `FrameNetworking.currentSonarSessionId` | fun | `fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()` | [305](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L305) |
-| `FrameNetworking.sonarSessionManagerOrNull` | fun | `fun sonarSessionManagerOrNull(): SonarSessionManager? = sonarSessionManager` | [308](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L308) |
-| `FrameNetworking.getContext` | fun | `fun getContext(): Context` | [315](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L315) |
-| `FrameNetworking.beginOnboardingSession` | fun | `fun beginOnboardingSession(clientSecret: String)` | [344](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L344) |
-| `FrameNetworking.endOnboardingSession` | fun | `fun endOnboardingSession(clientSecret: String? = null)` | [367](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L367) |
-| `FrameNetworking.hasActiveOnboardingSession` | val | `val hasActiveOnboardingSession: Boolean` | [377](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L377) |
-| `FrameNetworking.<reified T> parseResponse(data: ByteArra` | fun | `fun <reified T> parseResponse(data: ByteArray?): T?` | [444](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L444) |
-| `FrameNetworking.<reified T> parseListResponse(data: Byte` | fun | `fun <reified T> parseListResponse(data: ByteArray?): List<T>?` | [462](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L462) |
-| `FrameNetworking.performDataTask` | fun | `fun performDataTask( endpoint: FrameNetworkingEndpoints, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray?, NetworkingError?>` | [481](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L481) |
-| `FrameNetworking.performDataTaskWithRequest` | fun | `fun performDataTaskWithRequest( endpoint: FrameNetworkingEndpoints, request: Any? = null, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray?, Networ…` | [539](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L539) |
-| `FrameNetworking.performMultipartDataTask` | fun | `fun performMultipartDataTask( endpoint: FrameNetworkingEndpoints, filesToUpload: List<FileUpload>, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray…` | [612](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L612) |
-| `FrameNetworking.performMultipartDataTask` | fun | `fun performMultipartDataTask( endpoint: FrameNetworkingEndpoints, filesToUpload: List<FileUpload>, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (dat…` | [668](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L668) |
-| `FrameNetworking.performDataTask` | fun | `fun performDataTask( endpoint: FrameNetworkingEndpoints, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (data: ByteArray?, error: NetworkingError?) ->…` | [720](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L720) |
-| `FrameNetworking.<T> performDataTaskWithRequest( endpoint` | fun | `fun <T> performDataTaskWithRequest( endpoint: FrameNetworkingEndpoints, request: T? = null, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (data: Byte…` | [774](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L774) |
-| `FrameNetworking.applyEvervaultConfiguration` | fun | `fun applyEvervaultConfiguration(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean` | [851](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L851) |
-| `FrameNetworking.configureEvervault` | fun | `fun configureEvervault()` | [870](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L870) |
-| `FrameNetworking.ensureEvervaultReadyForCardInputs` | fun | `fun ensureEvervaultReadyForCardInputs(): Boolean = withContext(Dispatchers.IO)` | [886](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L886) |
-| `EvervaultConfigurator` | object | `object EvervaultConfigurator` | [905](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L905) |
-| `EvervaultConfigurator.ensureConfigured` | fun | `fun ensureConfigured(): Boolean` | [915](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L915) |
+| `FrameNetworking.isEvervaultConfigured` | var | `var isEvervaultConfigured: Boolean = false` | [214](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L214) |
+| `FrameNetworking.googlePayMerchantId` | var | `var googlePayMerchantId: String? = null` | [220](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L220) |
+| `FrameNetworking.initializeWithAPIKey` | fun | `fun initializeWithAPIKey( context: Context, secretKey: String, publishableKey: String, accountId: String? = null, googlePayMerchantId: String? = null, debug: B…` | [238](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L238) |
+| `FrameNetworking.currentSonarSessionId` | fun | `fun currentSonarSessionId(): String? = sonarSessionManager?.getSessionId()` | [309](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L309) |
+| `FrameNetworking.sonarSessionManagerOrNull` | fun | `fun sonarSessionManagerOrNull(): SonarSessionManager? = sonarSessionManager` | [312](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L312) |
+| `FrameNetworking.getContext` | fun | `fun getContext(): Context` | [319](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L319) |
+| `FrameNetworking.beginOnboardingSession` | fun | `fun beginOnboardingSession(clientSecret: String)` | [348](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L348) |
+| `FrameNetworking.endOnboardingSession` | fun | `fun endOnboardingSession(clientSecret: String? = null)` | [371](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L371) |
+| `FrameNetworking.hasActiveOnboardingSession` | val | `val hasActiveOnboardingSession: Boolean` | [381](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L381) |
+| `FrameNetworking.<reified T> parseResponse(data: ByteArra` | fun | `fun <reified T> parseResponse(data: ByteArray?): T?` | [448](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L448) |
+| `FrameNetworking.<reified T> parseListResponse(data: Byte` | fun | `fun <reified T> parseListResponse(data: ByteArray?): List<T>?` | [466](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L466) |
+| `FrameNetworking.performDataTask` | fun | `fun performDataTask( endpoint: FrameNetworkingEndpoints, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray?, NetworkingError?>` | [485](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L485) |
+| `FrameNetworking.performDataTaskWithRequest` | fun | `fun performDataTaskWithRequest( endpoint: FrameNetworkingEndpoints, request: Any? = null, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray?, Networ…` | [543](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L543) |
+| `FrameNetworking.performMultipartDataTask` | fun | `fun performMultipartDataTask( endpoint: FrameNetworkingEndpoints, filesToUpload: List<FileUpload>, auth: FrameAuthMode = FrameAuthMode.Secret ): Pair<ByteArray…` | [616](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L616) |
+| `FrameNetworking.performMultipartDataTask` | fun | `fun performMultipartDataTask( endpoint: FrameNetworkingEndpoints, filesToUpload: List<FileUpload>, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (dat…` | [672](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L672) |
+| `FrameNetworking.performDataTask` | fun | `fun performDataTask( endpoint: FrameNetworkingEndpoints, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (data: ByteArray?, error: NetworkingError?) ->…` | [724](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L724) |
+| `FrameNetworking.<T> performDataTaskWithRequest( endpoint` | fun | `fun <T> performDataTaskWithRequest( endpoint: FrameNetworkingEndpoints, request: T? = null, auth: FrameAuthMode = FrameAuthMode.Secret, completion: (data: Byte…` | [778](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L778) |
+| `FrameNetworking.applyEvervaultConfiguration` | fun | `fun applyEvervaultConfiguration(config: ConfigurationResponses.GetEvervaultConfigurationResponse?): Boolean` | [855](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L855) |
+| `FrameNetworking.configureEvervault` | fun | `fun configureEvervault()` | [874](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L874) |
+| `FrameNetworking.ensureEvervaultReadyForCardInputs` | fun | `fun ensureEvervaultReadyForCardInputs(): Boolean = withContext(Dispatchers.IO)` | [890](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L890) |
+| `EvervaultConfigurator` | object | `object EvervaultConfigurator` | [909](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L909) |
+| `EvervaultConfigurator.ensureConfigured` | fun | `fun ensureConfigured(): Boolean` | [919](FrameSDK/src/main/java/com/framepayments/framesdk/FrameNetworking.kt#L919) |
 
 </details>
 
@@ -284,7 +284,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-#### com/framepayments/framesdk/accountevents (170)
+#### com/framepayments/framesdk/accountevents (173)
 
 <details><summary><code>AccountEventCatalog.kt</code> — 142 symbols</summary>
 
@@ -437,15 +437,18 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-<details><summary><code>AccountEventEmitter.kt</code> — 3 symbols</summary>
+<details><summary><code>AccountEventEmitter.kt</code> — 6 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `AccountEventEmitter` | object | `object AccountEventEmitter` | [16](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L16) |
-| `AccountEventEmitter.queue` | var | `var queue: AccountEventQueue = AccountEventQueue.shared` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L18) |
-| `AccountEventEmitter.emit` | fun | `fun emit(name: AccountEventName, screen: AccountEventScreen, detail: String? = null)` | [34](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L34) |
+| `AccountEventEmitter` | object | `object AccountEventEmitter` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L18) |
+| `AccountEventEmitter.queue` | var | `var queue: AccountEventQueue = AccountEventQueue.shared` | [20](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L20) |
+| `AccountEventEmitter.emit` | fun | `fun emit(name: AccountEventName, screen: AccountEventScreen, detail: String? = null)` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L47) |
+| `AccountEventEmitter.onAccountIdResolved` | fun | `fun onAccountIdResolved(accountId: String)` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L84) |
+| `AccountEventEmitter.pendingEventNamesForTesting` | fun | `fun pendingEventNamesForTesting(): List<String> = pendingMutex.withLock` | [113](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L113) |
+| `AccountEventEmitter.clearPendingForTesting` | fun | `fun clearPendingForTesting() = pendingMutex.withLock` | [116](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventEmitter.kt#L116) |
 
 </details>
 

@@ -25,8 +25,8 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *
  * Lists the account's saved ACH payout methods and lets the applicant add a new one.
  *
- * Continue elects the chosen method as the account's primary payout destination, as does adding
- * a new bank; [FrameResult.Completed] is reported only after that.
+ * Adding a new bank returns to the list with it selected; Continue elects the chosen method as the
+ * account's primary payout destination, and [FrameResult.Completed] is reported only after that.
  *
  * @param accountId The Frame account ID whose payout method is being selected.
  * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your server
@@ -80,9 +80,8 @@ fun FrameSelectPayoutMethodView(
 
     LaunchedEffect(showAddPayout, onboardingData.selectedPayoutMethodId) {
         val id = onboardingData.selectedPayoutMethodId
-        if (showAddPayout && id != null && id != selectedIdWhenAddOpened && !didFinish) {
-            didFinish = true
-            onResult?.invoke(FrameResult.Completed(id))
+        if (showAddPayout && id != null && id != selectedIdWhenAddOpened) {
+            showAddPayout = false
         }
     }
 

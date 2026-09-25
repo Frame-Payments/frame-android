@@ -1933,7 +1933,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         // Selected only after the election: the standalone views report Completed on this.
         _onboardingData.update { it.copy(selectedPayoutMethodId = payoutMethodId) }
         clearAccountDetails()
-        moveNext()
+        // Back to Select so the applicant confirms the new bank with Continue, matching iOS.
+        val select = orderedSteps.firstOrNull { it == OnboardingStep.SelectPayoutMethod }
+        if (select != null) navigationState.goTo(select) else moveNext()
     }
 
     private fun retryUnelectedPayoutMethod(): Boolean {

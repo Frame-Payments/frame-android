@@ -184,11 +184,11 @@ object FrameNetworking {
     @Volatile private var onboardingSessionToken: String? = null
 
     /**
-     * The Frame account this app run belongs to, set at [initializeWithAPIKey]. Read by
-     * [com.framepayments.framesdk.accountevents.AccountEventEmitter] to attribute account
-     * events; null until set, in which case events are silently dropped.
+     * The Frame account this app run belongs to, set at [initializeWithAPIKey] or resolved later
+     * via [setAccountIdIfUnset]. Read by
+     * [com.framepayments.framesdk.accountevents.AccountEventEmitter] to attribute account events.
      */
-    var accountId: String? = null
+    @Volatile var accountId: String? = null
         private set
 
     /**
@@ -202,8 +202,12 @@ object FrameNetworking {
      */
     fun setAccountIdIfUnset(accountId: String?) {
         val resolved = accountId?.takeIf { it.isNotEmpty() } ?: return
-        if (this.accountId != null) return
-        this.accountId = resolved
+        val didSet = synchronized(this) {
+            if (this.accountId != null) return@synchronized false
+            this.accountId = resolved
+            true
+        }
+        if (didSet) com.framepayments.framesdk.accountevents.AccountEventEmitter.onAccountIdResolved(resolved)
     }
 
     /** `true` once Evervault has been successfully configured; `false` until then. */
