@@ -4,6 +4,8 @@ import com.framepayments.framesdk.FrameNetworking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -17,14 +19,25 @@ object AccountEventEmitter {
     /** The queue events are enqueued onto. Overridable so tests can inject a queue with a recording flush handler. */
     var queue: AccountEventQueue = AccountEventQueue.shared
 
+    private const val MAX_PENDING = 200
+
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val pendingMutex = Mutex()
+    private val pending = mutableListOf<PendingEvent>()
+
+    private data class PendingEvent(
+        val name: String,
+        val screen: String,
+        val occurredAt: String,
+        val detail: String?
+    )
 
     /**
      * Queues an event for the account this app run belongs to.
      *
-     * Silently does nothing if no [FrameNetworking.accountId] was supplied to
-     * [FrameNetworking.initializeWithAPIKey] — there is no account to attribute the event to,
-     * and, per the queue's contract, this must never surface an error or block the caller.
+     * A flow launched without an account ID (the common case — onboarding creates the account
+     * mid-flow) buffers the event instead of dropping it; [onAccountIdResolved] flushes the
+     * buffer once an account ID is known.
      *
      * @param detail Optional developer-facing detail, either a fixed [AccountEventDetail]
      *   constant or a dynamic debug description (e.g. `"$error"`). Must never contain PII,
@@ -32,19 +45,65 @@ object AccountEventEmitter {
      *   user-facing copy.
      */
     fun emit(name: AccountEventName, screen: AccountEventScreen, detail: String? = null) {
-        val accountId = FrameNetworking.accountId ?: return
+        val occurredAt = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString()
 
-        val event = AccountEventsRequests.Event(
-            accountId = accountId,
-            name = name.apiValue,
-            screen = screen.apiValue,
-            platform = FrameNetworking.eventPlatform,
-            sdkVersion = FrameNetworking.CURRENT_VERSION,
-            hostSdkVersion = FrameNetworking.hostSDKVersion,
-            occurredAt = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString(),
-            detail = detail
-        )
+        // Must read accountId and decide buffer-vs-send under the same lock onAccountIdResolved
+        // drains under, or a resolve landing in between can drop this event permanently.
+        scope.launch {
+            val accountId = pendingMutex.withLock {
+                val resolved = FrameNetworking.accountId
+                if (resolved == null) {
+                    if (pending.size >= MAX_PENDING) pending.removeAt(0)
+                    pending.add(PendingEvent(name.apiValue, screen.apiValue, occurredAt, detail))
+                }
+                resolved
+            } ?: return@launch
 
-        scope.launch { queue.enqueue(event) }
+            queue.enqueue(
+                AccountEventsRequests.Event(
+                    accountId = accountId,
+                    name = name.apiValue,
+                    screen = screen.apiValue,
+                    platform = FrameNetworking.eventPlatform,
+                    sdkVersion = FrameNetworking.CURRENT_VERSION,
+                    hostSdkVersion = FrameNetworking.hostSDKVersion,
+                    occurredAt = occurredAt,
+                    detail = detail
+                )
+            )
+        }
     }
+
+    /** Flushes events buffered before [accountId] resolved, preserving each one's original `occurredAt`. */
+    fun onAccountIdResolved(accountId: String) {
+        scope.launch {
+            val flushed = pendingMutex.withLock {
+                val taken = pending.toList()
+                pending.clear()
+                taken
+            }
+            if (flushed.isEmpty()) return@launch
+            flushed.forEach { pendingEvent ->
+                queue.enqueue(
+                    AccountEventsRequests.Event(
+                        accountId = accountId,
+                        name = pendingEvent.name,
+                        screen = pendingEvent.screen,
+                        platform = FrameNetworking.eventPlatform,
+                        sdkVersion = FrameNetworking.CURRENT_VERSION,
+                        hostSdkVersion = FrameNetworking.hostSDKVersion,
+                        occurredAt = pendingEvent.occurredAt,
+                        detail = pendingEvent.detail
+                    )
+                )
+            }
+            queue.flush()
+        }
+    }
+
+    /** Test-only inspection of what is currently buffered, without triggering a flush. */
+    suspend fun pendingEventNamesForTesting(): List<String> = pendingMutex.withLock { pending.map { it.name } }
+
+    /** Test-only reset so buffer state doesn't leak between tests sharing this singleton. */
+    suspend fun clearPendingForTesting() = pendingMutex.withLock { pending.clear() }
 }
