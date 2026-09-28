@@ -331,9 +331,10 @@ fun CustomerInformationView(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = errors[CustomerInformationFieldVM.Field.SSN] != null,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        errorBorderColor = Color.Transparent,
+                        // Outer Row draws the shared border; suppress the inner outline.
+                        focusedBorderColor = theme.colors.surface.copy(alpha = 0f),
+                        unfocusedBorderColor = theme.colors.surface.copy(alpha = 0f),
+                        errorBorderColor = theme.colors.surface.copy(alpha = 0f),
                         focusedContainerColor = theme.colors.surface,
                         unfocusedContainerColor = theme.colors.surface,
                         cursorColor = theme.colors.textPrimary
