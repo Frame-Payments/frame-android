@@ -49,6 +49,27 @@ object ChargeIntentsRequests {
     )
 
     /**
+     * Request body for confirming a charge intent with a publishable key.
+     *
+     * The secret travels in the body, not the Authorization header: the API authenticates with the
+     * publishable key, then matches [clientSecret] against the intent. Mirrors iOS /
+     * frame-js `confirmCardPayment`.
+     *
+     * @property clientSecret The charge intent's `client_secret` (`ci_<id>_secret_…`).
+     * @property useFrameSDK Required by the API for publishable-key confirmations.
+     * @property expectedPaymentMethodType Sent for parity with the browser SDK.
+     * @property paymentMethod Optional saved payment method (`pm_…`) to charge instead of the intent's own.
+     * @property shipping Optional shipping address to record against the charge.
+     */
+    data class ConfirmChargeIntentRequest(
+        @SerializedName("client_secret") val clientSecret: String,
+        @SerializedName("use_frame_sdk") val useFrameSDK: Boolean = true,
+        @SerializedName("expected_payment_method_type") val expectedPaymentMethodType: String = "card",
+        @SerializedName("payment_method") val paymentMethod: String? = null,
+        val shipping: FrameObjects.BillingAddress? = null
+    )
+
+    /**
      * Request body for updating mutable fields on an existing charge intent.
      *
      * @property amount Updated charge amount in the smallest currency unit, or `null` to leave unchanged.

@@ -57,19 +57,63 @@ fun OnboardingContainerView(
 ) {
     val viewModel = remember { FrameOnboardingViewModel(config) }
     val currentOnResult by rememberUpdatedState(onResult)
-    // Host sheet swipe / composition removal must emit Cancelled before close() tears down the
-    // scope — otherwise onResult never sees a terminal result (playground clears the sheet first).
-    DisposableEffect(viewModel) {
-        onDispose {
-            if (viewModel.result.value == null) {
-                viewModel.cancel()
+    // Guards against delivering Completed/Cancelled twice when LaunchedEffect and dispose race.
+    val resultDelivery = remember { object { var delivered = false } }
+
+    fun deliverTerminalResult(r: OnboardingResult) {
+        if (resultDelivery.delivered) return
+        when (r) {
+            is OnboardingResult.Completed -> {
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_COMPLETED,
+                    AccountEventScreen.ONBOARDING,
+                    detail = AccountEventDetail.ONBOARDING_COMPLETED_APPROVED
+                )
+            }
+            is OnboardingResult.FinishedUnverified -> {
+                when (val outcome = r.outcome) {
+                    is OnboardingOutcome.Declined -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_DECLINED,
+                        AccountEventScreen.ONBOARDING,
+                        detail = outcome.message ?: "declined"
+                    )
+                    is OnboardingOutcome.ActionRequired -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_ACTION_REQUIRED,
+                        AccountEventScreen.ONBOARDING,
+                        detail = outcome.message ?: "action required"
+                    )
+                    else -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_NEEDS_REVIEW,
+                        AccountEventScreen.ONBOARDING
+                    )
+                }
+            }
+            is OnboardingResult.Cancelled -> {
                 val segment = viewModel.navigationState.currentStep.toFlowSegment()
                 AccountEventEmitter.emit(
                     AccountEventName.ONBOARDING_CANCELLED,
                     segment.accountEventScreen(),
                     detail = "last step reached: ${segment.analyticsName}"
                 )
-                currentOnResult(OnboardingResult.Cancelled)
+            }
+            else -> return
+        }
+        resultDelivery.delivered = true
+        currentOnResult(r)
+    }
+
+    // Host sheet swipe / composition removal: emit Cancelled if nothing terminal ran, or flush a
+    // pending result LaunchedEffect never got to deliver before the effect was cancelled.
+    DisposableEffect(viewModel) {
+        onDispose {
+            if (!resultDelivery.delivered) {
+                val pending = viewModel.result.value
+                if (pending == null) {
+                    viewModel.cancel()
+                    deliverTerminalResult(OnboardingResult.Cancelled)
+                } else {
+                    deliverTerminalResult(pending)
+                }
             }
             viewModel.close()
         }
@@ -143,45 +187,8 @@ fun OnboardingContainerView(
     }
 
     LaunchedEffect(result) {
-        when (val r = result) {
-            is OnboardingResult.Completed -> {
-                AccountEventEmitter.emit(
-                    AccountEventName.ONBOARDING_COMPLETED,
-                    AccountEventScreen.ONBOARDING,
-                    detail = AccountEventDetail.ONBOARDING_COMPLETED_APPROVED
-                )
-                onResult(r)
-            }
-            is OnboardingResult.FinishedUnverified -> {
-                when (val outcome = r.outcome) {
-                    is OnboardingOutcome.Declined -> AccountEventEmitter.emit(
-                        AccountEventName.ONBOARDING_DECLINED,
-                        AccountEventScreen.ONBOARDING,
-                        detail = outcome.message ?: "declined"
-                    )
-                    is OnboardingOutcome.ActionRequired -> AccountEventEmitter.emit(
-                        AccountEventName.ONBOARDING_ACTION_REQUIRED,
-                        AccountEventScreen.ONBOARDING,
-                        detail = outcome.message ?: "action required"
-                    )
-                    else -> AccountEventEmitter.emit(
-                        AccountEventName.ONBOARDING_NEEDS_REVIEW,
-                        AccountEventScreen.ONBOARDING
-                    )
-                }
-                onResult(r)
-            }
-            is OnboardingResult.Cancelled -> {
-                val segment = viewModel.navigationState.currentStep.toFlowSegment()
-                AccountEventEmitter.emit(
-                    AccountEventName.ONBOARDING_CANCELLED,
-                    segment.accountEventScreen(),
-                    detail = "last step reached: ${segment.analyticsName}"
-                )
-                onResult(r)
-            }
-            else -> Unit
-        }
+        val r = result ?: return@LaunchedEffect
+        deliverTerminalResult(r)
     }
 
     LaunchedEffect(userError) {

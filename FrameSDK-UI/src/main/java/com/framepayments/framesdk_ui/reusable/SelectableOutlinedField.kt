@@ -44,14 +44,7 @@ fun SelectableOutlinedField(
         if (error != null) add(error)
     }.joinToString(", ")
     Column(modifier = modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics(mergeDescendants = true) {
-                    contentDescription = a11yLabel
-                    if (error != null) error(error)
-                }
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = if (showValue) value else "",
                 onValueChange = {},
@@ -71,7 +64,8 @@ fun SelectableOutlinedField(
                         tint = theme.colors.textSecondary,
                     )
                 },
-                // Visual only — a11y is owned by the merged parent + overlay button.
+                // Visual only — a11y lives on the clickable overlay so prompt/value/error + button
+                // action are one node (mergeDescendants does not pull clickable children in).
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
@@ -102,6 +96,10 @@ fun SelectableOutlinedField(
                         role = Role.Button,
                         onClickLabel = prompt,
                     )
+                    .semantics {
+                        contentDescription = a11yLabel
+                        if (error != null) error(error)
+                    }
             )
         }
         if (error != null) {

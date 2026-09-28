@@ -272,7 +272,7 @@ internal fun UserIdentificationView(
                                 ),
                                 codeExpirationHint = "Your code expires in 10 minutes",
                                 digitCount = 6,
-                                showResendCode = true,
+                                showResendCode = verifyPhoneUi != VerifyPhoneUi.OtpForProve,
                                 showChangePhoneNumber = true,
                                 embedInParentScaffold = true,
                                 emitsPhoneCodeEntry = verifyPhoneUi != VerifyPhoneUi.OtpForProve,
