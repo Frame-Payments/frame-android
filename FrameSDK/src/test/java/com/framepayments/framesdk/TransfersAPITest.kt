@@ -52,6 +52,28 @@ class TransfersAPITest {
     }
 
     @Test
+    fun testCreateTransferConfirmFalseIsSerialized() = runBlocking {
+        val responseBody = """{"id":"tr_3ds", "status":"requires_confirmation", "amount":10000, "currency":"usd", "client_secret":"ci_abc_secret_xyz"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = TransferRequests.CreateTransferRequest(
+            amount = 10000,
+            accountId = "acc_123",
+            currency = "usd",
+            sourcePaymentMethodId = "pm_123",
+            confirm = false
+        )
+        val (result, _) = TransfersAPI.createTransfer(request)
+
+        assertNotNull(result)
+        assertEquals(TransferStatus.REQUIRES_CONFIRMATION, result?.status)
+        assertEquals("ci_abc_secret_xyz", result?.clientSecret)
+
+        val body = mockWebServer.takeRequest().body.readUtf8()
+        assertTrue("checkout must defer confirm for 3DS", body.contains("\"confirm\":false"))
+    }
+
+    @Test
     fun testCreateTransferPayoutFlow() = runBlocking {
         val responseBody = """{"id":"tr_456", "status":"pending", "amount":5000}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))

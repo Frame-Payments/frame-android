@@ -17,6 +17,9 @@ object TransferRequests {
      * @property destinationPaymentMethodId Identifier of the payment method to push funds to. Uses the account default if omitted.
      * @property description Optional description that appears on the transfer record.
      * @property metadata Optional arbitrary key-value pairs to attach to the transfer.
+     * @property confirm Whether the API settles the charge inline. Omitted when null (API default `true`).
+     *   Pass `false` for a card that may need 3D Secure: an inline confirm rejects any charge that is
+     *   not already settled, and a charge awaiting a challenge never is.
      * @property sonarSessionId The account's Sonar session; set by [TransfersAPI] on charge-backed transfers.
      */
     data class CreateTransferRequest(
@@ -27,6 +30,7 @@ object TransferRequests {
         @SerializedName("destination_payment_method_id") val destinationPaymentMethodId: String? = null,
         val description: String? = null,
         val metadata: Map<String, String>? = null,
+        val confirm: Boolean? = null,
         @SerializedName("sonar_session_id") val sonarSessionId: String? = null
     )
 }
