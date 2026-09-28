@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2069 public symbols** across 182 files in 3 modules.
+**2070 public symbols** across 182 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -55,12 +55,12 @@ reverse is never true.
 | Objects | 130 |
 | Type aliases | 3 |
 | Functions | 358 |
-| Properties (val) | 1014 |
+| Properties (val) | 1015 |
 | Properties (var) | 20 |
 | Enum entries | 163 |
-| **Total** | **2069** |
+| **Total** | **2070** |
 
-### `FrameSDK` — 1648 public symbols
+### `FrameSDK` — 1649 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
@@ -2621,7 +2621,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-#### com/framepayments/framesdk/transfers (52)
+#### com/framepayments/framesdk/transfers (53)
 
 <details><summary><code>TransferEndpoints.kt</code> — 7 symbols</summary>
 
@@ -2672,22 +2672,23 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-<details><summary><code>TransferRequests.kt</code> — 10 symbols</summary>
+<details><summary><code>TransferRequests.kt</code> — 11 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
 | `TransferRequests` | object | `object TransferRequests` | [8](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L8) |
-| `TransferRequests.CreateTransferRequest` | data class | `data class CreateTransferRequest(` | [22](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L22) |
-| `TransferRequests.CreateTransferRequest.amount` | val | `val amount: Int,` | [23](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L23) |
-| `TransferRequests.CreateTransferRequest.accountId` | val | `val accountId: String,` | [24](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L24) |
-| `TransferRequests.CreateTransferRequest.currency` | val | `val currency: String? = null,` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L25) |
-| `TransferRequests.CreateTransferRequest.sourcePaymentMethodId` | val | `val sourcePaymentMethodId: String? = null,` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L26) |
-| `TransferRequests.CreateTransferRequest.destinationPaymentMethodId` | val | `val destinationPaymentMethodId: String? = null,` | [27](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L27) |
-| `TransferRequests.CreateTransferRequest.description` | val | `val description: String? = null,` | [28](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L28) |
-| `TransferRequests.CreateTransferRequest.metadata` | val | `val metadata: Map<String, String>? = null,` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L29) |
-| `TransferRequests.CreateTransferRequest.sonarSessionId` | val | `val sonarSessionId: String? = null` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L30) |
+| `TransferRequests.CreateTransferRequest` | data class | `data class CreateTransferRequest(` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L25) |
+| `TransferRequests.CreateTransferRequest.amount` | val | `val amount: Int,` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L26) |
+| `TransferRequests.CreateTransferRequest.accountId` | val | `val accountId: String,` | [27](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L27) |
+| `TransferRequests.CreateTransferRequest.currency` | val | `val currency: String? = null,` | [28](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L28) |
+| `TransferRequests.CreateTransferRequest.sourcePaymentMethodId` | val | `val sourcePaymentMethodId: String? = null,` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L29) |
+| `TransferRequests.CreateTransferRequest.destinationPaymentMethodId` | val | `val destinationPaymentMethodId: String? = null,` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L30) |
+| `TransferRequests.CreateTransferRequest.description` | val | `val description: String? = null,` | [31](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L31) |
+| `TransferRequests.CreateTransferRequest.metadata` | val | `val metadata: Map<String, String>? = null,` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L32) |
+| `TransferRequests.CreateTransferRequest.confirm` | val | `val confirm: Boolean? = null,` | [33](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L33) |
+| `TransferRequests.CreateTransferRequest.sonarSessionId` | val | `val sonarSessionId: String? = null` | [34](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L34) |
 
 </details>
 
