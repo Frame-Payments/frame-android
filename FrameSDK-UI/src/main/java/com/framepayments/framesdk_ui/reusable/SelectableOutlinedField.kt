@@ -16,6 +16,11 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
@@ -33,8 +38,20 @@ fun SelectableOutlinedField(
 ) {
     val theme = LocalFrameTheme.current
     val showValue = value.isNotBlank()
+    val a11yLabel = buildList {
+        add(prompt)
+        if (showValue) add(value)
+        if (error != null) add(error)
+    }.joinToString(", ")
     Column(modifier = modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) {
+                    contentDescription = a11yLabel
+                    if (error != null) error(error)
+                }
+        ) {
             OutlinedTextField(
                 value = if (showValue) value else "",
                 onValueChange = {},
@@ -54,9 +71,11 @@ fun SelectableOutlinedField(
                         tint = theme.colors.textSecondary,
                     )
                 },
+                // Visual only — a11y is owned by the merged parent + overlay button.
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp),
+                    .height(64.dp)
+                    .clearAndSetSemantics { },
                 singleLine = true,
                 isError = error != null,
                 textStyle = theme.fonts.body,
@@ -78,7 +97,11 @@ fun SelectableOutlinedField(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clickable(onClick = onClick)
+                    .clickable(
+                        onClick = onClick,
+                        role = Role.Button,
+                        onClickLabel = prompt,
+                    )
             )
         }
         if (error != null) {

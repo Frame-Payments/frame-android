@@ -391,24 +391,20 @@ internal fun UserIdentificationView(
                                 }
 
                                 var showDobPicker by rememberSaveable { mutableStateOf(false) }
+                                // Null until picked or parts hydrate — never seed the 18y default into the VM.
                                 var selectedDobMillis by rememberSaveable {
-                                    mutableStateOf(
-                                        millisFromDobParts(dobYear, dobMonth, dobDay)
-                                            ?: defaultAdultDobMillis()
-                                    )
+                                    mutableStateOf(millisFromDobParts(dobYear, dobMonth, dobDay))
                                 }
                                 LaunchedEffect(dobYear, dobMonth, dobDay) {
                                     millisFromDobParts(dobYear, dobMonth, dobDay)?.let {
                                         if (it != selectedDobMillis) selectedDobMillis = it
                                     }
                                 }
-                                LaunchedEffect(Unit) {
-                                    if (dobYear.isEmpty() || dobMonth.isEmpty() || dobDay.isEmpty()) {
-                                        applyDobMillisToViewModel(viewModel, selectedDobMillis)
-                                    }
-                                }
-                                val displayDate = remember(selectedDobMillis) {
-                                    formatDisplayDate(selectedDobMillis)
+                                val dobPartsMillis = millisFromDobParts(dobYear, dobMonth, dobDay)
+                                val displayDate = remember(selectedDobMillis, dobPartsMillis) {
+                                    (selectedDobMillis ?: dobPartsMillis)
+                                        ?.let { formatDisplayDate(it) }
+                                        ?: "Select date"
                                 }
                                 Box(
                                     modifier = Modifier
@@ -426,12 +422,17 @@ internal fun UserIdentificationView(
                                     Text(
                                         text = displayDate,
                                         style = LocalFrameTheme.current.fonts.body,
-                                        color = LocalFrameTheme.current.colors.textPrimary
+                                        color = if (dobPartsMillis == null) {
+                                            LocalFrameTheme.current.colors.textSecondary
+                                        } else {
+                                            LocalFrameTheme.current.colors.textPrimary
+                                        }
                                     )
                                 }
                                 if (showDobPicker) {
                                     SpinnerDatePickerDialog(
-                                        initialMillis = selectedDobMillis,
+                                        // Picker wheels open at 18y ago when unset; selection alone persists DOB.
+                                        initialMillis = selectedDobMillis ?: defaultAdultDobMillis(),
                                         onDismiss = { showDobPicker = false },
                                         onDateSelected = { millis ->
                                             selectedDobMillis = millis

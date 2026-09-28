@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.framepayments.frameonboarding.classes.Capabilities
@@ -55,7 +56,24 @@ fun OnboardingContainerView(
     onResult: (OnboardingResult) -> Unit
 ) {
     val viewModel = remember { FrameOnboardingViewModel(config) }
-    DisposableEffect(viewModel) { onDispose { viewModel.close() } }
+    val currentOnResult by rememberUpdatedState(onResult)
+    // Host sheet swipe / composition removal must emit Cancelled before close() tears down the
+    // scope — otherwise onResult never sees a terminal result (playground clears the sheet first).
+    DisposableEffect(viewModel) {
+        onDispose {
+            if (viewModel.result.value == null) {
+                viewModel.cancel()
+                val segment = viewModel.navigationState.currentStep.toFlowSegment()
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_CANCELLED,
+                    segment.accountEventScreen(),
+                    detail = "last step reached: ${segment.analyticsName}"
+                )
+                currentOnResult(OnboardingResult.Cancelled)
+            }
+            viewModel.close()
+        }
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val result by viewModel.result.collectAsState()
     val userError by viewModel.userErrorMessage.collectAsState()

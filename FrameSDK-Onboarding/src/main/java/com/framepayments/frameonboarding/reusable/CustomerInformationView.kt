@@ -90,9 +90,8 @@ fun CustomerInformationView(
     }
 
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
-    var selectedDobMillis by rememberSaveable {
-        mutableStateOf(defaultAdultDobMillis())
-    }
+    // Null until the applicant picks or a stored ISO hydrates — never write the 18y default into the VM.
+    var selectedDobMillis by rememberSaveable { mutableStateOf<Long?>(null) }
 
     // Hydrate from stored ISO when it changes externally (e.g. async account profile fetch).
     LaunchedEffect(identity.dateOfBirth) {
@@ -103,15 +102,11 @@ fun CustomerInformationView(
         }
     }
 
-    // Seed the displayed default into the VM when no DOB is stored yet.
-    LaunchedEffect(Unit) {
-        if (identity.dateOfBirth.isBlank()) {
-            applyDobMillis(viewModel, selectedDobMillis)
-        }
-    }
-
-    val displayDate = remember(selectedDobMillis) {
-        formatDisplayDate(selectedDobMillis)
+    val displayDate = remember(selectedDobMillis, identity.dateOfBirth) {
+        selectedDobMillis
+            ?.takeIf { identity.dateOfBirth.isNotBlank() }
+            ?.let { formatDisplayDate(it) }
+            ?: "Select date"
     }
 
     Column {
@@ -232,13 +227,18 @@ fun CustomerInformationView(
             Text(
                 text = displayDate,
                 style = theme.fonts.body,
-                color = theme.colors.textPrimary
+                color = if (identity.dateOfBirth.isBlank()) {
+                    theme.colors.textSecondary
+                } else {
+                    theme.colors.textPrimary
+                }
             )
         }
 
         if (showDatePicker) {
             SpinnerDatePickerDialog(
-                initialMillis = selectedDobMillis,
+                // Picker wheels open at 18y ago when unset; selection alone persists DOB.
+                initialMillis = selectedDobMillis ?: defaultAdultDobMillis(),
                 onDismiss = { showDatePicker = false },
                 onDateSelected = { millis ->
                     selectedDobMillis = millis

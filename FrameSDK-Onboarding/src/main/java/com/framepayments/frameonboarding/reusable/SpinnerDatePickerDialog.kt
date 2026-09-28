@@ -6,10 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
 import java.util.Calendar
+import java.util.TimeZone
 
 /**
  * Presents the platform spinner-style [DatePickerDialog] (month / day / year wheels).
  * Material3's calendar picker has no wheel mode; this matches the iOS `.wheel` date picker.
+ *
+ * Selected millis are UTC midnight for the chosen Y/M/D so ISO DOB formatting is timezone-stable.
  */
 @Composable
 fun SpinnerDatePickerDialog(
@@ -19,18 +22,16 @@ fun SpinnerDatePickerDialog(
 ) {
     val context = LocalContext.current
     DisposableEffect(initialMillis) {
-        val calendar = Calendar.getInstance().apply { timeInMillis = initialMillis }
+        val utc = TimeZone.getTimeZone("UTC")
+        val calendar = Calendar.getInstance(utc).apply { timeInMillis = initialMillis }
         val dialog = DatePickerDialog(
             context,
             { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-                val selected = Calendar.getInstance().apply {
+                val selected = Calendar.getInstance(utc).apply {
+                    clear()
                     set(Calendar.YEAR, year)
                     set(Calendar.MONTH, month)
                     set(Calendar.DAY_OF_MONTH, dayOfMonth)
-                    set(Calendar.HOUR_OF_DAY, 12)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
                 }
                 onDateSelected(selected.timeInMillis)
             },
@@ -39,7 +40,7 @@ fun SpinnerDatePickerDialog(
             calendar.get(Calendar.DAY_OF_MONTH)
         )
         dialog.datePicker.maxDate = System.currentTimeMillis()
-        val min = Calendar.getInstance().apply { add(Calendar.YEAR, -120) }
+        val min = Calendar.getInstance(utc).apply { add(Calendar.YEAR, -120) }
         dialog.datePicker.minDate = min.timeInMillis
         // Prefer spinner wheels when the platform still exposes them.
         @Suppress("DEPRECATION")
