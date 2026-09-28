@@ -43,24 +43,24 @@ reverse is never true.
 
 ## Public API inventory
 
-**2070 public symbols** across 182 files in 3 modules.
+**2076 public symbols** across 182 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
 | Classes | 32 |
-| Data classes | 267 |
+| Data classes | 268 |
 | Sealed classes | 37 |
 | Enums | 41 |
 | Interfaces | 4 |
 | Objects | 130 |
 | Type aliases | 3 |
 | Functions | 358 |
-| Properties (val) | 1015 |
+| Properties (val) | 1020 |
 | Properties (var) | 20 |
 | Enum entries | 163 |
-| **Total** | **2070** |
+| **Total** | **2076** |
 
-### `FrameSDK` — 1649 public symbols
+### `FrameSDK` — 1655 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
@@ -894,7 +894,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-#### com/framepayments/framesdk/chargeintents (145)
+#### com/framepayments/framesdk/chargeintents (151)
 
 <details><summary><code>ChargeIntentAPI.kt</code> — 17 symbols</summary>
 
@@ -906,19 +906,19 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `ChargeIntentAPI.createChargeIntent` | fun | `fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?>` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L32) |
 | `ChargeIntentAPI.captureChargeIntent` | fun | `fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?>` | [50](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L50) |
 | `ChargeIntentAPI.confirmChargeIntent` | fun | `fun confirmChargeIntent(intentId: String, clientSecret: String): Pair<ChargeIntent?, NetworkingError?>` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L69) |
-| `ChargeIntentAPI.cancelChargeIntent` | fun | `fun cancelChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?>` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L82) |
-| `ChargeIntentAPI.getAllChargeIntents` | fun | `fun getAllChargeIntents(page: Int?, perPage: Int?): Pair<ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?>` | [95](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L95) |
-| `ChargeIntentAPI.getChargeIntent` | fun | `fun getChargeIntent(intentId: String, clientSecret: String): Pair<ChargeIntent?, NetworkingError?>` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L108) |
-| `ChargeIntentAPI.updateChargeIntent` | fun | `fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?>` | [121](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L121) |
-| `ChargeIntentAPI.voidRemainingChargeIntent` | fun | `fun voidRemainingChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?>` | [133](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L133) |
-| `ChargeIntentAPI.createChargeIntent` | fun | `fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [149](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L149) |
-| `ChargeIntentAPI.captureChargeIntent` | fun | `fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Un…` | [167](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L167) |
-| `ChargeIntentAPI.confirmChargeIntent` | fun | `fun confirmChargeIntent(intentId: String, clientSecret: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [186](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L186) |
-| `ChargeIntentAPI.cancelChargeIntent` | fun | `fun cancelChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [200](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L200) |
-| `ChargeIntentAPI.getAllChargeIntents` | fun | `fun getAllChargeIntents(page: Int?, perPage: Int?, completionHandler: (ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?) -> Unit)` | [215](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L215) |
-| `ChargeIntentAPI.getChargeIntent` | fun | `fun getChargeIntent(intentId: String, clientSecret: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [230](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L230) |
-| `ChargeIntentAPI.updateChargeIntent` | fun | `fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [245](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L245) |
-| `ChargeIntentAPI.voidRemainingChargeIntent` | fun | `fun voidRemainingChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [259](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L259) |
+| `ChargeIntentAPI.cancelChargeIntent` | fun | `fun cancelChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?>` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L83) |
+| `ChargeIntentAPI.getAllChargeIntents` | fun | `fun getAllChargeIntents(page: Int?, perPage: Int?): Pair<ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?>` | [96](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L96) |
+| `ChargeIntentAPI.getChargeIntent` | fun | `fun getChargeIntent( intentId: String, @Suppress( ) clientSecret: String ): Pair<ChargeIntent?, NetworkingError?>` | [113](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L113) |
+| `ChargeIntentAPI.updateChargeIntent` | fun | `fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?>` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L131) |
+| `ChargeIntentAPI.voidRemainingChargeIntent` | fun | `fun voidRemainingChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?>` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L143) |
+| `ChargeIntentAPI.createChargeIntent` | fun | `fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [159](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L159) |
+| `ChargeIntentAPI.captureChargeIntent` | fun | `fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Un…` | [177](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L177) |
+| `ChargeIntentAPI.confirmChargeIntent` | fun | `fun confirmChargeIntent(intentId: String, clientSecret: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L194) |
+| `ChargeIntentAPI.cancelChargeIntent` | fun | `fun cancelChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [209](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L209) |
+| `ChargeIntentAPI.getAllChargeIntents` | fun | `fun getAllChargeIntents(page: Int?, perPage: Int?, completionHandler: (ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?) -> Unit)` | [224](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L224) |
+| `ChargeIntentAPI.getChargeIntent` | fun | `fun getChargeIntent( intentId: String, @Suppress( ) clientSecret: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit )` | [241](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L241) |
+| `ChargeIntentAPI.updateChargeIntent` | fun | `fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [260](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L260) |
+| `ChargeIntentAPI.voidRemainingChargeIntent` | fun | `fun voidRemainingChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [274](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L274) |
 
 </details>
 
@@ -1042,7 +1042,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-<details><summary><code>ChargeIntentRequests.kt</code> — 40 symbols</summary>
+<details><summary><code>ChargeIntentRequests.kt</code> — 46 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt)
 
@@ -1065,29 +1065,35 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `ChargeIntentsRequests.CreateChargeIntentRequest.fraudSignals` | var | `var fraudSignals: FraudSignals? = null,` | [46](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L46) |
 | `ChargeIntentsRequests.CreateChargeIntentRequest.useFrameSDK` | val | `val useFrameSDK: Boolean = true,` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L47) |
 | `ChargeIntentsRequests.CreateChargeIntentRequest.sonarSessionId` | var | `var sonarSessionId: String? = null` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L48) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest` | data class | `data class UpdateChargeIntentRequest (` | [62](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L62) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.amount` | val | `val amount: Int?,` | [63](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L63) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.currency` | val | `val currency: String?,` | [64](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L64) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.customer` | val | `val customer: String?,` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L65) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.description` | val | `val description: String?,` | [66](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L66) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.confirm` | val | `val confirm: Boolean?,` | [67](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L67) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.paymentMethod` | val | `val paymentMethod: String?,` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L68) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.receiptEmail` | val | `val receiptEmail: String?` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L69) |
-| `ChargeIntentsRequests.CaptureChargeIntentRequest` | data class | `data class CaptureChargeIntentRequest(` | [77](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L77) |
-| `ChargeIntentsRequests.CaptureChargeIntentRequest.amountCapturedCents` | val | `val amountCapturedCents: Int` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L78) |
-| `ChargeIntentsRequests.CustomerData` | data class | `data class CustomerData (` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L87) |
-| `ChargeIntentsRequests.CustomerData.name` | val | `val name: String,` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L88) |
-| `ChargeIntentsRequests.CustomerData.email` | val | `val email: String` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L89) |
-| `ChargeIntentsRequests.PaymentMethodData` | data class | `data class PaymentMethodData (` | [103](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L103) |
-| `ChargeIntentsRequests.PaymentMethodData.attach` | val | `val attach: Boolean?,` | [104](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L104) |
-| `ChargeIntentsRequests.PaymentMethodData.type` | val | `val type: PaymentMethodType,` | [105](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L105) |
-| `ChargeIntentsRequests.PaymentMethodData.cardNumber` | val | `val cardNumber: String,` | [106](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L106) |
-| `ChargeIntentsRequests.PaymentMethodData.expMonth` | val | `val expMonth: String,` | [107](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L107) |
-| `ChargeIntentsRequests.PaymentMethodData.expYear` | val | `val expYear: String,` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L108) |
-| `ChargeIntentsRequests.PaymentMethodData.cvc` | val | `val cvc: String,` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L109) |
-| `ChargeIntentsRequests.PaymentMethodData.billing` | val | `val billing: FrameObjects.BillingAddress?` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L110) |
-| `ChargeIntentsRequests.FraudSignals` | data class | `data class FraudSignals (` | [118](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L118) |
-| `ChargeIntentsRequests.FraudSignals.clientIp` | val | `val clientIp: String?` | [119](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L119) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest` | data class | `data class ConfirmChargeIntentRequest(` | [64](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L64) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.clientSecret` | val | `val clientSecret: String,` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L65) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.useFrameSDK` | val | `val useFrameSDK: Boolean = true,` | [66](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L66) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.expectedPaymentMethodType` | val | `val expectedPaymentMethodType: String = ,` | [67](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L67) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.paymentMethod` | val | `val paymentMethod: String? = null,` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L68) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.shipping` | val | `val shipping: FrameObjects.BillingAddress? = null` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L69) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest` | data class | `data class UpdateChargeIntentRequest (` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L83) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.amount` | val | `val amount: Int?,` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L84) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.currency` | val | `val currency: String?,` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L85) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.customer` | val | `val customer: String?,` | [86](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L86) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.description` | val | `val description: String?,` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L87) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.confirm` | val | `val confirm: Boolean?,` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L88) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.paymentMethod` | val | `val paymentMethod: String?,` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L89) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.receiptEmail` | val | `val receiptEmail: String?` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L90) |
+| `ChargeIntentsRequests.CaptureChargeIntentRequest` | data class | `data class CaptureChargeIntentRequest(` | [98](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L98) |
+| `ChargeIntentsRequests.CaptureChargeIntentRequest.amountCapturedCents` | val | `val amountCapturedCents: Int` | [99](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L99) |
+| `ChargeIntentsRequests.CustomerData` | data class | `data class CustomerData (` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L108) |
+| `ChargeIntentsRequests.CustomerData.name` | val | `val name: String,` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L109) |
+| `ChargeIntentsRequests.CustomerData.email` | val | `val email: String` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L110) |
+| `ChargeIntentsRequests.PaymentMethodData` | data class | `data class PaymentMethodData (` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L124) |
+| `ChargeIntentsRequests.PaymentMethodData.attach` | val | `val attach: Boolean?,` | [125](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L125) |
+| `ChargeIntentsRequests.PaymentMethodData.type` | val | `val type: PaymentMethodType,` | [126](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L126) |
+| `ChargeIntentsRequests.PaymentMethodData.cardNumber` | val | `val cardNumber: String,` | [127](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L127) |
+| `ChargeIntentsRequests.PaymentMethodData.expMonth` | val | `val expMonth: String,` | [128](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L128) |
+| `ChargeIntentsRequests.PaymentMethodData.expYear` | val | `val expYear: String,` | [129](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L129) |
+| `ChargeIntentsRequests.PaymentMethodData.cvc` | val | `val cvc: String,` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L130) |
+| `ChargeIntentsRequests.PaymentMethodData.billing` | val | `val billing: FrameObjects.BillingAddress?` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L131) |
+| `ChargeIntentsRequests.FraudSignals` | data class | `data class FraudSignals (` | [139](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L139) |
+| `ChargeIntentsRequests.FraudSignals.clientIp` | val | `val clientIp: String?` | [140](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L140) |
 
 </details>
 
