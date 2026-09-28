@@ -3011,7 +3011,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `SelectableOutlinedField` | fun | `fun SelectableOutlinedField( value: String, prompt: String, onClick: () -> Unit, modifier: Modifier = Modifier, error: String? = null, )` | [27](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/SelectableOutlinedField.kt#L27) |
+| `SelectableOutlinedField` | fun | `fun SelectableOutlinedField( value: String, prompt: String, onClick: () -> Unit, modifier: Modifier = Modifier, error: String? = null, )` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/SelectableOutlinedField.kt#L32) |
 
 </details>
 
@@ -3767,7 +3767,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `SpinnerDatePickerDialog` | fun | `fun SpinnerDatePickerDialog( initialMillis: Long, onDismiss: () -> Unit, onDateSelected: (Long) -> Unit, )` | [15](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/SpinnerDatePickerDialog.kt#L15) |
+| `SpinnerDatePickerDialog` | fun | `fun SpinnerDatePickerDialog( initialMillis: Long, onDismiss: () -> Unit, onDateSelected: (Long) -> Unit, )` | [18](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/SpinnerDatePickerDialog.kt#L18) |
 
 </details>
 
@@ -3865,7 +3865,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [53](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L53) |
+| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [54](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L54) |
 
 </details>
 
