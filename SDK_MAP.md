@@ -43,22 +43,22 @@ reverse is never true.
 
 ## Public API inventory
 
-**2059 public symbols** across 179 files in 3 modules.
+**2069 public symbols** across 182 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
 | Classes | 32 |
-| Data classes | 266 |
+| Data classes | 267 |
 | Sealed classes | 37 |
 | Enums | 41 |
 | Interfaces | 4 |
 | Objects | 130 |
 | Type aliases | 3 |
-| Functions | 355 |
-| Properties (val) | 1008 |
+| Functions | 358 |
+| Properties (val) | 1014 |
 | Properties (var) | 20 |
 | Enum entries | 163 |
-| **Total** | **2059** |
+| **Total** | **2069** |
 
 ### `FrameSDK` — 1648 public symbols
 
@@ -2763,7 +2763,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-### `FrameSDK-UI` — 185 public symbols
+### `FrameSDK-UI` — 194 public symbols
 
 Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, shared reusable components (payment method rows, card brand art).
 
@@ -2864,7 +2864,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L40) |
+| `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L50) |
 
 </details>
 
@@ -2930,7 +2930,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-#### com/framepayments/framesdk_ui/reusable (13)
+#### com/framepayments/framesdk_ui/reusable (14)
 
 <details><summary><code>AddressAutocompleteField.kt</code> — 1 symbols</summary>
 
@@ -2948,7 +2948,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `BillingAddressDetailView` | fun | `fun BillingAddressDetailView( viewModel: BillingAddressFieldVM, headerTitle: String = , showHeader: Boolean = true )` | [44](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/BillingAddressDetailView.kt#L44) |
+| `BillingAddressDetailView` | fun | `fun BillingAddressDetailView( viewModel: BillingAddressFieldVM, headerTitle: String = , showHeader: Boolean = true )` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/BillingAddressDetailView.kt#L37) |
 
 </details>
 
@@ -3001,7 +3001,17 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `PhoneNumberTextField` | fun | `fun PhoneNumberTextField( value: String, onValueChange: (String) -> Unit, prompt: String, regionCode: String, error: String?, modifier: Modifier = Modifier, co…` | [103](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/PhoneNumberTextField.kt#L103) |
+| `PhoneNumberTextField` | fun | `fun PhoneNumberTextField( value: String, onValueChange: (String) -> Unit, prompt: String, regionCode: String, error: String?, modifier: Modifier = Modifier, co…` | [105](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/PhoneNumberTextField.kt#L105) |
+
+</details>
+
+<details><summary><code>SelectableOutlinedField.kt</code> — 1 symbols</summary>
+
+[`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/SelectableOutlinedField.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/SelectableOutlinedField.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `SelectableOutlinedField` | fun | `fun SelectableOutlinedField( value: String, prompt: String, onClick: () -> Unit, modifier: Modifier = Modifier, error: String? = null, )` | [27](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/SelectableOutlinedField.kt#L27) |
 
 </details>
 
@@ -3031,7 +3041,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `ValidatedTextField` | fun | `fun ValidatedTextField( value: String, onValueChange: (String) -> Unit, prompt: String, error: String?, modifier: Modifier = Modifier, keyboardType: KeyboardTy…` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/ValidatedTextField.kt#L37) |
+| `ValidatedTextField` | fun | `fun ValidatedTextField( value: String, onValueChange: (String) -> Unit, prompt: String, error: String?, modifier: Modifier = Modifier, keyboardType: KeyboardTy…` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/ValidatedTextField.kt#L30) |
 
 </details>
 
@@ -3051,54 +3061,57 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-#### com/framepayments/framesdk_ui/theme (45)
+#### com/framepayments/framesdk_ui/theme (53)
 
-<details><summary><code>FrameColors.kt</code> — 20 symbols</summary>
+<details><summary><code>FrameColors.kt</code> — 21 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameColors` | data class | `data class FrameColors(` | [36](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L36) |
-| `FrameColors.primaryButton` | val | `val primaryButton: Color,` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L37) |
-| `FrameColors.primaryButtonText` | val | `val primaryButtonText: Color,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L38) |
-| `FrameColors.secondaryButton` | val | `val secondaryButton: Color,` | [39](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L39) |
-| `FrameColors.secondaryButtonText` | val | `val secondaryButtonText: Color,` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L40) |
-| `FrameColors.disabledButton` | val | `val disabledButton: Color,` | [41](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L41) |
-| `FrameColors.disabledButtonStroke` | val | `val disabledButtonStroke: Color,` | [42](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L42) |
-| `FrameColors.disabledButtonText` | val | `val disabledButtonText: Color,` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L43) |
-| `FrameColors.surface` | val | `val surface: Color,` | [44](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L44) |
-| `FrameColors.surfaceStroke` | val | `val surfaceStroke: Color,` | [45](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L45) |
-| `FrameColors.textPrimary` | val | `val textPrimary: Color,` | [46](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L46) |
-| `FrameColors.textSecondary` | val | `val textSecondary: Color,` | [47](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L47) |
-| `FrameColors.error` | val | `val error: Color,` | [48](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L48) |
-| `FrameColors.toastBackground` | val | `val toastBackground: Color,` | [49](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L49) |
-| `FrameColors.toastText` | val | `val toastText: Color,` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L50) |
-| `FrameColors.onboardingHeaderBackground` | val | `val onboardingHeaderBackground: Color,` | [51](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L51) |
-| `FrameColors.onboardingProgressFilledOnBrand` | val | `val onboardingProgressFilledOnBrand: Color,` | [52](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L52) |
-| `FrameColors.onboardingProgressEmptyOnBrand` | val | `val onboardingProgressEmptyOnBrand: Color,` | [53](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L53) |
-| `defaults` | fun | `fun defaults(context: Context): FrameColors` | [66](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L66) |
-| `defaults` | fun | `fun defaults(): FrameColors = defaults(LocalContext.current)` | [95](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L95) |
+| `FrameColors` | data class | `data class FrameColors(` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L37) |
+| `FrameColors.primaryButton` | val | `val primaryButton: Color,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L38) |
+| `FrameColors.primaryButtonText` | val | `val primaryButtonText: Color,` | [39](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L39) |
+| `FrameColors.secondaryButton` | val | `val secondaryButton: Color,` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L40) |
+| `FrameColors.secondaryButtonText` | val | `val secondaryButtonText: Color,` | [41](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L41) |
+| `FrameColors.disabledButton` | val | `val disabledButton: Color,` | [42](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L42) |
+| `FrameColors.disabledButtonStroke` | val | `val disabledButtonStroke: Color,` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L43) |
+| `FrameColors.disabledButtonText` | val | `val disabledButtonText: Color,` | [44](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L44) |
+| `FrameColors.surface` | val | `val surface: Color,` | [45](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L45) |
+| `FrameColors.surfaceStroke` | val | `val surfaceStroke: Color,` | [46](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L46) |
+| `FrameColors.fieldFocusStroke` | val | `val fieldFocusStroke: Color,` | [47](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L47) |
+| `FrameColors.textPrimary` | val | `val textPrimary: Color,` | [48](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L48) |
+| `FrameColors.textSecondary` | val | `val textSecondary: Color,` | [49](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L49) |
+| `FrameColors.error` | val | `val error: Color,` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L50) |
+| `FrameColors.toastBackground` | val | `val toastBackground: Color,` | [51](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L51) |
+| `FrameColors.toastText` | val | `val toastText: Color,` | [52](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L52) |
+| `FrameColors.onboardingHeaderBackground` | val | `val onboardingHeaderBackground: Color,` | [53](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L53) |
+| `FrameColors.onboardingProgressFilledOnBrand` | val | `val onboardingProgressFilledOnBrand: Color,` | [54](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L54) |
+| `FrameColors.onboardingProgressEmptyOnBrand` | val | `val onboardingProgressEmptyOnBrand: Color,` | [55](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L55) |
+| `defaults` | fun | `fun defaults(context: Context): FrameColors` | [68](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L68) |
+| `defaults` | fun | `fun defaults(): FrameColors = defaults(LocalContext.current)` | [98](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L98) |
 
 </details>
 
-<details><summary><code>FrameFonts.kt</code> — 11 symbols</summary>
+<details><summary><code>FrameFonts.kt</code> — 13 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameFonts` | data class | `data class FrameFonts(` | [27](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L27) |
-| `FrameFonts.title` | val | `val title: TextStyle,` | [28](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L28) |
-| `FrameFonts.heading` | val | `val heading: TextStyle,` | [29](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L29) |
-| `FrameFonts.headline` | val | `val headline: TextStyle,` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L30) |
-| `FrameFonts.body` | val | `val body: TextStyle,` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L31) |
-| `FrameFonts.bodySmall` | val | `val bodySmall: TextStyle,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L32) |
-| `FrameFonts.label` | val | `val label: TextStyle,` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L33) |
-| `FrameFonts.caption` | val | `val caption: TextStyle,` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L34) |
-| `FrameFonts.button` | val | `val button: TextStyle,` | [35](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L35) |
-| `defaults` | fun | `fun defaults(): FrameFonts = fromTypography(MaterialTheme.typography)` | [48](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L48) |
-| `defaultsForViews` | fun | `fun defaultsForViews(): FrameFonts = fromTypography(Typography())` | [54](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L54) |
+| `FrameFonts` | data class | `data class FrameFonts(` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L30) |
+| `FrameFonts.title` | val | `val title: TextStyle,` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L31) |
+| `FrameFonts.heading` | val | `val heading: TextStyle,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L32) |
+| `FrameFonts.headline` | val | `val headline: TextStyle,` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L33) |
+| `FrameFonts.body` | val | `val body: TextStyle,` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L34) |
+| `FrameFonts.bodySmall` | val | `val bodySmall: TextStyle,` | [35](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L35) |
+| `FrameFonts.label` | val | `val label: TextStyle,` | [36](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L36) |
+| `FrameFonts.caption` | val | `val caption: TextStyle,` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L37) |
+| `FrameFonts.button` | val | `val button: TextStyle,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L38) |
+| `Soehne` | val | `val Soehne: FontFamily = FontFamily(` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L43) |
+| `defaults` | fun | `fun defaults(): FrameFonts = soehneDefaults()` | [53](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L53) |
+| `defaultsForViews` | fun | `fun defaultsForViews(): FrameFonts = soehneDefaults()` | [56](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L56) |
+| `fromTypography` | fun | `fun fromTypography(typography: Typography): FrameFonts = FrameFonts( title = typography.headlineLarge.copy(fontWeight = FontWeight.Bold), heading = typography.…` | [102](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L102) |
 
 </details>
 
@@ -3115,20 +3128,34 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-<details><summary><code>FrameTheme.kt</code> — 8 symbols</summary>
+<details><summary><code>FrameSpacing.kt</code> — 4 symbols</summary>
+
+[`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `FrameSpacing` | data class | `data class FrameSpacing(` | [15](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt#L15) |
+| `FrameSpacing.sectionTop` | val | `val sectionTop: Dp = 16.dp,` | [16](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt#L16) |
+| `FrameSpacing.sectionGap` | val | `val sectionGap: Dp = 12.dp,` | [17](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt#L17) |
+| `FrameSpacing.formBlock` | val | `val formBlock: Dp = 16.dp,` | [18](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt#L18) |
+
+</details>
+
+<details><summary><code>FrameTheme.kt</code> — 9 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameTheme` | data class | `data class FrameTheme(` | [21](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L21) |
-| `FrameTheme.colors` | val | `val colors: FrameColors,` | [22](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L22) |
-| `FrameTheme.fonts` | val | `val fonts: FrameFonts,` | [23](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L23) |
-| `FrameTheme.radii` | val | `val radii: FrameRadii,` | [24](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L24) |
-| `default` | fun | `fun default(): FrameTheme = FrameTheme( colors = FrameColors.defaults(), fonts = FrameFonts.defaults(), radii = FrameRadii(), )` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L34) |
-| `default` | fun | `fun default(context: Context): FrameTheme = FrameTheme( colors = FrameColors.defaults(context), fonts = FrameFonts.defaultsForViews(), radii = FrameRadii(), )` | [46](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L46) |
-| `LocalFrameTheme` | val | `val LocalFrameTheme = staticCompositionLocalOf<FrameTheme>` | [65](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L65) |
-| `FrameTheme` | fun | `fun FrameTheme( theme: FrameTheme = FrameTheme.default(), content: @Composable () -> Unit, )` | [80](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L80) |
+| `FrameTheme` | data class | `data class FrameTheme(` | [29](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L29) |
+| `FrameTheme.colors` | val | `val colors: FrameColors,` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L30) |
+| `FrameTheme.fonts` | val | `val fonts: FrameFonts,` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L31) |
+| `FrameTheme.radii` | val | `val radii: FrameRadii,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L32) |
+| `FrameTheme.spacing` | val | `val spacing: FrameSpacing = FrameSpacing(),` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L33) |
+| `default` | fun | `fun default(): FrameTheme = FrameTheme( colors = FrameColors.defaults(), fonts = FrameFonts.defaults(), radii = FrameRadii(), spacing = FrameSpacing(), )` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L43) |
+| `default` | fun | `fun default(context: Context): FrameTheme = FrameTheme( colors = FrameColors.defaults(context), fonts = FrameFonts.defaultsForViews(), radii = FrameRadii(), sp…` | [56](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L56) |
+| `LocalFrameTheme` | val | `val LocalFrameTheme = staticCompositionLocalOf<FrameTheme>` | [76](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L76) |
+| `FrameTheme` | fun | `fun FrameTheme( theme: FrameTheme = FrameTheme.default(), content: @Composable () -> Unit, )` | [92](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L92) |
 
 </details>
 
@@ -3292,7 +3319,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-### `FrameSDK-Onboarding` — 226 public symbols
+### `FrameSDK-Onboarding` — 227 public symbols
 
 Onboarding product: the capability-driven identity/payment verification flow, its screens, and the onboarding-only APIs (3DS, IDV, phone OTP, geocompliance, Plaid, Persona).
 
@@ -3346,7 +3373,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 | `OnboardingConfig.requiredCapabilities` | val | `val requiredCapabilities: List<Capabilities> = emptyList(),` | [250](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L250) |
 | `OnboardingConfig.skipInitNetwork` | val | `val skipInitNetwork: Boolean = false,` | [251](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L251) |
 | `OnboardingConfig.theme` | val | `val theme: FrameTheme? = null,` | [252](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L252) |
-| `OnboardingConfig.showIntroScreen` | val | `val showIntroScreen: Boolean = true,` | [253](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L253) |
+| `OnboardingConfig.showIntroScreen` | val | `val showIntroScreen: Boolean = false,` | [253](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L253) |
 | `OnboardingConfig.showCompletionScreen` | val | `val showCompletionScreen: Boolean = true,` | [254](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L254) |
 | `PaymentCardDraft` | data class | `data class PaymentCardDraft(` | [273](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L273) |
 | `PaymentCardDraft.cardNumber` | val | `val cardNumber: String = ,` | [274](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L274) |
@@ -3672,7 +3699,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 </details>
 
-#### com/framepayments/frameonboarding/reusable (7)
+#### com/framepayments/frameonboarding/reusable (8)
 
 <details><summary><code>BankAccountDetailView.kt</code> — 1 symbols</summary>
 
@@ -3690,7 +3717,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `CustomerInformationView` | fun | `fun CustomerInformationView( viewModel: CustomerInformationFieldVM, headerTitle: String = , showHeader: Boolean = true, showGovIdVerification: Boolean = false,…` | [44](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/CustomerInformationView.kt#L44) |
+| `CustomerInformationView` | fun | `fun CustomerInformationView( viewModel: CustomerInformationFieldVM, headerTitle: String = , showHeader: Boolean = true, showGovIdVerification: Boolean = false,…` | [58](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/CustomerInformationView.kt#L58) |
 
 </details>
 
@@ -3731,6 +3758,16 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
 | `PhoneCountryPickerSheet` | fun | `fun PhoneCountryPickerSheet( selected: PhoneCountrySelection, onSelected: (PhoneCountrySelection) -> Unit, onDismiss: () -> Unit )` | [45](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/PhoneCountryPickerSheet.kt#L45) |
+
+</details>
+
+<details><summary><code>SpinnerDatePickerDialog.kt</code> — 1 symbols</summary>
+
+[`FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/SpinnerDatePickerDialog.kt`](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/SpinnerDatePickerDialog.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `SpinnerDatePickerDialog` | fun | `fun SpinnerDatePickerDialog( initialMillis: Long, onDismiss: () -> Unit, onDateSelected: (Long) -> Unit, )` | [15](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/SpinnerDatePickerDialog.kt#L15) |
 
 </details>
 
@@ -3798,7 +3835,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [39](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L39) |
+| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L40) |
 
 </details>
 
@@ -3828,7 +3865,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [51](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L51) |
+| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [53](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L53) |
 
 </details>
 
