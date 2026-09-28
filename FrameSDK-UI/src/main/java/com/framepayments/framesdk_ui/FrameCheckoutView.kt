@@ -9,24 +9,34 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.core.content.ContextCompat
-import androidx.core.widget.doAfterTextChanged
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.FrameResult
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
-import androidx.compose.runtime.mutableStateOf
-import com.framepayments.framesdk_ui.reusable.BillingAddressDetailView
-import com.framepayments.framesdk_ui.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
-import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentMethodRowBinding
 import com.framepayments.framesdk_ui.databinding.ItemPaymentNewRowBinding
+import com.framepayments.framesdk_ui.databinding.ViewFrameCheckoutBinding
+import com.framepayments.framesdk_ui.reusable.BillingAddressDetailView
+import com.framepayments.framesdk_ui.reusable.ValidatedTextField
+import com.framepayments.framesdk_ui.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
 import com.framepayments.framesdk_ui.theme.FrameTheme
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
@@ -72,25 +82,65 @@ class FrameCheckoutView @JvmOverloads constructor(
      * transport-error snackbar. Call after construction; safe to call multiple times.
      */
     fun setTheme(theme: FrameTheme) {
+        // Held as Compose state so the hosted billing-address form re-themes on a later setTheme.
+        composeTheme = theme
+
         val payColor = theme.colors.primaryButton.toArgb()
         val payTextColor = theme.colors.primaryButtonText.toArgb()
         binding.payButton.setBackgroundColor(payColor)
         binding.payButton.setTextColor(payTextColor)
-        binding.encryptedCardInput.accentColor = theme.colors.primaryButton
+        binding.encryptedCardInput.setTheme(theme)
 
         toastBackgroundColor = theme.colors.toastBackground.toArgb()
         toastTextColor = theme.colors.toastText.toArgb()
 
-        // Held as Compose state so the hosted billing-address form re-themes on a later setTheme.
-        composeTheme.value = theme
+        applySectionHeaderStyle(binding.customerInformation, theme)
+        applySectionHeaderStyle(binding.cardInformation, theme)
+        applySectionHeaderStyle(binding.countryRegion, theme)
+        applyCheckoutTypefaces()
     }
 
-    private val composeTheme = mutableStateOf(FrameTheme.default(context))
+    private fun applySectionHeaderStyle(view: TextView, theme: FrameTheme) {
+        view.setTextColor(theme.colors.textSecondary.toArgb())
+        view.textSize = 17f
+    }
+
+    private fun applyCheckoutTypefaces() {
+        val regular = fontOrNull(R.font.soehne_buch)
+        val semiBold = fontOrNull(R.font.soehne_dreiviertelfett)
+        val bold = fontOrNull(R.font.soehne_fett)
+        regular?.let { binding.saveCard.typeface = it }
+        bold?.let { binding.title.typeface = it }
+        semiBold?.let { binding.customerInformation.typeface = it }
+        semiBold?.let { binding.cardInformation.typeface = it }
+        semiBold?.let { binding.countryRegion.typeface = it }
+        semiBold?.let { binding.payButton.typeface = it }
+    }
+
+    private fun fontOrNull(id: Int): android.graphics.Typeface? =
+        try {
+            // Prefer View.resources so library-module font ids resolve against this APK merge.
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                resources.getFont(id)
+            } else {
+                ResourcesCompat.getFont(context, id)
+            }
+        } catch (_: Exception) {
+            // Host/resources can fail to resolve library font ids at inflate time; keep system face.
+            null
+        }
+
+    private var composeTheme by mutableStateOf(FrameTheme.default(context))
+    private var customerNameState by mutableStateOf("")
+    private var customerEmailState by mutableStateOf("")
+    private var fieldErrorsState by mutableStateOf<Map<FieldKey, ValidationError>>(emptyMap())
 
     init {
         val activity = (context as? AppCompatActivity)
             ?: throw IllegalArgumentException("FrameCheckoutView must be used in an AppCompatActivity")
         viewModel = ViewModelProvider(activity)[FrameCheckoutViewModel::class.java]
+
+        setTheme(FrameTheme.default(context))
 
         binding.closeButton.setOnClickListener {
             if (!didFinish) {
@@ -168,23 +218,44 @@ class FrameCheckoutView @JvmOverloads constructor(
         viewModel.customerInfoRequired.observe(activity) { refreshCustomerInfoVisibility() }
         viewModel.didLoadAccountPaymentMethods.observe(activity) { refreshCustomerInfoVisibility() }
 
-        // Bindings for customer information — also clear errors as the user edits.
-        wireField(
-            edit = binding.customerName,
-            liveData = viewModel.customerName,
-            field = FieldKey.NAME,
-            validate = { Validators.validateName(it) },
-            activity = activity
-        )
-        wireField(
-            edit = binding.customerEmail,
-            liveData = viewModel.customerEmail,
-            field = FieldKey.EMAIL,
-            validate = { Validators.validateEmail(it) },
-            activity = activity
-        )
+        viewModel.customerName.observe(activity) { customerNameState = it.orEmpty() }
+        viewModel.customerEmail.observe(activity) { customerEmailState = it.orEmpty() }
+
+        binding.customerInfoCompose.setContent {
+            FrameTheme(theme = composeTheme) {
+                val theme = LocalFrameTheme.current
+                val nameError = fieldErrorsState[FieldKey.NAME]?.let { context.getString(it.messageRes) }
+                val emailError = fieldErrorsState[FieldKey.EMAIL]?.let { context.getString(it.messageRes) }
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    ValidatedTextField(
+                        value = customerNameState,
+                        onValueChange = {
+                            customerNameState = it
+                            viewModel.customerName.value = it
+                        },
+                        prompt = context.getString(R.string.customer_name),
+                        error = nameError,
+                        onClearError = { viewModel.clearError(FieldKey.NAME) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(theme.spacing.sectionTop))
+                    ValidatedTextField(
+                        value = customerEmailState,
+                        onValueChange = {
+                            customerEmailState = it
+                            viewModel.customerEmail.value = it
+                        },
+                        prompt = context.getString(R.string.customer_email),
+                        error = emailError,
+                        keyboardType = KeyboardType.Email,
+                        onClearError = { viewModel.clearError(FieldKey.EMAIL) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
         binding.billingAddressCompose.setContent {
-            FrameTheme(theme = composeTheme.value) {
+            FrameTheme(theme = composeTheme) {
                 BillingAddressDetailView(
                     viewModel = viewModel.billingAddress,
                     showHeader = false
@@ -198,37 +269,14 @@ class FrameCheckoutView @JvmOverloads constructor(
         }
 
         viewModel.fieldErrors.observe(activity) { errors ->
-            binding.customerNameLayout.error = errors[FieldKey.NAME]?.let { context.getString(it.messageRes) }
-            binding.customerEmailLayout.error = errors[FieldKey.EMAIL]?.let { context.getString(it.messageRes) }
-            val cardErr = errors[FieldKey.CARD]
+            fieldErrorsState = errors ?: emptyMap()
+            val cardErr = errors?.get(FieldKey.CARD)
             if (cardErr == null) {
                 binding.cardErrorText.visibility = View.GONE
                 binding.cardErrorText.text = ""
             } else {
                 binding.cardErrorText.visibility = View.VISIBLE
                 binding.cardErrorText.text = context.getString(cardErr.messageRes)
-            }
-        }
-    }
-
-    private fun wireField(
-        edit: com.google.android.material.textfield.TextInputEditText,
-        liveData: androidx.lifecycle.MutableLiveData<String>,
-        field: FieldKey?,
-        validate: ((String?) -> ValidationError?)?,
-        activity: AppCompatActivity
-    ) {
-        edit.doAfterTextChanged {
-            val value = it.toString()
-            liveData.value = value
-            field?.let { key -> viewModel.clearError(key) }
-        }
-        liveData.observe(activity) { edit.setTextIfDifferent(it) }
-        if (field != null && validate != null) {
-            edit.setOnFocusChangeListener { _, hasFocus ->
-                if (!hasFocus) {
-                    viewModel.setError(field, validate(edit.text?.toString()))
-                }
             }
         }
     }
@@ -350,9 +398,4 @@ class FrameCheckoutView @JvmOverloads constructor(
             }
         )
     }
-}
-
-private fun com.google.android.material.textfield.TextInputEditText.setTextIfDifferent(value: String?) {
-    val newText = value.orEmpty()
-    if (text?.toString() != newText) setText(newText)
 }

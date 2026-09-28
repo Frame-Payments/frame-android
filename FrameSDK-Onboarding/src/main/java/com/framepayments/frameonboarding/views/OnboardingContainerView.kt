@@ -3,6 +3,7 @@ package com.framepayments.frameonboarding.views
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,6 +35,7 @@ import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk_ui.reusable.refreshesSonarSession
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 /**
  * Root composable for the Frame onboarding flow.
@@ -177,7 +179,12 @@ fun OnboardingContainerView(
     }
 
     FrameTheme(theme = config.theme ?: FrameTheme.default()) {
+        val theme = LocalFrameTheme.current
+        // Zero content insets so the header teal sits flush under the sheet drag-handle
+        // (hosts should set ModalBottomSheet containerColor to onboardingHeaderBackground).
         Scaffold(
+            containerColor = theme.colors.surface,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             modifier = Modifier
                 .fillMaxSize()
                 .refreshesSonarSession(accountId = resolvedAccountId),
@@ -187,7 +194,6 @@ fun OnboardingContainerView(
                 ProgressIndicator(
                     currentStep = viewModel.navigationState.currentStep,
                     flowSegments = viewModel.flowSegments,
-                    onClose = viewModel::cancel,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Box(modifier = Modifier.weight(1f)) {
@@ -203,7 +209,6 @@ fun OnboardingContainerView(
         }
     }
 }
-
 /** Mirrors iOS `OnboardingFlow.accountEventScreenName`, which maps at segment granularity. */
 private fun OnboardingFlowSegment.accountEventScreen(): AccountEventScreen = when (this) {
     OnboardingFlowSegment.PERSONAL_INFORMATION -> AccountEventScreen.PERSONAL_INFORMATION

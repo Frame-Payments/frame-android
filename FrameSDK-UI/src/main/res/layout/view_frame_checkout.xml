@@ -3,11 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/frame_surface"
+    android:fillViewport="true">
 
     <LinearLayout
-        android:orientation="vertical" android:padding="16dp"
-        android:layout_width="match_parent" android:layout_height="wrap_content">
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/frame_surface">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -23,7 +28,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/checkout"
                 android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold"
+                android:textColor="@color/frame_text_primary"/>
 
             <ImageButton
                 android:id="@+id/closeButton"
@@ -38,9 +44,7 @@
 
         <View android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_weight="1"
             android:background="@color/frame_surface_stroke"/>
--
 
         <com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
             android:id="@+id/googlePayBtn"
@@ -64,7 +68,8 @@
                 android:background="@color/frame_surface_stroke"/>
             <TextView android:text="@string/or"
                 android:layout_height="20dp"
-                android:layout_width="15dp"/>
+                android:layout_width="15dp"
+                android:textColor="@color/frame_text_secondary"/>
             <View android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_weight="1"
@@ -77,7 +82,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingTop="16dp"
-            android:paddingBottom="16dp">
+            android:paddingBottom="0dp">
 
             <LinearLayout
                 android:id="@+id/paymentOptionsContainer"
@@ -93,51 +98,21 @@
             android:layout_height="wrap_content"
             android:visibility="gone">
 
-        <TextView
-            android:id="@+id/customer_information"
-            android:text="@string/customer_information"
-            android:textStyle="normal"
-            android:textSize="12sp"
-            android:layout_marginBottom="2dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_marginTop="8dp"
-        android:padding="0dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/border_background">
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/customerNameLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/customer_name"
-                android:hint="@string/customer_name"
-                android:textColorHint="@color/frame_text_secondary"
+            <TextView
+                android:id="@+id/customer_information"
+                android:text="@string/customer_information"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="@color/frame_text_secondary"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"
-                />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="wrap_content"/>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/customerEmailLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:boxBackgroundMode="outline">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/customer_email"
-                android:hint="@string/customer_email"
-                android:textColorHint="@color/frame_text_secondary"
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/customerInfoCompose"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/transparent"/>
-        </com.google.android.material.textfield.TextInputLayout>
-    </LinearLayout>
+                android:layout_height="wrap_content"/>
         </LinearLayout>
 
         <LinearLayout
@@ -147,57 +122,60 @@
             android:layout_height="wrap_content"
             android:visibility="gone">
 
-        <TextView
-            android:id="@+id/card_information"
-            android:text="@string/card_information"
-            android:textStyle="normal"
-            android:textSize="12sp"
-            android:layout_marginTop="18dp"
-            android:layout_marginBottom="2dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/card_information"
+                android:text="@string/card_information"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="@color/frame_text_secondary"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
 
-        <com.framepayments.framesdk_ui.EncryptedPaymentCardInput
-            android:id="@+id/encryptedCardInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            <com.framepayments.framesdk_ui.EncryptedPaymentCardInput
+                android:id="@+id/encryptedCardInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
 
-        <TextView
-            android:id="@+id/cardErrorText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="?attr/colorError"
-            android:layout_marginTop="2dp"
-            android:visibility="gone"/>
+            <TextView
+                android:id="@+id/cardErrorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="?attr/colorError"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"/>
 
-        <LinearLayout
-            android:id="@+id/customerAddressContainer"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            <LinearLayout
+                android:id="@+id/customerAddressContainer"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/country_region"
-            android:text="@string/customer_address"
-            android:textStyle="normal"
-            android:textSize="12sp"
-            android:layout_marginTop="18dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+                <TextView
+                    android:id="@+id/country_region"
+                    android:text="@string/customer_address"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/frame_text_secondary"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
-        <androidx.compose.ui.platform.ComposeView
-            android:id="@+id/billingAddressCompose"
-            android:layout_marginTop="8dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-        </LinearLayout>
-        <CheckBox
-            android:id="@+id/saveCard"
-            android:text="@string/save_for_future"
-            android:layout_marginTop="8dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/billingAddressCompose"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+            <CheckBox
+                android:id="@+id/saveCard"
+                android:text="@string/save_for_future"
+                android:layout_marginTop="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/frame_text_primary"/>
         </LinearLayout>
 
         <FrameLayout
@@ -210,7 +188,8 @@
                 android:layout_marginTop="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:textStyle="bold" android:textColor="@color/frame_primary_button_text"
+                android:textStyle="bold"
+                android:textColor="@color/frame_primary_button_text"
                 android:backgroundTint="@color/frame_primary_button"/>
 
             <ProgressBar

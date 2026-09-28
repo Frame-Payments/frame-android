@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
@@ -172,7 +174,13 @@ fun PhoneNumberTextField(
             OutlinedTextField(
                 value = fieldValue,
                 onValueChange = handleChange,
-                placeholder = { Text(prompt) },
+                placeholder = {
+                    Text(
+                        prompt,
+                        style = theme.fonts.body,
+                        color = theme.colors.textSecondary,
+                    )
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(64.dp)
@@ -180,7 +188,15 @@ fun PhoneNumberTextField(
                 singleLine = true,
                 isError = showError,
                 textStyle = theme.fonts.body,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                shape = RoundedCornerShape(theme.radii.medium),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = theme.colors.fieldFocusStroke,
+                    unfocusedBorderColor = theme.colors.surfaceStroke,
+                    errorBorderColor = theme.colors.error,
+                    focusedContainerColor = theme.colors.surface,
+                    unfocusedContainerColor = theme.colors.surface,
+                )
             )
         }
         if (showError) {

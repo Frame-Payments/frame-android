@@ -2038,7 +2038,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         if (!checkIfCustomerCanContinueWithPayoutMethod()) return
         if (retryUnelectedPayoutMethod()) return
         val draft = _bankAccountDraft.value
-        val b = _createdBillingAddress.value
         if (!beginAction()) return
         viewModelScope.launch {
             try {
@@ -2054,14 +2053,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 routingNumber = draft.routingNumber,
                 customer = null,
                 account = acctId,
-                billing = FrameObjects.BillingAddress(
-                    addressLine1 = b.addressLine1 ?: "",
-                    addressLine2 = b.addressLine2,
-                    city = b.city ?: "",
-                    state = b.state ?: "",
-                    postalCode = b.postalCode,
-                    country = b.country ?: "US"
-                )
+                billing = null
             )
             val (payoutMethod, achErr) = PaymentMethodsAPI.createACHPaymentMethod(achRequest)
             val payoutMethodId = payoutMethod?.id

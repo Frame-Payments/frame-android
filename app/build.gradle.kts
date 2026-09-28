@@ -60,4 +60,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.1")
     implementation(libs.plaid.link)
+    implementation(libs.persona.inquiry)
 }

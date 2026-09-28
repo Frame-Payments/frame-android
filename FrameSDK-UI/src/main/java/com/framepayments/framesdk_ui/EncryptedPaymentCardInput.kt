@@ -49,9 +49,11 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
 
     private var surfaceColor: Color = colorRes(R.color.frame_surface)
     private var surfaceStrokeColor: Color = colorRes(R.color.frame_surface_stroke)
+    private var fieldFocusStrokeColor: Color = colorRes(R.color.frame_field_focus_stroke)
     private var textPrimaryColor: Color = colorRes(R.color.frame_text_primary)
     private var textSecondaryColor: Color = colorRes(R.color.frame_text_secondary)
     private var cornerRadiusDp: Float = 10f
+    private var cardGroupFocused: Boolean = false
 
     /**
      * Accent color for the cursor / focus indicator / labels inside the Evervault input.
@@ -81,6 +83,7 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
     fun setTheme(theme: FrameTheme) {
         surfaceColor = theme.colors.surface
         surfaceStrokeColor = theme.colors.surfaceStroke
+        fieldFocusStrokeColor = theme.colors.fieldFocusStroke
         textPrimaryColor = theme.colors.textPrimary
         textSecondaryColor = theme.colors.textSecondary
         cornerRadiusDp = theme.radii.medium.value
@@ -93,9 +96,18 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
     init {
         applySurface()
         applyContent()
+        viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
+            val focused = newFocus != null && (newFocus === this || isViewDescendant(newFocus, this))
+            if (focused != cardGroupFocused) {
+                cardGroupFocused = focused
+                applySurface()
+            }
+        }
     }
 
     private fun applySurface() {
+        val strokeColor = if (cardGroupFocused) fieldFocusStrokeColor else surfaceStrokeColor
+        val strokeWidthDp = if (cardGroupFocused) 1.5f else 1f
         background = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = TypedValue.applyDimension(
@@ -106,11 +118,20 @@ class EncryptedPaymentCardInput @JvmOverloads constructor(
             setColor(surfaceColor.toArgb())
             setStroke(
                 TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, 1f, resources.displayMetrics
+                    TypedValue.COMPLEX_UNIT_DIP, strokeWidthDp, resources.displayMetrics
                 ).toInt(),
-                surfaceStrokeColor.toArgb()
+                strokeColor.toArgb()
             )
         }
+    }
+
+    private fun isViewDescendant(child: android.view.View, parent: android.view.View): Boolean {
+        var current: android.view.View? = child
+        while (current != null) {
+            if (current === parent) return true
+            current = current.parent as? android.view.View
+        }
+        return false
     }
 
     private fun applyContent() {

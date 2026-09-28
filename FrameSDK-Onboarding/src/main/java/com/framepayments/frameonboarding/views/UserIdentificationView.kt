@@ -2,6 +2,8 @@ package com.framepayments.frameonboarding.views
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -29,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import com.framepayments.frameonboarding.reusable.SpinnerDatePickerDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,14 +43,23 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
+import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
@@ -56,7 +69,6 @@ import com.framepayments.frameonboarding.reusable.CustomerInformationView
 import com.framepayments.frameonboarding.reusable.PhoneCountryPickerSheet
 import com.framepayments.framesdk_ui.reusable.PhoneNumberTextField
 import com.framepayments.frameonboarding.reusable.TermsOfServiceView
-import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.viewmodels.BillingAddressFieldVM
 import com.framepayments.framesdk_ui.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.CustomerInformationFieldVM
@@ -68,6 +80,11 @@ import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 import com.withpersona.sdk2.inquiry.Inquiry
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,6 +92,7 @@ internal fun UserIdentificationView(
     viewModel: FrameOnboardingViewModel,
     requiresDateOfBirth: Boolean = false,
     showTermsOfService: Boolean = false,
+    canGoBack: Boolean = true,
     onBack: () -> Unit
 ) {
     val subStep by viewModel.verifyIdSubStep.collectAsState()
@@ -188,26 +206,34 @@ internal fun UserIdentificationView(
     }
 
     Scaffold(
+        containerColor = LocalFrameTheme.current.colors.surface,
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        when (subStep) {
-                            VerifyIdSubStep.PhoneAuth -> if (requiresDateOfBirth) "Phone Number & DOB" else "Enter Your Phone Number"
-                            VerifyIdSubStep.VerifyPhone -> "Enter Verification Code"
-                            VerifyIdSubStep.InformationForm -> "Personal Information"
-                        }
+                        text = when (subStep) {
+                            VerifyIdSubStep.PhoneAuth -> "Verify your phone number with a code"
+                            VerifyIdSubStep.VerifyPhone -> "Enter your verification code"
+                            VerifyIdSubStep.InformationForm -> "Verify your personal info"
+                        },
+                        style = LocalFrameTheme.current.fonts.heading,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
-                    TextButton(
-                        onClick = {
-                            when (subStep) {
-                                VerifyIdSubStep.PhoneAuth -> onBack()
-                                VerifyIdSubStep.VerifyPhone, VerifyIdSubStep.InformationForm -> viewModel.goBackFromVerifyPhone()
+                    val showNavBack = canGoBack || subStep != VerifyIdSubStep.PhoneAuth
+                    if (showNavBack) {
+                        TextButton(
+                            onClick = {
+                                when (subStep) {
+                                    VerifyIdSubStep.PhoneAuth -> onBack()
+                                    VerifyIdSubStep.VerifyPhone, VerifyIdSubStep.InformationForm -> viewModel.goBackFromVerifyPhone()
+                                }
                             }
-                        }
-                    ) { Text("Back") }
+                        ) { Text("Back") }
+                    }
                 }
             )
         }
@@ -238,14 +264,20 @@ internal fun UserIdentificationView(
                                 .imePadding()
                         ) {
                             VerifyCardScreen(
-                                headerTitle = "Enter Verification Code",
-                                bodyText = "We've sent a verification code to your phone. Enter it below.",
+                                headerTitle = "Enter your verification code",
+                                bodyAnnotated = otpSubtitleAnnotated(
+                                    dialCode = phoneCountry.dialCode,
+                                    phoneNumber = phoneNumber
+                                ),
+                                codeExpirationHint = "Your code expires in 10 minutes",
                                 digitCount = 6,
-                                showResendCode = false,
+                                showResendCode = true,
+                                showChangePhoneNumber = true,
                                 embedInParentScaffold = true,
                                 emitsPhoneCodeEntry = verifyPhoneUi != VerifyPhoneUi.OtpForProve,
                                 onBack = { viewModel.goBackFromVerifyPhone() },
                                 onResendCode = { viewModel.resendVerificationCode() },
+                                onChangePhoneNumber = { viewModel.goBackFromVerifyPhone() },
                                 onContinue = { code ->
                                     when (verifyPhoneUi) {
                                         VerifyPhoneUi.OtpForProve -> viewModel.submitOtpToProveSdk(code)
@@ -262,7 +294,8 @@ internal fun UserIdentificationView(
                 Column(
                     modifier = Modifier
                         .padding(padding)
-                        .padding(24.dp)
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 8.dp, bottom = 24.dp)
                         .fillMaxWidth()
                         .imePadding()
                         .verticalScroll(rememberScrollState())
@@ -270,10 +303,11 @@ internal fun UserIdentificationView(
                     when (subStep) {
                         VerifyIdSubStep.PhoneAuth -> {
                             Text(
-                                text = "We'll send you a code — it helps us keep your account secure.",
-                                style = LocalFrameTheme.current.fonts.bodySmall
+                                text = "We'll text you a 6-digit code to confirm it's you.",
+                                style = LocalFrameTheme.current.fonts.bodySmall,
+                                color = LocalFrameTheme.current.colors.textSecondary
                             )
-                            Spacer(Modifier.height(20.dp))
+                            Spacer(Modifier.height(16.dp))
 
                             // Phone number header row with error
                             Row(
@@ -282,7 +316,7 @@ internal fun UserIdentificationView(
                                     .padding(bottom = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Phone Number", style = LocalFrameTheme.current.fonts.label)
+                                Text("Phone number", style = LocalFrameTheme.current.fonts.label)
                                 fieldErrors[OnboardingField.AUTH_PHONE]?.let { msg ->
                                     Text(
                                         text = msg,
@@ -297,7 +331,7 @@ internal fun UserIdentificationView(
                             ) {
                                 OutlinedButton(
                                     onClick = { showPhoneCountryPicker = true },
-                                    shape = RoundedCornerShape(LocalFrameTheme.current.radii.small),
+                                    shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium),
                                     border = BorderStroke(1.dp, LocalFrameTheme.current.colors.surfaceStroke),
                                     modifier = Modifier
                                         .height(64.dp)
@@ -344,51 +378,68 @@ internal fun UserIdentificationView(
                                         )
                                     }
                                 }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+                                var showDobPicker by rememberSaveable { mutableStateOf(false) }
+                                var selectedDobMillis by rememberSaveable {
+                                    mutableStateOf(
+                                        millisFromDobParts(dobYear, dobMonth, dobDay)
+                                            ?: defaultAdultDobMillis()
+                                    )
+                                }
+                                LaunchedEffect(dobYear, dobMonth, dobDay) {
+                                    millisFromDobParts(dobYear, dobMonth, dobDay)?.let {
+                                        if (it != selectedDobMillis) selectedDobMillis = it
+                                    }
+                                }
+                                LaunchedEffect(Unit) {
+                                    if (dobYear.isEmpty() || dobMonth.isEmpty() || dobDay.isEmpty()) {
+                                        applyDobMillisToViewModel(viewModel, selectedDobMillis)
+                                    }
+                                }
+                                val displayDate = remember(selectedDobMillis) {
+                                    formatDisplayDate(selectedDobMillis)
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 50.dp)
+                                        .border(
+                                            1.dp,
+                                            LocalFrameTheme.current.colors.surfaceStroke,
+                                            RoundedCornerShape(LocalFrameTheme.current.radii.medium)
+                                        )
+                                        .clickable { showDobPicker = true }
+                                        .padding(horizontal = 16.dp),
+                                    contentAlignment = Alignment.CenterStart
                                 ) {
-                                    ValidatedTextField(
-                                        value = dobMonth,
-                                        onValueChange = { viewModel.onDobMonthChanged(it) },
-                                        prompt = "MM",
-                                        error = fieldErrors[OnboardingField.AUTH_BIRTH_MONTH],
-                                        keyboardType = KeyboardType.Number,
-                                        characterLimit = 2,
-                                        compactError = true,
-                                        onClearError = { clearAuthDobErrors(viewModel) },
-                                        modifier = Modifier.weight(1f)
+                                    Text(
+                                        text = displayDate,
+                                        style = LocalFrameTheme.current.fonts.body,
+                                        color = LocalFrameTheme.current.colors.textPrimary
                                     )
-                                    ValidatedTextField(
-                                        value = dobDay,
-                                        onValueChange = { viewModel.onDobDayChanged(it) },
-                                        prompt = "DD",
-                                        error = fieldErrors[OnboardingField.AUTH_BIRTH_DAY],
-                                        keyboardType = KeyboardType.Number,
-                                        characterLimit = 2,
-                                        compactError = true,
-                                        onClearError = { clearAuthDobErrors(viewModel) },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    ValidatedTextField(
-                                        value = dobYear,
-                                        onValueChange = { viewModel.onDobYearChanged(it) },
-                                        prompt = "YYYY",
-                                        error = fieldErrors[OnboardingField.AUTH_BIRTH_YEAR],
-                                        keyboardType = KeyboardType.Number,
-                                        characterLimit = 4,
-                                        compactError = true,
-                                        onClearError = { clearAuthDobErrors(viewModel) },
-                                        modifier = Modifier.weight(2f)
+                                }
+                                if (showDobPicker) {
+                                    SpinnerDatePickerDialog(
+                                        initialMillis = selectedDobMillis,
+                                        onDismiss = { showDobPicker = false },
+                                        onDateSelected = { millis ->
+                                            selectedDobMillis = millis
+                                            applyDobMillisToViewModel(viewModel, millis)
+                                            clearAuthDobErrors(viewModel)
+                                            showDobPicker = false
+                                        }
                                     )
                                 }
                             }
                         }
 
                         VerifyIdSubStep.InformationForm -> {
+                            PersonalInfoIntro()
+                            Spacer(Modifier.height(16.dp))
                             CustomerInformationView(
                                 viewModel = customerInfoVM,
-                                showHeader = false,
+                                headerTitle = "Legal name",
+                                showHeader = true,
                                 showGovIdVerification = showGovIdVerification,
                                 identityVerifiedViaGovId = onboardingData.identityVerifiedViaGovId &&
                                     !onboardingData.correctedKycDetailsRequired,
@@ -403,7 +454,7 @@ internal fun UserIdentificationView(
 
                             BillingAddressDetailView(
                                 viewModel = personalAddressVM,
-                                headerTitle = "Current Address"
+                                headerTitle = "Home address"
                             )
                         }
 
@@ -496,6 +547,52 @@ private fun clearAuthDobErrors(vm: FrameOnboardingViewModel) {
     vm.clearError(OnboardingField.AUTH_BIRTH_YEAR)
 }
 
+private fun defaultAdultDobMillis(): Long {
+    val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+    cal.add(Calendar.YEAR, -18)
+    return startOfUtcDayMillis(cal.timeInMillis)
+}
+
+private fun millisFromDobParts(year: String, month: String, day: String): Long? {
+    val y = year.toIntOrNull() ?: return null
+    val m = month.toIntOrNull() ?: return null
+    val d = day.toIntOrNull() ?: return null
+    if (year.length != 4 || month.isEmpty() || day.isEmpty()) return null
+    val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+    cal.clear()
+    cal.set(Calendar.YEAR, y)
+    cal.set(Calendar.MONTH, m - 1)
+    cal.set(Calendar.DAY_OF_MONTH, d)
+    return cal.timeInMillis
+}
+
+private fun applyDobMillisToViewModel(viewModel: FrameOnboardingViewModel, millis: Long) {
+    val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        timeInMillis = millis
+    }
+    viewModel.onDobYearChanged(cal.get(Calendar.YEAR).toString())
+    viewModel.onDobMonthChanged(String.format(Locale.US, "%02d", cal.get(Calendar.MONTH) + 1))
+    viewModel.onDobDayChanged(String.format(Locale.US, "%02d", cal.get(Calendar.DAY_OF_MONTH)))
+}
+
+private fun formatDisplayDate(millis: Long): String {
+    val fmt = SimpleDateFormat("MMM d, yyyy", Locale.US).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    return fmt.format(Date(millis))
+}
+
+private fun startOfUtcDayMillis(millis: Long): Long {
+    val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        timeInMillis = millis
+    }
+    cal.set(Calendar.HOUR_OF_DAY, 0)
+    cal.set(Calendar.MINUTE, 0)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+    return cal.timeInMillis
+}
+
 private fun identityFromOnboarding(
     vm: FrameOnboardingViewModel
 ): CustomerIdentityRequests.CreateCustomerIdentityRequest {
@@ -521,6 +618,59 @@ private fun addressFromOnboarding(vm: FrameOnboardingViewModel): FrameObjects.Bi
         addressLine1 = d.addressLine1,
         addressLine2 = d.addressLine2
     )
+}
+
+@Composable
+private fun PersonalInfoIntro() {
+    val theme = LocalFrameTheme.current
+    val uriHandler = LocalUriHandler.current
+    val privacyUrl = LegalConfiguration.privacyUrl
+    val annotated = buildAnnotatedString {
+        append(
+            "This information is collected to verify your identity, keep your account safe, and help meet legal regulatory requirements. For more information, review Frame's "
+        )
+        pushStringAnnotation(tag = "URL", annotation = privacyUrl)
+        withStyle(
+            SpanStyle(
+                color = theme.colors.textPrimary,
+                textDecoration = TextDecoration.Underline
+            )
+        ) {
+            append("Privacy Policy")
+        }
+        pop()
+        append(".")
+    }
+    ClickableText(
+        text = annotated,
+        style = theme.fonts.bodySmall.copy(color = theme.colors.textSecondary),
+        onClick = { offset ->
+            annotated.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                .firstOrNull()
+                ?.let { uriHandler.openUri(it.item) }
+        }
+    )
+}
+
+@Composable
+private fun otpSubtitleAnnotated(dialCode: String, phoneNumber: String): AnnotatedString {
+    val theme = LocalFrameTheme.current
+    // Keep AsYouTypeFormatter grouping (e.g. "(200) 100-1695"); only trim ends.
+    val formatted = phoneNumber.trim()
+    val display = listOf(dialCode, formatted)
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+    return buildAnnotatedString {
+        append("We texted a 6-digit code to ")
+        withStyle(
+            SpanStyle(
+                color = theme.colors.textPrimary,
+                fontWeight = FontWeight.Bold
+            )
+        ) {
+            append(display)
+        }
+    }
 }
 
 @FrameThemePreviews

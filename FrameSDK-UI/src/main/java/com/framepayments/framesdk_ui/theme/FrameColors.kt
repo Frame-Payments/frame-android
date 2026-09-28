@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat
  * @property disabledButtonText Text color of disabled buttons.
  * @property surface Background color of card surfaces and input containers.
  * @property surfaceStroke Border color of card surfaces and input containers.
+ * @property fieldFocusStroke Border color for focused form fields (FrameOS primary green).
  * @property textPrimary Primary body and heading text color.
  * @property textSecondary Secondary/hint text color.
  * @property error Color used for validation error messages and indicators.
@@ -43,6 +44,7 @@ data class FrameColors(
     val disabledButtonText: Color,
     val surface: Color,
     val surfaceStroke: Color,
+    val fieldFocusStroke: Color,
     val textPrimary: Color,
     val textSecondary: Color,
     val error: Color,
@@ -75,6 +77,7 @@ data class FrameColors(
                 disabledButtonText = c(R.color.frame_disabled_button_text),
                 surface = c(R.color.frame_surface),
                 surfaceStroke = c(R.color.frame_surface_stroke),
+                fieldFocusStroke = c(R.color.frame_field_focus_stroke),
                 textPrimary = c(R.color.frame_text_primary),
                 textSecondary = c(R.color.frame_text_secondary),
                 error = c(R.color.frame_error),

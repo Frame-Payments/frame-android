@@ -3,7 +3,6 @@ package com.framepayments.frameonboarding.views
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,14 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -31,17 +28,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.PaymentMethodSummary
+import com.framepayments.frameonboarding.reusable.MethodOptionRow
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.framesdk_ui.reusable.cardBrandIcon
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 
@@ -65,6 +61,7 @@ internal fun SelectPaymentMethodScreen(
     }
 
     Scaffold(
+        containerColor = LocalFrameTheme.current.colors.surface,
         topBar = {
             TopAppBar(
                 title = { Text("Select A Payment Method") },
@@ -113,12 +110,12 @@ internal fun SelectPaymentMethodScreen(
                     }
                 }
 
-                Text("Add Payment Method", style = LocalFrameTheme.current.fonts.label)
+                Text("Add a payment method", style = LocalFrameTheme.current.fonts.label)
                 Spacer(Modifier.height(8.dp))
 
-                AddPaymentMethodRow(
-                    title = "Debit/Credit Card",
-                    subtitle = "Add New Payment Method",
+                MethodOptionRow(
+                    iconRes = R.drawable.ic_add_card,
+                    title = "Add a card",
                     onClick = {
                         AccountEventEmitter.emit(
                             AccountEventName.ADD_PAYMENT_METHOD_STARTED,
@@ -168,58 +165,6 @@ private fun SavedPaymentMethodRow(
                 Text(text = "Exp. ${pm.exp}", style = LocalFrameTheme.current.fonts.bodySmall)
             }
             RadioButton(selected = selected, onClick = onClick)
-        }
-    }
-}
-
-@Composable
-private fun AddPaymentMethodRow(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        tonalElevation = 0.dp,
-        shape = RoundedCornerShape(LocalFrameTheme.current.radii.medium)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(40.dp),
-                color = LocalFrameTheme.current.colors.primaryButton,
-                shape = RoundedCornerShape(LocalFrameTheme.current.radii.small)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        tint = LocalFrameTheme.current.colors.primaryButtonText
-                    )
-                }
-            }
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(text = title, style = LocalFrameTheme.current.fonts.body)
-                Text(
-                    text = subtitle,
-                    style = LocalFrameTheme.current.fonts.bodySmall,
-                    color = LocalFrameTheme.current.colors.textPrimary.copy(alpha = 0.6f)
-                )
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null
-            )
         }
     }
 }

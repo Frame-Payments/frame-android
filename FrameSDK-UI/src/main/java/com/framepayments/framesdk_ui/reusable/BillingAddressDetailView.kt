@@ -1,6 +1,5 @@
 package com.framepayments.framesdk_ui.reusable
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,10 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,11 +18,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.unit.dp
-import com.framepayments.framesdk_ui.reusable.AddressAutocompleteField
-import com.framepayments.framesdk_ui.reusable.ValidatedTextField
-import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk.AddressSubregions
 import com.framepayments.framesdk_ui.classes.AddressFormat
+import com.framepayments.framesdk_ui.viewmodels.AvailableCountries
 import com.framepayments.framesdk_ui.viewmodels.BillingAddressFieldVM
 import com.framepayments.framesdk_ui.viewmodels.BillingAddressMode
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
@@ -61,16 +54,19 @@ fun BillingAddressDetailView(
         if (showHeader) {
             Text(
                 text = headerTitle,
-                style = theme.fonts.label,
-                color = theme.colors.textPrimary,
-                modifier = Modifier.padding(bottom = 8.dp)
+                style = theme.fonts.headline,
+                color = theme.colors.textSecondary,
+                modifier = Modifier.padding(
+                    top = theme.spacing.sectionTop,
+                    bottom = theme.spacing.sectionTop,
+                )
             )
         }
 
         AddressAutocompleteField(
             value = address.addressLine1.orEmpty(),
             onValueChange = { v -> viewModel.updateAddress { it.copy(addressLine1 = v) } },
-            prompt = "Address Line 1",
+            prompt = "Street address",
             error = errors[BillingAddressFieldVM.Field.LINE1],
             countryCode = countryCode,
             inlineError = true,
@@ -85,7 +81,7 @@ fun BillingAddressDetailView(
             onValueChange = { v ->
                 viewModel.updateAddress { it.copy(addressLine2 = v.ifBlank { null }) }
             },
-            prompt = "Address Line 2",
+            prompt = "Address line 2",
             error = null,
             inlineError = true,
             autofillContentType = ContentType.AddressAuxiliaryDetails
@@ -114,33 +110,14 @@ fun BillingAddressDetailView(
                         AddressSubregions.subregion(
                             forCode = address.state.orEmpty(),
                             countryCode = countryCode
-                        )?.name ?: format.stateLabel
+                        )?.name.orEmpty()
                     }
-                    OutlinedTextField(
+                    SelectableOutlinedField(
                         value = subregionName,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(format.stateLabel) },
-                        isError = errors.containsKey(BillingAddressFieldVM.Field.STATE),
-                        textStyle = theme.fonts.body,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showSubregionPicker = true },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Expand"
-                            )
-                        }
+                        prompt = format.stateLabel,
+                        error = errors[BillingAddressFieldVM.Field.STATE],
+                        onClick = { showSubregionPicker = true },
                     )
-                    errors[BillingAddressFieldVM.Field.STATE]?.let { msg ->
-                        Text(
-                            text = msg,
-                            style = theme.fonts.caption,
-                            color = theme.colors.error,
-                            modifier = Modifier.padding(top = 4.dp, start = 16.dp)
-                        )
-                    }
                 } else {
                     ValidatedTextField(
                         value = address.state.orEmpty(),
@@ -187,32 +164,12 @@ fun BillingAddressDetailView(
                     ?.displayName
                     ?: countryCode
             }
-            OutlinedTextField(
+            SelectableOutlinedField(
                 value = displayName,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Country") },
-                isError = errors.containsKey(BillingAddressFieldVM.Field.COUNTRY),
-                textStyle = theme.fonts.body,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showCountryPicker = true },
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Expand"
-                    )
-                }
+                prompt = "Country",
+                error = errors[BillingAddressFieldVM.Field.COUNTRY],
+                onClick = { showCountryPicker = true },
             )
-            errors[BillingAddressFieldVM.Field.COUNTRY]?.let { msg ->
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = msg,
-                    style = theme.fonts.caption,
-                    color = theme.colors.error,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
-            }
         }
     }
 

@@ -38,6 +38,7 @@ internal fun OnboardingScreenRouter(
                 // broader surface so every create/update path can attach an acceptance token
                 // (decision: Android is the correct one for now — M18).
                 showTermsOfService = true,
+                canGoBack = viewModel.orderedSteps.indexOf(OnboardingStep.VerifyIdentification) > 0,
                 onBack = { viewModel.moveBack() }
             )
         }

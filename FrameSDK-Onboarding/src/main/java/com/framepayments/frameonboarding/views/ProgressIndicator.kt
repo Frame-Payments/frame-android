@@ -8,13 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,16 +28,12 @@ import com.framepayments.framesdk_ui.theme.LocalFrameTheme
  * current segment are "filled". Capsule colors swap in dark mode to keep contrast on the
  * brand-colored background, matching iOS `progressIndicatorColor(filled:)` behavior.
  *
- * Also carries a close button, which iOS does not need: it presents onboarding in a `.sheet`
- * and relies on the sheet's own swipe-to-dismiss chrome to let the customer leave early.
- * Android has no equivalent implicit gesture for a full-screen composable, so [onClose]
- * gives the flow an explicit way out instead of trapping the customer until completion.
+ * Dismissal is left to the host sheet (swipe-to-dismiss); there is no close control here.
  */
 @Composable
 internal fun ProgressIndicator(
     currentStep: OnboardingStep,
     flowSegments: List<OnboardingFlowSegment>,
-    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val theme = LocalFrameTheme.current
@@ -60,26 +51,13 @@ internal fun ProgressIndicator(
         else -> theme.colors.surfaceStroke
     }
 
-    val closeIconColor = if (isDark) theme.colors.onboardingProgressFilledOnBrand else theme.colors.textPrimary
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp)
+            .height(72.dp)
             .background(theme.colors.onboardingHeaderBackground),
         contentAlignment = Alignment.BottomCenter
     ) {
-        IconButton(
-            onClick = onClose,
-            modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-                tint = closeIconColor,
-                modifier = Modifier.size(20.dp)
-            )
-        }
         if (showCapsules) {
             Row(
                 modifier = Modifier
@@ -121,8 +99,7 @@ private fun ProgressIndicatorPreview() {
                 OnboardingFlowSegment.PERSONAL_INFORMATION,
                 OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD,
                 OnboardingFlowSegment.VERIFICATION_SUBMITTED
-            ),
-            onClose = {}
+            )
         )
     }
 }

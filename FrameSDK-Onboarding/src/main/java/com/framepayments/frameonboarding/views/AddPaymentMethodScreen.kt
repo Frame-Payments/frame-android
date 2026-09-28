@@ -60,7 +60,9 @@ import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 @Composable
 internal fun AddPaymentMethodScreen(
     viewModel: FrameOnboardingViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    /** When false (standalone add-payment), hide Google Pay and show card entry only. */
+    showGooglePay: Boolean = true,
 ) {
     val paymentCard by viewModel.paymentCardData.collectAsState()
     val card by viewModel.paymentCardDraft.collectAsState()
@@ -109,6 +111,7 @@ internal fun AddPaymentMethodScreen(
     }
 
     Scaffold(
+        containerColor = LocalFrameTheme.current.colors.surface,
         topBar = {
             TopAppBar(
                 title = { Text("Add New Payment Method") },
@@ -134,11 +137,9 @@ internal fun AddPaymentMethodScreen(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            // Google Pay wallet attach button. The button gates its own visibility internally
-            // via Google's `isReadyToPay` check + Frame's wallet config + the merchant ID stored
-            // on `FrameNetworking` (set once at SDK init). If the merchant ID isn't configured,
-            // the button stays hidden — no host-app opt-in required here.
-            if (!isPreview && !onlyAddress) {
+            // Google Pay only during onboarding. Standalone add-payment (FrameAddPaymentMethodView)
+            // hides it — card + billing address only.
+            if (showGooglePay && !isPreview && !onlyAddress) {
                 AndroidView(
                     modifier = Modifier.fillMaxWidth(),
                     factory = { ctx -> FrameGooglePayButton(ctx) },

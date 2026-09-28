@@ -144,7 +144,7 @@ OnboardingContainerView(
 
 | Field | Default | Description |
 |---|---|---|
-| `showIntroScreen` | `true` | Show the "Verify Your Identity" welcome screen before the first step. Set to `false` to skip it and open directly on the first capability step. |
+| `showIntroScreen` | `false` | Show the "Verify Your Identity" welcome screen before the first step. Defaults to skipped; set to `true` to show it. |
 | `showCompletionScreen` | `true` | Show the "Verification Submitted" confirmation screen after the last step. Set to `false` to complete the flow immediately and finish without the final screen. |
 
 ```kotlin

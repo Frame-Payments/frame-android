@@ -15,9 +15,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +56,7 @@ import com.plaid.link.PlaidHandler
 import com.plaid.link.configuration.LinkTokenConfiguration
 import com.plaid.link.result.LinkExit
 import com.plaid.link.result.LinkSuccess
+import com.withpersona.sdk2.inquiry.Inquiry
 
 /** Which standalone entry-point view to launch, acting on [ContentViewModel.accountId]. */
 private enum class StandaloneView {
@@ -75,11 +77,12 @@ private fun FrameResult.toDemoMessage(title: String): DemoResultMessage = when (
 fun PlaygroundScreen(
     viewModel: ContentViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
     val onboardingMintState by viewModel.onboardingMintState.collectAsState()
     val accountId by viewModel.accountId.collectAsState()
     val plaidService by viewModel.plaidService.collectAsState()
-    val plaidMessage by viewModel.plaidMessage.collectAsState()
+    val demoAlert by viewModel.demoAlert.collectAsState()
+    val personaInquiryToLaunch by viewModel.personaInquiryToLaunch.collectAsState()
+    val isVerifyingIdentity by viewModel.isVerifyingIdentity.collectAsState()
     val plaidToken by remember(plaidService) {
         plaidService?.linkToken ?: kotlinx.coroutines.flow.MutableStateFlow(null)
     }.collectAsState()
@@ -89,12 +92,6 @@ fun PlaygroundScreen(
     val context = LocalContext.current
     val application = context.applicationContext as Application
     var showOnboarding by remember { mutableStateOf(false) }
-    var showCustomers by remember { mutableStateOf(false) }
-    var showPaymentMethods by remember { mutableStateOf(false) }
-    var showSubscriptions by remember { mutableStateOf(false) }
-    var showChargeIntents by remember { mutableStateOf(false) }
-    var showRefunds by remember { mutableStateOf(false) }
-    var showSubscriptionPhases by remember { mutableStateOf(false) }
     // Which standalone entry-point demo to launch, acting on viewModel.accountId.
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
@@ -123,6 +120,16 @@ fun PlaygroundScreen(
         }
     }
 
+    val personaLauncher = rememberLauncherForActivityResult(Inquiry.Contract(context)) { response ->
+        viewModel.onPersonaInquiryResult(response)
+    }
+
+    LaunchedEffect(personaInquiryToLaunch) {
+        personaInquiryToLaunch?.let { inquiry ->
+            viewModel.launchPendingPersonaInquiry(personaLauncher)
+        }
+    }
+
     LaunchedEffect(plaidToken) {
         plaidToken?.let { token ->
             plaidService?.clearLinkToken()
@@ -141,9 +148,17 @@ fun PlaygroundScreen(
             viewModel.clearOnboardingClientSecret()
         }
         val onboardingSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val customTheme = rememberDemoTheme()
         ModalBottomSheet(
             onDismissRequest = dismissOnboarding,
-            sheetState = onboardingSheetState
+            sheetState = onboardingSheetState,
+            // Match ProgressIndicator so teal continues through the drag-handle region.
+            containerColor = customTheme.colors.onboardingHeaderBackground,
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(
+                    color = Color.White.copy(alpha = 0.45f)
+                )
+            },
         ) {
             // Fills the sheet so the multi-step flow gets the height it expects; without it the
             // sheet wraps its content and each step resizes the sheet as the user advances.
@@ -156,7 +171,7 @@ fun PlaygroundScreen(
                 when (val mintState = onboardingMintState) {
                     is OnboardingMintState.Loading, OnboardingMintState.Idle -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(color = Color.White)
                         }
                     }
                     is OnboardingMintState.Error -> {
@@ -170,13 +185,15 @@ fun PlaygroundScreen(
                                 Text(
                                     text = "Couldn't start onboarding",
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = mintState.message,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
+                                    color = Color.White.copy(alpha = 0.85f)
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
                                 Button(onClick = { viewModel.mintOnboardingClientSecret(accountId) }) {
@@ -184,7 +201,7 @@ fun PlaygroundScreen(
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 TextButton(onClick = dismissOnboarding) {
-                                    Text("Cancel")
+                                    Text("Cancel", color = Color.White)
                                 }
                             }
                         }
@@ -193,7 +210,6 @@ fun PlaygroundScreen(
                         // Demo: show how a host app overrides the SDK theme. The override is shared
                         // with CartTestActivity / CheckoutActivity so onboarding, cart, and checkout
                         // all render with the same custom branding while running the playground.
-                        val customTheme = rememberDemoTheme()
                         OnboardingContainerView(
                             config = OnboardingConfig(
                                 // The clientSecret is scoped to the account it was minted for (see
@@ -319,7 +335,7 @@ fun PlaygroundScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Tap a button below to view your Frame data after you have entered your API key!",
+                text = "Tap a button below to exercise the SDK after you have entered your API key!",
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
@@ -357,6 +373,12 @@ fun PlaygroundScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
+            PlaygroundButton(text = "Checkout") {
+                val intent = Intent(context, CartTestActivity::class.java).apply {
+                    if (accountId.isNotBlank()) putExtra("accountId", accountId)
+                }
+                context.startActivity(intent)
+            }
             PlaygroundButton(text = "Show Onboarding Flow") {
                 // Demo/testing only: mint an onboarding-session token (onb_sess_…) from the
                 // configured sk_ before launching. In production your backend mints this token and
@@ -372,12 +394,11 @@ fun PlaygroundScreen(
                 enabled = !isConnectingPlaid,
                 onClick = { viewModel.startPlaidLink() }
             )
-            PlaygroundButton(text = "Checkout") {
-                val intent = Intent(context, CartTestActivity::class.java).apply {
-                    if (accountId.isNotBlank()) putExtra("accountId", accountId)
-                }
-                context.startActivity(intent)
-            }
+            PlaygroundButton(
+                text = if (isVerifyingIdentity) "Verifying Identity…" else "Test Identity Verification",
+                enabled = !isVerifyingIdentity,
+                onClick = { viewModel.startIdentityVerification() }
+            )
             PlaygroundButton(text = "Add Payment Method (standalone)") {
                 pendingStandaloneView = StandaloneView.ADD_PAYMENT_METHOD
             }
@@ -387,46 +408,16 @@ fun PlaygroundScreen(
             PlaygroundButton(text = "Select Payout Method (standalone)") {
                 pendingStandaloneView = StandaloneView.SELECT_PAYOUT_METHOD
             }
-            PlaygroundButton(
-                text = "View All Customers",
-                enabled = uiState.customers.isNotEmpty(),
-                onClick = { showCustomers = true }
-            )
-            PlaygroundButton(
-                text = "View All Payment Methods",
-                enabled = uiState.paymentMethods.isNotEmpty(),
-                onClick = { showPaymentMethods = true }
-            )
-            PlaygroundButton(
-                text = "View All Subscriptions",
-                enabled = uiState.subscriptions.isNotEmpty(),
-                onClick = { showSubscriptions = true }
-            )
-            PlaygroundButton(
-                text = "View All Charge Intents",
-                enabled = uiState.chargeIntents.isNotEmpty(),
-                onClick = { showChargeIntents = true }
-            )
-            PlaygroundButton(
-                text = "View All Refunds",
-                enabled = uiState.refunds.isNotEmpty(),
-                onClick = { showRefunds = true }
-            )
-            PlaygroundButton(
-                text = "View All Subscription Phases",
-                enabled = uiState.subscriptionPhases.isNotEmpty(),
-                onClick = { showSubscriptionPhases = true }
-            )
         }
     }
 
-    plaidMessage?.let { message ->
+    demoAlert?.let { message ->
         AlertDialog(
-            onDismissRequest = { viewModel.clearPlaidMessage() },
+            onDismissRequest = { viewModel.clearDemoAlert() },
             title = { Text(message.title) },
             text = { Text(message.body) },
             confirmButton = {
-                TextButton(onClick = { viewModel.clearPlaidMessage() }) { Text("OK") }
+                TextButton(onClick = { viewModel.clearDemoAlert() }) { Text("OK") }
             }
         )
     }
@@ -438,61 +429,6 @@ fun PlaygroundScreen(
             text = { Text(message.body) },
             confirmButton = {
                 TextButton(onClick = { demoResultMessage = null }) { Text("OK") }
-            }
-        )
-    }
-
-    if (showCustomers) {
-        ListBottomSheet(
-            title = "Customers",
-            onDismiss = { showCustomers = false },
-            items = uiState.customers.map { c ->
-                "Name: ${c.name}\nEmail: ${c.email ?: ""}\nPhone: ${c.phone ?: "Not Found"}"
-            }
-        )
-    }
-    if (showPaymentMethods) {
-        ListBottomSheet(
-            title = "Payment Methods",
-            onDismiss = { showPaymentMethods = false },
-            items = uiState.paymentMethods.map { pm ->
-                "Payment Method ID: ${pm.id}\nCustomer ID: ${pm.customerId ?: ""}"
-            }
-        )
-    }
-    if (showSubscriptions) {
-        ListBottomSheet(
-            title = "Subscriptions",
-            onDismiss = { showSubscriptions = false },
-            items = uiState.subscriptions.map { s ->
-                "Subscription ID: ${s.id}\nCustomer ID: ${s.customer ?: ""}"
-            }
-        )
-    }
-    if (showChargeIntents) {
-        ListBottomSheet(
-            title = "Charge Intents",
-            onDismiss = { showChargeIntents = false },
-            items = uiState.chargeIntents.map { ci ->
-                "Charge Intent ID: ${ci.id}\nCustomer ID: ${ci.customer?.id ?: ""}\nPayment Method Id: ${ci.paymentMethod?.id ?: ""}"
-            }
-        )
-    }
-    if (showRefunds) {
-        ListBottomSheet(
-            title = "Refunds",
-            onDismiss = { showRefunds = false },
-            items = uiState.refunds.map { r ->
-                "Refund ID: ${r.id}\nCharge Intent ID: ${r.chargeIntent ?: ""}"
-            }
-        )
-    }
-    if (showSubscriptionPhases) {
-        ListBottomSheet(
-            title = "Subscription Phases",
-            onDismiss = { showSubscriptionPhases = false },
-            items = uiState.subscriptionPhases.map { sp ->
-                "Subscription Phase ID: ${sp.id}\nPricing Type: ${sp.pricingType ?: ""}"
             }
         )
     }
@@ -516,45 +452,5 @@ private fun PlaygroundButton(
         )
     ) {
         Text(text = text, style = MaterialTheme.typography.titleSmall)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ListBottomSheet(
-    title: String,
-    onDismiss: () -> Unit,
-    items: List<String>
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 32.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            items.forEach { text ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                ) {
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
-            }
-        }
     }
 }
