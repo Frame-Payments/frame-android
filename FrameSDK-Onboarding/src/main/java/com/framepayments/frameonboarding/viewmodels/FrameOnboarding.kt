@@ -2035,7 +2035,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun submitNewPayoutMethod() {
-        if (!checkIfCustomerCanContinueWithPayoutMethod()) return
+        if (!checkIfCustomerCanContinueWithPayoutMethod()) {
+            reportUserError("Please enter valid bank account details.")
+            return
+        }
         if (retryUnelectedPayoutMethod()) return
         val draft = _bankAccountDraft.value
         if (!beginAction()) return
@@ -2354,19 +2357,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             _addPaymentUsesEvervaultCardUi.value
         )
 
-    /** Use from Compose with `remember(bank, billing)` so Continue tracks form state while typing. */
-    fun isPayoutMethodFormComplete(
-        bank: BankAccountDraft,
-        billing: FrameObjects.BillingAddress
-    ): Boolean {
-        val addrOk = !billing.addressLine1.isNullOrBlank() && !billing.city.isNullOrBlank() &&
-            !billing.state.isNullOrBlank() && billing.postalCode?.length == 5
-        if (!addrOk) return false
-        return bank.routingNumber.length >= 9 && bank.accountNumber.isNotEmpty() && bank.accountTypeLabel.isNotEmpty()
-    }
+    /** Use from Compose with `remember(bank)` so Continue tracks form state while typing. */
+    fun isPayoutMethodFormComplete(bank: BankAccountDraft): Boolean =
+        bank.routingNumber.length >= 9 &&
+            bank.accountNumber.isNotEmpty() &&
+            bank.accountTypeLabel.isNotEmpty()
 
     fun checkIfCustomerCanContinueWithPayoutMethod(): Boolean =
-        isPayoutMethodFormComplete(_bankAccountDraft.value, _createdBillingAddress.value)
+        isPayoutMethodFormComplete(_bankAccountDraft.value)
 
     @Suppress("unused")
     fun createNewBusinessAccount() {}

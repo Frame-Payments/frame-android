@@ -109,6 +109,13 @@ internal fun VerifyCardScreen(
                 .fillMaxSize()
                 .imePadding()
         ) {
+            if (embedInParentScaffold) {
+                Text(
+                    text = headerTitle,
+                    style = theme.fonts.heading,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
             if (bodyAnnotated != null) {
                 Text(
                     text = bodyAnnotated,

@@ -27,11 +27,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import com.framepayments.frameonboarding.reusable.SpinnerDatePickerDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -205,37 +205,38 @@ internal fun UserIdentificationView(
         }
     }
 
+    val theme = LocalFrameTheme.current
+    val pageTitle = when (subStep) {
+        VerifyIdSubStep.PhoneAuth -> "Verify your phone number with a code"
+        VerifyIdSubStep.VerifyPhone -> "Enter your verification code"
+        VerifyIdSubStep.InformationForm -> "Verify your personal info"
+    }
+    val showNavBack = canGoBack || subStep != VerifyIdSubStep.PhoneAuth
+
     Scaffold(
-        containerColor = LocalFrameTheme.current.colors.surface,
+        containerColor = theme.colors.surface,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = when (subStep) {
-                            VerifyIdSubStep.PhoneAuth -> "Verify your phone number with a code"
-                            VerifyIdSubStep.VerifyPhone -> "Enter your verification code"
-                            VerifyIdSubStep.InformationForm -> "Verify your personal info"
-                        },
-                        style = LocalFrameTheme.current.fonts.heading,
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                navigationIcon = {
-                    val showNavBack = canGoBack || subStep != VerifyIdSubStep.PhoneAuth
-                    if (showNavBack) {
+            // Back only — page title lives in the scroll content so it shares the same
+            // horizontal inset as the form (matches iOS PageHeaderView).
+            if (showNavBack) {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
                         TextButton(
                             onClick = {
                                 when (subStep) {
                                     VerifyIdSubStep.PhoneAuth -> onBack()
-                                    VerifyIdSubStep.VerifyPhone, VerifyIdSubStep.InformationForm -> viewModel.goBackFromVerifyPhone()
+                                    VerifyIdSubStep.VerifyPhone,
+                                    VerifyIdSubStep.InformationForm -> viewModel.goBackFromVerifyPhone()
                                 }
                             }
                         ) { Text("Back") }
-                    }
-                }
-            )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = theme.colors.surface
+                    )
+                )
+            }
         }
     ) { padding ->
         when (subStep) {
@@ -264,7 +265,7 @@ internal fun UserIdentificationView(
                                 .imePadding()
                         ) {
                             VerifyCardScreen(
-                                headerTitle = "Enter your verification code",
+                                headerTitle = pageTitle,
                                 bodyAnnotated = otpSubtitleAnnotated(
                                     dialCode = phoneCountry.dialCode,
                                     phoneNumber = phoneNumber
@@ -291,23 +292,33 @@ internal fun UserIdentificationView(
             }
 
             else -> {
+                // Match iOS PageHeaderView: 20dp horizontal for title + body; even gaps between
+                // title → subtitle → first field (iOS uses 20 under the subtitle).
+                val contentInset = 20.dp
                 Column(
                     modifier = Modifier
                         .padding(padding)
-                        .padding(horizontal = 24.dp)
-                        .padding(top = 8.dp, bottom = 24.dp)
+                        .padding(horizontal = contentInset)
+                        .padding(top = theme.spacing.sectionTop, bottom = 24.dp)
                         .fillMaxWidth()
                         .imePadding()
                         .verticalScroll(rememberScrollState())
                 ) {
+                    Text(
+                        text = pageTitle,
+                        style = theme.fonts.heading,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                     when (subStep) {
                         VerifyIdSubStep.PhoneAuth -> {
+                            Spacer(Modifier.height(theme.spacing.sectionGap))
                             Text(
                                 text = "We'll text you a 6-digit code to confirm it's you.",
-                                style = LocalFrameTheme.current.fonts.bodySmall,
-                                color = LocalFrameTheme.current.colors.textSecondary
+                                style = theme.fonts.bodySmall,
+                                color = theme.colors.textSecondary
                             )
-                            Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(20.dp))
 
                             // Phone number header row with error
                             Row(
@@ -316,12 +327,12 @@ internal fun UserIdentificationView(
                                     .padding(bottom = 4.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Phone number", style = LocalFrameTheme.current.fonts.label)
+                                Text("Phone number", style = theme.fonts.label)
                                 fieldErrors[OnboardingField.AUTH_PHONE]?.let { msg ->
                                     Text(
                                         text = msg,
-                                        style = LocalFrameTheme.current.fonts.caption,
-                                        color = LocalFrameTheme.current.colors.error
+                                        style = theme.fonts.caption,
+                                        color = theme.colors.error
                                     )
                                 }
                             }
@@ -434,6 +445,7 @@ internal fun UserIdentificationView(
                         }
 
                         VerifyIdSubStep.InformationForm -> {
+                            Spacer(Modifier.height(theme.spacing.sectionGap))
                             PersonalInfoIntro()
                             Spacer(Modifier.height(16.dp))
                             CustomerInformationView(
