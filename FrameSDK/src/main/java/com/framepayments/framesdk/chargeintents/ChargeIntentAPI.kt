@@ -59,8 +59,9 @@ object ChargeIntentAPI {
      *
      * The intent must already exist — your server creates it (`POST /v1/charge_intents` with
      * `sk_`) and hands the resulting `client_secret` to your app. Confirmation authenticates
-     * with the publishable key and sends `client_secret` in the body (never as the Bearer token).
-     * Mirrors `frame-js`'s `confirmCardPayment(clientSecret)` and iOS `ChargeIntentsAPI.confirmChargeIntent`.
+     * with the publishable key ([FrameAuthMode.PublishableOnly], so an active onboarding session
+     * cannot substitute `onb_sess_…`) and sends `client_secret` in the body. Mirrors
+     * `frame-js`'s `confirmCardPayment(clientSecret)` and iOS `ChargeIntentsAPI.confirmChargeIntent`.
      *
      * @param intentId The ID of the charge intent to confirm.
      * @param clientSecret The charge intent's server-minted `client_secret` (`ci_<id>_secret_…`).
@@ -69,7 +70,7 @@ object ChargeIntentAPI {
     suspend fun confirmChargeIntent(intentId: String, clientSecret: String): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.ConfirmChargeIntent(intentId)
         val body = ChargeIntentsRequests.ConfirmChargeIntentRequest(clientSecret = clientSecret)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.PublishableOnly)
 
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
@@ -100,14 +101,15 @@ object ChargeIntentAPI {
     }
 
     /**
-     * Retrieves a single server-minted charge intent in-app using its `client_secret`.
+     * Retrieves a single server-minted charge intent in-app for polling after confirm.
      *
-     * Authenticates with the publishable key (parity with iOS / frame-js polling). The
-     * [clientSecret] identifies which intent the caller is authorized to read; the API matches
-     * it against the resource rather than accepting it as a Bearer token.
+     * Authenticates with [FrameAuthMode.PublishableOnly] so the Bearer token is always the
+     * publishable key — [FrameAuthMode.Publishable] would prefer an active onboarding-session
+     * token (`onb_sess_…`) when one is set. [clientSecret] is retained for call-site
+     * compatibility with confirm but is not sent on this GET (parity with iOS / frame-js).
      *
      * @param intentId The ID of the charge intent to retrieve.
-     * @param clientSecret The charge intent's server-minted `client_secret` (`ci_<id>_secret_…`).
+     * @param clientSecret Unused on the wire; kept so callers pass the same secret used for confirm.
      * @return A [Pair] containing the [ChargeIntent] on success, or a [NetworkingError] on failure.
      */
     suspend fun getChargeIntent(
@@ -115,9 +117,7 @@ object ChargeIntentAPI {
         @Suppress("UNUSED_PARAMETER") clientSecret: String
     ): Pair<ChargeIntent?, NetworkingError?> {
         val endpoint = ChargeIntentEndpoints.GetChargeIntent(intentId)
-        // GET authenticates with the publishable key alone (same as iOS/JS). clientSecret is
-        // retained for call-site parity with confirm and for future query auth.
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly)
         return Pair(data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
     }
 
@@ -185,7 +185,7 @@ object ChargeIntentAPI {
     /**
      * Confirms a server-minted charge intent in-app, moving it to an authorized state.
      *
-     * Authenticates with the publishable key and sends `client_secret` in the body.
+     * Authenticates with [FrameAuthMode.PublishableOnly] and sends `client_secret` in the body.
      *
      * @param intentId The ID of the charge intent to confirm.
      * @param clientSecret The charge intent's server-minted `client_secret` (`ci_<id>_secret_…`).
@@ -195,7 +195,7 @@ object ChargeIntentAPI {
         val endpoint = ChargeIntentEndpoints.ConfirmChargeIntent(intentId)
         val body = ChargeIntentsRequests.ConfirmChargeIntentRequest(clientSecret = clientSecret)
 
-        FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.Publishable) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, body, FrameAuthMode.PublishableOnly) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
@@ -230,12 +230,12 @@ object ChargeIntentAPI {
     }
 
     /**
-     * Retrieves a single server-minted charge intent in-app using its `client_secret`.
+     * Retrieves a single server-minted charge intent in-app for polling after confirm.
      *
-     * Authenticates with the publishable key (parity with iOS / frame-js polling).
+     * Authenticates with [FrameAuthMode.PublishableOnly]. [clientSecret] is unused on the wire.
      *
      * @param intentId The ID of the charge intent to retrieve.
-     * @param clientSecret The charge intent's server-minted `client_secret` (`ci_<id>_secret_…`).
+     * @param clientSecret Unused on the wire; kept so callers pass the same secret used for confirm.
      * @param completionHandler Called with the [ChargeIntent] on success, or a [NetworkingError] on failure.
      */
     fun getChargeIntent(
@@ -245,7 +245,7 @@ object ChargeIntentAPI {
     ) {
         val endpoint = ChargeIntentEndpoints.GetChargeIntent(intentId)
 
-        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
+        FrameNetworking.performDataTask(endpoint, FrameAuthMode.PublishableOnly) { data, error ->
             completionHandler( data?.let { FrameNetworking.parseResponse<ChargeIntent>(data) }, error)
         }
     }
