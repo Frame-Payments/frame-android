@@ -239,7 +239,7 @@ sealed class OnboardingResult {
  *   Compose previews and design tools).
  * @property theme Optional [FrameTheme] applied to all onboarding screens. Defaults to
  *   [FrameTheme.default] when null.
- * @property showIntroScreen When false, the "Verify Your Identity" welcome screen is omitted
+ * @property showIntroScreen When false (default), the "Verify Your Identity" welcome screen is omitted
  *   and the first capability-driven step is shown immediately.
  * @property showCompletionScreen When false, the "Verification Submitted" screen is omitted
  *   and the flow completes immediately after the last capability step.
@@ -250,7 +250,7 @@ data class OnboardingConfig(
     val requiredCapabilities: List<Capabilities> = emptyList(),
     val skipInitNetwork: Boolean = false,
     val theme: FrameTheme? = null,
-    val showIntroScreen: Boolean = true,
+    val showIntroScreen: Boolean = false,
     val showCompletionScreen: Boolean = true,
 )
 

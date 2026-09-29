@@ -348,7 +348,9 @@ class FrameCheckoutViewModel : ViewModel() {
                 return@liveData
             }
 
-            // Build the transfer request (charge flow against the account)
+            // Build the transfer request (charge flow against the account).
+            // confirm=false matches iOS: an inline confirm rejects unsettled 3DS charges before
+            // ChargeIntentConfirmation can present the challenge.
             val request = TransferRequests.CreateTransferRequest(
                 amount = amount,
                 accountId = accountId,
@@ -356,7 +358,8 @@ class FrameCheckoutViewModel : ViewModel() {
                 sourcePaymentMethodId = paymentMethodId,
                 destinationPaymentMethodId = null,
                 description = null,
-                metadata = null
+                metadata = null,
+                confirm = false
             )
 
             val (transfer, transferError) = TransfersAPI.createTransfer(request)

@@ -82,14 +82,19 @@ class ChargeIntentAPITest {
     }
 
     @Test
-    fun testConfirmChargeIntentUsesClientSecretAsBearer() = runBlocking {
+    fun testConfirmChargeIntentUsesPublishableKeyAndClientSecretBody() = runBlocking {
+        FrameNetworking.apiPublishableKey = "pk_test_confirm"
         val responseBody = """{"id":"intent_123", "status":"succeeded"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         ChargeIntentAPI.confirmChargeIntent("intent_123", "ci_intent_123_secret_abc")
 
         val recorded = mockWebServer.takeRequest()
-        assertEquals("Bearer ci_intent_123_secret_abc", recorded.getHeader("Authorization"))
+        assertEquals("Bearer pk_test_confirm", recorded.getHeader("Authorization"))
+        val body = recorded.body.readUtf8()
+        assertTrue(body.contains("\"client_secret\":\"ci_intent_123_secret_abc\""))
+        assertTrue(body.contains("\"use_frame_sdk\":true"))
+        assertTrue(body.contains("\"expected_payment_method_type\":\"card\""))
     }
 
     @Test
@@ -138,14 +143,15 @@ class ChargeIntentAPITest {
     }
 
     @Test
-    fun testGetChargeIntentUsesClientSecretAsBearer() = runBlocking {
+    fun testGetChargeIntentUsesPublishableKeyAsBearer() = runBlocking {
+        FrameNetworking.apiPublishableKey = "pk_test_get"
         val responseBody = """{"id":"intent_123", "status":"pending"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
         ChargeIntentAPI.getChargeIntent("intent_123", "ci_intent_123_secret_xyz")
 
         val recorded = mockWebServer.takeRequest()
-        assertEquals("Bearer ci_intent_123_secret_xyz", recorded.getHeader("Authorization"))
+        assertEquals("Bearer pk_test_get", recorded.getHeader("Authorization"))
     }
 
     @Test

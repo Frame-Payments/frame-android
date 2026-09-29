@@ -1,27 +1,30 @@
 package com.framepayments.framesdk_ui.theme
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.framepayments.framesdk_ui.R
+import androidx.compose.material3.Typography
 
 /**
  * Typography token set for the Frame SDK UI.
  *
- * Each slot maps to a Material 3 typography role with weight overrides applied so the visual
- * hierarchy matches iOS. Pass a customized instance to [FrameTheme] to override fonts globally.
+ * Defaults use bundled Soehne (Söhne) fonts for FrameOS parity. Pass a customized
+ * instance to [FrameTheme] to override fonts globally.
  *
- * @property title Large display text style used for screen titles.
- * @property heading Medium display text style used for section headings.
- * @property headline Prominent label text used for card headings and emphasized content.
- * @property body Default body copy text style.
- * @property bodySmall Smaller body copy used for secondary descriptions.
- * @property label Semibold label used for form field labels and list item titles.
- * @property caption Small text used for captions and footnotes.
- * @property button Semibold text used inside action buttons.
+ * @property title Large display title (e.g. OTP digit style).
+ * @property heading Screen and sheet titles.
+ * @property headline Section headers within a form or checkout sheet.
+ * @property body Primary field and body copy.
+ * @property bodySmall Secondary body copy and subtitles.
+ * @property label Field labels above inputs.
+ * @property caption Captions, hints, and fine print.
+ * @property button Primary and secondary button labels.
  */
 @Immutable
 data class FrameFonts(
@@ -34,26 +37,69 @@ data class FrameFonts(
     val caption: TextStyle,
     val button: TextStyle,
 ) {
-    /** Factory methods for constructing default [FrameFonts] instances. */
+    /** Factory helpers for default and fallback [FrameFonts] instances. */
     companion object {
-        /**
-         * Defaults map to Material 3 typography slots, with weight overrides applied so the
-         * visual hierarchy matches iOS, where `theme.fonts.title` / `.heading` / `.headline`
-         * carry implicit semibold/bold weight via SwiftUI's system fonts. Material 3's
-         * default weights are Regular (400) for headline and title slots, which renders
-         * underweight against iOS without these overrides.
-         */
+        /** Bundled Soehne (Söhne) family used by [defaults] / [defaultsForViews]. */
+        val Soehne: FontFamily = FontFamily(
+            Font(R.font.soehne_buch, FontWeight.Normal),
+            Font(R.font.soehne_kraftig, FontWeight.Medium),
+            Font(R.font.soehne_dreiviertelfett, FontWeight.SemiBold),
+            Font(R.font.soehne_fett, FontWeight.Bold),
+        )
+
+        /** Default Soehne typography for Compose hosts. */
         @Composable
         @ReadOnlyComposable
-        fun defaults(): FrameFonts = fromTypography(MaterialTheme.typography)
+        fun defaults(): FrameFonts = soehneDefaults()
 
-        /**
-         * Non-Composable variant for View-based hosts. Uses Material 3's default
-         * [Typography] (no theme-customized typography from a Compose tree).
-         */
-        fun defaultsForViews(): FrameFonts = fromTypography(Typography())
+        /** Default Soehne typography for View-based hosts (no composition required). */
+        fun defaultsForViews(): FrameFonts = soehneDefaults()
 
-        private fun fromTypography(typography: Typography): FrameFonts = FrameFonts(
+        private fun soehneDefaults(): FrameFonts = FrameFonts(
+            title = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp
+            ),
+            heading = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp
+            ),
+            headline = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 17.sp
+            ),
+            body = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.Normal,
+                fontSize = 17.sp
+            ),
+            bodySmall = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp
+            ),
+            label = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp
+            ),
+            caption = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.Normal,
+                fontSize = 12.sp
+            ),
+            button = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 17.sp
+            ),
+        )
+
+        /** Material 3 fallback when Soehne resources are unavailable. */
+        fun fromTypography(typography: Typography): FrameFonts = FrameFonts(
             title = typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
             heading = typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
             headline = typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),

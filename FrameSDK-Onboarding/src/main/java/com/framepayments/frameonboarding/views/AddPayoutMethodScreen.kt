@@ -3,42 +3,45 @@ package com.framepayments.frameonboarding.views
 import android.app.Application
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.reusable.BankAccountDetailView
-import com.framepayments.framesdk_ui.reusable.BillingAddressDetailView
+import com.framepayments.frameonboarding.reusable.MethodOptionRow
 import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.viewmodels.BankAccountFieldVM
-import com.framepayments.framesdk_ui.viewmodels.BillingAddressFieldVM
-import com.framepayments.framesdk_ui.viewmodels.BillingAddressMode
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.plaid.link.FastOpenPlaidLink
 import com.plaid.link.Plaid
@@ -48,6 +51,7 @@ import com.plaid.link.result.LinkExit
 import com.plaid.link.result.LinkSuccess
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +60,6 @@ internal fun AddPayoutMethodScreen(
     onBack: () -> Unit
 ) {
     val bank by viewModel.bankAccountDraft.collectAsState()
-    val billing by viewModel.createdBillingAddress.collectAsState()
     val plaidToken by viewModel.plaidLinkToken.collectAsState()
     val isConnecting by viewModel.isConnectingPlaidBank.collectAsState()
 
@@ -65,12 +68,8 @@ internal fun AddPayoutMethodScreen(
     val bankVM = rememberSaveable(saver = BankAccountFieldVM.Saver) {
         BankAccountFieldVM(bank)
     }
-    val billingVM = rememberSaveable(
-        saver = BillingAddressFieldVM.Saver(BillingAddressMode.US_ONLY)
-    ) { BillingAddressFieldVM(billing, BillingAddressMode.US_ONLY) }
 
-    // Merge async backend updates (e.g. Plaid metadata populates accountTypeLabel /
-    // billing address) into the per-screen VMs without clobbering user-typed values.
+    // Merge async backend updates into the per-screen VM without clobbering user-typed values.
     LaunchedEffect(bank) {
         bankVM.updateDraft { current ->
             current.copy(
@@ -82,19 +81,9 @@ internal fun AddPayoutMethodScreen(
             )
         }
     }
-    LaunchedEffect(billing) {
-        billingVM.updateAddress { current ->
-            current.copy(
-                addressLine1 = current.addressLine1?.takeIf { it.isNotBlank() } ?: billing.addressLine1,
-                addressLine2 = current.addressLine2 ?: billing.addressLine2,
-                city = current.city?.takeIf { it.isNotBlank() } ?: billing.city,
-                state = current.state?.takeIf { it.isNotBlank() } ?: billing.state,
-                postalCode = current.postalCode?.takeIf { it.isNotBlank() } ?: billing.postalCode
-            )
-        }
-    }
 
     val application = LocalContext.current.applicationContext as Application
+    val theme = LocalFrameTheme.current
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
@@ -129,6 +118,7 @@ internal fun AddPayoutMethodScreen(
     }
 
     Scaffold(
+        containerColor = LocalFrameTheme.current.colors.surface,
         topBar = {
             TopAppBar(
                 title = { Text("Add Bank Account") },
@@ -151,19 +141,38 @@ internal fun AddPayoutMethodScreen(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            ContinueButton(
-                text = "Connect Bank Account",
-                isLoading = isConnecting,
-                onClick = { viewModel.fetchPlaidLinkToken() }
+            MethodOptionRow(
+                iconRes = R.drawable.ic_connect_bank,
+                title = "Connect a bank account",
+                onClick = { viewModel.fetchPlaidLinkToken() },
+                enabled = !isConnecting
             )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
 
-            TextButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { showManualForm = true }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, theme.colors.surfaceStroke, RoundedCornerShape(theme.radii.medium))
+                    .clickable { showManualForm = !showManualForm }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Enter manually")
+                Text(
+                    text = "Enter bank details manually",
+                    style = theme.fonts.bodySmall,
+                    color = theme.colors.textPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = if (showManualForm) {
+                        Icons.Default.KeyboardArrowDown
+                    } else {
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight
+                    },
+                    contentDescription = null,
+                    tint = theme.colors.textSecondary
+                )
             }
 
             AnimatedVisibility(visible = showManualForm) {
@@ -174,22 +183,12 @@ internal fun AddPayoutMethodScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    BillingAddressDetailView(
-                        viewModel = billingVM,
-                        headerTitle = "Billing Address"
-                    )
-
-                    Spacer(Modifier.height(24.dp))
-
                     ContinueButton(
-                        text = "Add Bank Account",
+                        text = "Save bank",
                         isLoading = isConnecting,
                         onClick = {
-                            val bankOK = bankVM.validate()
-                            val addressOK = billingVM.validate()
-                            if (bankOK && addressOK) {
+                            if (bankVM.validate()) {
                                 viewModel.updateBankAccountDraft { bankVM.draft.value }
-                                viewModel.updateCreatedBillingAddress { billingVM.address.value }
                                 viewModel.submitNewPayoutMethod()
                             }
                         }

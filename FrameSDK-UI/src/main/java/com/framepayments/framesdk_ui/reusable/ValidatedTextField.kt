@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
@@ -23,15 +25,6 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Text field with validation error display. 1:1 port of iOS ValidatedTextField.
- *
- * Three error display modes:
- * - default: error rendered below the field
- * - [inlineError] = true: error rendered to the right of the field in a Row
- * - [compactError] = true: error label suppressed (parent renders a header summary instead)
- *
- * Errors auto-clear via [onClearError] on every keystroke (matches iOS auto-clear behavior).
- *
- * @param autofillContentType Optional Autofill [ContentType] so the system can offer saved values.
  */
 @Composable
 fun ValidatedTextField(
@@ -65,6 +58,14 @@ fun ValidatedTextField(
     } else {
         Modifier
     }
+    val colors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = theme.colors.fieldFocusStroke,
+        unfocusedBorderColor = theme.colors.surfaceStroke,
+        errorBorderColor = theme.colors.error,
+        focusedContainerColor = theme.colors.surface,
+        unfocusedContainerColor = theme.colors.surface,
+    )
+    val fieldShape = RoundedCornerShape(theme.radii.medium)
 
     if (inlineError) {
         Row(
@@ -75,7 +76,13 @@ fun ValidatedTextField(
             OutlinedTextField(
                 value = value,
                 onValueChange = handleChange,
-                placeholder = { Text(prompt) },
+                placeholder = {
+                    Text(
+                        prompt,
+                        style = theme.fonts.body,
+                        color = theme.colors.textSecondary,
+                    )
+                },
                 modifier = Modifier
                     .weight(1f)
                     .height(64.dp)
@@ -83,7 +90,9 @@ fun ValidatedTextField(
                 singleLine = true,
                 isError = showError,
                 textStyle = theme.fonts.body,
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
+                shape = fieldShape,
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                colors = colors
             )
             if (showError) {
                 Text(
@@ -99,14 +108,22 @@ fun ValidatedTextField(
             OutlinedTextField(
                 value = value,
                 onValueChange = handleChange,
-                placeholder = { Text(prompt) },
+                placeholder = {
+                    Text(
+                        prompt,
+                        style = theme.fonts.body,
+                        color = theme.colors.textSecondary,
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(fieldModifier),
                 singleLine = true,
                 isError = showError,
                 textStyle = theme.fonts.body,
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
+                shape = fieldShape,
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                colors = colors
             )
             if (showError) {
                 Spacer(Modifier.height(errorSpacing))

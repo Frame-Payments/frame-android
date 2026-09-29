@@ -12,6 +12,7 @@
     <color name="frame_disabled_button_text">#B3FFFFFF</color>
     <color name="frame_surface">#FFFFFFFF</color>
     <color name="frame_surface_stroke">#33000000</color>
+    <color name="frame_field_focus_stroke">#FF324D52</color>
     <color name="frame_text_primary">#FF000000</color>
     <color name="frame_text_secondary">#FF6B7280</color>
     <color name="frame_error">#FFB00020</color>

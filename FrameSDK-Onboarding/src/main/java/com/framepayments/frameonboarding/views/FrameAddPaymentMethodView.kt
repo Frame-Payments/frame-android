@@ -25,7 +25,8 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *
  * Use this when a merchant wants to prompt an existing user to add a card at an arbitrary point
  * in their app, rather than as a step inside [com.framepayments.frameonboarding.views.OnboardingContainerView].
- * The screen presents the same card, billing-address, and Google Pay inputs used during onboarding.
+ * The screen presents the same card and billing-address inputs used during onboarding
+ * (Google Pay is omitted outside the onboarding flow).
  *
  * @param accountId The Frame account ID the new payment method is attached to.
  * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your server
@@ -90,7 +91,8 @@ fun FrameAddPaymentMethodView(
         ) { padding ->
             AddPaymentMethodScreen(
                 viewModel = viewModel,
-                onBack = { finishCancelled() }
+                onBack = { finishCancelled() },
+                showGooglePay = false,
             )
         }
     }

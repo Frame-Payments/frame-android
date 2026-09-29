@@ -1,10 +1,17 @@
 package com.framepayments.framesdk_ui.theme
 
 import android.content.Context
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 
 /**
  * Immutable design token bundle that drives all Frame SDK UI components.
@@ -16,12 +23,14 @@ import androidx.compose.runtime.staticCompositionLocalOf
  * @property colors Color token set controlling palette across all SDK surfaces.
  * @property fonts Typography token set controlling text styles across all SDK surfaces.
  * @property radii Corner-radius token set controlling shape across all SDK surfaces.
+ * @property spacing Vertical spacing token set for section headers and form blocks.
  */
 @Immutable
 data class FrameTheme(
     val colors: FrameColors,
     val fonts: FrameFonts,
     val radii: FrameRadii,
+    val spacing: FrameSpacing = FrameSpacing(),
 ) {
     /** Factory methods for constructing default [FrameTheme] instances. */
     companion object {
@@ -35,6 +44,7 @@ data class FrameTheme(
             colors = FrameColors.defaults(),
             fonts = FrameFonts.defaults(),
             radii = FrameRadii(),
+            spacing = FrameSpacing(),
         )
 
         /**
@@ -47,6 +57,7 @@ data class FrameTheme(
             colors = FrameColors.defaults(context),
             fonts = FrameFonts.defaultsForViews(),
             radii = FrameRadii(),
+            spacing = FrameSpacing(),
         )
     }
 }
@@ -71,7 +82,8 @@ val LocalFrameTheme = staticCompositionLocalOf<FrameTheme> {
 
 /**
  * Installs [theme] into the composition tree so all nested SDK components read it via
- * [LocalFrameTheme].
+ * [LocalFrameTheme], and mirrors its colors/fonts into Material 3 so Scaffold, TopAppBar,
+ * and default Text/Button styles stay white-background + Soehne instead of Material lilac.
  *
  * @param theme Theme to provide to child composables (default: [FrameTheme.default]).
  * @param content Composable content that receives the theme.
@@ -81,5 +93,87 @@ fun FrameTheme(
     theme: FrameTheme = FrameTheme.default(),
     content: @Composable () -> Unit,
 ) {
-    CompositionLocalProvider(LocalFrameTheme provides theme, content = content)
+    val isDark = isSystemInDarkTheme()
+    val colorScheme = remember(theme.colors, isDark) {
+        frameColorScheme(theme.colors, isDark)
+    }
+    val typography = remember(theme.fonts) {
+        Typography(
+            displayLarge = theme.fonts.title,
+            displayMedium = theme.fonts.title,
+            displaySmall = theme.fonts.heading,
+            headlineLarge = theme.fonts.title,
+            headlineMedium = theme.fonts.heading,
+            headlineSmall = theme.fonts.headline,
+            titleLarge = theme.fonts.headline,
+            titleMedium = theme.fonts.label,
+            titleSmall = theme.fonts.label,
+            bodyLarge = theme.fonts.body,
+            bodyMedium = theme.fonts.bodySmall,
+            bodySmall = theme.fonts.caption,
+            labelLarge = theme.fonts.button,
+            labelMedium = theme.fonts.label,
+            labelSmall = theme.fonts.caption,
+        )
+    }
+    CompositionLocalProvider(LocalFrameTheme provides theme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = typography,
+            content = content,
+        )
+    }
 }
+
+private fun frameColorScheme(colors: FrameColors, isDark: Boolean) =
+    if (isDark) {
+        darkColorScheme(
+            primary = colors.primaryButton,
+            onPrimary = colors.primaryButtonText,
+            primaryContainer = colors.surface,
+            onPrimaryContainer = colors.textPrimary,
+            secondary = colors.primaryButton,
+            onSecondary = colors.primaryButtonText,
+            tertiary = colors.primaryButton,
+            background = colors.surface,
+            onBackground = colors.textPrimary,
+            surface = colors.surface,
+            onSurface = colors.textPrimary,
+            surfaceVariant = colors.surface,
+            onSurfaceVariant = colors.textSecondary,
+            surfaceContainer = colors.surface,
+            surfaceContainerHigh = colors.surface,
+            surfaceContainerHighest = colors.surface,
+            surfaceContainerLow = colors.surface,
+            surfaceContainerLowest = colors.surface,
+            outline = colors.surfaceStroke,
+            outlineVariant = colors.surfaceStroke,
+            error = colors.error,
+            onError = Color.White,
+        )
+    } else {
+        lightColorScheme(
+            primary = colors.primaryButton,
+            onPrimary = colors.primaryButtonText,
+            primaryContainer = colors.surface,
+            onPrimaryContainer = colors.textPrimary,
+            secondary = colors.primaryButton,
+            onSecondary = colors.primaryButtonText,
+            tertiary = colors.primaryButton,
+            background = colors.surface,
+            onBackground = colors.textPrimary,
+            surface = colors.surface,
+            onSurface = colors.textPrimary,
+            surfaceVariant = colors.surface,
+            onSurfaceVariant = colors.textSecondary,
+            surfaceContainer = colors.surface,
+            surfaceContainerHigh = colors.surface,
+            surfaceContainerHighest = colors.surface,
+            surfaceContainerLow = colors.surface,
+            surfaceContainerLowest = colors.surface,
+            outline = colors.surfaceStroke,
+            outlineVariant = colors.surfaceStroke,
+            error = colors.error,
+            onError = Color.White,
+        )
+    }

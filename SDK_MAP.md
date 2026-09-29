@@ -43,24 +43,24 @@ reverse is never true.
 
 ## Public API inventory
 
-**2059 public symbols** across 179 files in 3 modules.
+**2076 public symbols** across 182 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
 | Classes | 32 |
-| Data classes | 266 |
+| Data classes | 268 |
 | Sealed classes | 37 |
 | Enums | 41 |
 | Interfaces | 4 |
 | Objects | 130 |
 | Type aliases | 3 |
-| Functions | 355 |
-| Properties (val) | 1008 |
+| Functions | 358 |
+| Properties (val) | 1020 |
 | Properties (var) | 20 |
 | Enum entries | 163 |
-| **Total** | **2059** |
+| **Total** | **2076** |
 
-### `FrameSDK` — 1648 public symbols
+### `FrameSDK` — 1655 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
@@ -894,7 +894,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-#### com/framepayments/framesdk/chargeintents (145)
+#### com/framepayments/framesdk/chargeintents (151)
 
 <details><summary><code>ChargeIntentAPI.kt</code> — 17 symbols</summary>
 
@@ -905,20 +905,20 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `ChargeIntentAPI` | object | `object ChargeIntentAPI` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L17) |
 | `ChargeIntentAPI.createChargeIntent` | fun | `fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?>` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L32) |
 | `ChargeIntentAPI.captureChargeIntent` | fun | `fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?>` | [50](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L50) |
-| `ChargeIntentAPI.confirmChargeIntent` | fun | `fun confirmChargeIntent(intentId: String, clientSecret: String): Pair<ChargeIntent?, NetworkingError?>` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L69) |
-| `ChargeIntentAPI.cancelChargeIntent` | fun | `fun cancelChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?>` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L82) |
-| `ChargeIntentAPI.getAllChargeIntents` | fun | `fun getAllChargeIntents(page: Int?, perPage: Int?): Pair<ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?>` | [95](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L95) |
-| `ChargeIntentAPI.getChargeIntent` | fun | `fun getChargeIntent(intentId: String, clientSecret: String): Pair<ChargeIntent?, NetworkingError?>` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L108) |
-| `ChargeIntentAPI.updateChargeIntent` | fun | `fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?>` | [121](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L121) |
-| `ChargeIntentAPI.voidRemainingChargeIntent` | fun | `fun voidRemainingChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?>` | [133](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L133) |
-| `ChargeIntentAPI.createChargeIntent` | fun | `fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [149](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L149) |
-| `ChargeIntentAPI.captureChargeIntent` | fun | `fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Un…` | [167](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L167) |
-| `ChargeIntentAPI.confirmChargeIntent` | fun | `fun confirmChargeIntent(intentId: String, clientSecret: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [186](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L186) |
-| `ChargeIntentAPI.cancelChargeIntent` | fun | `fun cancelChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [200](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L200) |
-| `ChargeIntentAPI.getAllChargeIntents` | fun | `fun getAllChargeIntents(page: Int?, perPage: Int?, completionHandler: (ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?) -> Unit)` | [215](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L215) |
-| `ChargeIntentAPI.getChargeIntent` | fun | `fun getChargeIntent(intentId: String, clientSecret: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [230](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L230) |
-| `ChargeIntentAPI.updateChargeIntent` | fun | `fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [245](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L245) |
-| `ChargeIntentAPI.voidRemainingChargeIntent` | fun | `fun voidRemainingChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [259](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L259) |
+| `ChargeIntentAPI.confirmChargeIntent` | fun | `fun confirmChargeIntent(intentId: String, clientSecret: String): Pair<ChargeIntent?, NetworkingError?>` | [70](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L70) |
+| `ChargeIntentAPI.cancelChargeIntent` | fun | `fun cancelChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?>` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L84) |
+| `ChargeIntentAPI.getAllChargeIntents` | fun | `fun getAllChargeIntents(page: Int?, perPage: Int?): Pair<ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?>` | [97](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L97) |
+| `ChargeIntentAPI.getChargeIntent` | fun | `fun getChargeIntent( intentId: String, @Suppress( ) clientSecret: String ): Pair<ChargeIntent?, NetworkingError?>` | [115](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L115) |
+| `ChargeIntentAPI.updateChargeIntent` | fun | `fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest): Pair<ChargeIntent?, NetworkingError?>` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L131) |
+| `ChargeIntentAPI.voidRemainingChargeIntent` | fun | `fun voidRemainingChargeIntent(intentId: String): Pair<ChargeIntent?, NetworkingError?>` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L143) |
+| `ChargeIntentAPI.createChargeIntent` | fun | `fun createChargeIntent(request: ChargeIntentsRequests.CreateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [159](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L159) |
+| `ChargeIntentAPI.captureChargeIntent` | fun | `fun captureChargeIntent(intentId: String, request: ChargeIntentsRequests.CaptureChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Un…` | [177](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L177) |
+| `ChargeIntentAPI.confirmChargeIntent` | fun | `fun confirmChargeIntent(intentId: String, clientSecret: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L194) |
+| `ChargeIntentAPI.cancelChargeIntent` | fun | `fun cancelChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [209](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L209) |
+| `ChargeIntentAPI.getAllChargeIntents` | fun | `fun getAllChargeIntents(page: Int?, perPage: Int?, completionHandler: (ChargeIntentResponses.ListChargeIntentsResponse?, NetworkingError?) -> Unit)` | [224](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L224) |
+| `ChargeIntentAPI.getChargeIntent` | fun | `fun getChargeIntent( intentId: String, @Suppress( ) clientSecret: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit )` | [241](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L241) |
+| `ChargeIntentAPI.updateChargeIntent` | fun | `fun updateChargeIntent(intentId: String, request: ChargeIntentsRequests.UpdateChargeIntentRequest, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [260](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L260) |
+| `ChargeIntentAPI.voidRemainingChargeIntent` | fun | `fun voidRemainingChargeIntent(intentId: String, completionHandler: (ChargeIntent?, NetworkingError?) -> Unit)` | [274](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentAPI.kt#L274) |
 
 </details>
 
@@ -1042,7 +1042,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-<details><summary><code>ChargeIntentRequests.kt</code> — 40 symbols</summary>
+<details><summary><code>ChargeIntentRequests.kt</code> — 46 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt)
 
@@ -1065,29 +1065,35 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `ChargeIntentsRequests.CreateChargeIntentRequest.fraudSignals` | var | `var fraudSignals: FraudSignals? = null,` | [46](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L46) |
 | `ChargeIntentsRequests.CreateChargeIntentRequest.useFrameSDK` | val | `val useFrameSDK: Boolean = true,` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L47) |
 | `ChargeIntentsRequests.CreateChargeIntentRequest.sonarSessionId` | var | `var sonarSessionId: String? = null` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L48) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest` | data class | `data class UpdateChargeIntentRequest (` | [62](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L62) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.amount` | val | `val amount: Int?,` | [63](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L63) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.currency` | val | `val currency: String?,` | [64](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L64) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.customer` | val | `val customer: String?,` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L65) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.description` | val | `val description: String?,` | [66](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L66) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.confirm` | val | `val confirm: Boolean?,` | [67](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L67) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.paymentMethod` | val | `val paymentMethod: String?,` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L68) |
-| `ChargeIntentsRequests.UpdateChargeIntentRequest.receiptEmail` | val | `val receiptEmail: String?` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L69) |
-| `ChargeIntentsRequests.CaptureChargeIntentRequest` | data class | `data class CaptureChargeIntentRequest(` | [77](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L77) |
-| `ChargeIntentsRequests.CaptureChargeIntentRequest.amountCapturedCents` | val | `val amountCapturedCents: Int` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L78) |
-| `ChargeIntentsRequests.CustomerData` | data class | `data class CustomerData (` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L87) |
-| `ChargeIntentsRequests.CustomerData.name` | val | `val name: String,` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L88) |
-| `ChargeIntentsRequests.CustomerData.email` | val | `val email: String` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L89) |
-| `ChargeIntentsRequests.PaymentMethodData` | data class | `data class PaymentMethodData (` | [103](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L103) |
-| `ChargeIntentsRequests.PaymentMethodData.attach` | val | `val attach: Boolean?,` | [104](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L104) |
-| `ChargeIntentsRequests.PaymentMethodData.type` | val | `val type: PaymentMethodType,` | [105](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L105) |
-| `ChargeIntentsRequests.PaymentMethodData.cardNumber` | val | `val cardNumber: String,` | [106](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L106) |
-| `ChargeIntentsRequests.PaymentMethodData.expMonth` | val | `val expMonth: String,` | [107](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L107) |
-| `ChargeIntentsRequests.PaymentMethodData.expYear` | val | `val expYear: String,` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L108) |
-| `ChargeIntentsRequests.PaymentMethodData.cvc` | val | `val cvc: String,` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L109) |
-| `ChargeIntentsRequests.PaymentMethodData.billing` | val | `val billing: FrameObjects.BillingAddress?` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L110) |
-| `ChargeIntentsRequests.FraudSignals` | data class | `data class FraudSignals (` | [118](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L118) |
-| `ChargeIntentsRequests.FraudSignals.clientIp` | val | `val clientIp: String?` | [119](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L119) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest` | data class | `data class ConfirmChargeIntentRequest(` | [64](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L64) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.clientSecret` | val | `val clientSecret: String,` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L65) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.useFrameSDK` | val | `val useFrameSDK: Boolean = true,` | [66](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L66) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.expectedPaymentMethodType` | val | `val expectedPaymentMethodType: String = ,` | [67](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L67) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.paymentMethod` | val | `val paymentMethod: String? = null,` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L68) |
+| `ChargeIntentsRequests.ConfirmChargeIntentRequest.shipping` | val | `val shipping: FrameObjects.BillingAddress? = null` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L69) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest` | data class | `data class UpdateChargeIntentRequest (` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L83) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.amount` | val | `val amount: Int?,` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L84) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.currency` | val | `val currency: String?,` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L85) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.customer` | val | `val customer: String?,` | [86](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L86) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.description` | val | `val description: String?,` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L87) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.confirm` | val | `val confirm: Boolean?,` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L88) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.paymentMethod` | val | `val paymentMethod: String?,` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L89) |
+| `ChargeIntentsRequests.UpdateChargeIntentRequest.receiptEmail` | val | `val receiptEmail: String?` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L90) |
+| `ChargeIntentsRequests.CaptureChargeIntentRequest` | data class | `data class CaptureChargeIntentRequest(` | [98](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L98) |
+| `ChargeIntentsRequests.CaptureChargeIntentRequest.amountCapturedCents` | val | `val amountCapturedCents: Int` | [99](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L99) |
+| `ChargeIntentsRequests.CustomerData` | data class | `data class CustomerData (` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L108) |
+| `ChargeIntentsRequests.CustomerData.name` | val | `val name: String,` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L109) |
+| `ChargeIntentsRequests.CustomerData.email` | val | `val email: String` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L110) |
+| `ChargeIntentsRequests.PaymentMethodData` | data class | `data class PaymentMethodData (` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L124) |
+| `ChargeIntentsRequests.PaymentMethodData.attach` | val | `val attach: Boolean?,` | [125](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L125) |
+| `ChargeIntentsRequests.PaymentMethodData.type` | val | `val type: PaymentMethodType,` | [126](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L126) |
+| `ChargeIntentsRequests.PaymentMethodData.cardNumber` | val | `val cardNumber: String,` | [127](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L127) |
+| `ChargeIntentsRequests.PaymentMethodData.expMonth` | val | `val expMonth: String,` | [128](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L128) |
+| `ChargeIntentsRequests.PaymentMethodData.expYear` | val | `val expYear: String,` | [129](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L129) |
+| `ChargeIntentsRequests.PaymentMethodData.cvc` | val | `val cvc: String,` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L130) |
+| `ChargeIntentsRequests.PaymentMethodData.billing` | val | `val billing: FrameObjects.BillingAddress?` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L131) |
+| `ChargeIntentsRequests.FraudSignals` | data class | `data class FraudSignals (` | [139](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L139) |
+| `ChargeIntentsRequests.FraudSignals.clientIp` | val | `val clientIp: String?` | [140](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentRequests.kt#L140) |
 
 </details>
 
@@ -2621,7 +2627,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-#### com/framepayments/framesdk/transfers (52)
+#### com/framepayments/framesdk/transfers (53)
 
 <details><summary><code>TransferEndpoints.kt</code> — 7 symbols</summary>
 
@@ -2672,22 +2678,23 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-<details><summary><code>TransferRequests.kt</code> — 10 symbols</summary>
+<details><summary><code>TransferRequests.kt</code> — 11 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
 | `TransferRequests` | object | `object TransferRequests` | [8](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L8) |
-| `TransferRequests.CreateTransferRequest` | data class | `data class CreateTransferRequest(` | [22](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L22) |
-| `TransferRequests.CreateTransferRequest.amount` | val | `val amount: Int,` | [23](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L23) |
-| `TransferRequests.CreateTransferRequest.accountId` | val | `val accountId: String,` | [24](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L24) |
-| `TransferRequests.CreateTransferRequest.currency` | val | `val currency: String? = null,` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L25) |
-| `TransferRequests.CreateTransferRequest.sourcePaymentMethodId` | val | `val sourcePaymentMethodId: String? = null,` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L26) |
-| `TransferRequests.CreateTransferRequest.destinationPaymentMethodId` | val | `val destinationPaymentMethodId: String? = null,` | [27](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L27) |
-| `TransferRequests.CreateTransferRequest.description` | val | `val description: String? = null,` | [28](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L28) |
-| `TransferRequests.CreateTransferRequest.metadata` | val | `val metadata: Map<String, String>? = null,` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L29) |
-| `TransferRequests.CreateTransferRequest.sonarSessionId` | val | `val sonarSessionId: String? = null` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L30) |
+| `TransferRequests.CreateTransferRequest` | data class | `data class CreateTransferRequest(` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L25) |
+| `TransferRequests.CreateTransferRequest.amount` | val | `val amount: Int,` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L26) |
+| `TransferRequests.CreateTransferRequest.accountId` | val | `val accountId: String,` | [27](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L27) |
+| `TransferRequests.CreateTransferRequest.currency` | val | `val currency: String? = null,` | [28](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L28) |
+| `TransferRequests.CreateTransferRequest.sourcePaymentMethodId` | val | `val sourcePaymentMethodId: String? = null,` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L29) |
+| `TransferRequests.CreateTransferRequest.destinationPaymentMethodId` | val | `val destinationPaymentMethodId: String? = null,` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L30) |
+| `TransferRequests.CreateTransferRequest.description` | val | `val description: String? = null,` | [31](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L31) |
+| `TransferRequests.CreateTransferRequest.metadata` | val | `val metadata: Map<String, String>? = null,` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L32) |
+| `TransferRequests.CreateTransferRequest.confirm` | val | `val confirm: Boolean? = null,` | [33](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L33) |
+| `TransferRequests.CreateTransferRequest.sonarSessionId` | val | `val sonarSessionId: String? = null` | [34](FrameSDK/src/main/java/com/framepayments/framesdk/transfers/TransferRequests.kt#L34) |
 
 </details>
 
@@ -2763,7 +2770,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-### `FrameSDK-UI` — 185 public symbols
+### `FrameSDK-UI` — 194 public symbols
 
 Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, shared reusable components (payment method rows, card brand art).
 
@@ -2864,7 +2871,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L40) |
+| `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L50) |
 
 </details>
 
@@ -2930,7 +2937,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-#### com/framepayments/framesdk_ui/reusable (13)
+#### com/framepayments/framesdk_ui/reusable (14)
 
 <details><summary><code>AddressAutocompleteField.kt</code> — 1 symbols</summary>
 
@@ -2948,7 +2955,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `BillingAddressDetailView` | fun | `fun BillingAddressDetailView( viewModel: BillingAddressFieldVM, headerTitle: String = , showHeader: Boolean = true )` | [44](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/BillingAddressDetailView.kt#L44) |
+| `BillingAddressDetailView` | fun | `fun BillingAddressDetailView( viewModel: BillingAddressFieldVM, headerTitle: String = , showHeader: Boolean = true )` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/BillingAddressDetailView.kt#L37) |
 
 </details>
 
@@ -3001,7 +3008,17 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `PhoneNumberTextField` | fun | `fun PhoneNumberTextField( value: String, onValueChange: (String) -> Unit, prompt: String, regionCode: String, error: String?, modifier: Modifier = Modifier, co…` | [103](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/PhoneNumberTextField.kt#L103) |
+| `PhoneNumberTextField` | fun | `fun PhoneNumberTextField( value: String, onValueChange: (String) -> Unit, prompt: String, regionCode: String, error: String?, modifier: Modifier = Modifier, co…` | [105](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/PhoneNumberTextField.kt#L105) |
+
+</details>
+
+<details><summary><code>SelectableOutlinedField.kt</code> — 1 symbols</summary>
+
+[`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/SelectableOutlinedField.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/SelectableOutlinedField.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `SelectableOutlinedField` | fun | `fun SelectableOutlinedField( value: String, prompt: String, onClick: () -> Unit, modifier: Modifier = Modifier, error: String? = null, )` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/SelectableOutlinedField.kt#L32) |
 
 </details>
 
@@ -3031,7 +3048,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `ValidatedTextField` | fun | `fun ValidatedTextField( value: String, onValueChange: (String) -> Unit, prompt: String, error: String?, modifier: Modifier = Modifier, keyboardType: KeyboardTy…` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/ValidatedTextField.kt#L37) |
+| `ValidatedTextField` | fun | `fun ValidatedTextField( value: String, onValueChange: (String) -> Unit, prompt: String, error: String?, modifier: Modifier = Modifier, keyboardType: KeyboardTy…` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/reusable/ValidatedTextField.kt#L30) |
 
 </details>
 
@@ -3051,54 +3068,57 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-#### com/framepayments/framesdk_ui/theme (45)
+#### com/framepayments/framesdk_ui/theme (53)
 
-<details><summary><code>FrameColors.kt</code> — 20 symbols</summary>
+<details><summary><code>FrameColors.kt</code> — 21 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameColors` | data class | `data class FrameColors(` | [36](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L36) |
-| `FrameColors.primaryButton` | val | `val primaryButton: Color,` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L37) |
-| `FrameColors.primaryButtonText` | val | `val primaryButtonText: Color,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L38) |
-| `FrameColors.secondaryButton` | val | `val secondaryButton: Color,` | [39](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L39) |
-| `FrameColors.secondaryButtonText` | val | `val secondaryButtonText: Color,` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L40) |
-| `FrameColors.disabledButton` | val | `val disabledButton: Color,` | [41](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L41) |
-| `FrameColors.disabledButtonStroke` | val | `val disabledButtonStroke: Color,` | [42](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L42) |
-| `FrameColors.disabledButtonText` | val | `val disabledButtonText: Color,` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L43) |
-| `FrameColors.surface` | val | `val surface: Color,` | [44](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L44) |
-| `FrameColors.surfaceStroke` | val | `val surfaceStroke: Color,` | [45](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L45) |
-| `FrameColors.textPrimary` | val | `val textPrimary: Color,` | [46](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L46) |
-| `FrameColors.textSecondary` | val | `val textSecondary: Color,` | [47](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L47) |
-| `FrameColors.error` | val | `val error: Color,` | [48](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L48) |
-| `FrameColors.toastBackground` | val | `val toastBackground: Color,` | [49](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L49) |
-| `FrameColors.toastText` | val | `val toastText: Color,` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L50) |
-| `FrameColors.onboardingHeaderBackground` | val | `val onboardingHeaderBackground: Color,` | [51](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L51) |
-| `FrameColors.onboardingProgressFilledOnBrand` | val | `val onboardingProgressFilledOnBrand: Color,` | [52](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L52) |
-| `FrameColors.onboardingProgressEmptyOnBrand` | val | `val onboardingProgressEmptyOnBrand: Color,` | [53](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L53) |
-| `defaults` | fun | `fun defaults(context: Context): FrameColors` | [66](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L66) |
-| `defaults` | fun | `fun defaults(): FrameColors = defaults(LocalContext.current)` | [95](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L95) |
+| `FrameColors` | data class | `data class FrameColors(` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L37) |
+| `FrameColors.primaryButton` | val | `val primaryButton: Color,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L38) |
+| `FrameColors.primaryButtonText` | val | `val primaryButtonText: Color,` | [39](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L39) |
+| `FrameColors.secondaryButton` | val | `val secondaryButton: Color,` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L40) |
+| `FrameColors.secondaryButtonText` | val | `val secondaryButtonText: Color,` | [41](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L41) |
+| `FrameColors.disabledButton` | val | `val disabledButton: Color,` | [42](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L42) |
+| `FrameColors.disabledButtonStroke` | val | `val disabledButtonStroke: Color,` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L43) |
+| `FrameColors.disabledButtonText` | val | `val disabledButtonText: Color,` | [44](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L44) |
+| `FrameColors.surface` | val | `val surface: Color,` | [45](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L45) |
+| `FrameColors.surfaceStroke` | val | `val surfaceStroke: Color,` | [46](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L46) |
+| `FrameColors.fieldFocusStroke` | val | `val fieldFocusStroke: Color,` | [47](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L47) |
+| `FrameColors.textPrimary` | val | `val textPrimary: Color,` | [48](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L48) |
+| `FrameColors.textSecondary` | val | `val textSecondary: Color,` | [49](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L49) |
+| `FrameColors.error` | val | `val error: Color,` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L50) |
+| `FrameColors.toastBackground` | val | `val toastBackground: Color,` | [51](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L51) |
+| `FrameColors.toastText` | val | `val toastText: Color,` | [52](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L52) |
+| `FrameColors.onboardingHeaderBackground` | val | `val onboardingHeaderBackground: Color,` | [53](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L53) |
+| `FrameColors.onboardingProgressFilledOnBrand` | val | `val onboardingProgressFilledOnBrand: Color,` | [54](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L54) |
+| `FrameColors.onboardingProgressEmptyOnBrand` | val | `val onboardingProgressEmptyOnBrand: Color,` | [55](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L55) |
+| `defaults` | fun | `fun defaults(context: Context): FrameColors` | [68](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L68) |
+| `defaults` | fun | `fun defaults(): FrameColors = defaults(LocalContext.current)` | [98](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameColors.kt#L98) |
 
 </details>
 
-<details><summary><code>FrameFonts.kt</code> — 11 symbols</summary>
+<details><summary><code>FrameFonts.kt</code> — 13 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameFonts` | data class | `data class FrameFonts(` | [27](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L27) |
-| `FrameFonts.title` | val | `val title: TextStyle,` | [28](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L28) |
-| `FrameFonts.heading` | val | `val heading: TextStyle,` | [29](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L29) |
-| `FrameFonts.headline` | val | `val headline: TextStyle,` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L30) |
-| `FrameFonts.body` | val | `val body: TextStyle,` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L31) |
-| `FrameFonts.bodySmall` | val | `val bodySmall: TextStyle,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L32) |
-| `FrameFonts.label` | val | `val label: TextStyle,` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L33) |
-| `FrameFonts.caption` | val | `val caption: TextStyle,` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L34) |
-| `FrameFonts.button` | val | `val button: TextStyle,` | [35](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L35) |
-| `defaults` | fun | `fun defaults(): FrameFonts = fromTypography(MaterialTheme.typography)` | [48](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L48) |
-| `defaultsForViews` | fun | `fun defaultsForViews(): FrameFonts = fromTypography(Typography())` | [54](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L54) |
+| `FrameFonts` | data class | `data class FrameFonts(` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L30) |
+| `FrameFonts.title` | val | `val title: TextStyle,` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L31) |
+| `FrameFonts.heading` | val | `val heading: TextStyle,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L32) |
+| `FrameFonts.headline` | val | `val headline: TextStyle,` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L33) |
+| `FrameFonts.body` | val | `val body: TextStyle,` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L34) |
+| `FrameFonts.bodySmall` | val | `val bodySmall: TextStyle,` | [35](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L35) |
+| `FrameFonts.label` | val | `val label: TextStyle,` | [36](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L36) |
+| `FrameFonts.caption` | val | `val caption: TextStyle,` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L37) |
+| `FrameFonts.button` | val | `val button: TextStyle,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L38) |
+| `Soehne` | val | `val Soehne: FontFamily = FontFamily(` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L43) |
+| `defaults` | fun | `fun defaults(): FrameFonts = soehneDefaults()` | [53](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L53) |
+| `defaultsForViews` | fun | `fun defaultsForViews(): FrameFonts = soehneDefaults()` | [56](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L56) |
+| `fromTypography` | fun | `fun fromTypography(typography: Typography): FrameFonts = FrameFonts( title = typography.headlineLarge.copy(fontWeight = FontWeight.Bold), heading = typography.…` | [102](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L102) |
 
 </details>
 
@@ -3115,20 +3135,34 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-<details><summary><code>FrameTheme.kt</code> — 8 symbols</summary>
+<details><summary><code>FrameSpacing.kt</code> — 4 symbols</summary>
+
+[`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `FrameSpacing` | data class | `data class FrameSpacing(` | [15](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt#L15) |
+| `FrameSpacing.sectionTop` | val | `val sectionTop: Dp = 16.dp,` | [16](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt#L16) |
+| `FrameSpacing.sectionGap` | val | `val sectionGap: Dp = 12.dp,` | [17](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt#L17) |
+| `FrameSpacing.formBlock` | val | `val formBlock: Dp = 16.dp,` | [18](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameSpacing.kt#L18) |
+
+</details>
+
+<details><summary><code>FrameTheme.kt</code> — 9 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameTheme` | data class | `data class FrameTheme(` | [21](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L21) |
-| `FrameTheme.colors` | val | `val colors: FrameColors,` | [22](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L22) |
-| `FrameTheme.fonts` | val | `val fonts: FrameFonts,` | [23](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L23) |
-| `FrameTheme.radii` | val | `val radii: FrameRadii,` | [24](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L24) |
-| `default` | fun | `fun default(): FrameTheme = FrameTheme( colors = FrameColors.defaults(), fonts = FrameFonts.defaults(), radii = FrameRadii(), )` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L34) |
-| `default` | fun | `fun default(context: Context): FrameTheme = FrameTheme( colors = FrameColors.defaults(context), fonts = FrameFonts.defaultsForViews(), radii = FrameRadii(), )` | [46](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L46) |
-| `LocalFrameTheme` | val | `val LocalFrameTheme = staticCompositionLocalOf<FrameTheme>` | [65](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L65) |
-| `FrameTheme` | fun | `fun FrameTheme( theme: FrameTheme = FrameTheme.default(), content: @Composable () -> Unit, )` | [80](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L80) |
+| `FrameTheme` | data class | `data class FrameTheme(` | [29](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L29) |
+| `FrameTheme.colors` | val | `val colors: FrameColors,` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L30) |
+| `FrameTheme.fonts` | val | `val fonts: FrameFonts,` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L31) |
+| `FrameTheme.radii` | val | `val radii: FrameRadii,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L32) |
+| `FrameTheme.spacing` | val | `val spacing: FrameSpacing = FrameSpacing(),` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L33) |
+| `default` | fun | `fun default(): FrameTheme = FrameTheme( colors = FrameColors.defaults(), fonts = FrameFonts.defaults(), radii = FrameRadii(), spacing = FrameSpacing(), )` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L43) |
+| `default` | fun | `fun default(context: Context): FrameTheme = FrameTheme( colors = FrameColors.defaults(context), fonts = FrameFonts.defaultsForViews(), radii = FrameRadii(), sp…` | [56](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L56) |
+| `LocalFrameTheme` | val | `val LocalFrameTheme = staticCompositionLocalOf<FrameTheme>` | [76](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L76) |
+| `FrameTheme` | fun | `fun FrameTheme( theme: FrameTheme = FrameTheme.default(), content: @Composable () -> Unit, )` | [92](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameTheme.kt#L92) |
 
 </details>
 
@@ -3292,7 +3326,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-### `FrameSDK-Onboarding` — 226 public symbols
+### `FrameSDK-Onboarding` — 227 public symbols
 
 Onboarding product: the capability-driven identity/payment verification flow, its screens, and the onboarding-only APIs (3DS, IDV, phone OTP, geocompliance, Plaid, Persona).
 
@@ -3346,7 +3380,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 | `OnboardingConfig.requiredCapabilities` | val | `val requiredCapabilities: List<Capabilities> = emptyList(),` | [250](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L250) |
 | `OnboardingConfig.skipInitNetwork` | val | `val skipInitNetwork: Boolean = false,` | [251](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L251) |
 | `OnboardingConfig.theme` | val | `val theme: FrameTheme? = null,` | [252](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L252) |
-| `OnboardingConfig.showIntroScreen` | val | `val showIntroScreen: Boolean = true,` | [253](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L253) |
+| `OnboardingConfig.showIntroScreen` | val | `val showIntroScreen: Boolean = false,` | [253](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L253) |
 | `OnboardingConfig.showCompletionScreen` | val | `val showCompletionScreen: Boolean = true,` | [254](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L254) |
 | `PaymentCardDraft` | data class | `data class PaymentCardDraft(` | [273](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L273) |
 | `PaymentCardDraft.cardNumber` | val | `val cardNumber: String = ,` | [274](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L274) |
@@ -3672,7 +3706,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 </details>
 
-#### com/framepayments/frameonboarding/reusable (7)
+#### com/framepayments/frameonboarding/reusable (8)
 
 <details><summary><code>BankAccountDetailView.kt</code> — 1 symbols</summary>
 
@@ -3690,7 +3724,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `CustomerInformationView` | fun | `fun CustomerInformationView( viewModel: CustomerInformationFieldVM, headerTitle: String = , showHeader: Boolean = true, showGovIdVerification: Boolean = false,…` | [44](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/CustomerInformationView.kt#L44) |
+| `CustomerInformationView` | fun | `fun CustomerInformationView( viewModel: CustomerInformationFieldVM, headerTitle: String = , showHeader: Boolean = true, showGovIdVerification: Boolean = false,…` | [57](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/CustomerInformationView.kt#L57) |
 
 </details>
 
@@ -3731,6 +3765,16 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
 | `PhoneCountryPickerSheet` | fun | `fun PhoneCountryPickerSheet( selected: PhoneCountrySelection, onSelected: (PhoneCountrySelection) -> Unit, onDismiss: () -> Unit )` | [45](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/PhoneCountryPickerSheet.kt#L45) |
+
+</details>
+
+<details><summary><code>SpinnerDatePickerDialog.kt</code> — 1 symbols</summary>
+
+[`FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/SpinnerDatePickerDialog.kt`](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/SpinnerDatePickerDialog.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `SpinnerDatePickerDialog` | fun | `fun SpinnerDatePickerDialog( initialMillis: Long, onDismiss: () -> Unit, onDateSelected: (Long) -> Unit, )` | [18](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/SpinnerDatePickerDialog.kt#L18) |
 
 </details>
 
@@ -3798,7 +3842,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [39](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L39) |
+| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L40) |
 
 </details>
 
@@ -3828,7 +3872,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [51](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L51) |
+| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [54](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L54) |
 
 </details>
 

@@ -1,42 +1,29 @@
 package com.framepayments.frame
 
+import androidx.activity.result.ActivityResultLauncher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.framepayments.frameonboarding.networking.idv.IdvAPI
+import com.framepayments.frameonboarding.persona.PersonaInquiry
+import com.framepayments.frameonboarding.persona.PersonaVerificationResult
+import com.framepayments.frameonboarding.persona.PersonaVerificationService
 import com.framepayments.frameonboarding.plaid.PlaidLinkResult
 import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.framesdk.FrameNetworking
-import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountObjects
 import com.framepayments.framesdk.accounts.AccountRequests
 import com.framepayments.framesdk.accounts.AccountsAPI
-import com.framepayments.framesdk.chargeintents.ChargeIntent
-import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
-import com.framepayments.framesdk.customers.CustomersAPI
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
-import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
-import com.framepayments.framesdk.refunds.Refund
-import com.framepayments.framesdk.refunds.RefundsAPI
-import com.framepayments.framesdk.subscriptions.Subscription
-import com.framepayments.framesdk.subscriptions.SubscriptionsAPI
-import com.framepayments.framesdk.subscriptionphases.SubscriptionPhase
-import com.framepayments.framesdk.subscriptionphases.SubscriptionPhasesAPI
+import com.withpersona.sdk2.inquiry.Inquiry
+import com.withpersona.sdk2.inquiry.InquiryResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class ContentUiState(
-    val customers: List<FrameObjects.Customer> = emptyList(),
-    val paymentMethods: List<FrameObjects.PaymentMethod> = emptyList(),
-    val subscriptions: List<Subscription> = emptyList(),
-    val chargeIntents: List<ChargeIntent> = emptyList(),
-    val refunds: List<Refund> = emptyList(),
-    val subscriptionPhases: List<SubscriptionPhase> = emptyList(),
-)
-
-data class PlaidMessage(val title: String, val body: String)
+data class DemoAlertMessage(val title: String, val body: String)
 
 /**
  * State of the demo onboarding-session mint flow. The example app cannot launch onboarding until a
@@ -63,14 +50,21 @@ sealed class OnboardingMintState {
 
 class ContentViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ContentUiState())
-    val uiState: StateFlow<ContentUiState> = _uiState.asStateFlow()
-
     private val _plaidService = MutableStateFlow<PlaidLinkService?>(null)
     val plaidService: StateFlow<PlaidLinkService?> = _plaidService.asStateFlow()
 
-    private val _plaidMessage = MutableStateFlow<PlaidMessage?>(null)
-    val plaidMessage: StateFlow<PlaidMessage?> = _plaidMessage.asStateFlow()
+    private val _demoAlert = MutableStateFlow<DemoAlertMessage?>(null)
+    val demoAlert: StateFlow<DemoAlertMessage?> = _demoAlert.asStateFlow()
+
+    private val personaService = PersonaVerificationService()
+    private var idvClientSecret: String? = null
+
+    private val _personaInquiryToLaunch = MutableStateFlow<PersonaInquiry?>(null)
+    /** Set when `POST /idv/session` returns an inquiry; the playground launches Persona against it. */
+    val personaInquiryToLaunch: StateFlow<PersonaInquiry?> = _personaInquiryToLaunch.asStateFlow()
+
+    private val _isVerifyingIdentity = MutableStateFlow(false)
+    val isVerifyingIdentity: StateFlow<Boolean> = _isVerifyingIdentity.asStateFlow()
 
     /**
      * State of the demo onboarding-session mint flow. The minted token (`onb_sess_…`) is exposed via
@@ -83,8 +77,8 @@ class ContentViewModel : ViewModel() {
     /**
      * The account every demo entry point acts on, mirroring the iOS example app's single
      * `viewModel.accountId`: onboarding, the standalone entry-point demos (add payment method,
-     * add payout method, select payout method), Plaid, and Google Pay all read and write this
-     * one value instead of each resolving their own account independently.
+     * add payout method, select payout method), Plaid, Persona IDV, and Google Pay all read and
+     * write this one value instead of each resolving their own account independently.
      *
      * Seeded from [FrameNetworking.accountId] — the accountId passed to
      * `initializeWithAPIKey`, if the host configured one — and otherwise starts blank, in which
@@ -95,42 +89,6 @@ class ContentViewModel : ViewModel() {
 
     fun setAccountId(accountId: String) {
         _accountId.value = accountId
-    }
-
-    init {
-        viewModelScope.launch {
-            loadCustomers()
-            loadPaymentMethods()
-            loadSubscriptions()
-            loadChargeIntents()
-            loadRefunds()
-            loadSubscriptionPhases()
-        }
-    }
-
-    private suspend fun loadCustomers() {
-        val (response, _) = CustomersAPI.getCustomers()
-        _uiState.value = _uiState.value.copy(customers = response?.data ?: emptyList())
-    }
-
-    private suspend fun loadPaymentMethods() {
-        val (response, _) = PaymentMethodsAPI.getPaymentMethods()
-        _uiState.value = _uiState.value.copy(paymentMethods = response?.data ?: emptyList())
-    }
-
-    private suspend fun loadSubscriptions() {
-        val (response, _) = SubscriptionsAPI.getSubscriptions(perPage = 50, page = 1)
-        _uiState.value = _uiState.value.copy(subscriptions = response?.data ?: emptyList())
-    }
-
-    private suspend fun loadChargeIntents() {
-        val (response, _) = ChargeIntentAPI.getAllChargeIntents(perPage = 50, page = 1)
-        _uiState.value = _uiState.value.copy(chargeIntents = response?.data ?: emptyList())
-    }
-
-    private suspend fun loadRefunds() {
-        val (response, _) = RefundsAPI.getRefunds(chargeId = null, chargeIntentId = null, perPage = 50, page = 1)
-        _uiState.value = _uiState.value.copy(refunds = response?.data ?: emptyList())
     }
 
     /**
@@ -148,34 +106,24 @@ class ContentViewModel : ViewModel() {
     fun mintOnboardingClientSecret(accountIdInput: String?) {
         _onboardingMintState.value = OnboardingMintState.Loading
         viewModelScope.launch {
-            val resolvedAccountId = accountIdInput?.takeIf { it.isNotBlank() } ?: run {
-                val (account, err) = createEmptyIndividualAccount()
-                account?.id ?: run {
-                    _onboardingMintState.value = OnboardingMintState.Error(
-                        err?.let { "Couldn't create an account to onboard: $it" }
-                            ?: "Account creation did not return an account id."
-                    )
-                    return@launch
-                }
-            }
-            val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(
-                accountId = resolvedAccountId,
+            when (val result = mintSession(
+                accountIdInput = accountIdInput,
                 steps = listOf(
                     OnboardingSessionRequests.OnboardingSessionStep.ID_VERIFICATION,
                     OnboardingSessionRequests.OnboardingSessionStep.GEO_COMPLIANCE,
                     OnboardingSessionRequests.OnboardingSessionStep.PAYMENT_METHOD,
-                )
-            )
-            val (session, sessionError) = OnboardingSessionsAPI.createOnboardingSession(request)
-            val clientSecret = session?.clientSecret
-            _onboardingMintState.value = if (clientSecret != null) {
-                _accountId.value = resolvedAccountId
-                OnboardingMintState.Ready(clientSecret, resolvedAccountId)
-            } else {
-                OnboardingMintState.Error(
-                    sessionError?.let { "Couldn't mint an onboarding session: $it" }
-                        ?: "Onboarding session response did not include a client secret."
-                )
+                ),
+            )) {
+                is MintResult.Ok -> {
+                    _accountId.value = result.session.accountId
+                    _onboardingMintState.value = OnboardingMintState.Ready(
+                        result.session.clientSecret,
+                        result.session.accountId,
+                    )
+                }
+                is MintResult.Err -> {
+                    _onboardingMintState.value = OnboardingMintState.Error(result.message)
+                }
             }
         }
     }
@@ -191,6 +139,38 @@ class ContentViewModel : ViewModel() {
         return AccountsAPI.createAccount(request)
     }
 
+    private data class MintedSession(val clientSecret: String, val accountId: String)
+
+    private sealed class MintResult {
+        data class Ok(val session: MintedSession) : MintResult()
+        data class Err(val message: String) : MintResult()
+    }
+
+    @Suppress("DEPRECATION")
+    private suspend fun mintSession(
+        accountIdInput: String?,
+        steps: List<OnboardingSessionRequests.OnboardingSessionStep>,
+    ): MintResult {
+        val resolvedAccountId = accountIdInput?.takeIf { it.isNotBlank() } ?: run {
+            val (account, err) = createEmptyIndividualAccount()
+            account?.id ?: return MintResult.Err(
+                err?.let { "Couldn't create an account to onboard: $it" }
+                    ?: "Account creation did not return an account id."
+            )
+        }
+        val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(
+            accountId = resolvedAccountId,
+            steps = steps,
+        )
+        val (session, sessionError) = OnboardingSessionsAPI.createOnboardingSession(request)
+        val clientSecret = session?.clientSecret
+            ?: return MintResult.Err(
+                sessionError?.let { "Couldn't mint an onboarding session: $it" }
+                    ?: "Onboarding session response did not include a client secret."
+            )
+        return MintResult.Ok(MintedSession(clientSecret, resolvedAccountId))
+    }
+
     /** Resets the mint flow to [OnboardingMintState.Idle] so the next launch mints a fresh token. */
     fun clearOnboardingClientSecret() {
         _onboardingMintState.value = OnboardingMintState.Idle
@@ -199,7 +179,7 @@ class ContentViewModel : ViewModel() {
     fun startPlaidLink() {
         if (_plaidService.value?.isConnecting?.value == true) return
         val accountId = _accountId.value.takeIf { it.isNotBlank() } ?: run {
-            _plaidMessage.value = PlaidMessage(
+            _demoAlert.value = DemoAlertMessage(
                 title = "Plaid",
                 body = "No account set. Onboard or enter an account ID first."
             )
@@ -210,7 +190,7 @@ class ContentViewModel : ViewModel() {
             _plaidService.value = service
             service.fetchLinkToken()
             if (service.linkToken.value == null) {
-                _plaidMessage.value = PlaidMessage(
+                _demoAlert.value = DemoAlertMessage(
                     title = "Plaid",
                     body = "Failed to get Plaid token (${service.result.value})"
                 )
@@ -237,7 +217,7 @@ class ContentViewModel : ViewModel() {
                 is PlaidLinkResult.Success -> {
                     val pm = outcome.paymentMethod
                     val mask = pm.ach?.lastFour?.let { "••$it" }.orEmpty()
-                    _plaidMessage.value = PlaidMessage(
+                    _demoAlert.value = DemoAlertMessage(
                         title = "Bank account connected",
                         body = buildString {
                             append("Payment method saved to the Frame account.\n\n")
@@ -246,10 +226,9 @@ class ContentViewModel : ViewModel() {
                             institutionName?.let { append("\nBank: $it") }
                         }
                     )
-                    loadPaymentMethods()
                 }
                 is PlaidLinkResult.Failure -> {
-                    _plaidMessage.value = PlaidMessage(
+                    _demoAlert.value = DemoAlertMessage(
                         title = "Plaid connection failed",
                         body = outcome.error?.toString() ?: "Unknown error"
                     )
@@ -268,15 +247,140 @@ class ContentViewModel : ViewModel() {
         _plaidService.value = null
     }
 
-    fun clearPlaidMessage() {
-        _plaidMessage.value = null
+    /**
+     * Demo/testing only: mints an onboarding session, creates a Persona inquiry via `/idv/session`,
+     * and publishes it on [personaInquiryToLaunch] so the playground can open the Persona SDK.
+     * Requires a configured account id (same gate as Plaid).
+     */
+    fun startIdentityVerification() {
+        if (_isVerifyingIdentity.value) return
+        val accountId = _accountId.value.takeIf { it.isNotBlank() } ?: run {
+            _demoAlert.value = DemoAlertMessage(
+                title = "Identity Verification",
+                body = "No account set. Onboard or enter an account ID first."
+            )
+            return
+        }
+        _isVerifyingIdentity.value = true
+        viewModelScope.launch {
+            when (val minted = mintSession(
+                accountIdInput = accountId,
+                steps = listOf(OnboardingSessionRequests.OnboardingSessionStep.ID_VERIFICATION),
+            )) {
+                is MintResult.Err -> {
+                    _isVerifyingIdentity.value = false
+                    _demoAlert.value = DemoAlertMessage(
+                        title = "Identity Verification",
+                        body = minted.message,
+                    )
+                    return@launch
+                }
+                is MintResult.Ok -> {
+                    idvClientSecret = minted.session.clientSecret
+                    _accountId.value = minted.session.accountId
+
+                    val (session, err) = IdvAPI.createSession(minted.session.clientSecret)
+                    val inquiryId = session?.inquiryId?.takeIf { it.isNotBlank() }
+                    if (inquiryId == null) {
+                        _isVerifyingIdentity.value = false
+                        _demoAlert.value = DemoAlertMessage(
+                            title = "Identity Verification",
+                            body = err?.toString() ?: "Couldn't create a Persona inquiry."
+                        )
+                        return@launch
+                    }
+
+                    // Already-approved inquiries are terminal — confirm and skip the Persona UI.
+                    val (existing, existingErr) = IdvAPI.completeInquiry(
+                        minted.session.clientSecret,
+                        inquiryId,
+                    )
+                    if (existingErr == null && existing?.verified == true) {
+                        _isVerifyingIdentity.value = false
+                        _demoAlert.value = DemoAlertMessage(
+                            title = "Identity Verification",
+                            body = "Already verified.\n\nInquiry: $inquiryId"
+                        )
+                        return@launch
+                    }
+
+                    _personaInquiryToLaunch.value = PersonaInquiry(inquiryId, session?.sessionToken)
+                }
+            }
+        }
     }
 
-    private suspend fun loadSubscriptionPhases() {
-        val (subResponse, _) = SubscriptionsAPI.getSubscriptions(perPage = 1, page = 1)
-        val firstSub = subResponse?.data?.firstOrNull() ?: return
-        val firstSubId = firstSub.id ?: return
-        val (phaseResponse, _) = SubscriptionPhasesAPI.getSubscriptionPhases(firstSubId)
-        _uiState.value = _uiState.value.copy(subscriptionPhases = phaseResponse?.phases ?: emptyList())
+    /** Forwards the Persona ActivityResult callback into [personaService]. */
+    fun onPersonaInquiryResult(response: InquiryResponse) {
+        personaService.onInquiryResult(response)
+    }
+
+    /**
+     * Launches Persona for the pending inquiry via the lifecycle-owned [launcher], then confirms
+     * with `POST /idv/complete` (server is source of truth).
+     */
+    fun launchPendingPersonaInquiry(launcher: ActivityResultLauncher<Inquiry>) {
+        val inquiry = _personaInquiryToLaunch.value ?: return
+        _personaInquiryToLaunch.value = null
+        val clientSecret = idvClientSecret ?: run {
+            _isVerifyingIdentity.value = false
+            _demoAlert.value = DemoAlertMessage(
+                title = "Identity Verification",
+                body = "Verification is unavailable for this session."
+            )
+            return
+        }
+        viewModelScope.launch {
+            try {
+                when (val outcome = personaService.awaitResult(
+                    inquiry.inquiryId,
+                    inquiry.sessionToken,
+                    launcher,
+                )) {
+                    is PersonaVerificationResult.Completed -> {
+                        val (complete, err) = IdvAPI.completeInquiry(clientSecret, outcome.inquiryId)
+                        _demoAlert.value = when {
+                            complete?.verified == true -> DemoAlertMessage(
+                                title = "Identity Verification",
+                                body = "Verified.\n\nInquiry: ${outcome.inquiryId}"
+                            )
+                            err != null -> DemoAlertMessage(
+                                title = "Identity Verification",
+                                body = "Complete failed: $err"
+                            )
+                            else -> DemoAlertMessage(
+                                title = "Identity Verification",
+                                body = buildString {
+                                    append("Not verified.")
+                                    complete?.status?.let { append("\nStatus: $it") }
+                                    complete?.failureType?.let { append("\nFailure: $it") }
+                                    append("\nInquiry: ${outcome.inquiryId}")
+                                }
+                            )
+                        }
+                    }
+                    is PersonaVerificationResult.Cancelled -> {
+                        _demoAlert.value = DemoAlertMessage(
+                            title = "Identity Verification",
+                            body = "Cancelled."
+                        )
+                    }
+                    is PersonaVerificationResult.Failure -> {
+                        _demoAlert.value = DemoAlertMessage(
+                            title = "Identity Verification",
+                            body = "Persona failed${outcome.message?.let { ": $it" } ?: "."}"
+                        )
+                    }
+                }
+            } finally {
+                _isVerifyingIdentity.value = false
+                idvClientSecret = null
+                personaService.clearResult()
+            }
+        }
+    }
+
+    fun clearDemoAlert() {
+        _demoAlert.value = null
     }
 }

@@ -1,9 +1,14 @@
 package com.framepayments.frameonboarding.views
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingData
@@ -31,15 +36,28 @@ internal fun OnboardingScreenRouter(
         }
 
         OnboardingStep.VerifyIdentification -> {
-            UserIdentificationView(
-                viewModel = viewModel,
-            requiresDateOfBirth = viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL),
-                // Always show TOS on Android. iOS gates on geo_compliance; Android keeps the
-                // broader surface so every create/update path can attach an acceptance token
-                // (decision: Android is the correct one for now — M18).
-                showTermsOfService = true,
-                onBack = { viewModel.moveBack() }
-            )
+            val accountReady by viewModel.isExistingAccountReady.collectAsState()
+            // When the intro is skipped, this is the first screen. Block until a pre-existing
+            // account finishes loading so updateOnboardingFlow cannot yank the applicant mid-entry.
+            if (!accountReady && config.accountId != null && !config.showIntroScreen) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                UserIdentificationView(
+                    viewModel = viewModel,
+                    requiresDateOfBirth = viewModel.originallyRequiredCapabilities.contains(Capabilities.KYC_PREFILL),
+                    // Always show TOS on Android. iOS gates on geo_compliance; Android keeps the
+                    // broader surface so every create/update path can attach an acceptance token
+                    // (decision: Android is the correct one for now — M18).
+                    showTermsOfService = true,
+                    canGoBack = viewModel.orderedSteps.indexOf(OnboardingStep.VerifyIdentification) > 0,
+                    onBack = { viewModel.moveBack() }
+                )
+            }
         }
 
         OnboardingStep.GeolocationVerification -> {

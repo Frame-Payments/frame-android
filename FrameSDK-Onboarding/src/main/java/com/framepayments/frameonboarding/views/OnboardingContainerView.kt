@@ -3,6 +3,7 @@ package com.framepayments.frameonboarding.views
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.framepayments.frameonboarding.classes.Capabilities
@@ -34,6 +36,7 @@ import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk_ui.reusable.refreshesSonarSession
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
+import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 
 /**
  * Root composable for the Frame onboarding flow.
@@ -53,7 +56,68 @@ fun OnboardingContainerView(
     onResult: (OnboardingResult) -> Unit
 ) {
     val viewModel = remember { FrameOnboardingViewModel(config) }
-    DisposableEffect(viewModel) { onDispose { viewModel.close() } }
+    val currentOnResult by rememberUpdatedState(onResult)
+    // Guards against delivering Completed/Cancelled twice when LaunchedEffect and dispose race.
+    val resultDelivery = remember { object { var delivered = false } }
+
+    fun deliverTerminalResult(r: OnboardingResult) {
+        if (resultDelivery.delivered) return
+        when (r) {
+            is OnboardingResult.Completed -> {
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_COMPLETED,
+                    AccountEventScreen.ONBOARDING,
+                    detail = AccountEventDetail.ONBOARDING_COMPLETED_APPROVED
+                )
+            }
+            is OnboardingResult.FinishedUnverified -> {
+                when (val outcome = r.outcome) {
+                    is OnboardingOutcome.Declined -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_DECLINED,
+                        AccountEventScreen.ONBOARDING,
+                        detail = outcome.message ?: "declined"
+                    )
+                    is OnboardingOutcome.ActionRequired -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_ACTION_REQUIRED,
+                        AccountEventScreen.ONBOARDING,
+                        detail = outcome.message ?: "action required"
+                    )
+                    else -> AccountEventEmitter.emit(
+                        AccountEventName.ONBOARDING_NEEDS_REVIEW,
+                        AccountEventScreen.ONBOARDING
+                    )
+                }
+            }
+            is OnboardingResult.Cancelled -> {
+                val segment = viewModel.navigationState.currentStep.toFlowSegment()
+                AccountEventEmitter.emit(
+                    AccountEventName.ONBOARDING_CANCELLED,
+                    segment.accountEventScreen(),
+                    detail = "last step reached: ${segment.analyticsName}"
+                )
+            }
+            else -> return
+        }
+        resultDelivery.delivered = true
+        currentOnResult(r)
+    }
+
+    // Host sheet swipe / composition removal: emit Cancelled if nothing terminal ran, or flush a
+    // pending result LaunchedEffect never got to deliver before the effect was cancelled.
+    DisposableEffect(viewModel) {
+        onDispose {
+            if (!resultDelivery.delivered) {
+                val pending = viewModel.result.value
+                if (pending == null) {
+                    viewModel.cancel()
+                    deliverTerminalResult(OnboardingResult.Cancelled)
+                } else {
+                    deliverTerminalResult(pending)
+                }
+            }
+            viewModel.close()
+        }
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val result by viewModel.result.collectAsState()
     val userError by viewModel.userErrorMessage.collectAsState()
@@ -123,45 +187,8 @@ fun OnboardingContainerView(
     }
 
     LaunchedEffect(result) {
-        when (val r = result) {
-            is OnboardingResult.Completed -> {
-                AccountEventEmitter.emit(
-                    AccountEventName.ONBOARDING_COMPLETED,
-                    AccountEventScreen.ONBOARDING,
-                    detail = AccountEventDetail.ONBOARDING_COMPLETED_APPROVED
-                )
-                onResult(r)
-            }
-            is OnboardingResult.FinishedUnverified -> {
-                when (val outcome = r.outcome) {
-                    is OnboardingOutcome.Declined -> AccountEventEmitter.emit(
-                        AccountEventName.ONBOARDING_DECLINED,
-                        AccountEventScreen.ONBOARDING,
-                        detail = outcome.message ?: "declined"
-                    )
-                    is OnboardingOutcome.ActionRequired -> AccountEventEmitter.emit(
-                        AccountEventName.ONBOARDING_ACTION_REQUIRED,
-                        AccountEventScreen.ONBOARDING,
-                        detail = outcome.message ?: "action required"
-                    )
-                    else -> AccountEventEmitter.emit(
-                        AccountEventName.ONBOARDING_NEEDS_REVIEW,
-                        AccountEventScreen.ONBOARDING
-                    )
-                }
-                onResult(r)
-            }
-            is OnboardingResult.Cancelled -> {
-                val segment = viewModel.navigationState.currentStep.toFlowSegment()
-                AccountEventEmitter.emit(
-                    AccountEventName.ONBOARDING_CANCELLED,
-                    segment.accountEventScreen(),
-                    detail = "last step reached: ${segment.analyticsName}"
-                )
-                onResult(r)
-            }
-            else -> Unit
-        }
+        val r = result ?: return@LaunchedEffect
+        deliverTerminalResult(r)
     }
 
     LaunchedEffect(userError) {
@@ -177,7 +204,12 @@ fun OnboardingContainerView(
     }
 
     FrameTheme(theme = config.theme ?: FrameTheme.default()) {
+        val theme = LocalFrameTheme.current
+        // Zero content insets so the header teal sits flush under the sheet drag-handle
+        // (hosts should set ModalBottomSheet containerColor to onboardingHeaderBackground).
         Scaffold(
+            containerColor = theme.colors.surface,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             modifier = Modifier
                 .fillMaxSize()
                 .refreshesSonarSession(accountId = resolvedAccountId),
@@ -187,7 +219,6 @@ fun OnboardingContainerView(
                 ProgressIndicator(
                     currentStep = viewModel.navigationState.currentStep,
                     flowSegments = viewModel.flowSegments,
-                    onClose = viewModel::cancel,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Box(modifier = Modifier.weight(1f)) {
@@ -203,7 +234,6 @@ fun OnboardingContainerView(
         }
     }
 }
-
 /** Mirrors iOS `OnboardingFlow.accountEventScreenName`, which maps at segment granularity. */
 private fun OnboardingFlowSegment.accountEventScreen(): AccountEventScreen = when (this) {
     OnboardingFlowSegment.PERSONAL_INFORMATION -> AccountEventScreen.PERSONAL_INFORMATION

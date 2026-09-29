@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.views
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,16 +16,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,15 +32,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
+import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.theme.FrameTheme
 import com.framepayments.framesdk_ui.theme.FrameThemePreviews
@@ -52,14 +51,18 @@ import com.framepayments.framesdk_ui.theme.FrameThemePreviews
 internal fun VerifyCardScreen(
     headerTitle: String = "Verify Your Card",
     bodyText: String = "We've sent a security code to your bank registered phone number ending in *3432.",
+    bodyAnnotated: AnnotatedString? = null,
+    codeExpirationHint: String? = null,
     confirmButtonText: String = "Continue",
     digitCount: Int = 6,
     showResendCode: Boolean = false,
+    showChangePhoneNumber: Boolean = false,
     embedInParentScaffold: Boolean = false,
     /** True only on the Twilio phone-OTP path — the 3DS and Prove-OTP call sites do not emit. */
     emitsPhoneCodeEntry: Boolean = false,
     onBack: () -> Unit,
     onResendCode: () -> Unit = {},
+    onChangePhoneNumber: () -> Unit = {},
     onContinue: (String) -> Unit
 ) {
     var code by remember { mutableStateOf("") }
@@ -72,15 +75,23 @@ internal fun VerifyCardScreen(
             )
         }
     }
+    val theme = LocalFrameTheme.current
     val focusRequesters = remember(digitCount) { List(digitCount) { FocusRequester() } }
     val canContinue = code.length == digitCount
-    val digitTextStyle = LocalFrameTheme.current.fonts.heading.copy(
+    val digitTextStyle = theme.fonts.heading.copy(
         textAlign = TextAlign.Center,
         lineHeight = 40.sp,
         lineHeightStyle = LineHeightStyle(
             alignment = LineHeightStyle.Alignment.Center,
             trim = LineHeightStyle.Trim.None
         )
+    )
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = theme.colors.fieldFocusStroke,
+        unfocusedBorderColor = theme.colors.surfaceStroke,
+        focusedContainerColor = theme.colors.surface,
+        unfocusedContainerColor = theme.colors.surface,
+        cursorColor = theme.colors.textPrimary,
     )
 
     @Composable
@@ -89,87 +100,120 @@ internal fun VerifyCardScreen(
             focusRequesters[0].requestFocus()
         }
 
+        // Action stack under the OTP digits; Continue sits a bit farther below the links.
+        val otpActionSpacing = 8.dp
         Column(
             modifier = Modifier
                 .padding(scaffoldContentPadding)
-                .padding(24.dp)
+                .padding(horizontal = 16.dp)
                 .fillMaxSize()
-                .imePadding(),
-            verticalArrangement = Arrangement.SpaceBetween
+                .imePadding()
         ) {
-            Column {
+            if (embedInParentScaffold) {
+                Text(
+                    text = headerTitle,
+                    style = theme.fonts.heading,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+            if (bodyAnnotated != null) {
+                Text(
+                    text = bodyAnnotated,
+                    style = theme.fonts.bodySmall.copy(color = theme.colors.textSecondary)
+                )
+            } else {
                 Text(
                     text = bodyText,
-                    style = LocalFrameTheme.current.fonts.bodySmall
+                    style = theme.fonts.bodySmall,
+                    color = theme.colors.textSecondary,
                 )
+            }
 
-                Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(16.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    repeat(digitCount) { index ->
-                        OutlinedTextField(
-                            value = code.getOrNull(index)?.toString() ?: "",
-                            onValueChange = { newValue ->
-                                if (newValue.length <= 1 && newValue.all { it.isDigit() }) {
-                                    val newCode = code.toMutableList()
-                                    if (newValue.isEmpty()) {
-                                        if (index < newCode.size) {
-                                            newCode.removeAt(index)
-                                        }
-                                        code = newCode.joinToString("")
-                                        if (index > 0) {
-                                            focusRequesters[index - 1].requestFocus()
-                                        }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                repeat(digitCount) { index ->
+                    OutlinedTextField(
+                        value = code.getOrNull(index)?.toString() ?: "",
+                        onValueChange = { newValue ->
+                            if (newValue.length <= 1 && newValue.all { it.isDigit() }) {
+                                val newCode = code.toMutableList()
+                                if (newValue.isEmpty()) {
+                                    if (index < newCode.size) {
+                                        newCode.removeAt(index)
+                                    }
+                                    code = newCode.joinToString("")
+                                    if (index > 0) {
+                                        focusRequesters[index - 1].requestFocus()
+                                    }
+                                } else {
+                                    if (index < newCode.size) {
+                                        newCode[index] = newValue[0]
                                     } else {
-                                        if (index < newCode.size) {
-                                            newCode[index] = newValue[0]
-                                        } else {
-                                            newCode.add(newValue[0])
-                                        }
-                                        code = newCode.joinToString("")
-                                        if (index < digitCount - 1) {
-                                            focusRequesters[index + 1].requestFocus()
-                                        }
+                                        newCode.add(newValue[0])
+                                    }
+                                    code = newCode.joinToString("")
+                                    if (index < digitCount - 1) {
+                                        focusRequesters[index + 1].requestFocus()
                                     }
                                 }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 72.dp)
-                                .focusRequester(focusRequesters[index]),
-                            textStyle = digitTextStyle,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            maxLines = 1
-                        )
-                    }
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = 70.dp)
+                            .focusRequester(focusRequesters[index]),
+                        textStyle = digitTextStyle,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        maxLines = 1,
+                        colors = fieldColors,
+                    )
                 }
+            }
 
-                Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(8.dp))
+
+            Column(verticalArrangement = Arrangement.spacedBy(otpActionSpacing)) {
+                codeExpirationHint?.let { hint ->
+                    Text(
+                        text = hint,
+                        style = theme.fonts.caption,
+                        color = theme.colors.textSecondary
+                    )
+                }
 
                 if (showResendCode) {
-                    TextButton(onClick = onResendCode) {
-                        Text("Resend Code")
-                    }
+                    Text(
+                        "Resend code",
+                        style = theme.fonts.bodySmall,
+                        color = theme.colors.textPrimary,
+                        modifier = Modifier.clickable(onClick = onResendCode)
+                    )
                 }
+                if (showChangePhoneNumber) {
+                    Text(
+                        "Change phone number",
+                        style = theme.fonts.bodySmall,
+                        color = theme.colors.textPrimary,
+                        modifier = Modifier.clickable(onClick = onChangePhoneNumber)
+                    )
+                }
+
+                ContinueButton(
+                    text = confirmButtonText,
+                    enabled = canContinue,
+                    modifier = Modifier.padding(top = 4.dp),
+                    onClick = { onContinue(code) },
+                )
             }
 
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                enabled = canContinue,
-                onClick = { onContinue(code) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = LocalFrameTheme.current.colors.primaryButton,
-                    contentColor = LocalFrameTheme.current.colors.primaryButtonText,
-                    disabledContainerColor = LocalFrameTheme.current.colors.primaryButton.copy(alpha = 0.35f),
-                    disabledContentColor = LocalFrameTheme.current.colors.primaryButtonText.copy(alpha = 0.7f)
-                )
-            ) {
-                Text(confirmButtonText)
-            }
+            Spacer(Modifier.weight(1f))
         }
     }
 
@@ -177,9 +221,10 @@ internal fun VerifyCardScreen(
         VerifyCardBody(PaddingValues(0.dp))
     } else {
         Scaffold(
+            containerColor = theme.colors.surface,
             topBar = {
                 TopAppBar(
-                    title = { Text(headerTitle) },
+                    title = { Text(headerTitle, style = theme.fonts.heading) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(
@@ -200,9 +245,9 @@ internal fun VerifyCardScreen(
 @Composable
 private fun VerifyCardScreenPreview() {
     FrameTheme {
-    VerifyCardScreen(
-        onBack = {},
-        onContinue = {}
-    )
+        VerifyCardScreen(
+            onBack = {},
+            onContinue = {}
+        )
     }
 }
