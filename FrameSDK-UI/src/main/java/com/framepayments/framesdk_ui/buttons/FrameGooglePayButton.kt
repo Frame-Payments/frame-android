@@ -20,8 +20,8 @@ import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
 import com.framepayments.framesdk.chargeintents.ChargeIntentsRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
-import com.framepayments.framesdk.transfers.TransferRequests
-import com.framepayments.framesdk.transfers.TransfersAPI
+import com.framepayments.framesdk.transfersv2.TransferV2Requests
+import com.framepayments.framesdk.transfersv2.TransfersV2API
 import com.framepayments.framesdk.wallet.WalletAPI
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
@@ -394,14 +394,22 @@ class FrameGooglePayButton @JvmOverloads constructor(
                         return@launch
                     }
                     is Owner.Account -> {
-                        // Account owner → create a Transfer. `Result.Success.id` is the Transfer id.
-                        val transferRequest = TransferRequests.CreateTransferRequest(
-                            amount = m.amountCents,
-                            accountId = o.id,
-                            currency = m.currencyCode.lowercase(),
-                            sourcePaymentMethodId = resolvedPaymentMethod.id
+                        // Account owner → create a V2 Transfer. `Result.Success.id` is the Transfer id.
+                        // confirm=true: Google Pay already carries a cryptogram; this path has no
+                        // TransferV2Confirmation / 3DS presenter.
+                        val transferRequest = TransferV2Requests.CreateTransferRequest(
+                            amount = TransferV2Requests.MoneyAmount(
+                                value = m.amountCents,
+                                currency = m.currencyCode.lowercase()
+                            ),
+                            source = TransferV2Requests.EndpointSlot(
+                                accountId = o.id,
+                                paymentMethodId = resolvedPaymentMethod.id
+                            ),
+                            confirm = true,
+                            authorizationMode = "automatic"
                         )
-                        val (transfer, transferError) = TransfersAPI.createTransfer(transferRequest)
+                        val (transfer, transferError) = TransfersV2API.createTransfer(transferRequest)
                         if (transfer == null) reportError(transferError)
                         withContext(Dispatchers.Main) {
                             val id = transfer?.id

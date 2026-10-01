@@ -12,6 +12,8 @@ import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
 import com.framepayments.framesdk.transfers.TransferStatusAdapter
+import com.framepayments.framesdk.transfersv2.TransferV2StatusAdapter
+import com.framepayments.framesdk.transfersv2.TransferV2TypeAdapter
 import com.framepayments.framesdk.managers.SiftManager
 import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
@@ -102,6 +104,8 @@ object FrameNetworking {
     val gson: Gson = GsonBuilder()
         .registerTypeAdapterFactory(LenientFieldTypeAdapterFactory)
         .registerTypeAdapterFactory(TransferStatusAdapter)
+        .registerTypeAdapterFactory(TransferV2StatusAdapter)
+        .registerTypeAdapterFactory(TransferV2TypeAdapter)
         .create()
 
     /** Shared OkHttp client configured with Frame's standard timeouts. */
