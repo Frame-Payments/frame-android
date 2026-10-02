@@ -312,7 +312,7 @@ private fun AddPaymentMethodScreenPreview() {
     MaterialTheme {
         AddPaymentMethodScreen(
             viewModel = FrameOnboardingViewModel(
-                OnboardingConfig(skipInitNetwork = true)
+                OnboardingConfig(clientSecret = "onb_sess_preview", skipInitNetwork = true)
             ),
             onBack = {}
         )

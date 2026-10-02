@@ -174,30 +174,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         FrameNetworking.setAccountIdIfUnset(accountId)
     }
 
-    // Onboarding-session secret (`onb_sess_…`) minted locally when the host did not supply a
-    // config.clientSecret. Retained so endpoints that carry client_secret in the body (e.g. IDV) can
-    // authenticate on the publishable-key path. FrameNetworking uses it for auth headers but does not
-    // expose it, so we keep our own copy — along with the account it was minted for, since
-    // FrameNetworking.hasActiveOnboardingSession is a process-global flag that says nothing about
-    // which account the live token belongs to.
-    private var mintedOnboardingSessionSecret: String? = null
-    private var mintedOnboardingSessionAccountId: String? = null
-
-    /**
-     * The onboarding-session secret the IDV endpoints authenticate with: the host-supplied
-     * [OnboardingConfig.clientSecret] when present, otherwise the locally minted `onb_sess_…`.
-     *
-     * Every step of the government-ID flow must resolve the secret the same way — Frame-iOS keeps
-     * this in one place by letting `FrameNetworking` resolve auth centrally, so its
-     * `IdentityVerificationAPI` takes no secret at all. Android threads it explicitly (the server
-     * reads `client_secret` from the request body here), so this accessor is the single source of
-     * truth instead. Reading `config.clientSecret` directly in one step and this chain in another
-     * strands the flow half-completed on the publishable-key path.
-     */
-    private val idvClientSecret: String?
-        get() = config.clientSecret ?: mintedOnboardingSessionSecret?.takeIf {
-            mintedOnboardingSessionAccountId == _resolvedAccountId.value
-        }
+    /** Host-supplied onboarding-session token. IDV sends it as `client_secret` in the body. */
+    private val idvClientSecret: String
+        get() = config.clientSecret
 
     // Payment methods loaded for the account
     private val _savedPaymentMethods = MutableStateFlow<List<PaymentMethodSummary>>(emptyList())
@@ -302,12 +281,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private var isClosed = false
 
     /**
-     * Ends a self-minted onboarding session and cancels in-flight work. Views build this VM with
-     * `remember`, not a ViewModelStore, so `onCleared` never runs — they call this on dispose.
+     * Cancels in-flight work. Views build this VM with `remember`, not a ViewModelStore, so
+     * `onCleared` never runs — they call this on dispose.
      */
     fun close() {
         isClosed = true
-        mintedOnboardingSessionSecret?.let { FrameNetworking.endOnboardingSession(it) }
         viewModelScope.cancel()
     }
 
@@ -1394,18 +1372,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      * composable's lifecycle and cannot be launched from the ViewModel directly.
      *
      * No-op if a verification is already in flight, if the customer is already verified, or if the
-     * onboarding session has no `client_secret` — either a host-supplied one or a locally minted
-     * `onb_sess_` secret (the IDV endpoints authenticate via it in the body).
+     * onboarding session has no `client_secret` (the IDV endpoints authenticate via it in the body).
      *
      * @param advanceOnVerified Move to the next step once verified — set when Continue runs a step-up.
      */
     fun verifyIdentityWithoutSsn(advanceOnVerified: Boolean = false) {
         if (_isVerifyingGovId.value) return
         if (_onboardingData.value.identityVerifiedViaGovId) return
-        val clientSecret = idvClientSecret ?: run {
-            reportUserError("Verification is unavailable for this session.")
-            return
-        }
+        val clientSecret = idvClientSecret
         advanceAfterGovIdVerification = advanceOnVerified
         _isVerifyingGovId.value = true
         viewModelScope.launch {
@@ -1488,11 +1462,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         clearPersonaInquiryToLaunch()
         // Must resolve the secret exactly as verifyIdentityWithoutSsn did — it already reached
         // /idv/session, so bailing here would strand the applicant with an inquiry that never opens.
-        val clientSecret = idvClientSecret ?: run {
-            _isVerifyingGovId.value = false
-            reportUserError("Verification is unavailable for this session.")
-            return
-        }
+        val clientSecret = idvClientSecret
         AccountEventEmitter.emit(
             AccountEventName.STEP_UP_STARTED,
             AccountEventScreen.IDENTITY_VERIFICATION,
