@@ -2871,7 +2871,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L50) |
+| `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [51](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L51) |
 
 </details>
 
@@ -3303,26 +3303,26 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameCheckoutViewModel` | class | `class FrameCheckoutViewModel : ViewModel()` | [39](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L39) |
-| `FrameCheckoutViewModel.accountPaymentOptions` | val | `val accountPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _accountPaymentOptions` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L43) |
-| `FrameCheckoutViewModel.didLoadAccountPaymentMethods` | val | `val didLoadAccountPaymentMethods: LiveData<Boolean> = _didLoadAccountPaymentMethods` | [51](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L51) |
-| `FrameCheckoutViewModel.customerName` | val | `val customerName = MutableLiveData( )` | [54](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L54) |
-| `FrameCheckoutViewModel.customerEmail` | val | `val customerEmail = MutableLiveData( )` | [56](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L56) |
-| `FrameCheckoutViewModel.customerInfoRequired` | val | `val customerInfoRequired: LiveData<Boolean> = _customerInfoRequired` | [65](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L65) |
-| `FrameCheckoutViewModel.billingAddress` | val | `val billingAddress = BillingAddressFieldVM(` | [83](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L83) |
-| `FrameCheckoutViewModel.selectedAccountPaymentOption` | val | `val selectedAccountPaymentOption: LiveData<FrameObjects.PaymentMethod?> = _selectedAccountPaymentOption` | [97](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L97) |
-| `FrameCheckoutViewModel.setSelectedAccountPaymentOption` | fun | `fun setSelectedAccountPaymentOption(method: FrameObjects.PaymentMethod?)` | [100](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L100) |
-| `FrameCheckoutViewModel.cardData` | var | `var cardData: PaymentCardData = PaymentCardData()` | [114](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L114) |
-| `FrameCheckoutViewModel.clearNewCardFieldErrors` | fun | `fun clearNewCardFieldErrors()` | [125](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L125) |
-| `FrameCheckoutViewModel.hasUsablePaymentInput` | val | `val hasUsablePaymentInput: LiveData<Boolean> = _hasUsablePaymentInput` | [141](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L141) |
-| `FrameCheckoutViewModel.addressMode` | var | `var addressMode: AddressMode = AddressMode.REQUIRED` | [151](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L151) |
-| `FrameCheckoutViewModel.fieldErrors` | val | `val fieldErrors: LiveData<Map<FieldKey, ValidationError>> = _fieldErrors` | [154](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L154) |
-| `FrameCheckoutViewModel.isPerformingAction` | val | `val isPerformingAction: LiveData<Boolean> = _isPerformingAction` | [165](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L165) |
-| `FrameCheckoutViewModel.loadAccountDetails` | fun | `fun loadAccountDetails(accountId: String, amount: Int)` | [174](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L174) |
-| `FrameCheckoutViewModel.setError` | fun | `fun setError(key: FieldKey, error: ValidationError?)` | [190](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L190) |
-| `FrameCheckoutViewModel.clearError` | fun | `fun clearError(key: FieldKey)` | [201](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L201) |
-| `FrameCheckoutViewModel.validateAll` | fun | `fun validateAll(forSavedCard: Boolean): Map<FieldKey, ValidationError>` | [225](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L225) |
-| `FrameCheckoutViewModel.checkoutWithSelectedPaymentMethod` | fun | `fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<Transfer?> = liveData(Dispatchers.IO)` | [249](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L249) |
+| `FrameCheckoutViewModel` | class | `class FrameCheckoutViewModel : ViewModel()` | [42](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L42) |
+| `FrameCheckoutViewModel.accountPaymentOptions` | val | `val accountPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _accountPaymentOptions` | [46](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L46) |
+| `FrameCheckoutViewModel.didLoadAccountPaymentMethods` | val | `val didLoadAccountPaymentMethods: LiveData<Boolean> = _didLoadAccountPaymentMethods` | [54](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L54) |
+| `FrameCheckoutViewModel.customerName` | val | `val customerName = MutableLiveData( )` | [57](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L57) |
+| `FrameCheckoutViewModel.customerEmail` | val | `val customerEmail = MutableLiveData( )` | [59](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L59) |
+| `FrameCheckoutViewModel.customerInfoRequired` | val | `val customerInfoRequired: LiveData<Boolean> = _customerInfoRequired` | [68](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L68) |
+| `FrameCheckoutViewModel.billingAddress` | val | `val billingAddress = BillingAddressFieldVM(` | [86](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L86) |
+| `FrameCheckoutViewModel.selectedAccountPaymentOption` | val | `val selectedAccountPaymentOption: LiveData<FrameObjects.PaymentMethod?> = _selectedAccountPaymentOption` | [100](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L100) |
+| `FrameCheckoutViewModel.setSelectedAccountPaymentOption` | fun | `fun setSelectedAccountPaymentOption(method: FrameObjects.PaymentMethod?)` | [103](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L103) |
+| `FrameCheckoutViewModel.cardData` | var | `var cardData: PaymentCardData = PaymentCardData()` | [117](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L117) |
+| `FrameCheckoutViewModel.clearNewCardFieldErrors` | fun | `fun clearNewCardFieldErrors()` | [128](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L128) |
+| `FrameCheckoutViewModel.hasUsablePaymentInput` | val | `val hasUsablePaymentInput: LiveData<Boolean> = _hasUsablePaymentInput` | [144](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L144) |
+| `FrameCheckoutViewModel.addressMode` | var | `var addressMode: AddressMode = AddressMode.REQUIRED` | [154](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L154) |
+| `FrameCheckoutViewModel.fieldErrors` | val | `val fieldErrors: LiveData<Map<FieldKey, ValidationError>> = _fieldErrors` | [157](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L157) |
+| `FrameCheckoutViewModel.isPerformingAction` | val | `val isPerformingAction: LiveData<Boolean> = _isPerformingAction` | [168](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L168) |
+| `FrameCheckoutViewModel.loadAccountDetails` | fun | `fun loadAccountDetails( accountId: String, amount: Int, account: AccountObjects.Account? = null, paymentMethods: List<FrameObjects.PaymentMethod>? = null, )` | [180](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L180) |
+| `FrameCheckoutViewModel.setError` | fun | `fun setError(key: FieldKey, error: ValidationError?)` | [254](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L254) |
+| `FrameCheckoutViewModel.clearError` | fun | `fun clearError(key: FieldKey)` | [265](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L265) |
+| `FrameCheckoutViewModel.validateAll` | fun | `fun validateAll(forSavedCard: Boolean): Map<FieldKey, ValidationError>` | [289](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L289) |
+| `FrameCheckoutViewModel.checkoutWithSelectedPaymentMethod` | fun | `fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<Transfer?> = liveData(Dispatchers.IO)` | [313](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L313) |
 
 </details>
 
