@@ -6,6 +6,8 @@ import com.framepayments.framesdk.NetworkingError
 
 /**
  * Provides suspend and callback-based operations for managing Terms of Service acceptance.
+ *
+ * While an onboarding session is active these calls authenticate with that session token (`onb_sess_…`).
  */
 object TermsOfServiceAPI {
     // MARK: Coroutines
@@ -17,7 +19,7 @@ object TermsOfServiceAPI {
      */
     suspend fun createToken(): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?> {
         val endpoint = TermsOfServiceEndpoints.CreateToken
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, emptyMap<String, String>(), FrameAuthMode.PublishableOnly)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, emptyMap<String, String>(), FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<TermsOfServiceObjects.TermsOfServiceTokenResponse>(it) }, error)
     }
 
@@ -29,7 +31,7 @@ object TermsOfServiceAPI {
      */
     suspend fun update(request: TermsOfServiceRequests.UpdateRequest): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?> {
         val endpoint = TermsOfServiceEndpoints.Update
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.PublishableOnly)
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable)
         return Pair(data?.let { FrameNetworking.parseResponse<TermsOfServiceObjects.TermsOfServiceTokenResponse>(it) }, error)
     }
 
@@ -42,7 +44,7 @@ object TermsOfServiceAPI {
      */
     fun createToken(completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit) {
         val endpoint = TermsOfServiceEndpoints.CreateToken
-        FrameNetworking.performDataTaskWithRequest(endpoint, emptyMap<String, String>(), FrameAuthMode.PublishableOnly) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, emptyMap<String, String>(), FrameAuthMode.Publishable) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<TermsOfServiceObjects.TermsOfServiceTokenResponse>(it) }, error)
         }
     }
@@ -55,7 +57,7 @@ object TermsOfServiceAPI {
      */
     fun update(request: TermsOfServiceRequests.UpdateRequest, completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit) {
         val endpoint = TermsOfServiceEndpoints.Update
-        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.PublishableOnly) { data, error ->
+        FrameNetworking.performDataTaskWithRequest(endpoint, request, FrameAuthMode.Publishable) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<TermsOfServiceObjects.TermsOfServiceTokenResponse>(it) }, error)
         }
     }

@@ -156,7 +156,7 @@ class FrameNetworkingTest {
 
     @Test
     fun explicitPublishableOnlyAuthWinsOverOnboardingSession() = runBlocking {
-        // Merchant-level endpoints (terms_of_service, sonar, configuration, …) reject the
+        // Merchant-level endpoints (sonar, configuration, …) reject the
         // onb_sess_ token, so a .PublishableOnly request must use the pk_ even while a session is
         // active. Precedence: ClientSecret > PublishableOnly > session > Publishable > Secret.
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))

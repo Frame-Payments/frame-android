@@ -1131,8 +1131,29 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         billingAddress: FrameObjects.BillingAddress
     ): AccountObjects.Account? {
         return _resolvedAccountId.value?.let { existing ->
-            // Personal info is saved by the host backend. A client credential cannot patch the account.
-            val (account, err) = AccountsAPI.getAccountWith(existing, forTesting = false)
+            val updateIndividual = AccountRequests.UpdateIndividualAccount(
+                name = AccountRequests.UpdateAccountInfo(
+                    firstName = firstName,
+                    middleName = null,
+                    lastName = lastName
+                ),
+                email = email,
+                phone = AccountObjects.AccountPhoneNumber(
+                    number = _phoneNumber.value,
+                    countryCode = _phoneCountry.value.dialCode
+                ),
+                address = billingAddress,
+                birthdate = dob,
+                ssnLast4 = ssnLastFour.ifEmpty { null }
+            )
+            // The active onboarding session authenticates this patch (onb_sess_…).
+            val (updated, err) = AccountsAPI.updateAccount(
+                existing,
+                AccountRequests.UpdateAccountRequest(
+                    termsOfService = termsOfServiceForUpdate(),
+                    profile = AccountRequests.UpdateAccountProfile(individual = updateIndividual)
+                )
+            )
             if (err != null) {
                 AccountEventEmitter.emit(
                     AccountEventName.PROFILE_UPDATE_FAILED,
@@ -1142,8 +1163,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 reportUserError(userMessageForNetworkError(err))
                 null
             } else {
-                updateStepUpRequirements(account?.capabilities)
-                account
+                AccountEventEmitter.emit(
+                    AccountEventName.PROFILE_UPDATED,
+                    AccountEventScreen.PERSONAL_INFORMATION
+                )
+                updateStepUpRequirements(updated?.capabilities)
+                updated ?: AccountsAPI.getAccountWith(existing, forTesting = false).first
             }
         } ?: run {
             val accountRequest = AccountRequests.CreateAccountRequest(
@@ -1592,7 +1617,38 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         viewModelScope.launch {
             try {
                 val existing = _resolvedAccountId.value ?: return@launch
-                val (account, updateErr) = AccountsAPI.getAccountWith(existing, forTesting = false)
+                val d = _onboardingData.value
+                val dob = d.dateOfBirth ?: dateOfBirth
+                val billingAddress = FrameObjects.BillingAddress(
+                    city = d.city,
+                    country = d.country ?: "US",
+                    state = d.stateCode,
+                    postalCode = d.postalCode ?: "",
+                    addressLine1 = d.addressLine1,
+                    addressLine2 = d.addressLine2
+                )
+                val updateIndividual = AccountRequests.UpdateIndividualAccount(
+                    name = AccountRequests.UpdateAccountInfo(
+                        firstName = d.firstName ?: return@launch,
+                        middleName = null,
+                        lastName = d.lastName ?: return@launch
+                    ),
+                    email = d.email ?: return@launch,
+                    phone = AccountObjects.AccountPhoneNumber(
+                        number = _phoneNumber.value,
+                        countryCode = _phoneCountry.value.dialCode
+                    ),
+                    address = billingAddress,
+                    birthdate = dob,
+                    ssnLast4 = d.ssnLast4?.ifEmpty { null }
+                )
+                val (updated, updateErr) = AccountsAPI.updateAccount(
+                    existing,
+                    AccountRequests.UpdateAccountRequest(
+                        termsOfService = termsOfServiceForUpdate(),
+                        profile = AccountRequests.UpdateAccountProfile(individual = updateIndividual)
+                    )
+                )
                 if (updateErr != null) {
                     AccountEventEmitter.emit(
                         AccountEventName.PROFILE_UPDATE_FAILED,
@@ -1601,7 +1657,11 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     )
                     reportUserError(userMessageForNetworkError(updateErr))
                 } else {
-                    updateStepUpRequirements(account?.capabilities)
+                    AccountEventEmitter.emit(
+                        AccountEventName.PROFILE_UPDATED,
+                        AccountEventScreen.PERSONAL_INFORMATION
+                    )
+                    updateStepUpRequirements(updated?.capabilities)
                 }
             } finally {
                 endAction()
