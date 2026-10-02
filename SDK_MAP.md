@@ -3376,21 +3376,21 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 | `OnboardingResult.Failed` | data class | `data class Failed(val message: String) : OnboardingResult()` | [225](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L225) |
 | `OnboardingConfig` | data class | `data class OnboardingConfig(` | [247](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L247) |
 | `OnboardingConfig.accountId` | val | `val accountId: String? = null,` | [248](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L248) |
-| `OnboardingConfig.clientSecret` | val | `val clientSecret: String? = null,` | [249](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L249) |
+| `OnboardingConfig.clientSecret` | val | `val clientSecret: String,` | [249](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L249) |
 | `OnboardingConfig.requiredCapabilities` | val | `val requiredCapabilities: List<Capabilities> = emptyList(),` | [250](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L250) |
 | `OnboardingConfig.skipInitNetwork` | val | `val skipInitNetwork: Boolean = false,` | [251](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L251) |
 | `OnboardingConfig.theme` | val | `val theme: FrameTheme? = null,` | [252](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L252) |
 | `OnboardingConfig.showIntroScreen` | val | `val showIntroScreen: Boolean = false,` | [253](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L253) |
 | `OnboardingConfig.showCompletionScreen` | val | `val showCompletionScreen: Boolean = true,` | [254](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L254) |
-| `PaymentCardDraft` | data class | `data class PaymentCardDraft(` | [273](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L273) |
-| `PaymentCardDraft.cardNumber` | val | `val cardNumber: String = ,` | [274](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L274) |
-| `PaymentCardDraft.expiryMonth` | val | `val expiryMonth: String = ,` | [275](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L275) |
-| `PaymentCardDraft.expiryYear` | val | `val expiryYear: String = ,` | [276](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L276) |
-| `PaymentCardDraft.cvc` | val | `val cvc: String =` | [277](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L277) |
-| `BankAccountDraft` | data class | `data class BankAccountDraft(` | [287](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L287) |
-| `BankAccountDraft.routingNumber` | val | `val routingNumber: String = ,` | [288](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L288) |
-| `BankAccountDraft.accountNumber` | val | `val accountNumber: String = ,` | [289](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L289) |
-| `BankAccountDraft.accountTypeLabel` | val | `val accountTypeLabel: String =` | [290](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L290) |
+| `PaymentCardDraft` | data class | `data class PaymentCardDraft(` | [279](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L279) |
+| `PaymentCardDraft.cardNumber` | val | `val cardNumber: String = ,` | [280](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L280) |
+| `PaymentCardDraft.expiryMonth` | val | `val expiryMonth: String = ,` | [281](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L281) |
+| `PaymentCardDraft.expiryYear` | val | `val expiryYear: String = ,` | [282](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L282) |
+| `PaymentCardDraft.cvc` | val | `val cvc: String =` | [283](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L283) |
+| `BankAccountDraft` | data class | `data class BankAccountDraft(` | [293](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L293) |
+| `BankAccountDraft.routingNumber` | val | `val routingNumber: String = ,` | [294](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L294) |
+| `BankAccountDraft.accountNumber` | val | `val accountNumber: String = ,` | [295](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L295) |
+| `BankAccountDraft.accountTypeLabel` | val | `val accountTypeLabel: String =` | [296](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L296) |
 
 </details>
 
@@ -3843,7 +3843,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L40) |
+| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String, onResult: ((FrameResult) -> Unit)? = null )` | [39](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L39) |
 
 </details>
 
@@ -3853,7 +3853,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAddPayoutMethodView` | fun | `fun FrameAddPayoutMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [41](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPayoutMethodView.kt#L41) |
+| `FrameAddPayoutMethodView` | fun | `fun FrameAddPayoutMethodView( accountId: String, clientSecret: String, onResult: ((FrameResult) -> Unit)? = null )` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPayoutMethodView.kt#L40) |
 
 </details>
 
@@ -3863,7 +3863,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameSelectPayoutMethodView` | fun | `fun FrameSelectPayoutMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [41](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameSelectPayoutMethodView.kt#L41) |
+| `FrameSelectPayoutMethodView` | fun | `fun FrameSelectPayoutMethodView( accountId: String, clientSecret: String, onResult: ((FrameResult) -> Unit)? = null )` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameSelectPayoutMethodView.kt#L40) |
 
 </details>
 
@@ -3873,7 +3873,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [54](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L54) |
+| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [53](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L53) |
 
 </details>
 
