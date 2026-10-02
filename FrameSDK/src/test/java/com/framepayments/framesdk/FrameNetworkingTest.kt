@@ -170,8 +170,7 @@ class FrameNetworkingTest {
 
     @Test
     fun onboardingSessionOverridesPublishableAuth() = runBlocking {
-        // Account-scoped reads tagged .Publishable (e.g. getAccountWith) must authenticate as the
-        // session while one is active, or the server withholds PII-gated fields such as `profile`.
+        // Account-scoped calls tagged .Publishable authenticate as the session while one is active.
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
 
         FrameNetworking.beginOnboardingSession("onb_sess_abc123")

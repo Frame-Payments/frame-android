@@ -7,25 +7,22 @@ import com.framepayments.framesdk.NetworkingError
 /**
  * Creates onboarding sessions via the Frame API.
  *
- * **Note:** `POST /v1/onboarding_sessions` accepts a **publishable key** (`pk_`), so the onboarding
- * flow can mint its own account-scoped session on-device without a secret key — see
- * [createOnboardingSessionWithPublishableKey]. The deprecated [createOnboardingSession] methods
- * below default to the configured key (typically `sk_` in the example app) and remain for backward
- * compatibility; production integrations that mint from their own backend hand the resulting
- * `onb_sess_…` to the onboarding flow as its `clientSecret`.
+ * **Note:** `POST /v1/onboarding_sessions` is secret-key only. The host backend mints the session
+ * and passes `onb_sess_…` to the onboarding flow as `clientSecret`.
  */
 object OnboardingSessionsAPI {
     /**
-     * Mints an onboarding session using the SDK's **publishable key** (`pk_`), the client-safe
-     * credential accepted by `POST /v1/onboarding_sessions`. The onboarding flow calls this to bind
-     * itself to a freshly-created account so subsequent requests (e.g. IDV) authenticate as the
-     * session rather than falling back to the configured key. Not deprecated — unlike
-     * [createOnboardingSession], this never sends a secret key.
+     * Mints an onboarding session using the publishable key.
+     *
+     * The API rejects this unless the merchant is on the legacy client-credential flag. Mint the
+     * session from your backend with a secret key and pass `clientSecret` instead. The onboarding
+     * flow does not call this.
      *
      * @param request The request body specifying the account and onboarding steps.
      * @return A [Pair] containing the decoded [OnboardingSessionResponses.OnboardingSession] on
      *   success, or a [NetworkingError] on failure.
      */
+    @Deprecated("Mint the onboarding session from your backend with sk_. A publishable key cannot create one.")
     suspend fun createOnboardingSessionWithPublishableKey(
         request: OnboardingSessionRequests.CreateOnboardingSessionRequest
     ): Pair<OnboardingSessionResponses.OnboardingSession?, NetworkingError?> {

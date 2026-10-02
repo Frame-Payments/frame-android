@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.networking.phoneotpverification
 
+import com.framepayments.framesdk.accounts.AccountObjects
 import com.google.gson.annotations.SerializedName
 
 /**
@@ -25,11 +26,13 @@ data class PhoneOTPVerificationCreateResponse(
  * @property id Unique identifier for the verification attempt.
  * @property status Final status of the verification after confirmation.
  * @property prefillStatus Prefill status from the Prove identity prefill, if applicable.
+ * @property profile Individual profile returned once, when [prefillStatus] is `prefilled`.
  */
 data class PhoneOTPVerificationConfirmResponse(
     val id: String?,
     val status: String?,
-    @SerializedName("prefill_status") val prefillStatus: String? = null
+    @SerializedName("prefill_status") val prefillStatus: String? = null,
+    val profile: AccountObjects.AccountProfile? = null
 )
 
 /**
