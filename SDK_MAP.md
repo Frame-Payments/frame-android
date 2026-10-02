@@ -2508,11 +2508,11 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `TermsOfServiceAPI` | object | `object TermsOfServiceAPI` | [10](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L10) |
-| `TermsOfServiceAPI.createToken` | fun | `fun createToken(): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?>` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L18) |
-| `TermsOfServiceAPI.update` | fun | `fun update(request: TermsOfServiceRequests.UpdateRequest): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?>` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L30) |
-| `TermsOfServiceAPI.createToken` | fun | `fun createToken(completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit)` | [43](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L43) |
-| `TermsOfServiceAPI.update` | fun | `fun update(request: TermsOfServiceRequests.UpdateRequest, completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit)` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L56) |
+| `TermsOfServiceAPI` | object | `object TermsOfServiceAPI` | [12](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L12) |
+| `TermsOfServiceAPI.createToken` | fun | `fun createToken(): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?>` | [20](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L20) |
+| `TermsOfServiceAPI.update` | fun | `fun update(request: TermsOfServiceRequests.UpdateRequest): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?>` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L32) |
+| `TermsOfServiceAPI.createToken` | fun | `fun createToken(completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit)` | [45](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L45) |
+| `TermsOfServiceAPI.update` | fun | `fun update(request: TermsOfServiceRequests.UpdateRequest, completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit)` | [58](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L58) |
 
 </details>
 
