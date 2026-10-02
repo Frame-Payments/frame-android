@@ -692,7 +692,9 @@ private fun UserIdentificationViewPreview() {
     FrameTheme {
     UserIdentificationView(
         viewModel = FrameOnboardingViewModel(
-            config = OnboardingConfig(requiredCapabilities = listOf(
+            config = OnboardingConfig(
+                clientSecret = "onb_sess_preview",
+                requiredCapabilities = listOf(
                 Capabilities.KYC,
                 Capabilities.KYC_PREFILL,
                 Capabilities.CARD_VERIFICATION,
@@ -700,7 +702,9 @@ private fun UserIdentificationViewPreview() {
                 Capabilities.GEO_COMPLIANCE,
                 Capabilities.AGE_VERIFICATION,
                 Capabilities.PHONE_VERIFICATION
-            ))
+                ),
+                skipInitNetwork = true
+            )
         ),
         requiresDateOfBirth = true,
         showTermsOfService = true,

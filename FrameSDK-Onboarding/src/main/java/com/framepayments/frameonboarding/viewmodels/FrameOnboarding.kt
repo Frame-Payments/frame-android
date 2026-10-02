@@ -1,7 +1,6 @@
 package com.framepayments.frameonboarding.viewmodels
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.framepayments.frameonboarding.classes.Capabilities
@@ -25,6 +24,7 @@ import com.framepayments.frameonboarding.classes.toFlowSegment
 import com.framepayments.frameonboarding.networking.idv.IdvAPI
 import com.framepayments.frameonboarding.networking.idv.IdvCompletionRouting
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
+import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationConfirmResponse
 import com.framepayments.frameonboarding.persona.PersonaInquiry
 import com.framepayments.frameonboarding.persona.PersonaVerificationResult
 import com.framepayments.frameonboarding.persona.PersonaVerificationService
@@ -174,30 +174,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         FrameNetworking.setAccountIdIfUnset(accountId)
     }
 
-    // Onboarding-session secret (`onb_sess_…`) minted locally when the host did not supply a
-    // config.clientSecret. Retained so endpoints that carry client_secret in the body (e.g. IDV) can
-    // authenticate on the publishable-key path. FrameNetworking uses it for auth headers but does not
-    // expose it, so we keep our own copy — along with the account it was minted for, since
-    // FrameNetworking.hasActiveOnboardingSession is a process-global flag that says nothing about
-    // which account the live token belongs to.
-    private var mintedOnboardingSessionSecret: String? = null
-    private var mintedOnboardingSessionAccountId: String? = null
-
-    /**
-     * The onboarding-session secret the IDV endpoints authenticate with: the host-supplied
-     * [OnboardingConfig.clientSecret] when present, otherwise the locally minted `onb_sess_…`.
-     *
-     * Every step of the government-ID flow must resolve the secret the same way — Frame-iOS keeps
-     * this in one place by letting `FrameNetworking` resolve auth centrally, so its
-     * `IdentityVerificationAPI` takes no secret at all. Android threads it explicitly (the server
-     * reads `client_secret` from the request body here), so this accessor is the single source of
-     * truth instead. Reading `config.clientSecret` directly in one step and this chain in another
-     * strands the flow half-completed on the publishable-key path.
-     */
-    private val idvClientSecret: String?
-        get() = config.clientSecret ?: mintedOnboardingSessionSecret?.takeIf {
-            mintedOnboardingSessionAccountId == _resolvedAccountId.value
-        }
+    /** Host-supplied onboarding-session token. IDV sends it as `client_secret` in the body. */
+    private val idvClientSecret: String
+        get() = config.clientSecret
 
     // Payment methods loaded for the account
     private val _savedPaymentMethods = MutableStateFlow<List<PaymentMethodSummary>>(emptyList())
@@ -299,52 +278,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         return err.toastMessage()
     }
 
-    /**
-     * Binds the onboarding flow to the resolved account by minting an account-scoped onboarding
-     * session (`onb_sess_…`) and beginning it, so subsequent requests (e.g. IDV) authenticate as the
-     * session rather than falling back to the configured publishable/secret key.
-     *
-     * Mints with the publishable key (`pk_`), which `POST /v1/onboarding_sessions` accepts, so no
-     * secret key leaves the device. Idempotent and safe to call after each account-creation path: it
-     * does nothing when the host already supplied a `clientSecret` (a session is active) or when no
-     * account exists yet.
-     */
-    private suspend fun beginOnboardingSessionIfNeeded() {
-        if (config.clientSecret != null) return
-        val accountId = _resolvedAccountId.value ?: return
-        // FrameNetworking.hasActiveOnboardingSession is process-global and says nothing about which
-        // account the live token belongs to, so skip only when this flow holds one for this account.
-        if (mintedOnboardingSessionSecret != null && mintedOnboardingSessionAccountId == accountId) return
-
-        val request = OnboardingSessionRequests.CreateOnboardingSessionRequest(accountId = accountId)
-        val (session, error) = OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey(request)
-        if (error != null) reportUserError(userMessageForNetworkError(error))
-        val clientSecret = session?.clientSecret ?: run {
-            if (error != null) {
-                AccountEventEmitter.emit(
-                    AccountEventName.ONBOARDING_SESSION_START_FAILED,
-                    AccountEventScreen.ONBOARDING,
-                    detail = "$error"
-                )
-            }
-            return
-        }
-        // The flow closed while the mint was in flight; installing the token now would leak it.
-        if (isClosed) return
-        mintedOnboardingSessionSecret = clientSecret
-        mintedOnboardingSessionAccountId = accountId
-        FrameNetworking.beginOnboardingSession(clientSecret)
-    }
-
     private var isClosed = false
 
     /**
-     * Ends a self-minted onboarding session and cancels in-flight work. Views build this VM with
-     * `remember`, not a ViewModelStore, so `onCleared` never runs — they call this on dispose.
+     * Cancels in-flight work. Views build this VM with `remember`, not a ViewModelStore, so
+     * `onCleared` never runs — they call this on dispose.
      */
     fun close() {
         isClosed = true
-        mintedOnboardingSessionSecret?.let { FrameNetworking.endOnboardingSession(it) }
         viewModelScope.cancel()
     }
 
@@ -611,18 +552,13 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     suspend fun checkExistingAccount(updateCapabilities: Boolean = false, depth: Int = 0) {
         val accountId = _resolvedAccountId.value ?: return
-        // A host that launches onboarding with an existing accountId but no clientSecret has no
-        // account-creation step to mint from, so bind a session here too — otherwise IDV and other
-        // account-scoped requests fall back to the configured key. No-ops if a session is already active.
-        beginOnboardingSessionIfNeeded()
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
         account?.id?.let { aid ->
             setResolvedAccountId(aid)
             _onboardingData.update { it.copy(resolvedAccountId = aid) }
         }
         existingAccountHasTOS = account?.termsOfService?.acceptedAt != null
-        account?.payoutPaymentMethodId?.let { _primaryPayoutMethodId.value = it }
-        // Capabilities aren't PII-gated, so seed before the profile guard below.
+        // `profile` on this GET is ignored. A one-time prefill arrives on phone confirm.
         updateStepUpRequirements(account?.capabilities)
         // A completed government-ID verification leaves idv active; don't ask the applicant again.
         if (account?.capabilities?.any {
@@ -631,10 +567,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         ) {
             _onboardingData.update { it.copy(identityVerifiedViaGovId = true) }
         }
-        if (account?.profile?.individual == null) return
-        applyAccountProfileToOnboarding(accountId, account)
         if (!updateCapabilities) return
-        val caps = account.capabilities ?: return
+        val caps = account?.capabilities ?: return
         val requiredNames = requiredCapabilityApiStrings().toSet()
         val accountNames = caps.map { it.name }.toSet()
         val hasSuperset = requiredNames.all { accountNames.contains(it) }
@@ -795,39 +729,20 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     /**
-     * Fetches [accountId] with a session bound first (so `profile` isn't PII-gated) and applies
-     * it to onboarding state via [applyAccountProfileToOnboarding].
-     *
-     * `profile` is PII-gated: the server withholds it unless the request carries a secret key or
-     * a matching onboarding session. Without a session bound first, a publishable-key host reads
-     * back a profile-less account and silently prefills nothing — which is what stopped Prove's
-     * KYC-prefill data reaching the form.
+     * Copies the one-time prefill off a phone-verification confirm. A replay has no profile.
+     * Capability flags are re-read from account GET, which does not include `profile`.
      */
-    private suspend fun refreshAccountProfileIntoOnboarding(accountId: String) {
-        beginOnboardingSessionIfNeeded()
+    private suspend fun refreshAccountAfterPhoneConfirm(accountId: String, confirm: PhoneOTPVerificationConfirmResponse?) {
+        if (confirm?.prefillStatus == "prefilled") {
+            applyIndividualPrefill(accountId, confirm.profile?.individual)
+        }
         val (account, _) = AccountsAPI.getAccountWith(accountId, forTesting = false)
-        applyAccountProfileToOnboarding(accountId, account)
-        // Phone verification can satisfy KYC-prefill and surface step-up flags; re-read them so
-        // the SSN field hides (or shows) before the applicant reaches personal info.
         updateStepUpRequirements(account?.capabilities)
     }
 
-    /**
-     * Applies an already-fetched [account]'s profile to onboarding state. Split out of
-     * [refreshAccountProfileIntoOnboarding] so [checkExistingAccount] can reuse the account it
-     * already fetched instead of fetching it a second time, matching iOS's single-fetch shape.
-     */
-    private fun applyAccountProfileToOnboarding(accountId: String, account: AccountObjects.Account?) {
-        val individual = account?.profile?.individual
+    private fun applyIndividualPrefill(accountId: String, individual: AccountObjects.IndividualAccount?) {
         if (individual == null) {
-            if (FrameNetworking.debugMode) {
-                Log.w(
-                    "FrameSDK",
-                    "Account $accountId returned no profile, so there is nothing to prefill. The " +
-                        "profile is PII-gated — check that an onboarding session is active for this account."
-                )
-            }
-            _onboardingData.update { it.copy(resolvedAccountId = account?.id ?: accountId) }
+            _onboardingData.update { it.copy(resolvedAccountId = accountId) }
             return
         }
         val addr = individual.address
@@ -856,7 +771,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         applyIsoDobToPhoneAuthFields(birthOrDob)
         _onboardingData.update { cur ->
             cur.copy(
-                resolvedAccountId = account.id,
+                resolvedAccountId = accountId,
                 firstName = individual.name?.firstName?.takeIf { it.isNotBlank() } ?: cur.firstName,
                 lastName = individual.name?.lastName?.takeIf { it.isNotBlank() } ?: cur.lastName,
                 email = individual.email?.takeIf { it.isNotBlank() } ?: cur.email,
@@ -873,10 +788,13 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
     }
 
-    private suspend fun finalizePhoneVerificationAndShowPersonalInfo(accountId: String) {
+    private suspend fun finalizePhoneVerificationAndShowPersonalInfo(
+        accountId: String,
+        confirm: PhoneOTPVerificationConfirmResponse? = null
+    ) {
         _awaitingAccountProfileRefresh.value = true
         try {
-            refreshAccountProfileIntoOnboarding(accountId)
+            refreshAccountAfterPhoneConfirm(accountId, confirm)
         } finally {
             _awaitingAccountProfileRefresh.value = false
         }
@@ -919,7 +837,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     } else {
                         setResolvedAccountId(id)
                         _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = id)
-                        beginOnboardingSessionIfNeeded()
                         id
                     }
                 } ?: return@launch
@@ -1000,6 +917,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
 
     // A cancelled Prove code entry can surface as a Prove failure; this keeps it from triggering the fallback.
     private var proveOtpCancelledByUser = false
+    private var pendingPhoneConfirm: PhoneOTPVerificationConfirmResponse? = null
 
     fun startProveAuth(context: Context) {
         if (proveAuthLaunchStarted) return
@@ -1042,6 +960,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     if (resp == null) {
                         throw IllegalStateException("Phone verification confirm returned no data")
                     }
+                    pendingPhoneConfirm = resp
                 },
                 otpProvider = otpProvider
             )
@@ -1062,7 +981,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     )
                     _pendingVerificationId.value = null
                     _pendingProveAuthToken.value = null
-                    finalizePhoneVerificationAndShowPersonalInfo(acctId)
+                    val confirm = pendingPhoneConfirm
+                    pendingPhoneConfirm = null
+                    finalizePhoneVerificationAndShowPersonalInfo(acctId, confirm)
                 } else {
                     fallBackToTwilio(acctId, proveError = AccountEventDetail.PROVE_PROVIDER)
                 }
@@ -1153,7 +1074,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             try {
                 val acctId = _resolvedAccountId.value ?: return@launch
                 val verificationId = _pendingVerificationId.value ?: return@launch
-                val (_, err) = PhoneOTPVerificationAPI.confirmVerification(acctId, verificationId, code)
+                val (confirm, err) = PhoneOTPVerificationAPI.confirmVerification(acctId, verificationId, code)
                 if (err == null) {
                     AccountEventEmitter.emit(
                         AccountEventName.PHONE_VERIFIED,
@@ -1161,7 +1082,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     )
                     _pendingVerificationId.value = null
                     _pendingProveAuthToken.value = null
-                    finalizePhoneVerificationAndShowPersonalInfo(acctId)
+                    finalizePhoneVerificationAndShowPersonalInfo(acctId, confirm)
                 } else {
                     AccountEventEmitter.emit(
                         AccountEventName.PHONE_CODE_INCORRECT,
@@ -1225,6 +1146,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 birthdate = dob,
                 ssnLast4 = ssnLastFour.ifEmpty { null }
             )
+            // The active onboarding session authenticates this patch (onb_sess_…).
             val (updated, err) = AccountsAPI.updateAccount(
                 existing,
                 AccountRequests.UpdateAccountRequest(
@@ -1288,7 +1210,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 setResolvedAccountId(newId)
                 _onboardingData.value = _onboardingData.value.copy(resolvedAccountId = newId)
                 updateStepUpRequirements(account.capabilities)
-                beginOnboardingSessionIfNeeded()
                 account
             }
         }
@@ -1476,18 +1397,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
      * composable's lifecycle and cannot be launched from the ViewModel directly.
      *
      * No-op if a verification is already in flight, if the customer is already verified, or if the
-     * onboarding session has no `client_secret` — either a host-supplied one or a locally minted
-     * `onb_sess_` secret (the IDV endpoints authenticate via it in the body).
+     * onboarding session has no `client_secret` (the IDV endpoints authenticate via it in the body).
      *
      * @param advanceOnVerified Move to the next step once verified — set when Continue runs a step-up.
      */
     fun verifyIdentityWithoutSsn(advanceOnVerified: Boolean = false) {
         if (_isVerifyingGovId.value) return
         if (_onboardingData.value.identityVerifiedViaGovId) return
-        val clientSecret = idvClientSecret ?: run {
-            reportUserError("Verification is unavailable for this session.")
-            return
-        }
+        val clientSecret = idvClientSecret
         advanceAfterGovIdVerification = advanceOnVerified
         _isVerifyingGovId.value = true
         viewModelScope.launch {
@@ -1570,11 +1487,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         clearPersonaInquiryToLaunch()
         // Must resolve the secret exactly as verifyIdentityWithoutSsn did — it already reached
         // /idv/session, so bailing here would strand the applicant with an inquiry that never opens.
-        val clientSecret = idvClientSecret ?: run {
-            _isVerifyingGovId.value = false
-            reportUserError("Verification is unavailable for this session.")
-            return
-        }
+        val clientSecret = idvClientSecret
         AccountEventEmitter.emit(
             AccountEventName.STEP_UP_STARTED,
             AccountEventScreen.IDENTITY_VERIFICATION,
@@ -1685,7 +1598,6 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 setResolvedAccountId(id)
                 _onboardingData.update { o -> o.copy(resolvedAccountId = id) }
                 updateStepUpRequirements(account?.capabilities)
-                beginOnboardingSessionIfNeeded()
             } else {
                 AccountEventEmitter.emit(
                     AccountEventName.PROFILE_UPDATE_FAILED,
@@ -1830,52 +1742,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     /**
-     * Updates the selected payment method's billing address (address-only verification path for
-     * a saved card that is missing one).
+     * A client credential cannot patch a payment method. Billing goes on the create request.
      */
     fun updateSelectedPaymentMethodBillingAddress() {
-        val paymentMethodId = _onboardingData.value.selectedPaymentMethodId ?: return
-        if (!checkIfCustomerCanContinueWithPaymentMethod(onlyAddress = true)) {
-            reportUserError("Please enter a complete billing address.")
-            return
-        }
-        if (!beginAction()) return
-        viewModelScope.launch {
-            try {
-                val b = _createdBillingAddress.value
-                val billingAddress = FrameObjects.BillingAddress(
-                    city = b.city ?: "",
-                    country = b.country ?: "US",
-                    state = b.state ?: "",
-                    postalCode = b.postalCode,
-                    addressLine1 = b.addressLine1 ?: "",
-                    addressLine2 = b.addressLine2
-                )
-                val (_, err) = PaymentMethodsAPI.updatePaymentMethodWith(
-                    paymentMethodId,
-                    PaymentMethodRequests.UpdatePaymentMethodRequest(billing = billingAddress)
-                )
-                if (err != null) {
-                    AccountEventEmitter.emit(
-                        AccountEventName.BILLING_ADDRESS_UPDATE_FAILED,
-                        AccountEventScreen.PAYMENT_METHOD,
-                        detail = "$err"
-                    )
-                    reportUserError(userMessageForNetworkError(err))
-                    return@launch
-                }
-                AccountEventEmitter.emit(
-                    AccountEventName.BILLING_ADDRESS_UPDATED,
-                    AccountEventScreen.PAYMENT_METHOD,
-                    detail = AccountEventDetail.BILLING_ADDRESS_ONLY_VERIFICATION_PATH
-                )
-                _onlyAddressVerification.value = false
-                clearAccountDetails()
-                moveToNextSegment()
-            } finally {
-                endAction()
-            }
-        }
+        reportUserError("This card's billing address can't be updated here.")
     }
 
     fun onPayoutMethodSelected(id: String) {
@@ -2370,47 +2240,8 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun createNewBusinessAccount() {}
 
     /**
-     * Loads the account's saved cards and banks. Called when a select screen appears rather than
-     * from `init`, which runs before the host's onboarding session is bound.
+     * Saved methods are not listed with a client credential. Methods added in this session stay
+     * on the in-memory lists.
      */
-    fun loadSavedPaymentMethods() {
-        val accountId = _resolvedAccountId.value ?: return
-        if (config.skipInitNetwork) return
-        viewModelScope.launch {
-            val (list, err) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
-            if (err != null) {
-                AccountEventEmitter.emit(
-                    AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
-                    AccountEventScreen.PAYMENT_METHOD,
-                    detail = "$err"
-                )
-            }
-            _savedPaymentMethods.value = list
-                ?.mapNotNull { pm ->
-                    val pmId = pm.id ?: return@mapNotNull null
-                    pm.card?.let { c ->
-                        PaymentMethodSummary(
-                            id = pmId,
-                            brand = c.brand?.uppercase().orEmpty(),
-                            last4 = c.lastFourDigits.orEmpty(),
-                            exp = "${c.expirationMonth.orEmpty()}/${c.expirationYear?.takeLast(2).orEmpty()}",
-                            hasBillingAddress = !pm.billing?.addressLine1.isNullOrBlank()
-                        )
-                    }
-                }
-                ?: emptyList()
-            _savedPayoutMethods.value = list
-                ?.filter { it.ach != null }
-                ?.mapNotNull { pm ->
-                    val pmId = pm.id ?: return@mapNotNull null
-                    PaymentMethodSummary(
-                        id = pmId,
-                        brand = "BANK",
-                        last4 = pm.ach?.lastFour ?: "",
-                        exp = ""
-                    )
-                }
-                ?: emptyList()
-        }
-    }
+    fun loadSavedPaymentMethods() {}
 }

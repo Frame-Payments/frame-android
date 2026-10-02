@@ -30,9 +30,8 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *
  * @param accountId The Frame account ID whose payout method is being selected.
  * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your server
- *   (`POST /v1/onboarding_sessions`) and handed to your app. While this screen is presented every
- *   request authenticates with this token, scoping it to a single account. Pass null only for
- *   legacy integrations that still authenticate with a secret key.
+ *   (`POST /v1/onboarding_sessions`) and handed to your app. Required. While this screen is
+ *   presented every request authenticates with this token, scoping it to a single account.
  * @param onResult Called with a [FrameResult] when the screen finishes or is cancelled. On
  *   [FrameResult.Completed] the id is the elected payout method. When null, system Back on the
  *   selection screen is left to the host.
@@ -40,7 +39,7 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
 @Composable
 fun FrameSelectPayoutMethodView(
     accountId: String,
-    clientSecret: String? = null,
+    clientSecret: String,
     onResult: ((FrameResult) -> Unit)? = null
 ) {
     // Keyed on accountId/clientSecret: a keyless remember would keep the first VM instance (and
@@ -63,12 +62,12 @@ fun FrameSelectPayoutMethodView(
     var selectedIdWhenAddOpened by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(viewModel, clientSecret) {
-        clientSecret?.let { FrameNetworking.beginOnboardingSession(it) }
+        FrameNetworking.beginOnboardingSession(clientSecret)
         // Seeds saved payout methods; onboarding gets this from its container.
         viewModel.launchCheckExistingAccount(updateCapabilities = false)
         viewModel.loadSavedPaymentMethods()
         onDispose {
-            clientSecret?.let { FrameNetworking.endOnboardingSession(it) }
+            FrameNetworking.endOnboardingSession(clientSecret)
         }
     }
 

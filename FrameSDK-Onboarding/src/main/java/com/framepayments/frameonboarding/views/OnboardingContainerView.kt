@@ -1,6 +1,5 @@
 package com.framepayments.frameonboarding.views
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -127,26 +126,14 @@ fun OnboardingContainerView(
     val resolvedAccountId by viewModel.resolvedAccountId.collectAsState()
 
     // Authenticate every onboarding request with the onboarding-session token while this flow is
-    // on screen, scoping it to a single account. Only flows that began a session end one, so a
-    // legacy (clientSecret == null) flow leaves the configured keys untouched.
+    // on screen, scoping it to a single account.
     DisposableEffect(config.clientSecret) {
         val clientSecret = config.clientSecret
-        if (clientSecret != null) {
-            FrameNetworking.beginOnboardingSession(clientSecret)
-        } else {
-            Log.w(
-                "FrameSDK",
-                "⚠️ Frame: onboarding launched without OnboardingConfig.clientSecret. Requests will fall back to " +
-                    "the configured pk_/sk_ keys, which are not scoped to a single account. Mint an onboarding-session " +
-                    "token from your backend (POST /v1/onboarding_sessions) and pass it as OnboardingConfig.clientSecret."
-            )
-        }
+        FrameNetworking.beginOnboardingSession(clientSecret)
         onDispose {
-            if (clientSecret != null) {
-                // Clear only the token this flow set; if a newer onboarding flow has already begun
-                // its own session, this stale disposal must not wipe it out.
-                FrameNetworking.endOnboardingSession(clientSecret)
-            }
+            // Clear only the token this flow set; if a newer onboarding flow has already begun
+            // its own session, this stale disposal must not wipe it out.
+            FrameNetworking.endOnboardingSession(clientSecret)
         }
     }
 
@@ -247,6 +234,7 @@ private fun OnboardingFlowSegment.accountEventScreen(): AccountEventScreen = whe
 private fun OnboardingContainerViewPreview() {
     OnboardingContainerView(
         config = OnboardingConfig(
+            clientSecret = "onb_sess_preview",
             requiredCapabilities = listOf(
                 Capabilities.KYC,
                 Capabilities.KYC_PREFILL,
