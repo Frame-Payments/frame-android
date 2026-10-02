@@ -7,6 +7,8 @@ import com.framepayments.framesdk.FrameCheckoutError
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.accountevents.AccountEventDetail
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
@@ -28,6 +30,7 @@ import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for the checkout surface.
@@ -165,20 +168,81 @@ class FrameCheckoutViewModel : ViewModel() {
     val isPerformingAction: LiveData<Boolean> = _isPerformingAction
 
     /**
-     * Opens checkout on card entry. A client credential cannot read the account profile or the
-     * saved-method list.
+     * Prefills name and email and loads saved payment methods.
+     *
+     * A supplied [account] or [paymentMethods] list, fetched on the host's backend, is used as-is.
+     * Anything not supplied is fetched here only when the SDK was initialized with a secret key.
+     * A publishable key cannot read the profile or the saved-method list, so those stay empty.
      *
      * [accountId] is required because the bundled checkout's pay button creates a
      * Transfer, which is account-scoped.
      */
-    fun loadAccountDetails(accountId: String, amount: Int) {
+    fun loadAccountDetails(
+        accountId: String,
+        amount: Int,
+        account: AccountObjects.Account? = null,
+        paymentMethods: List<FrameObjects.PaymentMethod>? = null,
+    ) {
         require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccountDetails requires a non-empty accountId" }
         this.amount = amount
         currentAccountId = accountId
         FrameNetworking.setAccountIdIfUnset(accountId)
         AccountEventEmitter.emit(AccountEventName.CHECKOUT_STARTED, AccountEventScreen.PAYMENT_SHEET)
+
+        if (account != null) applyIndividual(account.profile?.individual)
+        if (paymentMethods != null) applyPaymentMethods(paymentMethods)
         refreshCustomerInfoRequired()
-        _didLoadAccountPaymentMethods.value = true
+
+        val fetchAccount = account == null && FrameNetworking.apiSecretKey.isNotEmpty()
+        val fetchMethods = paymentMethods == null && FrameNetworking.apiSecretKey.isNotEmpty()
+        if (!fetchAccount && !fetchMethods) {
+            _didLoadAccountPaymentMethods.value = true
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            if (fetchAccount) {
+                val (fetched, accountError) = AccountsAPI.getAccountWith(accountId)
+                reportError(accountError)
+                withContext(Dispatchers.Main) { applyIndividual(fetched?.profile?.individual) }
+            }
+            if (fetchMethods) {
+                val (fetchedMethods, paymentMethodsError) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+                if (paymentMethodsError != null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        "$paymentMethodsError"
+                    )
+                }
+                reportError(paymentMethodsError)
+                withContext(Dispatchers.Main) { applyPaymentMethods(fetchedMethods.orEmpty()) }
+            }
+            withContext(Dispatchers.Main) {
+                refreshCustomerInfoRequired()
+                _didLoadAccountPaymentMethods.value = true
+            }
+        }
+    }
+
+    private fun applyIndividual(individual: AccountObjects.IndividualAccount?) {
+        if (individual == null) return
+        val composedName = listOf(individual.name?.firstName.orEmpty(), individual.name?.lastName.orEmpty())
+            .filter { it.isNotEmpty() }
+            .joinToString(" ")
+        if (composedName.isNotEmpty()) customerName.value = composedName
+        val composedEmail = individual.email.orEmpty()
+        if (composedEmail.isNotEmpty()) customerEmail.value = composedEmail
+    }
+
+    private fun applyPaymentMethods(methods: List<FrameObjects.PaymentMethod>) {
+        _accountPaymentOptions.value = methods
+        if (_selectedAccountPaymentOption.value == null &&
+            cardData.card.number.isEmpty() &&
+            methods.isNotEmpty()
+        ) {
+            setSelectedAccountPaymentOption(methods.first())
+        }
     }
 
     /**
