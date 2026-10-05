@@ -267,6 +267,33 @@ class FrameCheckoutViewModelTest {
         assertEquals(true, vm.hasUsablePaymentInput.value)
     }
 
+    @Test fun applyPaymentMethods_dropsSelectionMissingFromSuppliedList() {
+        val previousKey = FrameNetworking.apiSecretKey
+        FrameNetworking.apiSecretKey = ""
+        val saved = FrameObjects.PaymentMethod(
+            id = "saved",
+            customerId = null,
+            billing = null,
+            type = FrameObjects.PaymentMethodType.CARD,
+            methodObject = "payment_method",
+            created = 0,
+            updated = 0,
+            livemode = false,
+            card = null,
+            ach = null,
+            status = FrameObjects.PaymentMethodStatus.ACTIVE,
+        )
+        val other = saved.copy(id = "other")
+        vm.setSelectedAccountPaymentOption(saved)
+        vm.loadAccountDetails("acc_1", 100, paymentMethods = emptyList())
+        assertNull(vm.selectedAccountPaymentOption.value)
+        vm.loadAccountDetails("acc_1", 100, paymentMethods = listOf(other))
+        assertEquals("other", vm.selectedAccountPaymentOption.value?.id)
+        vm.loadAccountDetails("acc_1", 100, paymentMethods = listOf(other))
+        assertEquals("other", vm.selectedAccountPaymentOption.value?.id)
+        FrameNetworking.apiSecretKey = previousKey
+    }
+
     @Test fun loadAccountDetails_usesSuppliedAccountAndPaymentMethods() {
         FrameNetworking.apiSecretKey = ""
         val account = AccountObjects.Account(

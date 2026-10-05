@@ -2255,8 +2255,12 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         }
         val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
         if (FrameNetworking.apiSecretKey.isEmpty() || FrameNetworking.hasActiveOnboardingSession) return
-        val (methods, _) = withContext(Dispatchers.IO) {
+        val (methods, error) = withContext(Dispatchers.IO) {
             PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+        }
+        if (error != null) {
+            reportUserError(userMessageForNetworkError(error))
+            return
         }
         val fetched = methods.orEmpty().mapNotNull { it.toPayoutSummary() }
         val fetchedIds = fetched.map { it.id }.toSet()

@@ -237,6 +237,10 @@ class FrameCheckoutViewModel : ViewModel() {
 
     private fun applyPaymentMethods(methods: List<FrameObjects.PaymentMethod>) {
         _accountPaymentOptions.value = methods
+        val selectedId = _selectedAccountPaymentOption.value?.id
+        if (selectedId != null && methods.none { it.id == selectedId }) {
+            setSelectedAccountPaymentOption(null)
+        }
         if (_selectedAccountPaymentOption.value == null &&
             cardData.card.number.isEmpty() &&
             methods.isNotEmpty()
