@@ -254,7 +254,7 @@ data class OnboardingConfig(
     val showCompletionScreen: Boolean = true,
 ) {
     init {
-        require(clientSecret.isNotEmpty()) {
+        require(clientSecret.isNotBlank()) {
             "OnboardingConfig.clientSecret is required. Mint it on your backend with POST /v1/onboarding_sessions."
         }
     }

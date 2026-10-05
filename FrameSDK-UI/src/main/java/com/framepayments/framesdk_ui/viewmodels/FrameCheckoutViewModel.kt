@@ -230,9 +230,9 @@ class FrameCheckoutViewModel : ViewModel() {
         val composedName = listOf(individual.name?.firstName.orEmpty(), individual.name?.lastName.orEmpty())
             .filter { it.isNotEmpty() }
             .joinToString(" ")
-        if (composedName.isNotEmpty()) customerName.value = composedName
+        if (composedName.isNotEmpty() && customerName.value.isNullOrEmpty()) customerName.value = composedName
         val composedEmail = individual.email.orEmpty()
-        if (composedEmail.isNotEmpty()) customerEmail.value = composedEmail
+        if (composedEmail.isNotEmpty() && customerEmail.value.isNullOrEmpty()) customerEmail.value = composedEmail
     }
 
     private fun applyPaymentMethods(methods: List<FrameObjects.PaymentMethod>) {

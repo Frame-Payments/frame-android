@@ -18,6 +18,7 @@ import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
 import com.withpersona.sdk2.inquiry.Inquiry
 import com.withpersona.sdk2.inquiry.InquiryResponse
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -91,6 +92,8 @@ class ContentViewModel : ViewModel() {
         _accountId.value = accountId
     }
 
+    private var mintJob: Job? = null
+
     /**
      * Example app has no backend. Production apps mint POST /v1/onboarding_sessions on their
      * server with sk_ and pass the client secret in. A valid [accountId] resumes that account;
@@ -98,8 +101,9 @@ class ContentViewModel : ViewModel() {
      */
     @Suppress("DEPRECATION")
     fun mintOnboardingClientSecret(accountIdInput: String?) {
+        mintJob?.cancel()
         _onboardingMintState.value = OnboardingMintState.Loading
-        viewModelScope.launch {
+        mintJob = viewModelScope.launch {
             when (val result = mintSession(
                 accountIdInput = accountIdInput,
                 steps = listOf(
@@ -167,6 +171,8 @@ class ContentViewModel : ViewModel() {
 
     /** Resets the mint flow to [OnboardingMintState.Idle] so the next launch mints a fresh token. */
     fun clearOnboardingClientSecret() {
+        mintJob?.cancel()
+        mintJob = null
         _onboardingMintState.value = OnboardingMintState.Idle
     }
 

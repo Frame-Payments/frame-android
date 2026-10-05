@@ -2240,8 +2240,37 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun createNewBusinessAccount() {}
 
     /**
-     * Saved methods are not listed with a client credential. Methods added in this session stay
-     * on the in-memory lists.
+     * Loads ACH payout methods for the select-payout screen.
+     *
+     * A supplied list is used as-is. Otherwise the list is fetched only when a secret key is
+     * configured and no onboarding session is active, because a client credential cannot list
+     * payment methods. Methods added later in this session stay on the in-memory list.
+     *
+     * @param supplied Host-fetched payout methods, or null to fetch when a secret key is set.
      */
-    fun loadSavedPaymentMethods() {}
+    suspend fun loadSavedPaymentMethods(supplied: List<FrameObjects.PaymentMethod>? = null) {
+        if (supplied != null) {
+            _savedPayoutMethods.value = supplied.mapNotNull { it.toPayoutSummary() }
+            return
+        }
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        if (FrameNetworking.apiSecretKey.isEmpty() || FrameNetworking.hasActiveOnboardingSession) return
+        val (methods, _) = withContext(Dispatchers.IO) {
+            PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+        }
+        val fetched = methods.orEmpty().mapNotNull { it.toPayoutSummary() }
+        val fetchedIds = fetched.map { it.id }.toSet()
+        _savedPayoutMethods.value = fetched + _savedPayoutMethods.value.filter { it.id !in fetchedIds }
+    }
+
+    private fun FrameObjects.PaymentMethod.toPayoutSummary(): PaymentMethodSummary? {
+        if (type != FrameObjects.PaymentMethodType.ACH) return null
+        val methodId = id?.takeIf { it.isNotEmpty() } ?: return null
+        return PaymentMethodSummary(
+            id = methodId,
+            brand = "BANK",
+            last4 = ach?.lastFour.orEmpty(),
+            exp = ""
+        )
+    }
 }
