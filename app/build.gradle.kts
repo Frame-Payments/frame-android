@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     kotlin("android") version "2.2.10"
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun localProp(name: String): String =
+    localProperties.getProperty(name).orEmpty().replace("\\", "\\\\").replace("\"", "\\\"")
 
 android {
     namespace = "com.framepayments.frame"
@@ -16,9 +26,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SANDBOX_PUBLISHABLE_KEY", "\"${localProp("sandbox.publishableKey")}\"")
+        buildConfigField("String", "SANDBOX_SECRET_KEY", "\"${localProp("sandbox.secretKey")}\"")
+        buildConfigField("String", "SANDBOX_ACCOUNT_ID", "\"${localProp("sandbox.accountId")}\"")
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     buildTypes {
         release {

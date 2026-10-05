@@ -1,6 +1,9 @@
 package com.framepayments.framesdk_ui.viewmodels
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.accounts.AccountObjects
 import com.framepayments.framesdk_ui.AddressMode
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
@@ -262,6 +265,70 @@ class FrameCheckoutViewModelTest {
         )
         vm.setSelectedAccountPaymentOption(saved)
         assertEquals(true, vm.hasUsablePaymentInput.value)
+    }
+
+    @Test fun applyPaymentMethods_dropsSelectionMissingFromSuppliedList() {
+        val previousKey = FrameNetworking.apiSecretKey
+        FrameNetworking.apiSecretKey = ""
+        val saved = FrameObjects.PaymentMethod(
+            id = "saved",
+            customerId = null,
+            billing = null,
+            type = FrameObjects.PaymentMethodType.CARD,
+            methodObject = "payment_method",
+            created = 0,
+            updated = 0,
+            livemode = false,
+            card = null,
+            ach = null,
+            status = FrameObjects.PaymentMethodStatus.ACTIVE,
+        )
+        val other = saved.copy(id = "other")
+        vm.setSelectedAccountPaymentOption(saved)
+        vm.loadAccountDetails("acc_1", 100, paymentMethods = emptyList())
+        assertNull(vm.selectedAccountPaymentOption.value)
+        vm.loadAccountDetails("acc_1", 100, paymentMethods = listOf(other))
+        assertEquals("other", vm.selectedAccountPaymentOption.value?.id)
+        vm.loadAccountDetails("acc_1", 100, paymentMethods = listOf(other))
+        assertEquals("other", vm.selectedAccountPaymentOption.value?.id)
+        FrameNetworking.apiSecretKey = previousKey
+    }
+
+    @Test fun loadAccountDetails_usesSuppliedAccountAndPaymentMethods() {
+        FrameNetworking.apiSecretKey = ""
+        val account = AccountObjects.Account(
+            id = "acc_1",
+            accountObject = "account",
+            type = AccountObjects.AccountType.INDIVIDUAL,
+            status = AccountObjects.AccountStatus.ACTIVE,
+            profile = AccountObjects.AccountProfile(
+                individual = AccountObjects.IndividualAccount(
+                    name = AccountObjects.IndividualAccountName(firstName = "Ada", lastName = "Lovelace"),
+                    email = "ada@example.com",
+                ),
+            ),
+            created = 0,
+            updated = 0,
+            livemode = false,
+        )
+        val supplied = FrameObjects.PaymentMethod(
+            id = "supplied",
+            customerId = null,
+            billing = null,
+            type = FrameObjects.PaymentMethodType.CARD,
+            methodObject = "payment_method",
+            created = 0,
+            updated = 0,
+            livemode = false,
+            card = null,
+            ach = null,
+            status = FrameObjects.PaymentMethodStatus.ACTIVE,
+        )
+        vm.loadAccountDetails("acc_1", 100, account, listOf(supplied))
+        assertEquals("Ada Lovelace", vm.customerName.value)
+        assertEquals("ada@example.com", vm.customerEmail.value)
+        assertEquals("supplied", vm.selectedAccountPaymentOption.value?.id)
+        assertEquals(true, vm.didLoadAccountPaymentMethods.value)
     }
 
     @Test fun newCardPath_runsCardValidation() {

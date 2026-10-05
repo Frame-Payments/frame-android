@@ -10,6 +10,7 @@ class FrameOnboardingNavigationTest {
 
     private fun makeVM() = FrameOnboardingViewModel(
         OnboardingConfig(
+            clientSecret = "onb_sess_preview",
             requiredCapabilities = listOf(Capabilities.CARD_SEND, Capabilities.BANK_ACCOUNT_RECEIVE),
             skipInitNetwork = true
         )

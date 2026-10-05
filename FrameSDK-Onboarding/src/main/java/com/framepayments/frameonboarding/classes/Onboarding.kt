@@ -230,9 +230,9 @@ sealed class OnboardingResult {
  *
  * @property accountId Pre-existing Frame account ID to resume onboarding for, or null to create
  *   a new account during the flow.
- * @property clientSecret Onboarding-session token (`onb_sess_…`) minted by your backend. When
- *   provided, every onboarding request is authenticated with it, scoping the flow to a single
- *   account. Leave null only for legacy integrations that authenticate via the configured keys.
+ * @property clientSecret Onboarding-session token (`onb_sess_…`) minted by your backend
+ *   (`POST /v1/onboarding_sessions`). Required. Every onboarding request authenticates with it,
+ *   scoping the flow to a single account.
  * @property requiredCapabilities Capabilities the customer must satisfy; determines which
  *   onboarding steps are shown.
  * @property skipInitNetwork When true, suppresses network calls during ViewModel init (for
@@ -246,13 +246,19 @@ sealed class OnboardingResult {
  */
 data class OnboardingConfig(
     val accountId: String? = null,
-    val clientSecret: String? = null,
+    val clientSecret: String,
     val requiredCapabilities: List<Capabilities> = emptyList(),
     val skipInitNetwork: Boolean = false,
     val theme: FrameTheme? = null,
     val showIntroScreen: Boolean = false,
     val showCompletionScreen: Boolean = true,
-)
+) {
+    init {
+        require(clientSecret.isNotBlank()) {
+            "OnboardingConfig.clientSecret is required. Mint it on your backend with POST /v1/onboarding_sessions."
+        }
+    }
+}
 
 internal data class PaymentMethodSummary(
     val id: String,

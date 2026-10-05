@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameNetworking
+import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.FrameResult
 import com.framepayments.framesdk_ui.reusable.refreshesSonarSession
 import com.framepayments.framesdk_ui.theme.FrameTheme
@@ -30,9 +31,10 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *
  * @param accountId The Frame account ID whose payout method is being selected.
  * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your server
- *   (`POST /v1/onboarding_sessions`) and handed to your app. While this screen is presented every
- *   request authenticates with this token, scoping it to a single account. Pass null only for
- *   legacy integrations that still authenticate with a secret key.
+ *   (`POST /v1/onboarding_sessions`) and handed to your app. Required. While this screen is
+ *   presented every request authenticates with this token, scoping it to a single account.
+ * @param payoutMethods ACH methods fetched on the host backend. When null, saved banks are loaded
+ *   only if the SDK was initialized with a secret key.
  * @param onResult Called with a [FrameResult] when the screen finishes or is cancelled. On
  *   [FrameResult.Completed] the id is the elected payout method. When null, system Back on the
  *   selection screen is left to the host.
@@ -40,7 +42,8 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
 @Composable
 fun FrameSelectPayoutMethodView(
     accountId: String,
-    clientSecret: String? = null,
+    clientSecret: String,
+    payoutMethods: List<FrameObjects.PaymentMethod>? = null,
     onResult: ((FrameResult) -> Unit)? = null
 ) {
     // Keyed on accountId/clientSecret: a keyless remember would keep the first VM instance (and
@@ -62,13 +65,15 @@ fun FrameSelectPayoutMethodView(
     // The selection when Add opened; only a different id afterwards means a bank was added.
     var selectedIdWhenAddOpened by remember { mutableStateOf<String?>(null) }
 
-    DisposableEffect(viewModel, clientSecret) {
-        clientSecret?.let { FrameNetworking.beginOnboardingSession(it) }
-        // Seeds saved payout methods; onboarding gets this from its container.
+    LaunchedEffect(accountId, clientSecret) {
+        FrameNetworking.endOnboardingSession(clientSecret)
+        viewModel.loadSavedPaymentMethods(payoutMethods)
+        FrameNetworking.beginOnboardingSession(clientSecret)
         viewModel.launchCheckExistingAccount(updateCapabilities = false)
-        viewModel.loadSavedPaymentMethods()
+    }
+    DisposableEffect(clientSecret) {
         onDispose {
-            clientSecret?.let { FrameNetworking.endOnboardingSession(it) }
+            FrameNetworking.endOnboardingSession(clientSecret)
         }
     }
 

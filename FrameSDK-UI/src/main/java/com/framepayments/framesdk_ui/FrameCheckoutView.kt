@@ -24,6 +24,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.FrameResult
+import com.framepayments.framesdk.accounts.AccountObjects
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
@@ -352,6 +353,11 @@ class FrameCheckoutView @JvmOverloads constructor(
      *
      * The Google Pay merchant identifier is read from [com.framepayments.framesdk.FrameNetworking.googlePayMerchantId]
      * — pass it once at SDK init. The Google Pay row stays hidden if it isn't configured.
+     *
+     * @param account Account fetched on the host's backend with `sk_`. Prefills name and email.
+     *   When null and the SDK was initialized with a secret key, checkout fetches the account.
+     * @param paymentMethods Saved methods fetched on the host's backend with `sk_`. When null and
+     *   the SDK was initialized with a secret key, checkout fetches the list.
      */
     @JvmOverloads
     @SuppressLint("SetTextI18n")
@@ -359,6 +365,8 @@ class FrameCheckoutView @JvmOverloads constructor(
         accountId: String,
         paymentAmount: Int,
         addressMode: AddressMode = AddressMode.REQUIRED,
+        account: AccountObjects.Account? = null,
+        paymentMethods: List<FrameObjects.PaymentMethod>? = null,
         onResult: (FrameResult) -> Unit,
     ) {
         require(accountId.isNotEmpty()) { "FrameCheckoutView.configure requires a non-empty accountId" }
@@ -366,7 +374,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         viewModel.addressMode = addressMode
         binding.customerAddressContainer.visibility =
             if (addressMode == AddressMode.HIDDEN) View.GONE else View.VISIBLE
-        viewModel.loadAccountDetails(accountId, paymentAmount)
+        viewModel.loadAccountDetails(accountId, paymentAmount, account, paymentMethods)
         binding.payButton.text = "Pay ${CurrencyFormatter.convertCentsToCurrencyString(paymentAmount)}"
 
         binding.googlePayBtn.configure(

@@ -204,7 +204,7 @@ internal fun AddPayoutMethodScreen(
 private fun AddPayoutMethodScreenPreview() {
     FrameTheme {
     AddPayoutMethodScreen(
-        viewModel = FrameOnboardingViewModel(OnboardingConfig()),
+        viewModel = FrameOnboardingViewModel(OnboardingConfig(clientSecret = "onb_sess_preview")),
         onBack = {}
     )
     }
