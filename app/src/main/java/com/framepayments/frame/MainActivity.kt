@@ -9,22 +9,22 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.framepayments.frame.BuildConfig
 import com.framepayments.framesdk.FrameNetworking
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Supply sandbox keys via local.properties / BuildConfig before running the example.
-        // Do not commit real keys.
-        val sandboxAccountId = "INSERT_SANDBOX_ACCOUNT_ID"
+        // Sandbox keys live in local.properties (gitignored) and are baked into BuildConfig.
+        val sandboxAccountId = BuildConfig.SANDBOX_ACCOUNT_ID
         FrameNetworking.initializeWithAPIKey(
             context = applicationContext,
-            secretKey = "INSERT_SANDBOX_SECRET_KEY",
-            publishableKey = "INSERT_SANDBOX_PUBLISHABLE_KEY",
+            secretKey = BuildConfig.SANDBOX_SECRET_KEY,
+            publishableKey = BuildConfig.SANDBOX_PUBLISHABLE_KEY,
             // Optional: an existing account this run belongs to, used to attribute account
-            // events. Leave null if you're onboarding a new account instead.
-            accountId = sandboxAccountId.takeIf { it != "INSERT_SANDBOX_ACCOUNT_ID" },
+            // events. Leave empty if you're onboarding a new account instead.
+            accountId = sandboxAccountId.takeIf { it.isNotEmpty() },
             googlePayMerchantId = "BCR2DN4T_TEST_STUB",
             debug = true
         )
