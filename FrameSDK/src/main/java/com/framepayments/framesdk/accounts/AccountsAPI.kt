@@ -70,12 +70,18 @@ object AccountsAPI {
      *
      * @param accountId The ID of the account to retrieve.
      * @param forTesting When `true`, suppresses the Sift login event.
+     * @param auth Credential for the request. Defaults to the publishable key. Checkout passes a
+     *   `chk_sess_` token here.
      * @return A pair of the [AccountObjects.Account] and any [NetworkingError].
      */
-    suspend fun getAccountWith(accountId: String, forTesting: Boolean = false): Pair<AccountObjects.Account?, NetworkingError?> {
+    suspend fun getAccountWith(
+        accountId: String,
+        forTesting: Boolean = false,
+        auth: FrameAuthMode = FrameAuthMode.Publishable,
+    ): Pair<AccountObjects.Account?, NetworkingError?> {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.GetAccountWith(accountId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, auth)
         val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
         if (!forTesting) {
             decodedResponse?.let {

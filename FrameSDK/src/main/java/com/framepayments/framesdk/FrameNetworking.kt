@@ -69,8 +69,8 @@ sealed class FrameAuthMode {
     /**
      * Authenticate with a server-minted, per-object client secret used as a Bearer token.
      *
-     * Covers the charge-intent `client_secret` (`ci_<id>_secret_…`) and onboarding-session
-     * tokens (`onb_sess_…`).
+     * Covers the charge-intent `client_secret` (`ci_<id>_secret_…`), onboarding-session
+     * tokens (`onb_sess_…`), and the checkout token (`chk_sess_…`).
      *
      * @property token The client secret value to use as the Bearer token.
      */

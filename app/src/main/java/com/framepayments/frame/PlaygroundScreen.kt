@@ -31,6 +31,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,6 +92,7 @@ fun PlaygroundScreen(
         plaidService?.isConnecting ?: kotlinx.coroutines.flow.MutableStateFlow(false)
     }.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val application = context.applicationContext as Application
     var showOnboarding by remember { mutableStateOf(false) }
     // Which standalone entry-point demo to launch, acting on viewModel.accountId.
@@ -391,10 +394,17 @@ fun PlaygroundScreen(
                 }
             }
             PlaygroundButton(text = "Checkout") {
-                val intent = Intent(context, CartTestActivity::class.java).apply {
-                    if (accountId.isNotBlank()) putExtra("accountId", accountId)
+                scope.launch {
+                    val secret = viewModel.mintCheckoutClientSecret(accountId)
+                    if (secret != null) {
+                        val intent = Intent(context, CartTestActivity::class.java).apply {
+                            putExtra("accountId", viewModel.accountId.value)
+                            putExtra("checkoutClientSecret", secret.clientSecret)
+                            putExtra("checkoutClientSecretExpiresAt", secret.expiresAt)
+                        }
+                        context.startActivity(intent)
+                    }
                 }
-                context.startActivity(intent)
             }
             PlaygroundButton(text = "Show Onboarding Flow") {
                 // Example app has no backend. Production apps mint POST /v1/onboarding_sessions

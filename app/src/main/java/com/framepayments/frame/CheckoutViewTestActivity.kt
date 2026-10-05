@@ -3,6 +3,7 @@ package com.framepayments.frame
 import android.os.Bundle
 import android.widget.FrameLayout
 import com.framepayments.framesdk.FrameResult
+import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
 import com.framepayments.framesdk_ui.FrameCheckoutView
 
 class CheckoutActivity : BaseActivity() {
@@ -13,6 +14,9 @@ class CheckoutActivity : BaseActivity() {
 
         val accountId = intent.getStringExtra("accountId") ?: "default_account"
         val totalCents = intent.getIntExtra("totalCents", 0)
+        val checkoutClientSecret = intent.getStringExtra("checkoutClientSecret")?.let { token ->
+            FrameCheckoutClientSecret(token, intent.getLongExtra("checkoutClientSecretExpiresAt", 0L))
+        }
 
         val rootLayout = FrameLayout(this).apply {
             layoutParams = FrameLayout.LayoutParams(
@@ -24,7 +28,8 @@ class CheckoutActivity : BaseActivity() {
         val frameCheckoutView = FrameCheckoutView(this).apply {
             configure(
                 accountId = accountId,
-                paymentAmount = totalCents
+                paymentAmount = totalCents,
+                checkoutClientSecret = checkoutClientSecret,
             ) { result ->
                 when (result) {
                     is FrameResult.Completed -> {

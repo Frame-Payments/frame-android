@@ -14,6 +14,8 @@ import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
 import com.framepayments.framesdk.chargeintents.ChargeIntentConfirmation
+import com.framepayments.framesdk.checkoutsessions.CheckoutSessionsAPI
+import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
 import com.framepayments.framesdk.chargeintents.FrameChargeIntentError
 import com.framepayments.framesdk.chargeintents.FrameChargeIntentOutcome
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
@@ -171,17 +173,27 @@ class FrameCheckoutViewModel : ViewModel() {
      * Prefills name and email and loads saved payment methods.
      *
      * A supplied [account] or [paymentMethods] list, fetched on the host's backend, is used as-is.
-     * Anything not supplied is fetched here only when the SDK was initialized with a secret key.
-     * A publishable key cannot read the profile or the saved-method list, so those stay empty.
+     * Anything not supplied is fetched here when a checkout client secret is set, or when the SDK
+     * was initialized with a secret key. A publishable key cannot read the profile or the
+     * saved-method list, so those stay empty.
      *
      * [accountId] is required because the bundled checkout's pay button creates a
      * Transfer, which is account-scoped.
+     *
+     * @param accountId The Frame account that will be charged.
+     * @param amount Charge amount in the currency's smallest unit.
+     * @param account Account fetched on the host's backend. Prefills name and email.
+     * @param paymentMethods Saved methods fetched on the host's backend.
+     * @param checkoutClientSecret `chk_sess_` token from `POST /v1/checkout_sessions`. When set,
+     *   the name, email, and saved cards are read with it. An expired token is refreshed with
+     *   the secret key when one is configured.
      */
     fun loadAccountDetails(
         accountId: String,
         amount: Int,
         account: AccountObjects.Account? = null,
         paymentMethods: List<FrameObjects.PaymentMethod>? = null,
+        checkoutClientSecret: FrameCheckoutClientSecret? = null,
     ) {
         require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccountDetails requires a non-empty accountId" }
         this.amount = amount
@@ -193,8 +205,9 @@ class FrameCheckoutViewModel : ViewModel() {
         if (paymentMethods != null) applyPaymentMethods(paymentMethods)
         refreshCustomerInfoRequired()
 
-        val fetchAccount = account == null && FrameNetworking.apiSecretKey.isNotEmpty()
-        val fetchMethods = paymentMethods == null && FrameNetworking.apiSecretKey.isNotEmpty()
+        val usingCheckoutSecret = checkoutClientSecret != null
+        val fetchAccount = account == null && (usingCheckoutSecret || FrameNetworking.apiSecretKey.isNotEmpty())
+        val fetchMethods = paymentMethods == null && (usingCheckoutSecret || FrameNetworking.apiSecretKey.isNotEmpty())
         if (!fetchAccount && !fetchMethods) {
             _didLoadAccountPaymentMethods.value = true
             return
@@ -202,12 +215,20 @@ class FrameCheckoutViewModel : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             if (fetchAccount) {
-                val (fetched, accountError) = AccountsAPI.getAccountWith(accountId)
+                val (fetched, accountError) = if (checkoutClientSecret != null) {
+                    CheckoutSessionsAPI.loadAccount(accountId, checkoutClientSecret)
+                } else {
+                    AccountsAPI.getAccountWith(accountId)
+                }
                 reportError(accountError)
                 withContext(Dispatchers.Main) { applyIndividual(fetched?.profile?.individual) }
             }
             if (fetchMethods) {
-                val (fetchedMethods, paymentMethodsError) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+                val (fetchedMethods, paymentMethodsError) = if (checkoutClientSecret != null) {
+                    CheckoutSessionsAPI.loadPaymentMethods(accountId, checkoutClientSecret)
+                } else {
+                    PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+                }
                 if (paymentMethodsError != null) {
                     AccountEventEmitter.emit(
                         AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
