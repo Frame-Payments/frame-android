@@ -5,8 +5,6 @@ import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountObjects
-import com.framepayments.framesdk.accounts.AccountsAPI
-import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
 
 /**
  * Mints and uses a checkout client secret (`chk_sess_`).
@@ -42,7 +40,12 @@ object CheckoutSessionsAPI {
         secret: FrameCheckoutClientSecret,
     ): Pair<AccountObjects.Account?, NetworkingError?> {
         return authorized(accountId, secret) { token ->
-            AccountsAPI.getAccountWith(accountId, auth = FrameAuthMode.ClientSecret(token))
+            val (data, error) = FrameNetworking.performDataTask(
+                CheckoutSessionEndpoints.GetAccount(accountId),
+                auth = FrameAuthMode.ClientSecret(token),
+            )
+            if (error != null) return@authorized Pair(null, error)
+            Pair(data?.let { FrameNetworking.parseResponse<CheckoutAccountPayload>(it)?.toAccount() }, null)
         }
     }
 
@@ -55,7 +58,15 @@ object CheckoutSessionsAPI {
         secret: FrameCheckoutClientSecret,
     ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
         return authorized(accountId, secret) { token ->
-            PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId, auth = FrameAuthMode.ClientSecret(token))
+            val (data, error) = FrameNetworking.performDataTask(
+                CheckoutSessionEndpoints.GetPaymentMethods(accountId),
+                auth = FrameAuthMode.ClientSecret(token),
+            )
+            if (error != null) return@authorized Pair(null, error)
+            val methods = data
+                ?.let { FrameNetworking.parseResponse<CheckoutPaymentMethodList>(it)?.data }
+                ?.map { it.toPaymentMethod() }
+            Pair(methods, null)
         }
     }
 

@@ -31,6 +31,8 @@ import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -161,6 +163,7 @@ class FrameCheckoutViewModel : ViewModel() {
     // Internal tracking
     private var currentAccountId: String? = null
     internal var amount: Int = 0
+    private var loadAccountDetailsJob: Job? = null
 
     private val _isPerformingAction = MutableLiveData(false)
     /**
@@ -209,17 +212,21 @@ class FrameCheckoutViewModel : ViewModel() {
         val fetchAccount = account == null && (usingCheckoutSecret || FrameNetworking.apiSecretKey.isNotEmpty())
         val fetchMethods = paymentMethods == null && (usingCheckoutSecret || FrameNetworking.apiSecretKey.isNotEmpty())
         if (!fetchAccount && !fetchMethods) {
+            loadAccountDetailsJob?.cancel()
+            loadAccountDetailsJob = null
             _didLoadAccountPaymentMethods.value = true
             return
         }
 
-        viewModelScope.launch(Dispatchers.IO) {
+        loadAccountDetailsJob?.cancel()
+        loadAccountDetailsJob = viewModelScope.launch(Dispatchers.IO) {
             if (fetchAccount) {
                 val (fetched, accountError) = if (checkoutClientSecret != null) {
                     CheckoutSessionsAPI.loadAccount(accountId, checkoutClientSecret)
                 } else {
                     AccountsAPI.getAccountWith(accountId)
                 }
+                ensureActive()
                 reportError(accountError)
                 withContext(Dispatchers.Main) { applyIndividual(fetched?.profile?.individual) }
             }
@@ -229,6 +236,7 @@ class FrameCheckoutViewModel : ViewModel() {
                 } else {
                     PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
                 }
+                ensureActive()
                 if (paymentMethodsError != null) {
                     AccountEventEmitter.emit(
                         AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,

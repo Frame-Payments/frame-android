@@ -73,6 +73,30 @@ class CheckoutSessionsAPITest {
     }
 
     @Test
+    fun redactedPaymentMethodListMapsCardAndAch() = runBlocking {
+        server.enqueue(
+            MockResponse().setBody(
+                """{"data":[
+                  {"id":"pm_card","object":"payment_method","type":"card","status":"active","card":{"brand":"visa","last_four":"4242","exp_month":"12","exp_year":"2027"}},
+                  {"id":"pm_ach","object":"payment_method","type":"ach","status":"active","ach":{"account_type":"checking","last_four":"6789"}}
+                ]}""",
+            ),
+        )
+
+        val secret = FrameCheckoutClientSecret("chk_sess_live", expiresAt = 2_000_000_000)
+        val (methods, error) = CheckoutSessionsAPI.loadPaymentMethods("acc_1", secret)
+
+        assertNull(error)
+        assertEquals(2, methods?.size)
+        assertEquals("pm_card", methods?.get(0)?.id)
+        assertEquals("4242", methods?.get(0)?.card?.lastFourDigits)
+        assertNull(methods?.get(0)?.card?.issuer)
+        assertEquals("pm_ach", methods?.get(1)?.id)
+        assertEquals("6789", methods?.get(1)?.ach?.lastFour)
+        assertNull(methods?.get(1)?.ach?.routingNumber)
+    }
+
+    @Test
     fun expiredTokenPropagatesMintErrorWhenRefreshFails() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(500).setBody("""{"error":"mint failed"}"""))
 
