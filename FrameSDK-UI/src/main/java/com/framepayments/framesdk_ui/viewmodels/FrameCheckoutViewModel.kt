@@ -218,9 +218,14 @@ class FrameCheckoutViewModel : ViewModel() {
         }
 
         loadAccountDetailsJob?.cancel()
-        // Drop prior account payment state before the replacement fetch so a stale selected
-        // method cannot be submitted against the new accountId while the load is in flight.
-        clearPendingPaymentLoadState()
+        if (fetchMethods) {
+            // Drop prior payment state only when this call will replace the list, so a stale
+            // selected method cannot be submitted while the fetch is in flight. Account-only
+            // fetches keep host-supplied methods from applyPaymentMethods above.
+            clearPendingPaymentLoadState()
+        } else if (paymentMethods != null) {
+            _didLoadAccountPaymentMethods.value = true
+        }
         loadAccountDetailsJob = viewModelScope.launch(Dispatchers.IO) {
             if (fetchAccount) {
                 val (fetched, accountError) = if (checkoutClientSecret != null) {

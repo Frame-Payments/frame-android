@@ -74,6 +74,42 @@ class FrameCheckoutViewModelCheckoutSecretTest {
     }
 
     @Test
+    fun loadAccountDetails_accountOnlyFetchKeepsSuppliedPaymentMethods() = runBlocking {
+        val supplied = FrameObjects.PaymentMethod(
+            id = "pm_host",
+            customerId = null,
+            billing = null,
+            type = FrameObjects.PaymentMethodType.CARD,
+            methodObject = "payment_method",
+            created = 0,
+            updated = 0,
+            livemode = false,
+            card = null,
+            ach = null,
+            status = FrameObjects.PaymentMethodStatus.ACTIVE,
+        )
+        server.enqueue(
+            accountResponse(firstName = "Milo", lastName = "Pinson", email = "milo@example.com")
+                .setBodyDelay(300, TimeUnit.MILLISECONDS),
+        )
+
+        vm.loadAccountDetails(
+            accountId = "acc_1",
+            amount = 100,
+            paymentMethods = listOf(supplied),
+            checkoutClientSecret = FrameCheckoutClientSecret("chk_sess_live", expiresAt = 2_000_000_000),
+        )
+
+        assertEquals("pm_host", vm.selectedAccountPaymentOption.value?.id)
+        assertEquals(true, vm.didLoadAccountPaymentMethods.value)
+        assertEquals(listOf(supplied), vm.accountPaymentOptions.value)
+
+        awaitUntil { vm.customerName.value == "Milo Pinson" }
+        assertEquals("pm_host", vm.selectedAccountPaymentOption.value?.id)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
     fun loadAccountDetails_clearsPriorPaymentStateBeforeFetch() = runBlocking {
         val prior = FrameObjects.PaymentMethod(
             id = "pm_prior",
