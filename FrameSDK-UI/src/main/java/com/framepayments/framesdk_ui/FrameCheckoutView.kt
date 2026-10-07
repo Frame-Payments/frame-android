@@ -25,6 +25,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.FrameResult
 import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
@@ -208,15 +209,12 @@ class FrameCheckoutView @JvmOverloads constructor(
         }
         viewModel.didLoadAccountPaymentMethods.observe(activity) { refreshNewCardVisibility() }
 
-        // Shown only once the account load has settled, and only when the profile did not supply
-        // a usable name and email — otherwise the customer re-types what Frame already has.
+        // Always shown once the account load has settled so the customer can edit a prefilled
+        // name/email. Hidden only while the initial fetch is still in flight.
         fun refreshCustomerInfoVisibility() {
-            val loaded = viewModel.didLoadAccountPaymentMethods.value == true
-            val required = viewModel.customerInfoRequired.value != false
             binding.customerInfoContainer.visibility =
-                if (loaded && required) View.VISIBLE else View.GONE
+                if (viewModel.didLoadAccountPaymentMethods.value == true) View.VISIBLE else View.GONE
         }
-        viewModel.customerInfoRequired.observe(activity) { refreshCustomerInfoVisibility() }
         viewModel.didLoadAccountPaymentMethods.observe(activity) { refreshCustomerInfoVisibility() }
 
         viewModel.customerName.observe(activity) { customerNameState = it.orEmpty() }
@@ -358,6 +356,9 @@ class FrameCheckoutView @JvmOverloads constructor(
      *   When null and the SDK was initialized with a secret key, checkout fetches the account.
      * @param paymentMethods Saved methods fetched on the host's backend with `sk_`. When null and
      *   the SDK was initialized with a secret key, checkout fetches the list.
+     * @param checkoutClientSecret `chk_sess_` token from `POST /v1/checkout_sessions`. When set,
+     *   checkout reads the name, email, and saved cards with it. An expired token is refreshed
+     *   with the secret key when one is configured.
      */
     @JvmOverloads
     @SuppressLint("SetTextI18n")
@@ -367,6 +368,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         addressMode: AddressMode = AddressMode.REQUIRED,
         account: AccountObjects.Account? = null,
         paymentMethods: List<FrameObjects.PaymentMethod>? = null,
+        checkoutClientSecret: FrameCheckoutClientSecret? = null,
         onResult: (FrameResult) -> Unit,
     ) {
         require(accountId.isNotEmpty()) { "FrameCheckoutView.configure requires a non-empty accountId" }
@@ -374,7 +376,7 @@ class FrameCheckoutView @JvmOverloads constructor(
         viewModel.addressMode = addressMode
         binding.customerAddressContainer.visibility =
             if (addressMode == AddressMode.HIDDEN) View.GONE else View.VISIBLE
-        viewModel.loadAccountDetails(accountId, paymentAmount, account, paymentMethods)
+        viewModel.loadAccountDetails(accountId, paymentAmount, account, paymentMethods, checkoutClientSecret)
         binding.payButton.text = "Pay ${CurrencyFormatter.convertCentsToCurrencyString(paymentAmount)}"
 
         binding.googlePayBtn.configure(

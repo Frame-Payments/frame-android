@@ -63,11 +63,16 @@ object PaymentMethodsAPI {
      * Fetches all payment methods associated with a specific merchant account.
      *
      * @param accountId The unique identifier of the account whose payment methods to retrieve.
+     * @param auth Credential for the request. Defaults to the secret key. Checkout passes a
+     *   `chk_sess_` token here.
      * @return A pair of the list of payment methods and a networking error.
      */
-    suspend fun getPaymentMethodsWithAccount(accountId: String): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
+    suspend fun getPaymentMethodsWithAccount(
+        accountId: String,
+        auth: FrameAuthMode = FrameAuthMode.Secret,
+    ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithAccount(accountId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint)
+        val (data, error) = FrameNetworking.performDataTask(endpoint, auth)
         return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
     }
 

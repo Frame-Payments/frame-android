@@ -68,6 +68,8 @@ dependencies {
     implementation(libs.libphonenumber)
     testImplementation(libs.junit)
     testImplementation("androidx.arch.core:core-testing:2.2.0")
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

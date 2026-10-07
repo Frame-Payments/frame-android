@@ -14,6 +14,8 @@ import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountObjects
 import com.framepayments.framesdk.accounts.AccountRequests
 import com.framepayments.framesdk.accounts.AccountsAPI
+import com.framepayments.framesdk.checkoutsessions.CheckoutSessionsAPI
+import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
 import com.withpersona.sdk2.inquiry.Inquiry
@@ -167,6 +169,38 @@ class ContentViewModel : ViewModel() {
                     ?: "Onboarding session response did not include a client secret."
             )
         return MintResult.Ok(MintedSession(clientSecret, resolvedAccountId))
+    }
+
+    /**
+     * Example app has no backend. Production apps mint `POST /v1/checkout_sessions` on their
+     * server with sk_ and pass the client secret in. Checkout refreshes an expired token with
+     * the secret key configured on this example.
+     */
+    suspend fun mintCheckoutClientSecret(accountIdInput: String?): FrameCheckoutClientSecret? {
+        val resolvedAccountId = accountIdInput?.takeIf { it.isNotBlank() } ?: run {
+            val (account, err) = createEmptyIndividualAccount()
+            account?.id ?: run {
+                _demoAlert.value = DemoAlertMessage(
+                    title = "Checkout",
+                    body = err?.let { "Couldn't create an account to check out: $it" }
+                        ?: "Account creation did not return an account id.",
+                )
+                return null
+            }
+        }
+        val (session, sessionError) = CheckoutSessionsAPI.createCheckoutSession(resolvedAccountId)
+        val clientSecret = session?.clientSecret?.takeIf { it.isNotEmpty() }
+        val expiresAt = session?.expiresAt
+        if (clientSecret == null || expiresAt == null) {
+            _demoAlert.value = DemoAlertMessage(
+                title = "Checkout",
+                body = sessionError?.let { "Couldn't mint a checkout client secret: $it" }
+                    ?: "Checkout session response did not include a client secret.",
+            )
+            return null
+        }
+        _accountId.value = resolvedAccountId
+        return FrameCheckoutClientSecret(clientSecret, expiresAt)
     }
 
     /** Resets the mint flow to [OnboardingMintState.Idle] so the next launch mints a fresh token. */

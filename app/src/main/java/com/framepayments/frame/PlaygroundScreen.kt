@@ -31,6 +31,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,11 +92,13 @@ fun PlaygroundScreen(
         plaidService?.isConnecting ?: kotlinx.coroutines.flow.MutableStateFlow(false)
     }.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val application = context.applicationContext as Application
     var showOnboarding by remember { mutableStateOf(false) }
     // Which standalone entry-point demo to launch, acting on viewModel.accountId.
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
+    var isMintingCheckout by remember { mutableStateOf(false) }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
@@ -390,11 +394,27 @@ fun PlaygroundScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
-            PlaygroundButton(text = "Checkout") {
-                val intent = Intent(context, CartTestActivity::class.java).apply {
-                    if (accountId.isNotBlank()) putExtra("accountId", accountId)
+            PlaygroundButton(
+                text = if (isMintingCheckout) "Opening Checkout…" else "Checkout",
+                enabled = !isMintingCheckout,
+            ) {
+                if (isMintingCheckout) return@PlaygroundButton
+                isMintingCheckout = true
+                scope.launch {
+                    try {
+                        val secret = viewModel.mintCheckoutClientSecret(accountId)
+                        if (secret != null) {
+                            val intent = Intent(context, CartTestActivity::class.java).apply {
+                                putExtra("accountId", viewModel.accountId.value)
+                                putExtra("checkoutClientSecret", secret.clientSecret)
+                                putExtra("checkoutClientSecretExpiresAt", secret.expiresAt)
+                            }
+                            context.startActivity(intent)
+                        }
+                    } finally {
+                        isMintingCheckout = false
+                    }
                 }
-                context.startActivity(intent)
             }
             PlaygroundButton(text = "Show Onboarding Flow") {
                 // Example app has no backend. Production apps mint POST /v1/onboarding_sessions

@@ -28,6 +28,9 @@ class CartTestActivity : BaseActivity() {
         // just onboarded (or typed into the playground's account field) carries through to
         // checkout, rather than checkout always acting on an unrelated hardcoded account.
         val accountId = intent.getStringExtra("accountId") ?: "INSERT_SANDBOX_ACCOUNT_ID"
+        val checkoutClientSecret = intent.getStringExtra("checkoutClientSecret")
+        val checkoutClientSecretExpiresAt = intent.getLongExtra("checkoutClientSecretExpiresAt", 0L)
+        val hasCheckoutExpiry = intent.hasExtra("checkoutClientSecretExpiresAt")
 
         val cartView = FrameCartView(this).apply {
             configure(
@@ -38,6 +41,10 @@ class CartTestActivity : BaseActivity() {
                     val intent = Intent(this@CartTestActivity, CheckoutActivity::class.java).apply {
                         putExtra("totalCents", total)
                         putExtra("accountId", accountId)
+                        checkoutClientSecret?.let { putExtra("checkoutClientSecret", it) }
+                        if (hasCheckoutExpiry) {
+                            putExtra("checkoutClientSecretExpiresAt", checkoutClientSecretExpiresAt)
+                        }
                     }
                     checkoutLauncher.launch(intent)
                 }
