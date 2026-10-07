@@ -64,26 +64,42 @@ object CheckoutSessionsAPI {
         secret: FrameCheckoutClientSecret,
         read: suspend (String) -> Pair<T?, NetworkingError?>,
     ): Pair<T?, NetworkingError?> {
-        val token = tokenForRead(accountId, secret)
-            ?: return Pair(null, NetworkingError.ServerError(401, "Checkout client secret expired."))
+        val (token, tokenError) = tokenForRead(accountId, secret)
+        if (token == null) {
+            return Pair(
+                null,
+                tokenError ?: NetworkingError.ServerError(401, "Checkout client secret expired."),
+            )
+        }
         val (value, error) = read(token)
         if (!unauthorized(error)) return Pair(value, error)
-        val refreshed = refresh(accountId, secret) ?: return Pair(null, error)
+        // After a 401, keep that error if the refresh mint fails.
+        val (refreshed, _) = refresh(accountId, secret)
+        if (refreshed == null) return Pair(null, error)
         return read(refreshed)
     }
 
-    private suspend fun tokenForRead(accountId: String, secret: FrameCheckoutClientSecret): String? {
-        if (!secret.isExpired() && secret.clientSecret.isNotEmpty()) return secret.clientSecret
+    private suspend fun tokenForRead(
+        accountId: String,
+        secret: FrameCheckoutClientSecret,
+    ): Pair<String?, NetworkingError?> {
+        if (!secret.isExpired() && secret.clientSecret.isNotEmpty()) {
+            return Pair(secret.clientSecret, null)
+        }
         return refresh(accountId, secret)
     }
 
-    private suspend fun refresh(accountId: String, secret: FrameCheckoutClientSecret): String? {
-        if (FrameNetworking.apiSecretKey.isEmpty()) return null
+    private suspend fun refresh(
+        accountId: String,
+        secret: FrameCheckoutClientSecret,
+    ): Pair<String?, NetworkingError?> {
+        if (FrameNetworking.apiSecretKey.isEmpty()) return Pair(null, null)
         val (session, error) = createCheckoutSession(accountId)
-        val clientSecret = session?.clientSecret?.takeIf { error == null && it.isNotEmpty() } ?: return null
+        val clientSecret = session?.clientSecret?.takeIf { error == null && it.isNotEmpty() }
+            ?: return Pair(null, error)
         secret.clientSecret = clientSecret
         session.expiresAt?.let { secret.expiresAt = it }
-        return clientSecret
+        return Pair(clientSecret, null)
     }
 
     private fun unauthorized(error: NetworkingError?): Boolean {

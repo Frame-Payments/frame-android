@@ -98,6 +98,7 @@ fun PlaygroundScreen(
     // Which standalone entry-point demo to launch, acting on viewModel.accountId.
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
+    var isMintingCheckout by remember { mutableStateOf(false) }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
@@ -393,16 +394,25 @@ fun PlaygroundScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
-            PlaygroundButton(text = "Checkout") {
+            PlaygroundButton(
+                text = if (isMintingCheckout) "Opening Checkout…" else "Checkout",
+                enabled = !isMintingCheckout,
+            ) {
+                if (isMintingCheckout) return@PlaygroundButton
+                isMintingCheckout = true
                 scope.launch {
-                    val secret = viewModel.mintCheckoutClientSecret(accountId)
-                    if (secret != null) {
-                        val intent = Intent(context, CartTestActivity::class.java).apply {
-                            putExtra("accountId", viewModel.accountId.value)
-                            putExtra("checkoutClientSecret", secret.clientSecret)
-                            putExtra("checkoutClientSecretExpiresAt", secret.expiresAt)
+                    try {
+                        val secret = viewModel.mintCheckoutClientSecret(accountId)
+                        if (secret != null) {
+                            val intent = Intent(context, CartTestActivity::class.java).apply {
+                                putExtra("accountId", viewModel.accountId.value)
+                                putExtra("checkoutClientSecret", secret.clientSecret)
+                                putExtra("checkoutClientSecretExpiresAt", secret.expiresAt)
+                            }
+                            context.startActivity(intent)
                         }
-                        context.startActivity(intent)
+                    } finally {
+                        isMintingCheckout = false
                     }
                 }
             }

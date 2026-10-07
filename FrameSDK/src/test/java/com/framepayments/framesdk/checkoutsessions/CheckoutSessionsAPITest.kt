@@ -7,8 +7,10 @@ import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
+import com.framepayments.framesdk.NetworkingError
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,6 +70,35 @@ class CheckoutSessionsAPITest {
         assertEquals("Bearer chk_sess_old", server.takeRequest().getHeader("Authorization"))
         assertEquals("Bearer sk_test_checkout", server.takeRequest().getHeader("Authorization"))
         assertEquals("Bearer chk_sess_new", server.takeRequest().getHeader("Authorization"))
+    }
+
+    @Test
+    fun expiredTokenPropagatesMintErrorWhenRefreshFails() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(500).setBody("""{"error":"mint failed"}"""))
+
+        val secret = FrameCheckoutClientSecret("chk_sess_old", expiresAt = 0)
+        val (account, error) = CheckoutSessionsAPI.loadAccount("acc_1", secret)
+
+        assertNull(account)
+        assertTrue(error is NetworkingError.ServerError)
+        assertEquals(500, (error as NetworkingError.ServerError).statusCode)
+        assertEquals("chk_sess_old", secret.clientSecret)
+        assertEquals("Bearer sk_test_checkout", server.takeRequest().getHeader("Authorization"))
+    }
+
+    @Test
+    fun unauthorizedReadKeepsOriginal401WhenRefreshFails() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"Invalid or expired client secret."}"""))
+        server.enqueue(MockResponse().setResponseCode(500).setBody("""{"error":"mint failed"}"""))
+
+        val secret = FrameCheckoutClientSecret("chk_sess_old", expiresAt = 2_000_000_000)
+        val (methods, error) = CheckoutSessionsAPI.loadPaymentMethods("acc_1", secret)
+
+        assertNull(methods)
+        assertTrue(error is NetworkingError.ServerError)
+        assertEquals(401, (error as NetworkingError.ServerError).statusCode)
+        assertEquals("Bearer chk_sess_old", server.takeRequest().getHeader("Authorization"))
+        assertEquals("Bearer sk_test_checkout", server.takeRequest().getHeader("Authorization"))
     }
 
     private fun sessionResponse() = MockResponse().setBody(
