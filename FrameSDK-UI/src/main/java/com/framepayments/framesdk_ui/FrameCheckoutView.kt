@@ -209,15 +209,12 @@ class FrameCheckoutView @JvmOverloads constructor(
         }
         viewModel.didLoadAccountPaymentMethods.observe(activity) { refreshNewCardVisibility() }
 
-        // Shown only once the account load has settled, and only when the profile did not supply
-        // a usable name and email — otherwise the customer re-types what Frame already has.
+        // Always shown once the account load has settled so the customer can edit a prefilled
+        // name/email. Hidden only while the initial fetch is still in flight.
         fun refreshCustomerInfoVisibility() {
-            val loaded = viewModel.didLoadAccountPaymentMethods.value == true
-            val required = viewModel.customerInfoRequired.value != false
             binding.customerInfoContainer.visibility =
-                if (loaded && required) View.VISIBLE else View.GONE
+                if (viewModel.didLoadAccountPaymentMethods.value == true) View.VISIBLE else View.GONE
         }
-        viewModel.customerInfoRequired.observe(activity) { refreshCustomerInfoVisibility() }
         viewModel.didLoadAccountPaymentMethods.observe(activity) { refreshCustomerInfoVisibility() }
 
         viewModel.customerName.observe(activity) { customerNameState = it.orEmpty() }

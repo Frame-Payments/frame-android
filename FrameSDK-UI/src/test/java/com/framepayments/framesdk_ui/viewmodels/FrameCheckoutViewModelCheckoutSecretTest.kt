@@ -14,6 +14,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -70,6 +71,46 @@ class FrameCheckoutViewModelCheckoutSecretTest {
         assertEquals("4242", vm.selectedAccountPaymentOption.value?.card?.lastFourDigits)
         assertEquals("Bearer chk_sess_live", server.takeRequest().getHeader("Authorization"))
         assertEquals("Bearer chk_sess_live", server.takeRequest().getHeader("Authorization"))
+    }
+
+    @Test
+    fun loadAccountDetails_clearsPriorPaymentStateBeforeFetch() = runBlocking {
+        val prior = FrameObjects.PaymentMethod(
+            id = "pm_prior",
+            customerId = null,
+            billing = null,
+            type = FrameObjects.PaymentMethodType.CARD,
+            methodObject = "payment_method",
+            created = 0,
+            updated = 0,
+            livemode = false,
+            card = null,
+            ach = null,
+            status = FrameObjects.PaymentMethodStatus.ACTIVE,
+        )
+        vm.loadAccountDetails("acc_old", 100, paymentMethods = listOf(prior))
+        assertEquals("pm_prior", vm.selectedAccountPaymentOption.value?.id)
+        assertEquals(true, vm.didLoadAccountPaymentMethods.value)
+
+        server.enqueue(
+            accountResponse(firstName = "Milo", lastName = "Pinson", email = "milo@example.com")
+                .setBodyDelay(300, TimeUnit.MILLISECONDS),
+        )
+        server.enqueue(methodsResponse(id = "pm_new", lastFour = "4242"))
+
+        vm.loadAccountDetails(
+            accountId = "acc_1",
+            amount = 100,
+            checkoutClientSecret = FrameCheckoutClientSecret("chk_sess_live", expiresAt = 2_000_000_000),
+        )
+
+        assertEquals(false, vm.didLoadAccountPaymentMethods.value)
+        assertNull(vm.selectedAccountPaymentOption.value)
+        assertTrue(vm.accountPaymentOptions.value.isNullOrEmpty())
+
+        awaitUntil { vm.didLoadAccountPaymentMethods.value == true }
+        assertEquals("pm_new", vm.selectedAccountPaymentOption.value?.id)
+        assertEquals("Milo Pinson", vm.customerName.value)
     }
 
     @Test

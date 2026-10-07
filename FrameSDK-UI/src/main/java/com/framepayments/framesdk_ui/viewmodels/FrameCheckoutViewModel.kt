@@ -64,16 +64,15 @@ class FrameCheckoutViewModel : ViewModel() {
 
     private val _customerInfoRequired = MutableLiveData(true)
     /**
-     * Whether the customer name/email fields must be shown. They are always validated, but the
-     * account profile normally supplies both — it is PII-gated, so a publishable-key host may
-     * receive neither, and the fields would otherwise stay hidden on the saved-payment-method
-     * path while still blocking the pay button.
+     * `true` when name or email still fails validation after the account load. The checkout form
+     * always shows both fields so the customer can edit a prefilled profile; this flag is for
+     * hosts that want to know whether the profile alone was enough.
      */
     val customerInfoRequired: LiveData<Boolean> = _customerInfoRequired
 
     /**
      * Evaluates [customerInfoRequired] once the account load settles. Deliberately not re-run on
-     * every keystroke: the fields would vanish mid-typing the moment the input became valid.
+     * every keystroke.
      */
     internal fun refreshCustomerInfoRequired() {
         _customerInfoRequired.value =
@@ -219,6 +218,9 @@ class FrameCheckoutViewModel : ViewModel() {
         }
 
         loadAccountDetailsJob?.cancel()
+        // Drop prior account payment state before the replacement fetch so a stale selected
+        // method cannot be submitted against the new accountId while the load is in flight.
+        clearPendingPaymentLoadState()
         loadAccountDetailsJob = viewModelScope.launch(Dispatchers.IO) {
             if (fetchAccount) {
                 val (fetched, accountError) = if (checkoutClientSecret != null) {
@@ -262,6 +264,13 @@ class FrameCheckoutViewModel : ViewModel() {
         if (composedName.isNotEmpty() && customerName.value.isNullOrEmpty()) customerName.value = composedName
         val composedEmail = individual.email.orEmpty()
         if (composedEmail.isNotEmpty() && customerEmail.value.isNullOrEmpty()) customerEmail.value = composedEmail
+    }
+
+    private fun clearPendingPaymentLoadState() {
+        _didLoadAccountPaymentMethods.value = false
+        _accountPaymentOptions.value = emptyList()
+        _selectedAccountPaymentOption.value = null
+        recomputeUsablePaymentInput()
     }
 
     private fun applyPaymentMethods(methods: List<FrameObjects.PaymentMethod>) {
