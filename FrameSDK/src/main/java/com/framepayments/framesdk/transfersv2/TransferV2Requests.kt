@@ -142,15 +142,6 @@ object TransferV2Requests {
     data class AmountOnlyRequest(
         val amount: MoneyAmount? = null
     )
-
-    /**
-     * Body for client-side confirm with a V2 transfer `client_secret`.
-     *
-     * @property clientSecret The transfer's server-minted `client_secret`.
-     */
-    data class ConfirmWithClientSecretRequest(
-        @SerializedName("client_secret") val clientSecret: String
-    )
 }
 
 /** Partial update body for `PATCH /v2/transfers/:id` (pre-confirm payment fields). */

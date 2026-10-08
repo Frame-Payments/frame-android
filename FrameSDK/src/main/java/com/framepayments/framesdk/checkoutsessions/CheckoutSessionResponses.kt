@@ -2,6 +2,7 @@ package com.framepayments.framesdk.checkoutsessions
 
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.transfersv2.TransferV2Money
 import com.google.gson.annotations.SerializedName
 
 /**
@@ -13,6 +14,9 @@ import com.google.gson.annotations.SerializedName
  * @property sessionObject The object type. Always `"checkout_session"`.
  * @property expiresAt Unix timestamp, in seconds, when the token expires.
  * @property livemode `true` for a live-mode session.
+ * @property amount Present only when the session was minted with a locked amount and can create a transfer.
+ * @property authorizationMode The authorization mode the server stamps on transfers created by this session.
+ * @property destinationAccountId Destination the server stamps when the session was minted with one.
  */
 data class CheckoutSession(
     val id: String?,
@@ -21,6 +25,9 @@ data class CheckoutSession(
     @SerializedName("object") val sessionObject: String?,
     @SerializedName("expires_at") val expiresAt: Long?,
     val livemode: Boolean?,
+    val amount: TransferV2Money? = null,
+    @SerializedName("authorization_mode") val authorizationMode: String? = null,
+    @SerializedName("destination_account_id") val destinationAccountId: String? = null,
 )
 
 /**

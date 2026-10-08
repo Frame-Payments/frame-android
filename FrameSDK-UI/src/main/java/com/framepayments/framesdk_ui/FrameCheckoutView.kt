@@ -347,7 +347,7 @@ class FrameCheckoutView @JvmOverloads constructor(
     /**
      * Configure the bundled checkout. The card path creates a `Transfer` (account-scoped),
      * and so does the embedded Google Pay button — both require [accountId]. Callers
-     * needing a customer/ChargeIntent flow should use [FrameGooglePayButton] directly.
+     * that only saves a card should use [FrameGooglePayButton] directly.
      *
      * The Google Pay merchant identifier is read from [com.framepayments.framesdk.FrameNetworking.googlePayMerchantId]
      * — pass it once at SDK init. The Google Pay row stays hidden if it isn't configured.
@@ -382,6 +382,8 @@ class FrameCheckoutView @JvmOverloads constructor(
         binding.googlePayBtn.configure(
             amountCents = paymentAmount,
             owner = FrameGooglePayButton.Owner.Account(accountId),
+            currencyCode = checkoutClientSecret?.amountCurrency?.uppercase() ?: "USD",
+            checkoutClientSecret = checkoutClientSecret,
             onResult = { gpResult ->
                 when (gpResult) {
                     is FrameGooglePayButton.Result.Success -> {

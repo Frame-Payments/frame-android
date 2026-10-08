@@ -1,43 +1,10 @@
 package com.framepayments.framesdk.transfersv2
 
-/**
- * A V2 transfer's `client_secret`, split into the pieces the API expects separately.
- *
- * Accepts `tr_<id>_secret_<token>` (preferred) and `ci_<id>_secret_<token>` during the bridge
- * while V2 payments may still mint ChargeIntent-shaped secrets.
- *
- * The confirm and retrieve calls need the bare resource id for the URL path and the full
- * secret for the request body.
- */
-class TransferV2ClientSecret(
-    /** The secret exactly as issued. A credential authorizing one confirmation: never log it. */
-    val value: String
-) {
-    /** The bare transfer resource id, for the URL path. */
-    val transferId: String
-
-    init {
-        val prefix = when {
-            value.startsWith("tr_") -> "tr_"
-            value.startsWith("ci_") -> "ci_"
-            else -> throw FrameTransferV2Error.InvalidClientSecret()
-        }
-
-        val marker = value.indexOf("_secret_")
-        // Both parts are required: an id with no "_secret_" marker, and a marker with nothing
-        // after it, would otherwise pass and fail later at the API instead.
-        if (marker <= prefix.length || marker + "_secret_".length >= value.length) {
-            throw FrameTransferV2Error.InvalidClientSecret()
-        }
-        transferId = value.substring(0, marker).removePrefix(prefix)
-    }
-}
-
 /** Errors raised while confirming a V2 transfer from the app. */
 sealed class FrameTransferV2Error(message: String, cause: Throwable? = null) : Exception(message, cause) {
-    /** The string is not a recognised transfer `client_secret`. */
-    class InvalidClientSecret :
-        FrameTransferV2Error("The string is not a transfer client_secret (tr_<id>_secret_... or ci_<id>_secret_...).")
+    /** Confirm was asked to run without a transfer id. */
+    class MissingTransfer :
+        FrameTransferV2Error("Confirm was asked to run without a transfer id.")
 
     /** The transfer requires 3D Secure but carried no challenge session to present. */
     class MissingThreeDSecureChallenge :

@@ -1,7 +1,8 @@
 package com.framepayments.framesdk
 
-import com.framepayments.framesdk.transfersv2.FrameTransferV2Error
-import com.framepayments.framesdk.transfersv2.TransferV2ClientSecret
+import com.framepayments.framesdk.transfersv2.FrameTransferV2Outcome
+import com.framepayments.framesdk.transfersv2.TransferV2
+import com.framepayments.framesdk.transfersv2.TransferV2Confirmation
 import com.framepayments.framesdk.transfersv2.TransferV2Requests
 import com.framepayments.framesdk.transfersv2.TransferV2Endpoints
 import com.framepayments.framesdk.transfersv2.TransferV2Status
@@ -212,7 +213,6 @@ class TransfersV2APITest {
         assertEquals(15000, transfer?.amount?.value)
         assertEquals("succeeded", transfer?.payment?.status)
         assertEquals(TransferV2Type.PAYMENT, transfer?.type)
-        assertEquals("tr_v2_1_secret_abc", transfer?.clientSecret)
         assertEquals("use_frame_sdk", transfer?.nextAction?.type)
         assertEquals("https://example.com/3ds", transfer?.nextAction?.redirectUrl)
         assertEquals("sess_1", transfer?.nextAction?.useFrameSDK?.source)
@@ -264,72 +264,65 @@ class TransfersV2APITest {
     }
 
     @Test
-    fun testConfirmTransferWithClientSecretUsesPublishableKeyAndBody() = runBlocking {
-        FrameNetworking.apiPublishableKey = "pk_test_confirm"
-        val responseBody = """{"id":"tr_v2_1","status":"pending","type":"payment","payment":{"status":"succeeded"}}"""
-        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
-
-        val (result, _) = TransfersV2API.confirmTransfer("tr_v2_1", "tr_tr_v2_1_secret_abc")
-
-        assertNotNull(result)
-        assertEquals("tr_v2_1", result?.id)
-
-        val recorded = mockWebServer.takeRequest()
-        assertEquals("Bearer pk_test_confirm", recorded.getHeader("Authorization"))
-        assertTrue(recorded.path!!.endsWith("/v2/transfers/tr_v2_1/confirm"))
-        assertTrue(recorded.body.readUtf8().contains("\"client_secret\":\"tr_tr_v2_1_secret_abc\""))
-    }
-
-    @Test
-    fun testGetTransferWithClientSecretUsesPublishableKey() = runBlocking {
-        FrameNetworking.apiPublishableKey = "pk_test_get"
+    fun testCheckoutSessionCreateSendsSessionBearer() = runBlocking {
         val responseBody = """{"id":"tr_v2_1","status":"pending","type":"payment"}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
 
-        val (result, _) = TransfersV2API.getTransferWith("tr_v2_1", "tr_tr_v2_1_secret_xyz")
+        val request = TransferV2Requests.CreateTransferRequest(
+            amount = TransferV2Requests.MoneyAmount(value = 1000, currency = "usd"),
+            source = TransferV2Requests.EndpointSlot(accountId = "acc_1", paymentMethodId = "pm_1"),
+            confirm = false,
+        )
+        val (result, _) = TransfersV2API.createTransfer(request, checkoutClientSecret = "chk_sess_abc")
+
+        assertNotNull(result)
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer chk_sess_abc", recorded.getHeader("Authorization"))
+        assertTrue(recorded.path!!.endsWith("/v2/transfers"))
+        assertNotNull(recorded.getHeader("Idempotency-Key"))
+    }
+
+    @Test
+    fun testCheckoutSessionConfirmOmitsIdempotencyKey() = runBlocking {
+        val responseBody = """{"id":"tr_v2_1","status":"pending","type":"payment","payment":{"status":"succeeded"}}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val (result, _) = TransfersV2API.confirmTransfer("tr_v2_1", "chk_sess_abc")
 
         assertNotNull(result)
         assertEquals("tr_v2_1", result?.id)
 
         val recorded = mockWebServer.takeRequest()
-        assertEquals("Bearer pk_test_get", recorded.getHeader("Authorization"))
+        assertEquals("Bearer chk_sess_abc", recorded.getHeader("Authorization"))
+        assertTrue(recorded.path!!.endsWith("/v2/transfers/tr_v2_1/confirm"))
+        assertNull(recorded.getHeader("Idempotency-Key"))
+    }
+
+    @Test
+    fun testGetTransferWithCheckoutSessionUsesSessionBearer() = runBlocking {
+        val responseBody = """{"id":"tr_v2_1","status":"pending","type":"payment"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val (result, _) = TransfersV2API.getTransferWith("tr_v2_1", "chk_sess_xyz")
+
+        assertNotNull(result)
+        assertEquals("tr_v2_1", result?.id)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer chk_sess_xyz", recorded.getHeader("Authorization"))
         assertTrue(recorded.path!!.endsWith("/v2/transfers/tr_v2_1"))
     }
 
     @Test
-    fun testTransferV2ClientSecretParsesTrPrefix() {
-        val secret = TransferV2ClientSecret("tr_v2_1_secret_tok")
-        assertEquals("tr_v2_1_secret_tok", secret.value)
-        assertEquals("v2_1", secret.transferId)
-    }
-
-    @Test
-    fun testTransferV2ClientSecretParsesCiBridge() {
-        val secret = TransferV2ClientSecret("ci_intent_123_secret_abc")
-        assertEquals("intent_123", secret.transferId)
-    }
-
-    @Test
-    fun testTransferV2ClientSecretRejectsInvalid() {
-        try {
-            TransferV2ClientSecret("not_a_secret")
-            fail("Expected InvalidClientSecret")
-        } catch (_: FrameTransferV2Error.InvalidClientSecret) {
-            // expected
-        }
-
-        try {
-            TransferV2ClientSecret("tr_only")
-            fail("Expected InvalidClientSecret")
-        } catch (_: FrameTransferV2Error.InvalidClientSecret) {
-            // expected
-        }
-
-        try {
-            TransferV2ClientSecret("tr_id_secret_")
-            fail("Expected InvalidClientSecret")
-        } catch (_: FrameTransferV2Error.InvalidClientSecret) {
-            // expected
-        }
+    fun testConfirmationSettlesOnNestedPaymentStatus() = runBlocking {
+        val json = """{"id":"tr_v2_1","status":"pending","type":"payment","payment":{"status":"succeeded"}}"""
+        val transfer = FrameNetworking.parseResponse<TransferV2>(json.toByteArray(Charsets.UTF_8))
+        val confirmation = TransferV2Confirmation(
+            challengePresenter = null,
+            confirmTransfer = { transfer },
+            loadTransfer = { null },
+        )
+        val outcome = confirmation.confirm("tr_v2_1")
+        assertTrue(outcome is FrameTransferV2Outcome.Succeeded)
     }
 }

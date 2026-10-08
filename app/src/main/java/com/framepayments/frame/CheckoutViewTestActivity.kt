@@ -15,7 +15,17 @@ class CheckoutActivity : BaseActivity() {
         val accountId = intent.getStringExtra("accountId") ?: "default_account"
         val totalCents = intent.getIntExtra("totalCents", 0)
         val checkoutClientSecret = intent.getStringExtra("checkoutClientSecret")?.let { token ->
-            FrameCheckoutClientSecret(token, intent.getLongExtra("checkoutClientSecretExpiresAt", 0L))
+            val amountCents = if (intent.hasExtra("checkoutAmountCents")) {
+                intent.getIntExtra("checkoutAmountCents", 0)
+            } else {
+                null
+            }
+            FrameCheckoutClientSecret(
+                token,
+                intent.getLongExtra("checkoutClientSecretExpiresAt", 0L),
+                amountCents = amountCents,
+                amountCurrency = intent.getStringExtra("checkoutAmountCurrency"),
+            )
         }
 
         val rootLayout = FrameLayout(this).apply {

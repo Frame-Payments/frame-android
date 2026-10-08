@@ -15,10 +15,9 @@ import com.framepayments.framesdk.accountevents.AccountEventDetail
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
-import com.framepayments.framesdk.chargeintents.ChargeIntent
-import com.framepayments.framesdk.chargeintents.FrameThreeDSecureChallengePresenting
-import com.framepayments.framesdk.chargeintents.FrameThreeDSecureChallengeResult
-import com.framepayments.framesdk.chargeintents.UseFrameSDK
+import com.framepayments.framesdk.transfersv2.FrameThreeDSecureChallengePresenting
+import com.framepayments.framesdk.transfersv2.FrameThreeDSecureChallengeResult
+import com.framepayments.framesdk.transfersv2.UseFrameSDK
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -42,7 +41,7 @@ class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameT
         private const val CALLBACK_PATH_COMPONENT = "/evervault/3ds/callback"
     }
 
-    override suspend fun presentChallenge(challenge: UseFrameSDK, intent: ChargeIntent): FrameThreeDSecureChallengeResult {
+    override suspend fun presentChallenge(challenge: UseFrameSDK): FrameThreeDSecureChallengeResult {
         val challengeUrl = challenge.challengeUrl ?: run {
             AccountEventEmitter.emit(
                 AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE,

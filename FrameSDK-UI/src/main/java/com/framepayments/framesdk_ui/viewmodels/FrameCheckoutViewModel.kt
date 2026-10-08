@@ -160,6 +160,7 @@ class FrameCheckoutViewModel : ViewModel() {
 
     // Internal tracking
     private var currentAccountId: String? = null
+    private var checkoutClientSecret: FrameCheckoutClientSecret? = null
     internal var amount: Int = 0
     private var loadAccountDetailsJob: Job? = null
 
@@ -199,6 +200,7 @@ class FrameCheckoutViewModel : ViewModel() {
         require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccountDetails requires a non-empty accountId" }
         this.amount = amount
         currentAccountId = accountId
+        this.checkoutClientSecret = checkoutClientSecret
         FrameNetworking.setAccountIdIfUnset(accountId)
         AccountEventEmitter.emit(AccountEventName.CHECKOUT_STARTED, AccountEventScreen.PAYMENT_SHEET)
 
@@ -419,16 +421,18 @@ class FrameCheckoutViewModel : ViewModel() {
             // Deferred confirm: inline confirm rejects unsettled 3DS charges before
             // TransferV2Confirmation can present the challenge.
             val request = TransferV2Requests.CreateTransferRequest(
-                amount = TransferV2Requests.MoneyAmount(value = amount, currency = "usd"),
+                amount = TransferV2Requests.MoneyAmount(
+                    value = amount,
+                    currency = checkoutClientSecret?.amountCurrency ?: "usd",
+                ),
                 source = TransferV2Requests.EndpointSlot(
                     accountId = accountId,
                     paymentMethodId = paymentMethodId
                 ),
                 confirm = false,
-                authorizationMode = "automatic"
             )
 
-            val (transfer, transferError) = TransfersV2API.createTransfer(request)
+            val (transfer, transferError) = createCheckoutTransfer(accountId, request)
             if (transferError != null) {
                 AccountEventEmitter.emit(
                     AccountEventName.CHECKOUT_PAYMENT_FAILED,
@@ -463,16 +467,38 @@ class FrameCheckoutViewModel : ViewModel() {
      * Confirms a V2 transfer the API held back, running a 3D Secure challenge if the confirm asks
      * for one, and reports the charge's real outcome.
      */
+    private suspend fun createCheckoutTransfer(
+        accountId: String,
+        request: TransferV2Requests.CreateTransferRequest,
+    ): Pair<TransferV2?, NetworkingError?> {
+        val secret = checkoutClientSecret ?: return TransfersV2API.createTransfer(request)
+        val token = CheckoutSessionsAPI.authorizationToken(accountId, secret)
+        if (token.isNullOrEmpty()) {
+            return Pair(null, NetworkingError.ServerError(401, "Checkout client secret expired."))
+        }
+        return TransfersV2API.createTransfer(request, checkoutClientSecret = token)
+    }
+
     private suspend fun completeThreeDSecure(transfer: TransferV2, context: Context): TransferV2? {
-        val clientSecret = transfer.clientSecret ?: run {
+        val secret = checkoutClientSecret
+        val token = if (secret == null) {
+            null
+        } else {
+            val accountId = currentAccountId
+            if (accountId.isNullOrEmpty()) null else CheckoutSessionsAPI.authorizationToken(accountId, secret)
+        }
+        if (secret != null && token.isNullOrEmpty()) {
             FrameSnackbarController.emit(FrameCheckoutError.ThreeDSecureUnavailable().toastMessage())
             return null
         }
 
-        val confirmation = TransferV2Confirmation(challengePresenter = FrameThreeDSecureChallengePresenter(context))
+        val confirmation = TransferV2Confirmation(
+            checkoutClientSecret = token,
+            challengePresenter = FrameThreeDSecureChallengePresenter(context),
+        )
 
         return try {
-            when (val outcome = confirmation.confirm(clientSecret)) {
+            when (val outcome = confirmation.confirm(transfer.id)) {
                 is FrameTransferV2Outcome.Succeeded -> {
                     AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
                     outcome.transfer

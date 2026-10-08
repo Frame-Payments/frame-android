@@ -402,12 +402,17 @@ fun PlaygroundScreen(
                 isMintingCheckout = true
                 scope.launch {
                     try {
-                        val secret = viewModel.mintCheckoutClientSecret(accountId)
+                        val secret = viewModel.mintCheckoutClientSecret(
+                            accountId,
+                            amountCents = CartTestActivity.lockedAmountCents,
+                        )
                         if (secret != null) {
                             val intent = Intent(context, CartTestActivity::class.java).apply {
                                 putExtra("accountId", viewModel.accountId.value)
                                 putExtra("checkoutClientSecret", secret.clientSecret)
                                 putExtra("checkoutClientSecretExpiresAt", secret.expiresAt)
+                                secret.amountCents?.let { putExtra("checkoutAmountCents", it) }
+                                secret.amountCurrency?.let { putExtra("checkoutAmountCurrency", it) }
                             }
                             context.startActivity(intent)
                         }

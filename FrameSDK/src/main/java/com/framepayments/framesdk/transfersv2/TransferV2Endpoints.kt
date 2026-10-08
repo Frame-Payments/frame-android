@@ -7,7 +7,6 @@ import com.framepayments.framesdk.QueryItem
  * Defines the network endpoints for the Transfers V2 API (`/v2/transfers`).
  *
  * Each case maps to a specific API route and HTTP method used by [TransfersV2API].
- * Additive alongside [com.framepayments.framesdk.transfers.TransferEndpoints] (V1).
  */
 sealed class TransferV2Endpoints : FrameNetworkingEndpoints {
 

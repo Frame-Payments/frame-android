@@ -5,6 +5,7 @@ import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.transfersv2.TransferV2Money
 
 /**
  * Mints and uses a checkout client secret (`chk_sess_`).
@@ -18,13 +19,17 @@ object CheckoutSessionsAPI {
      * Mints a checkout client secret for [accountId].
      *
      * @param accountId The account the token may read.
+     * @param amount Locked charge amount. Omit it and the session stays read-only.
      * @return The session, and any networking error.
      */
-    suspend fun createCheckoutSession(accountId: String): Pair<CheckoutSession?, NetworkingError?> {
+    suspend fun createCheckoutSession(
+        accountId: String,
+        amount: TransferV2Money? = null,
+    ): Pair<CheckoutSession?, NetworkingError?> {
         // Secret auth is replaced by an active onboarding session. The mint only accepts sk_.
         val (data, error) = FrameNetworking.performDataTaskWithRequest(
             CheckoutSessionEndpoints.CreateCheckoutSession,
-            CreateCheckoutSessionRequest(accountId),
+            CreateCheckoutSessionRequest(accountId, amount),
             auth = FrameAuthMode.ClientSecret(FrameNetworking.apiSecretKey),
         )
         if (error != null) return Pair(null, error)
@@ -70,6 +75,14 @@ object CheckoutSessionsAPI {
         }
     }
 
+    /**
+     * A live `chk_sess_…` for create and confirm. Refreshes [secret] in place when it is expired.
+     */
+    suspend fun authorizationToken(
+        accountId: String,
+        secret: FrameCheckoutClientSecret,
+    ): String? = tokenForRead(accountId, secret).first
+
     private suspend fun <T> authorized(
         accountId: String,
         secret: FrameCheckoutClientSecret,
@@ -105,11 +118,16 @@ object CheckoutSessionsAPI {
         secret: FrameCheckoutClientSecret,
     ): Pair<String?, NetworkingError?> {
         if (FrameNetworking.apiSecretKey.isEmpty()) return Pair(null, null)
-        val (session, error) = createCheckoutSession(accountId)
+        val amount = secret.amountCents?.let { TransferV2Money(value = it, currency = secret.amountCurrency) }
+        val (session, error) = createCheckoutSession(accountId, amount)
         val clientSecret = session?.clientSecret?.takeIf { error == null && it.isNotEmpty() }
             ?: return Pair(null, error)
         secret.clientSecret = clientSecret
         session.expiresAt?.let { secret.expiresAt = it }
+        session.amount?.let {
+            secret.amountCents = it.value
+            secret.amountCurrency = it.currency
+        }
         return Pair(clientSecret, null)
     }
 

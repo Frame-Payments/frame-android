@@ -9,8 +9,8 @@ import java.util.UUID
 /**
  * Provides suspend and callback-based functions for managing V2 transfers (`/v2/transfers`).
  *
- * Additive alongside [com.framepayments.framesdk.transfers.TransfersAPI] (V1).
- * Money movement authenticates with the secret key (default [com.framepayments.framesdk.FrameAuthMode.Secret]).
+ * Secret-key calls use [com.framepayments.framesdk.FrameAuthMode.Secret]. Checkout creates and
+ * confirms with `Authorization: Bearer chk_sess_…` when a checkout client secret is passed.
  */
 object TransfersV2API {
 
@@ -60,10 +60,38 @@ object TransfersV2API {
     suspend fun createTransfer(
         request: TransferV2Requests.CreateTransferRequest,
         idempotencyKey: String? = null
+    ): Pair<TransferV2?, NetworkingError?> =
+        createTransfer(request, idempotencyKey, FrameAuthMode.Secret)
+
+    /**
+     * Creates a V2 transfer under a checkout session.
+     *
+     * The session must have been minted with a locked amount. The server stamps that amount,
+     * authorization mode, and checkout session id; the client still sends `Idempotency-Key`.
+     *
+     * @param checkoutClientSecret The `chk_sess_…` token. An empty token returns `(null, null)`.
+     */
+    suspend fun createTransfer(
+        request: TransferV2Requests.CreateTransferRequest,
+        checkoutClientSecret: String,
+        idempotencyKey: String? = null,
+    ): Pair<TransferV2?, NetworkingError?> {
+        if (checkoutClientSecret.isEmpty()) return Pair(null, null)
+        return createTransfer(request, idempotencyKey, FrameAuthMode.ClientSecret(checkoutClientSecret))
+    }
+
+    private suspend fun createTransfer(
+        request: TransferV2Requests.CreateTransferRequest,
+        idempotencyKey: String?,
+        auth: FrameAuthMode,
     ): Pair<TransferV2?, NetworkingError?> {
         val key = if (!idempotencyKey.isNullOrEmpty()) idempotencyKey else UUID.randomUUID().toString()
         val endpoint = TransferV2Endpoints.CreateTransfer(key)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, withSonarSession(request))
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(
+            endpoint,
+            withSonarSession(request),
+            auth
+        )
         return Pair(data?.let { FrameNetworking.parseResponse<TransferV2>(data) }, error)
     }
 
@@ -139,47 +167,39 @@ object TransfersV2API {
     }
 
     /**
-     * Confirms a server-minted V2 transfer in-app using its `client_secret` (publishable auth).
+     * Confirms a V2 transfer with a checkout-session bearer.
      *
-     * Mirrors [com.framepayments.framesdk.chargeintents.ChargeIntentAPI.confirmChargeIntent].
-     * Does not send `Idempotency-Key` — publishable confirm is exempt on the API.
-     *
-     * @param transferId The ID of the transfer to confirm.
-     * @param clientSecret The transfer's server-minted `client_secret` (`tr_<id>_secret_…`).
-     * @return A [Pair] of ([TransferV2]?, [NetworkingError]?).
+     * Confirm does not send `Idempotency-Key`. An empty id or token returns `(null, null)`.
      */
     suspend fun confirmTransfer(
         transferId: String,
-        clientSecret: String
+        checkoutClientSecret: String
     ): Pair<TransferV2?, NetworkingError?> {
-        if (transferId.isEmpty() || clientSecret.isEmpty()) return Pair(null, null)
+        if (transferId.isEmpty() || checkoutClientSecret.isEmpty()) return Pair(null, null)
         val endpoint = TransferV2Endpoints.ConfirmTransfer(transferId, idempotencyKey = null)
-        val body = TransferV2Requests.ConfirmWithClientSecretRequest(clientSecret = clientSecret)
         val (data, error) = FrameNetworking.performDataTaskWithRequest(
             endpoint,
-            body,
-            FrameAuthMode.Publishable
+            emptyMap<String, Any>(),
+            FrameAuthMode.ClientSecret(checkoutClientSecret)
         )
         return Pair(data?.let { FrameNetworking.parseResponse<TransferV2>(data) }, error)
     }
 
     /**
-     * Retrieves a server-minted V2 transfer in-app using its `client_secret` (publishable auth).
+     * Retrieves a V2 transfer with a checkout-session bearer.
      *
-     * [clientSecret] is retained for call-site compatibility with confirm but is not sent on this
-     * GET (parity with iOS / charge-intent retrieve).
-     *
-     * @param transferId The ID of the transfer to retrieve.
-     * @param clientSecret Unused on the wire; kept so callers pass the same secret used for confirm.
-     * @return A [Pair] of ([TransferV2]?, [NetworkingError]?).
+     * The transfer must belong to the session. An empty id or token returns `(null, null)`.
      */
     suspend fun getTransferWith(
         transferId: String,
-        @Suppress("UNUSED_PARAMETER") clientSecret: String
+        checkoutClientSecret: String
     ): Pair<TransferV2?, NetworkingError?> {
-        if (transferId.isEmpty() || clientSecret.isEmpty()) return Pair(null, null)
+        if (transferId.isEmpty() || checkoutClientSecret.isEmpty()) return Pair(null, null)
         val endpoint = TransferV2Endpoints.GetTransferWith(transferId)
-        val (data, error) = FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable)
+        val (data, error) = FrameNetworking.performDataTask(
+            endpoint,
+            FrameAuthMode.ClientSecret(checkoutClientSecret)
+        )
         return Pair(data?.let { FrameNetworking.parseResponse<TransferV2>(data) }, error)
     }
 
@@ -327,50 +347,46 @@ object TransfersV2API {
     }
 
     /**
-     * Confirms a server-minted V2 transfer in-app using its `client_secret` (publishable auth).
+     * Confirms a V2 transfer with a checkout-session bearer.
      *
-     * @param transferId The ID of the transfer to confirm.
-     * @param clientSecret The transfer's server-minted `client_secret`.
-     * @param completionHandler Callback invoked with ([TransferV2]?, [NetworkingError]?).
+     * Confirm does not send `Idempotency-Key`.
      */
     fun confirmTransfer(
         transferId: String,
-        clientSecret: String,
+        checkoutClientSecret: String,
         completionHandler: (TransferV2?, NetworkingError?) -> Unit
     ) {
-        if (transferId.isEmpty() || clientSecret.isEmpty()) {
+        if (transferId.isEmpty() || checkoutClientSecret.isEmpty()) {
             completionHandler(null, null)
             return
         }
         val endpoint = TransferV2Endpoints.ConfirmTransfer(transferId, idempotencyKey = null)
-        val body = TransferV2Requests.ConfirmWithClientSecretRequest(clientSecret = clientSecret)
         FrameNetworking.performDataTaskWithRequest(
             endpoint,
-            body,
-            FrameAuthMode.Publishable
+            emptyMap<String, Any>(),
+            FrameAuthMode.ClientSecret(checkoutClientSecret)
         ) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<TransferV2>(data) }, error)
         }
     }
 
     /**
-     * Retrieves a server-minted V2 transfer in-app using its `client_secret` (publishable auth).
-     *
-     * @param transferId The ID of the transfer to retrieve.
-     * @param clientSecret Unused on the wire; kept so callers pass the same secret used for confirm.
-     * @param completionHandler Callback invoked with ([TransferV2]?, [NetworkingError]?).
+     * Retrieves a V2 transfer with a checkout-session bearer.
      */
     fun getTransferWith(
         transferId: String,
-        @Suppress("UNUSED_PARAMETER") clientSecret: String,
+        checkoutClientSecret: String,
         completionHandler: (TransferV2?, NetworkingError?) -> Unit
     ) {
-        if (transferId.isEmpty() || clientSecret.isEmpty()) {
+        if (transferId.isEmpty() || checkoutClientSecret.isEmpty()) {
             completionHandler(null, null)
             return
         }
         val endpoint = TransferV2Endpoints.GetTransferWith(transferId)
-        FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
+        FrameNetworking.performDataTask(
+            endpoint,
+            FrameAuthMode.ClientSecret(checkoutClientSecret)
+        ) { data, error ->
             completionHandler(data?.let { FrameNetworking.parseResponse<TransferV2>(data) }, error)
         }
     }

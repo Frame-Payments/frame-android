@@ -9,6 +9,15 @@ import com.framepayments.framesdk_ui.FrameCartItem
 
 class CartTestActivity : BaseActivity() {
 
+    companion object {
+        const val SHIPPING_CENTS = 500
+        val items = listOf(
+            FrameCartItem("1", "Coffee Mug", 1299, "https://m.media-amazon.com/images/I/61NWeN3zY1L._AC_UF894,1000_QL80_.jpg"),
+            FrameCartItem("2", "T-Shirt", 2599, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP2BAKInCCh3PZ5BwPdCBOk1v92vBLOgsgVw&s")
+        )
+        val lockedAmountCents = items.sumOf { it.amountInCents } + SHIPPING_CENTS
+    }
+
     private val checkoutLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -19,11 +28,6 @@ class CartTestActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         supportActionBar?.hide()
 
-        val items = listOf(
-            FrameCartItem("1", "Coffee Mug", 1299, "https://m.media-amazon.com/images/I/61NWeN3zY1L._AC_UF894,1000_QL80_.jpg"),
-            FrameCartItem("2", "T-Shirt", 2599, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP2BAKInCCh3PZ5BwPdCBOk1v92vBLOgsgVw&s")
-        )
-
         // Matches FrameExample-iOS's FrameCartView(accountId: viewModel.accountId): the account
         // just onboarded (or typed into the playground's account field) carries through to
         // checkout, rather than checkout always acting on an unrelated hardcoded account.
@@ -31,12 +35,14 @@ class CartTestActivity : BaseActivity() {
         val checkoutClientSecret = intent.getStringExtra("checkoutClientSecret")
         val checkoutClientSecretExpiresAt = intent.getLongExtra("checkoutClientSecretExpiresAt", 0L)
         val hasCheckoutExpiry = intent.hasExtra("checkoutClientSecretExpiresAt")
+        val checkoutAmountCents = intent.getIntExtra("checkoutAmountCents", lockedAmountCents)
+        val checkoutAmountCurrency = intent.getStringExtra("checkoutAmountCurrency")
 
         val cartView = FrameCartView(this).apply {
             configure(
                 accountId = accountId,
                 items = items,
-                shippingCents = 500,
+                shippingCents = SHIPPING_CENTS,
                 onCheckout = { total: Int ->
                     val intent = Intent(this@CartTestActivity, CheckoutActivity::class.java).apply {
                         putExtra("totalCents", total)
@@ -45,6 +51,8 @@ class CartTestActivity : BaseActivity() {
                         if (hasCheckoutExpiry) {
                             putExtra("checkoutClientSecretExpiresAt", checkoutClientSecretExpiresAt)
                         }
+                        putExtra("checkoutAmountCents", checkoutAmountCents)
+                        checkoutAmountCurrency?.let { putExtra("checkoutAmountCurrency", it) }
                     }
                     checkoutLauncher.launch(intent)
                 }

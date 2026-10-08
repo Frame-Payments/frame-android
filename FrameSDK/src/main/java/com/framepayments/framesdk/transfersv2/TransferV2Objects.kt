@@ -1,7 +1,6 @@
 package com.framepayments.framesdk.transfersv2
 
 import com.framepayments.framesdk.FrameObjects
-import com.framepayments.framesdk.chargeintents.UseFrameSDK
 import com.google.gson.TypeAdapter
 import com.google.gson.TypeAdapterFactory
 import com.google.gson.annotations.SerializedName
@@ -227,6 +226,19 @@ data class TransferV2WalletRef(
 )
 
 /**
+ * A 3D Secure challenge session for the client to complete.
+ *
+ * @property source The opaque session identifier the challenge is driven from.
+ * @property directoryServerName The card network's directory server (e.g. `"visa"`).
+ * @property challengeUrl The issuer challenge page to present.
+ */
+data class UseFrameSDK(
+    val source: String?,
+    @SerializedName("directory_server_name") val directoryServerName: String? = null,
+    @SerializedName("challenge_url") val challengeUrl: String? = null
+)
+
+/**
  * Challenge presentation fields for client-side 3DS (when the API exposes them).
  *
  * @property type The kind of action required. Currently `"use_frame_sdk"` or a redirect.
@@ -264,7 +276,6 @@ data class TransferV2NextAction(
  * @property payment Nested payment detail when [type] is [TransferV2Type.PAYMENT].
  * @property payout Nested payout detail when [type] is [TransferV2Type.PAYOUT].
  * @property accountTransfer Nested account-transfer detail when [type] is [TransferV2Type.ACCOUNT_TRANSFER].
- * @property clientSecret Present once the API ships the client-confirm contract.
  * @property nextAction Challenge presentation fields when a client action is required.
  */
 data class TransferV2(
@@ -290,6 +301,5 @@ data class TransferV2(
     val payment: TransferV2Payment? = null,
     val payout: TransferV2Payout? = null,
     @SerializedName("account_transfer") val accountTransfer: TransferV2AccountTransfer? = null,
-    @SerializedName("client_secret") val clientSecret: String? = null,
     @SerializedName("next_action") val nextAction: TransferV2NextAction? = null
 )

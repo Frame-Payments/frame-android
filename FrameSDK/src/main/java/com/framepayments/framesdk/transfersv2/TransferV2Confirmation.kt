@@ -1,29 +1,44 @@
 package com.framepayments.framesdk.transfersv2
 
-import com.framepayments.framesdk.chargeintents.AuthorizationMode
-import com.framepayments.framesdk.chargeintents.ChargeIntent
-import com.framepayments.framesdk.chargeintents.ChargeIntentStatus
-import com.framepayments.framesdk.chargeintents.FrameThreeDSecureChallengePresenting
-import com.framepayments.framesdk.chargeintents.FrameThreeDSecureChallengeResult
-import com.framepayments.framesdk.chargeintents.NextAction
-import com.framepayments.framesdk.chargeintents.UseFrameSDK
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+
+/** Result of presenting a 3D Secure challenge. */
+enum class FrameThreeDSecureChallengeResult {
+    /** The cardholder finished the challenge. The transfer status is read afterward. */
+    COMPLETED,
+    /** The cardholder failed or dismissed the challenge. */
+    FAILED,
+    /** The challenge could not be shown. */
+    UNAVAILABLE
+}
+
+/** Presents a 3D Secure challenge. Implemented by the UI layer. */
+interface FrameThreeDSecureChallengePresenting {
+    /**
+     * Shows [challenge] and returns how it ended.
+     */
+    suspend fun presentChallenge(challenge: UseFrameSDK): FrameThreeDSecureChallengeResult
+}
 
 /**
  * Confirms a V2 transfer from the app, driving a 3D Secure challenge when the API asks for one.
  *
- * Mirrors [com.framepayments.framesdk.chargeintents.ChargeIntentConfirmation] / Frame.js
- * `confirmTransfer`. Polling timings are part of the contract — see [PollingConfiguration].
+ * Polling timings are part of the contract — see [PollingConfiguration].
  */
 class TransferV2Confirmation(
+    private val checkoutClientSecret: String? = null,
     private val challengePresenter: FrameThreeDSecureChallengePresenting?,
     private val polling: PollingConfiguration = PollingConfiguration(),
-    private val confirmTransfer: suspend (transferId: String, clientSecret: String) -> TransferV2? = { id, secret ->
-        TransfersV2API.confirmTransfer(id, secret).first
+    private val confirmTransfer: suspend (transferId: String) -> TransferV2? = { id ->
+        val token = checkoutClientSecret
+        if (!token.isNullOrEmpty()) TransfersV2API.confirmTransfer(id, token).first
+        else TransfersV2API.confirmTransfer(id).first
     },
-    private val loadTransfer: suspend (transferId: String, clientSecret: String) -> TransferV2? = { id, secret ->
-        TransfersV2API.getTransferWith(id, secret).first
+    private val loadTransfer: suspend (transferId: String) -> TransferV2? = { id ->
+        val token = checkoutClientSecret
+        if (!token.isNullOrEmpty()) TransfersV2API.getTransferWith(id, token).first
+        else TransfersV2API.getTransferWith(id).first
     },
     private val sleep: suspend (Long) -> Unit = { delay(it) }
 ) {
@@ -38,17 +53,15 @@ class TransferV2Confirmation(
     }
 
     /**
-     * Confirms a V2 transfer, completing a 3D Secure challenge if the API requires one.
+     * Confirms [transferId], completing a 3D Secure challenge if the API requires one.
      *
-     * @param clientSecret The transfer's `client_secret` (`tr_<id>_secret_…` or bridge `ci_…`).
      * @return The terminal outcome, or [FrameTransferV2Outcome.TimedOut].
      * @throws FrameTransferV2Error
      */
-    suspend fun confirm(clientSecret: String): FrameTransferV2Outcome {
-        val secret = TransferV2ClientSecret(clientSecret)
+    suspend fun confirm(transferId: String): FrameTransferV2Outcome {
+        if (transferId.isEmpty()) throw FrameTransferV2Error.MissingTransfer()
 
-        val transfer = confirmTransfer(secret.transferId, secret.value)
-            ?: return pollForTerminalOutcome(secret)
+        val transfer = confirmTransfer(transferId) ?: return pollForTerminalOutcome(transferId)
 
         FrameTransferV2Outcome.terminalOutcome(transfer)?.let { return it }
 
@@ -58,7 +71,7 @@ class TransferV2Confirmation(
             presentChallengeIfNeeded(transfer)
         }
 
-        return pollForTerminalOutcome(secret)
+        return pollForTerminalOutcome(transferId)
     }
 
     private suspend fun presentChallengeIfNeeded(transfer: TransferV2) {
@@ -67,9 +80,7 @@ class TransferV2Confirmation(
 
         val useFrameSDK = transfer.nextAction?.useFrameSDK
         if (useFrameSDK != null) {
-            if (presenter.presentChallenge(useFrameSDK, chargeIntentShell(transfer, useFrameSDK)) ==
-                FrameThreeDSecureChallengeResult.UNAVAILABLE
-            ) {
+            if (presenter.presentChallenge(useFrameSDK) == FrameThreeDSecureChallengeResult.UNAVAILABLE) {
                 throw FrameTransferV2Error.ThreeDSecureUnavailable()
             }
             return
@@ -78,9 +89,7 @@ class TransferV2Confirmation(
         val redirect = transfer.nextAction?.redirectUrl
         if (!redirect.isNullOrEmpty()) {
             val synthetic = UseFrameSDK(source = "redirect", challengeUrl = redirect)
-            if (presenter.presentChallenge(synthetic, chargeIntentShell(transfer, synthetic)) ==
-                FrameThreeDSecureChallengeResult.UNAVAILABLE
-            ) {
+            if (presenter.presentChallenge(synthetic) == FrameThreeDSecureChallengeResult.UNAVAILABLE) {
                 throw FrameTransferV2Error.ThreeDSecureUnavailable()
             }
             return
@@ -89,33 +98,12 @@ class TransferV2Confirmation(
         throw FrameTransferV2Error.MissingThreeDSecureChallenge()
     }
 
-    private fun chargeIntentShell(transfer: TransferV2, challenge: UseFrameSDK): ChargeIntent {
-        return ChargeIntent(
-            id = transfer.id,
-            currency = transfer.amount?.currency ?: "usd",
-            customer = null,
-            shipping = null,
-            status = ChargeIntentStatus.REQUIRES_THREE_D_SECURE,
-            description = null,
-            amount = transfer.amount?.value,
-            created = transfer.created,
-            updated = null,
-            livemode = transfer.livemode,
-            latestCharge = null,
-            paymentMethod = null,
-            authorizationMode = AuthorizationMode.AUTOMATIC,
-            failureDescription = null,
-            intentObject = "transfer",
-            nextAction = NextAction(type = "use_frame_sdk", useFrameSDK = challenge)
-        )
-    }
-
-    private suspend fun pollForTerminalOutcome(secret: TransferV2ClientSecret): FrameTransferV2Outcome {
+    private suspend fun pollForTerminalOutcome(transferId: String): FrameTransferV2Outcome {
         sleep(polling.intervalMillis)
 
         for (attempt in 1..polling.maxAttempts) {
             try {
-                val transfer = loadTransfer(secret.transferId, secret.value)
+                val transfer = loadTransfer(transferId)
                 if (transfer != null) {
                     FrameTransferV2Outcome.terminalOutcome(transfer)?.let { return it }
                 }
