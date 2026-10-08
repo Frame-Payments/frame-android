@@ -19,6 +19,7 @@ class FrameOnboardingViewModelValidationTest {
 
     private fun makeVM() = FrameOnboardingViewModel(
         OnboardingConfig(
+            clientSecret = "onb_sess_preview",
             requiredCapabilities = listOf(Capabilities.KYC_PREFILL),
             skipInitNetwork = true
         )

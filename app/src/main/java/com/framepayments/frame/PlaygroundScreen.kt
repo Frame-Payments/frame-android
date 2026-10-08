@@ -31,6 +31,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,11 +92,13 @@ fun PlaygroundScreen(
         plaidService?.isConnecting ?: kotlinx.coroutines.flow.MutableStateFlow(false)
     }.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val application = context.applicationContext as Application
     var showOnboarding by remember { mutableStateOf(false) }
     // Which standalone entry-point demo to launch, acting on viewModel.accountId.
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
+    var isMintingCheckout by remember { mutableStateOf(false) }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
@@ -260,56 +264,73 @@ fun PlaygroundScreen(
     if (standaloneView != null) {
         val standaloneSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            onDismissRequest = { pendingStandaloneView = null },
+            onDismissRequest = {
+                pendingStandaloneView = null
+                viewModel.clearOnboardingClientSecret()
+            },
             sheetState = standaloneSheetState
         ) {
             // Fills the sheet so these flows get the height they expect; without it the sheet
             // wraps its content and resizes as the user advances.
             Box(modifier = Modifier.fillMaxSize()) {
-                // Matches FrameExample-iOS: these views act on viewModel.accountId directly, with no
-                // separate session mint — FrameAddPaymentMethodView/etc. bind their own session
-                // internally, and a null clientSecret is the documented default for a standalone launch.
-                if (accountId.isBlank()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(
-                            modifier = Modifier.padding(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "No account set",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Onboard an applicant first, or pass an accountId to initializeWithAPIKey.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                            TextButton(onClick = { pendingStandaloneView = null }) {
-                                Text("Cancel")
+                val dismissStandalone = {
+                    pendingStandaloneView = null
+                    viewModel.clearOnboardingClientSecret()
+                }
+                when (val mintState = onboardingMintState) {
+                    is OnboardingMintState.Loading, OnboardingMintState.Idle -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    is OnboardingMintState.Error -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Couldn't start",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = mintState.message,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                                Button(onClick = { viewModel.mintOnboardingClientSecret(accountId) }) {
+                                    Text("Retry")
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TextButton(onClick = dismissStandalone) { Text("Cancel") }
                             }
                         }
                     }
-                } else {
-                    val finish = { message: DemoResultMessage ->
-                        pendingStandaloneView = null
-                        demoResultMessage = message
-                    }
-                    when (standaloneView) {
-                        StandaloneView.ADD_PAYMENT_METHOD -> FrameAddPaymentMethodView(
-                            accountId = accountId,
-                            onResult = { finish(it.toDemoMessage("Add Payment Method")) }
-                        )
-                        StandaloneView.ADD_PAYOUT_METHOD -> FrameAddPayoutMethodView(
-                            accountId = accountId,
-                            onResult = { finish(it.toDemoMessage("Add Payout Method")) }
-                        )
-                        StandaloneView.SELECT_PAYOUT_METHOD -> FrameSelectPayoutMethodView(
-                            accountId = accountId,
-                            onResult = { finish(it.toDemoMessage("Select Payout Method")) }
-                        )
+                    is OnboardingMintState.Ready -> {
+                        val finish = { message: DemoResultMessage ->
+                            dismissStandalone()
+                            demoResultMessage = message
+                        }
+                        when (standaloneView) {
+                            StandaloneView.ADD_PAYMENT_METHOD -> FrameAddPaymentMethodView(
+                                accountId = mintState.accountId,
+                                clientSecret = mintState.clientSecret,
+                                onResult = { finish(it.toDemoMessage("Add Payment Method")) }
+                            )
+                            StandaloneView.ADD_PAYOUT_METHOD -> FrameAddPayoutMethodView(
+                                accountId = mintState.accountId,
+                                clientSecret = mintState.clientSecret,
+                                onResult = { finish(it.toDemoMessage("Add Payout Method")) }
+                            )
+                            StandaloneView.SELECT_PAYOUT_METHOD -> FrameSelectPayoutMethodView(
+                                accountId = mintState.accountId,
+                                clientSecret = mintState.clientSecret,
+                                onResult = { finish(it.toDemoMessage("Select Payout Method")) }
+                            )
+                        }
                     }
                 }
             }
@@ -373,19 +394,31 @@ fun PlaygroundScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
-            PlaygroundButton(text = "Checkout") {
-                val intent = Intent(context, CartTestActivity::class.java).apply {
-                    if (accountId.isNotBlank()) putExtra("accountId", accountId)
+            PlaygroundButton(
+                text = if (isMintingCheckout) "Opening Checkout…" else "Checkout",
+                enabled = !isMintingCheckout,
+            ) {
+                if (isMintingCheckout) return@PlaygroundButton
+                isMintingCheckout = true
+                scope.launch {
+                    try {
+                        val secret = viewModel.mintCheckoutClientSecret(accountId)
+                        if (secret != null) {
+                            val intent = Intent(context, CartTestActivity::class.java).apply {
+                                putExtra("accountId", viewModel.accountId.value)
+                                putExtra("checkoutClientSecret", secret.clientSecret)
+                                putExtra("checkoutClientSecretExpiresAt", secret.expiresAt)
+                            }
+                            context.startActivity(intent)
+                        }
+                    } finally {
+                        isMintingCheckout = false
+                    }
                 }
-                context.startActivity(intent)
             }
             PlaygroundButton(text = "Show Onboarding Flow") {
-                // Demo/testing only: mint an onboarding-session token (onb_sess_…) from the
-                // configured sk_ before launching. In production your backend mints this token and
-                // hands it to the app as the clientSecret — see ContentViewModel. Onboards the
-                // account passed to initializeWithAPIKey when one was configured there; otherwise
-                // creates a new applicant, matching FrameExample-iOS — never a random pre-existing
-                // account.
+                // Example app has no backend. Production apps mint POST /v1/onboarding_sessions
+                // on their server with sk_ and pass the client secret in.
                 viewModel.mintOnboardingClientSecret(accountId)
                 showOnboarding = true
             }
@@ -400,12 +433,21 @@ fun PlaygroundScreen(
                 onClick = { viewModel.startIdentityVerification() }
             )
             PlaygroundButton(text = "Add Payment Method (standalone)") {
+                // Example app has no backend. Production apps mint POST /v1/onboarding_sessions
+                // on their server with sk_ and pass the client secret in.
+                viewModel.mintOnboardingClientSecret(accountId)
                 pendingStandaloneView = StandaloneView.ADD_PAYMENT_METHOD
             }
             PlaygroundButton(text = "Add Payout Method (standalone)") {
+                // Example app has no backend. Production apps mint POST /v1/onboarding_sessions
+                // on their server with sk_ and pass the client secret in.
+                viewModel.mintOnboardingClientSecret(accountId)
                 pendingStandaloneView = StandaloneView.ADD_PAYOUT_METHOD
             }
             PlaygroundButton(text = "Select Payout Method (standalone)") {
+                // Example app has no backend. Production apps mint POST /v1/onboarding_sessions
+                // on their server with sk_ and pass the client secret in.
+                viewModel.mintOnboardingClientSecret(accountId)
                 pendingStandaloneView = StandaloneView.SELECT_PAYOUT_METHOD
             }
         }

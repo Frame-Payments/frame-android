@@ -14,10 +14,13 @@ import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountObjects
 import com.framepayments.framesdk.accounts.AccountRequests
 import com.framepayments.framesdk.accounts.AccountsAPI
+import com.framepayments.framesdk.checkoutsessions.CheckoutSessionsAPI
+import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
 import com.withpersona.sdk2.inquiry.Inquiry
 import com.withpersona.sdk2.inquiry.InquiryResponse
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -91,21 +94,18 @@ class ContentViewModel : ViewModel() {
         _accountId.value = accountId
     }
 
+    private var mintJob: Job? = null
+
     /**
-     * Demo/testing only: mints an onboarding-session token (`onb_sess_…`) so the example app can
-     * exercise the onboarding flow end-to-end. Mirrors the iOS example app: a valid [accountId]
-     * resumes that account, otherwise (blank, or not a real account) a new individual account is
-     * created first — never a random pre-existing one.
-     *
-     * This is **not** the production path. Creating an onboarding session is a server-only operation
-     * that requires your secret key (`sk_`). Production integrations mint the token from their
-     * backend (`POST /v1/onboarding_sessions`) and pass it to `OnboardingConfig.clientSecret`. The
-     * example app does it inline only because it is configured with an `sk_`.
+     * Example app has no backend. Production apps mint POST /v1/onboarding_sessions on their
+     * server with sk_ and pass the client secret in. A valid [accountId] resumes that account;
+     * otherwise a new individual account is created first.
      */
     @Suppress("DEPRECATION")
     fun mintOnboardingClientSecret(accountIdInput: String?) {
+        mintJob?.cancel()
         _onboardingMintState.value = OnboardingMintState.Loading
-        viewModelScope.launch {
+        mintJob = viewModelScope.launch {
             when (val result = mintSession(
                 accountIdInput = accountIdInput,
                 steps = listOf(
@@ -163,7 +163,7 @@ class ContentViewModel : ViewModel() {
             steps = steps,
         )
         val (session, sessionError) = OnboardingSessionsAPI.createOnboardingSession(request)
-        val clientSecret = session?.clientSecret
+        val clientSecret = session?.clientSecret?.takeIf { it.isNotEmpty() }
             ?: return MintResult.Err(
                 sessionError?.let { "Couldn't mint an onboarding session: $it" }
                     ?: "Onboarding session response did not include a client secret."
@@ -171,8 +171,42 @@ class ContentViewModel : ViewModel() {
         return MintResult.Ok(MintedSession(clientSecret, resolvedAccountId))
     }
 
+    /**
+     * Example app has no backend. Production apps mint `POST /v1/checkout_sessions` on their
+     * server with sk_ and pass the client secret in. Checkout refreshes an expired token with
+     * the secret key configured on this example.
+     */
+    suspend fun mintCheckoutClientSecret(accountIdInput: String?): FrameCheckoutClientSecret? {
+        val resolvedAccountId = accountIdInput?.takeIf { it.isNotBlank() } ?: run {
+            val (account, err) = createEmptyIndividualAccount()
+            account?.id ?: run {
+                _demoAlert.value = DemoAlertMessage(
+                    title = "Checkout",
+                    body = err?.let { "Couldn't create an account to check out: $it" }
+                        ?: "Account creation did not return an account id.",
+                )
+                return null
+            }
+        }
+        val (session, sessionError) = CheckoutSessionsAPI.createCheckoutSession(resolvedAccountId)
+        val clientSecret = session?.clientSecret?.takeIf { it.isNotEmpty() }
+        val expiresAt = session?.expiresAt
+        if (clientSecret == null || expiresAt == null) {
+            _demoAlert.value = DemoAlertMessage(
+                title = "Checkout",
+                body = sessionError?.let { "Couldn't mint a checkout client secret: $it" }
+                    ?: "Checkout session response did not include a client secret.",
+            )
+            return null
+        }
+        _accountId.value = resolvedAccountId
+        return FrameCheckoutClientSecret(clientSecret, expiresAt)
+    }
+
     /** Resets the mint flow to [OnboardingMintState.Idle] so the next launch mints a fresh token. */
     fun clearOnboardingClientSecret() {
+        mintJob?.cancel()
+        mintJob = null
         _onboardingMintState.value = OnboardingMintState.Idle
     }
 

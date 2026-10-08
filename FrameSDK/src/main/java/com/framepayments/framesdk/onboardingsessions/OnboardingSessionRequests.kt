@@ -4,11 +4,8 @@ import com.google.gson.annotations.SerializedName
 /**
  * Contains request body models used when creating onboarding sessions.
  *
- * **Note:** `POST /v1/onboarding_sessions` accepts a **publishable key** (`pk_`), so the onboarding
- * flow can mint its own account-scoped session on-device without a secret key
- * (see [OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey]). Production integrations
- * that mint from their own backend hand the resulting `onb_sess_…` to the onboarding flow as its
- * `clientSecret`.
+ * **Note:** `POST /v1/onboarding_sessions` is secret-key only. The host backend mints the session
+ * and passes `onb_sess_…` to the onboarding flow as `clientSecret`.
  */
 object OnboardingSessionRequests {
 

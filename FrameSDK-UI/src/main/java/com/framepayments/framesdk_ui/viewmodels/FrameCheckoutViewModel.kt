@@ -7,11 +7,14 @@ import com.framepayments.framesdk.FrameCheckoutError
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.accountevents.AccountEventDetail
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
-import com.framepayments.framesdk.accounts.AccountsAPI
+import com.framepayments.framesdk.checkoutsessions.CheckoutSessionsAPI
+import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
 import com.framepayments.framesdk.transfersv2.FrameTransferV2Error
@@ -27,6 +30,8 @@ import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -58,16 +63,15 @@ class FrameCheckoutViewModel : ViewModel() {
 
     private val _customerInfoRequired = MutableLiveData(true)
     /**
-     * Whether the customer name/email fields must be shown. They are always validated, but the
-     * account profile normally supplies both — it is PII-gated, so a publishable-key host may
-     * receive neither, and the fields would otherwise stay hidden on the saved-payment-method
-     * path while still blocking the pay button.
+     * `true` when name or email still fails validation after the account load. The checkout form
+     * always shows both fields so the customer can edit a prefilled profile; this flag is for
+     * hosts that want to know whether the profile alone was enough.
      */
     val customerInfoRequired: LiveData<Boolean> = _customerInfoRequired
 
     /**
      * Evaluates [customerInfoRequired] once the account load settles. Deliberately not re-run on
-     * every keystroke: the fields would vanish mid-typing the moment the input became valid.
+     * every keystroke.
      */
     internal fun refreshCustomerInfoRequired() {
         _customerInfoRequired.value =
@@ -157,6 +161,7 @@ class FrameCheckoutViewModel : ViewModel() {
     // Internal tracking
     private var currentAccountId: String? = null
     internal var amount: Int = 0
+    private var loadAccountDetailsJob: Job? = null
 
     private val _isPerformingAction = MutableLiveData(false)
     /**
@@ -166,59 +171,123 @@ class FrameCheckoutViewModel : ViewModel() {
     val isPerformingAction: LiveData<Boolean> = _isPerformingAction
 
     /**
-     * Fetches the account, prefills the customer name + email fields from its
-     * individual profile (matches iOS `loadAccountDetails`), then loads the saved
-     * payment methods so the user can pick one instead of entering a new card.
+     * Prefills name and email and loads saved payment methods.
+     *
+     * A supplied [account] or [paymentMethods] list, fetched on the host's backend, is used as-is.
+     * Anything not supplied is fetched here when a checkout client secret is set, or when the SDK
+     * was initialized with a secret key. A publishable key cannot read the profile or the
+     * saved-method list, so those stay empty.
      *
      * [accountId] is required because the bundled checkout's pay button creates a
      * Transfer, which is account-scoped.
+     *
+     * @param accountId The Frame account that will be charged.
+     * @param amount Charge amount in the currency's smallest unit.
+     * @param account Account fetched on the host's backend. Prefills name and email.
+     * @param paymentMethods Saved methods fetched on the host's backend.
+     * @param checkoutClientSecret `chk_sess_` token from `POST /v1/checkout_sessions`. When set,
+     *   the name, email, and saved cards are read with it. An expired token is refreshed with
+     *   the secret key when one is configured.
      */
-    fun loadAccountDetails(accountId: String, amount: Int) {
+    fun loadAccountDetails(
+        accountId: String,
+        amount: Int,
+        account: AccountObjects.Account? = null,
+        paymentMethods: List<FrameObjects.PaymentMethod>? = null,
+        checkoutClientSecret: FrameCheckoutClientSecret? = null,
+    ) {
         require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccountDetails requires a non-empty accountId" }
         this.amount = amount
         currentAccountId = accountId
-        // Checkout is often the first surface a host shows, so this may be the SDK's first
-        // sighting of the account — publish it before emitting, or the event is dropped.
         FrameNetworking.setAccountIdIfUnset(accountId)
         AccountEventEmitter.emit(AccountEventName.CHECKOUT_STARTED, AccountEventScreen.PAYMENT_SHEET)
 
-        viewModelScope.launch(Dispatchers.IO) {
-            val (account, accountError) = AccountsAPI.getAccountWith(accountId)
-            reportError(accountError)
-            val individual = account?.profile?.individual
-            if (individual != null) {
-                val firstName = individual.name?.firstName.orEmpty()
-                val lastName = individual.name?.lastName.orEmpty()
-                val composedName = listOf(firstName, lastName)
-                    .filter { it.isNotEmpty() }
-                    .joinToString(" ")
-                val composedEmail = individual.email.orEmpty()
-                withContext(Dispatchers.Main) {
-                    if (composedName.isNotEmpty()) customerName.value = composedName
-                    if (composedEmail.isNotEmpty()) customerEmail.value = composedEmail
-                }
-            }
-            withContext(Dispatchers.Main) { refreshCustomerInfoRequired() }
+        if (account != null) applyIndividual(account.profile?.individual)
+        if (paymentMethods != null) applyPaymentMethods(paymentMethods)
+        refreshCustomerInfoRequired()
 
-            val (paymentMethods, paymentMethodsError) = PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
-            if (paymentMethodsError != null) {
-                AccountEventEmitter.emit(
-                    AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
-                    AccountEventScreen.PAYMENT_SHEET,
-                    "$paymentMethodsError"
-                )
-            }
-            reportError(paymentMethodsError)
-            withContext(Dispatchers.Main) {
-                _accountPaymentOptions.value = paymentMethods
-                if (_selectedAccountPaymentOption.value == null &&
-                    cardData.card.number.isEmpty() &&
-                    !paymentMethods.isNullOrEmpty()
-                ) {
-                    setSelectedAccountPaymentOption(paymentMethods.first())
+        val usingCheckoutSecret = checkoutClientSecret != null
+        val fetchAccount = account == null && (usingCheckoutSecret || FrameNetworking.apiSecretKey.isNotEmpty())
+        val fetchMethods = paymentMethods == null && (usingCheckoutSecret || FrameNetworking.apiSecretKey.isNotEmpty())
+        if (!fetchAccount && !fetchMethods) {
+            loadAccountDetailsJob?.cancel()
+            loadAccountDetailsJob = null
+            _didLoadAccountPaymentMethods.value = true
+            return
+        }
+
+        loadAccountDetailsJob?.cancel()
+        if (fetchMethods) {
+            // Drop prior payment state only when this call will replace the list, so a stale
+            // selected method cannot be submitted while the fetch is in flight. Account-only
+            // fetches keep host-supplied methods from applyPaymentMethods above.
+            clearPendingPaymentLoadState()
+        } else if (paymentMethods != null) {
+            _didLoadAccountPaymentMethods.value = true
+        }
+        loadAccountDetailsJob = viewModelScope.launch(Dispatchers.IO) {
+            if (fetchAccount) {
+                val (fetched, accountError) = if (checkoutClientSecret != null) {
+                    CheckoutSessionsAPI.loadAccount(accountId, checkoutClientSecret)
+                } else {
+                    AccountsAPI.getAccountWith(accountId)
                 }
+                ensureActive()
+                reportError(accountError)
+                withContext(Dispatchers.Main) { applyIndividual(fetched?.profile?.individual) }
+            }
+            if (fetchMethods) {
+                val (fetchedMethods, paymentMethodsError) = if (checkoutClientSecret != null) {
+                    CheckoutSessionsAPI.loadPaymentMethods(accountId, checkoutClientSecret)
+                } else {
+                    PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+                }
+                ensureActive()
+                if (paymentMethodsError != null) {
+                    AccountEventEmitter.emit(
+                        AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        "$paymentMethodsError"
+                    )
+                }
+                reportError(paymentMethodsError)
+                withContext(Dispatchers.Main) { applyPaymentMethods(fetchedMethods.orEmpty()) }
+            }
+            withContext(Dispatchers.Main) {
+                refreshCustomerInfoRequired()
                 _didLoadAccountPaymentMethods.value = true
             }
+        }
+    }
+
+    private fun applyIndividual(individual: AccountObjects.IndividualAccount?) {
+        if (individual == null) return
+        val composedName = listOf(individual.name?.firstName.orEmpty(), individual.name?.lastName.orEmpty())
+            .filter { it.isNotEmpty() }
+            .joinToString(" ")
+        if (composedName.isNotEmpty() && customerName.value.isNullOrEmpty()) customerName.value = composedName
+        val composedEmail = individual.email.orEmpty()
+        if (composedEmail.isNotEmpty() && customerEmail.value.isNullOrEmpty()) customerEmail.value = composedEmail
+    }
+
+    private fun clearPendingPaymentLoadState() {
+        _didLoadAccountPaymentMethods.value = false
+        _accountPaymentOptions.value = emptyList()
+        _selectedAccountPaymentOption.value = null
+        recomputeUsablePaymentInput()
+    }
+
+    private fun applyPaymentMethods(methods: List<FrameObjects.PaymentMethod>) {
+        _accountPaymentOptions.value = methods
+        val selectedId = _selectedAccountPaymentOption.value?.id
+        if (selectedId != null && methods.none { it.id == selectedId }) {
+            setSelectedAccountPaymentOption(null)
+        }
+        if (_selectedAccountPaymentOption.value == null &&
+            cardData.card.number.isEmpty() &&
+            methods.isNotEmpty()
+        ) {
+            setSelectedAccountPaymentOption(methods.first())
         }
     }
 

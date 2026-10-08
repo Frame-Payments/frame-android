@@ -43,24 +43,24 @@ reverse is never true.
 
 ## Public API inventory
 
-**2076 public symbols** across 182 files in 3 modules.
+**2100 public symbols** across 187 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
-| Classes | 32 |
-| Data classes | 268 |
-| Sealed classes | 37 |
+| Classes | 33 |
+| Data classes | 272 |
+| Sealed classes | 38 |
 | Enums | 41 |
 | Interfaces | 4 |
-| Objects | 130 |
+| Objects | 132 |
 | Type aliases | 3 |
-| Functions | 358 |
-| Properties (val) | 1020 |
-| Properties (var) | 20 |
+| Functions | 361 |
+| Properties (val) | 1031 |
+| Properties (var) | 22 |
 | Enum entries | 163 |
-| **Total** | **2076** |
+| **Total** | **2100** |
 
-### `FrameSDK` — 1655 public symbols
+### `FrameSDK` — 1678 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
@@ -733,26 +733,26 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `AccountsAPI.createAccount` | fun | `fun createAccount(request: AccountRequests.CreateAccountRequest): Pair<AccountObjects.Account?, NetworkingError?>` | [19](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L19) |
 | `AccountsAPI.updateAccount` | fun | `fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest): Pair<AccountObjects.Account?, NetworkingError?>` | [37](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L37) |
 | `AccountsAPI.getAccounts` | fun | `fun getAccounts( status: AccountObjects.AccountStatus? = null, type: AccountObjects.AccountType? = null, externalId: String? = null, includeDisabled: Boolean =…` | [55](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L55) |
-| `AccountsAPI.getAccountWith` | fun | `fun getAccountWith(accountId: String, forTesting: Boolean = false): Pair<AccountObjects.Account?, NetworkingError?>` | [75](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L75) |
-| `AccountsAPI.deleteAccountWith` | fun | `fun deleteAccountWith(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [95](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L95) |
-| `AccountsAPI.searchAccounts` | fun | `fun searchAccounts( email: String? = null, externalId: String? = null, type: AccountObjects.AccountType? = null, status: AccountObjects.AccountStatus? = null, …` | [113](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L113) |
-| `AccountsAPI.electPayoutMethod` | fun | `fun electPayoutMethod( accountId: String, request: AccountRequests.ElectPayoutMethodRequest ): Pair<AccountObjects.Account?, NetworkingError?>` | [136](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L136) |
-| `AccountsAPI.restrictAccount` | fun | `fun restrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [152](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L152) |
-| `AccountsAPI.unrestrictAccount` | fun | `fun unrestrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [165](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L165) |
-| `AccountsAPI.createPhoneVerification` | fun | `fun createPhoneVerification(accountId: String): Pair<AccountObjects.PhoneVerification?, NetworkingError?>` | [178](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L178) |
-| `AccountsAPI.confirmPhoneVerification` | fun | `fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest): Pair<AccountObjects.PhoneVer…` | [193](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L193) |
-| `AccountsAPI.getPlaidLinkToken` | fun | `fun getPlaidLinkToken(accountId: String): Pair<AccountResponses.PlaidLinkTokenResponse?, NetworkingError?>` | [206](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L206) |
-| `AccountsAPI.createAccount` | fun | `fun createAccount(request: AccountRequests.CreateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [221](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L221) |
-| `AccountsAPI.updateAccount` | fun | `fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [240](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L240) |
-| `AccountsAPI.getAccounts` | fun | `fun getAccounts( status: AccountObjects.AccountStatus? = null, type: AccountObjects.AccountType? = null, externalId: String? = null, includeDisabled: Boolean =…` | [259](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L259) |
-| `AccountsAPI.getAccountWith` | fun | `fun getAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [280](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L280) |
-| `AccountsAPI.deleteAccountWith` | fun | `fun deleteAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [299](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L299) |
-| `AccountsAPI.searchAccounts` | fun | `fun searchAccounts( email: String? = null, externalId: String? = null, type: AccountObjects.AccountType? = null, status: AccountObjects.AccountStatus? = null, …` | [318](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L318) |
-| `AccountsAPI.restrictAccount` | fun | `fun restrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [342](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L342) |
-| `AccountsAPI.unrestrictAccount` | fun | `fun unrestrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [356](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L356) |
-| `AccountsAPI.createPhoneVerification` | fun | `fun createPhoneVerification(accountId: String, completionHandler: (AccountObjects.PhoneVerification?, NetworkingError?) -> Unit)` | [370](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L370) |
-| `AccountsAPI.confirmPhoneVerification` | fun | `fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest, completionHandler: (AccountOb…` | [386](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L386) |
-| `AccountsAPI.getPlaidLinkToken` | fun | `fun getPlaidLinkToken(accountId: String, completionHandler: (AccountResponses.PlaidLinkTokenResponse?, NetworkingError?) -> Unit)` | [400](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L400) |
+| `AccountsAPI.getAccountWith` | fun | `fun getAccountWith( accountId: String, forTesting: Boolean = false, auth: FrameAuthMode = FrameAuthMode.Publishable, ): Pair<AccountObjects.Account?, Networkin…` | [77](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L77) |
+| `AccountsAPI.deleteAccountWith` | fun | `fun deleteAccountWith(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [101](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L101) |
+| `AccountsAPI.searchAccounts` | fun | `fun searchAccounts( email: String? = null, externalId: String? = null, type: AccountObjects.AccountType? = null, status: AccountObjects.AccountStatus? = null, …` | [119](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L119) |
+| `AccountsAPI.electPayoutMethod` | fun | `fun electPayoutMethod( accountId: String, request: AccountRequests.ElectPayoutMethodRequest ): Pair<AccountObjects.Account?, NetworkingError?>` | [142](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L142) |
+| `AccountsAPI.restrictAccount` | fun | `fun restrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [158](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L158) |
+| `AccountsAPI.unrestrictAccount` | fun | `fun unrestrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [171](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L171) |
+| `AccountsAPI.createPhoneVerification` | fun | `fun createPhoneVerification(accountId: String): Pair<AccountObjects.PhoneVerification?, NetworkingError?>` | [184](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L184) |
+| `AccountsAPI.confirmPhoneVerification` | fun | `fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest): Pair<AccountObjects.PhoneVer…` | [199](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L199) |
+| `AccountsAPI.getPlaidLinkToken` | fun | `fun getPlaidLinkToken(accountId: String): Pair<AccountResponses.PlaidLinkTokenResponse?, NetworkingError?>` | [212](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L212) |
+| `AccountsAPI.createAccount` | fun | `fun createAccount(request: AccountRequests.CreateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [227](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L227) |
+| `AccountsAPI.updateAccount` | fun | `fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [246](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L246) |
+| `AccountsAPI.getAccounts` | fun | `fun getAccounts( status: AccountObjects.AccountStatus? = null, type: AccountObjects.AccountType? = null, externalId: String? = null, includeDisabled: Boolean =…` | [265](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L265) |
+| `AccountsAPI.getAccountWith` | fun | `fun getAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [286](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L286) |
+| `AccountsAPI.deleteAccountWith` | fun | `fun deleteAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [305](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L305) |
+| `AccountsAPI.searchAccounts` | fun | `fun searchAccounts( email: String? = null, externalId: String? = null, type: AccountObjects.AccountType? = null, status: AccountObjects.AccountStatus? = null, …` | [324](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L324) |
+| `AccountsAPI.restrictAccount` | fun | `fun restrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [348](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L348) |
+| `AccountsAPI.unrestrictAccount` | fun | `fun unrestrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [362](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L362) |
+| `AccountsAPI.createPhoneVerification` | fun | `fun createPhoneVerification(accountId: String, completionHandler: (AccountObjects.PhoneVerification?, NetworkingError?) -> Unit)` | [376](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L376) |
+| `AccountsAPI.confirmPhoneVerification` | fun | `fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest, completionHandler: (AccountOb…` | [392](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L392) |
+| `AccountsAPI.getPlaidLinkToken` | fun | `fun getPlaidLinkToken(accountId: String, completionHandler: (AccountResponses.PlaidLinkTokenResponse?, NetworkingError?) -> Unit)` | [406](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L406) |
 
 </details>
 
@@ -1107,6 +1107,76 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `ChargeIntentResponses.ListChargeIntentsResponse` | data class | `data class ListChargeIntentsResponse (` | [15](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentResponses.kt#L15) |
 | `ChargeIntentResponses.ListChargeIntentsResponse.meta` | val | `val meta: FrameMetadata?,` | [16](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentResponses.kt#L16) |
 | `ChargeIntentResponses.ListChargeIntentsResponse.data` | val | `val data: List<ChargeIntent>?` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/chargeintents/ChargeIntentResponses.kt#L17) |
+
+</details>
+
+#### com/framepayments/framesdk/checkoutsessions (23)
+
+<details><summary><code>CheckoutSessionEndpoints.kt</code> — 7 symbols</summary>
+
+[`FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `CheckoutSessionEndpoints` | sealed class | `sealed class CheckoutSessionEndpoints : FrameNetworkingEndpoints` | [6](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt#L6) |
+| `CheckoutSessionEndpoints.CreateCheckoutSession` | object | `object CreateCheckoutSession : CheckoutSessionEndpoints()` | [8](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt#L8) |
+| `CheckoutSessionEndpoints.GetAccount` | data class | `data class GetAccount(val accountId: String) : CheckoutSessionEndpoints()` | [11](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt#L11) |
+| `CheckoutSessionEndpoints.GetPaymentMethods` | data class | `data class GetPaymentMethods(val accountId: String) : CheckoutSessionEndpoints()` | [14](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt#L14) |
+| `CheckoutSessionEndpoints.endpointURL` | val | `val endpointURL: String` | [16](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt#L16) |
+| `CheckoutSessionEndpoints.httpMethod` | val | `val httpMethod: String` | [23](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt#L23) |
+| `CheckoutSessionEndpoints.queryItems` | val | `val queryItems: List<com.framepayments.framesdk.QueryItem>?` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionEndpoints.kt#L29) |
+
+</details>
+
+<details><summary><code>CheckoutSessionRequests.kt</code> — 2 symbols</summary>
+
+[`FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionRequests.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionRequests.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `CreateCheckoutSessionRequest` | data class | `data class CreateCheckoutSessionRequest(` | [13](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionRequests.kt#L13) |
+| `CreateCheckoutSessionRequest.accountId` | val | `val accountId: String,` | [14](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionRequests.kt#L14) |
+
+</details>
+
+<details><summary><code>CheckoutSessionResponses.kt</code> — 7 symbols</summary>
+
+[`FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `CheckoutSession` | data class | `data class CheckoutSession(` | [15](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt#L15) |
+| `CheckoutSession.id` | val | `val id: String?,` | [16](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt#L16) |
+| `CheckoutSession.accountId` | val | `val accountId: String?,` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt#L17) |
+| `CheckoutSession.clientSecret` | val | `val clientSecret: String?,` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt#L18) |
+| `CheckoutSession.sessionObject` | val | `val sessionObject: String?,` | [19](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt#L19) |
+| `CheckoutSession.expiresAt` | val | `val expiresAt: Long?,` | [20](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt#L20) |
+| `CheckoutSession.livemode` | val | `val livemode: Boolean?,` | [21](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionResponses.kt#L21) |
+
+</details>
+
+<details><summary><code>CheckoutSessionsAPI.kt</code> — 4 symbols</summary>
+
+[`FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `CheckoutSessionsAPI` | object | `object CheckoutSessionsAPI` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L18) |
+| `CheckoutSessionsAPI.createCheckoutSession` | fun | `fun createCheckoutSession(accountId: String): Pair<CheckoutSession?, NetworkingError?>` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L25) |
+| `CheckoutSessionsAPI.loadAccount` | fun | `fun loadAccount( accountId: String, secret: FrameCheckoutClientSecret, ): Pair<AccountObjects.Account?, NetworkingError?>` | [40](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L40) |
+| `CheckoutSessionsAPI.loadPaymentMethods` | fun | `fun loadPaymentMethods( accountId: String, secret: FrameCheckoutClientSecret, ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?>` | [53](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L53) |
+
+</details>
+
+<details><summary><code>FrameCheckoutClientSecret.kt</code> — 3 symbols</summary>
+
+[`FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/FrameCheckoutClientSecret.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/FrameCheckoutClientSecret.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `FrameCheckoutClientSecret` | class | `class FrameCheckoutClientSecret(` | [12](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/FrameCheckoutClientSecret.kt#L12) |
+| `FrameCheckoutClientSecret.clientSecret` | var | `var clientSecret: String,` | [13](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/FrameCheckoutClientSecret.kt#L13) |
+| `FrameCheckoutClientSecret.expiresAt` | var | `var expiresAt: Long,` | [14](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/FrameCheckoutClientSecret.kt#L14) |
 
 </details>
 
@@ -1794,12 +1864,12 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `OnboardingSessionRequests` | object | `object OnboardingSessionRequests` | [13](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L13) |
-| `OnboardingSessionRequests.OnboardingSessionStep` | enum | `enum OnboardingSessionStep` | [19](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L19) |
-| `OnboardingSessionRequests.CreateOnboardingSessionRequest` | data class | `data class CreateOnboardingSessionRequest(` | [37](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L37) |
-| `OnboardingSessionRequests.CreateOnboardingSessionRequest.accountId` | val | `val accountId: String,` | [38](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L38) |
-| `OnboardingSessionRequests.CreateOnboardingSessionRequest.steps` | val | `val steps: List<OnboardingSessionStep>? = null,` | [39](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L39) |
-| `OnboardingSessionRequests.CreateOnboardingSessionRequest.returnUrl` | val | `val returnUrl: String? = null,` | [40](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L40) |
+| `OnboardingSessionRequests` | object | `object OnboardingSessionRequests` | [10](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L10) |
+| `OnboardingSessionRequests.OnboardingSessionStep` | enum | `enum OnboardingSessionStep` | [16](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L16) |
+| `OnboardingSessionRequests.CreateOnboardingSessionRequest` | data class | `data class CreateOnboardingSessionRequest(` | [34](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L34) |
+| `OnboardingSessionRequests.CreateOnboardingSessionRequest.accountId` | val | `val accountId: String,` | [35](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L35) |
+| `OnboardingSessionRequests.CreateOnboardingSessionRequest.steps` | val | `val steps: List<OnboardingSessionStep>? = null,` | [36](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L36) |
+| `OnboardingSessionRequests.CreateOnboardingSessionRequest.returnUrl` | val | `val returnUrl: String? = null,` | [37](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionRequests.kt#L37) |
 
 </details>
 
@@ -1829,10 +1899,10 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `OnboardingSessionsAPI` | object | `object OnboardingSessionsAPI` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionsAPI.kt#L17) |
-| `OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey` | fun | `fun createOnboardingSessionWithPublishableKey( request: OnboardingSessionRequests.CreateOnboardingSessionRequest ): Pair<OnboardingSessionResponses.OnboardingS…` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionsAPI.kt#L29) |
-| `OnboardingSessionsAPI.createOnboardingSession` | fun | `fun createOnboardingSession( request: OnboardingSessionRequests.CreateOnboardingSessionRequest ): Pair<OnboardingSessionResponses.OnboardingSession?, Networkin…` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionsAPI.kt#L57) |
-| `OnboardingSessionsAPI.createOnboardingSession` | fun | `fun createOnboardingSession( request: OnboardingSessionRequests.CreateOnboardingSessionRequest, completionHandler: (OnboardingSessionResponses.OnboardingSessio…` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionsAPI.kt#L81) |
+| `OnboardingSessionsAPI` | object | `object OnboardingSessionsAPI` | [13](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionsAPI.kt#L13) |
+| `OnboardingSessionsAPI.createOnboardingSessionWithPublishableKey` | fun | `fun createOnboardingSessionWithPublishableKey( request: OnboardingSessionRequests.CreateOnboardingSessionRequest ): Pair<OnboardingSessionResponses.OnboardingS…` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionsAPI.kt#L26) |
+| `OnboardingSessionsAPI.createOnboardingSession` | fun | `fun createOnboardingSession( request: OnboardingSessionRequests.CreateOnboardingSessionRequest ): Pair<OnboardingSessionResponses.OnboardingSession?, Networkin…` | [54](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionsAPI.kt#L54) |
+| `OnboardingSessionsAPI.createOnboardingSession` | fun | `fun createOnboardingSession( request: OnboardingSessionRequests.CreateOnboardingSessionRequest, completionHandler: (OnboardingSessionResponses.OnboardingSessio…` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/onboardingsessions/OnboardingSessionsAPI.kt#L78) |
 
 </details>
 
@@ -1938,29 +2008,29 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `PaymentMethodsAPI.getPaymentMethods` | fun | `fun getPaymentMethods(page: Int? = null, perPage: Int? = null): Pair<PaymentMethodResponses.ListPaymentMethodsResponse?, NetworkingError?>` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L32) |
 | `PaymentMethodsAPI.getPaymentMethodWith` | fun | `fun getPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [44](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L44) |
 | `PaymentMethodsAPI.getPaymentMethodsWithCustomer` | fun | `fun getPaymentMethodsWithCustomer(customerId: String): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?>` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L56) |
-| `PaymentMethodsAPI.getPaymentMethodsWithAccount` | fun | `fun getPaymentMethodsWithAccount(accountId: String): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?>` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L68) |
-| `PaymentMethodsAPI.createCardPaymentMethod` | fun | `fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true): Pair<FrameObjects.PaymentMethod?, Netw…` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L85) |
-| `PaymentMethodsAPI.createACHPaymentMethod` | fun | `fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L110) |
-| `PaymentMethodsAPI.updatePaymentMethodWith` | fun | `fun updatePaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.UpdatePaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingEr…` | [123](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L123) |
-| `PaymentMethodsAPI.attachPaymentMethodWith` | fun | `fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest):Pair<FrameObjects.PaymentMethod?, NetworkingErr…` | [136](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L136) |
-| `PaymentMethodsAPI.detachPaymentMethodWith` | fun | `fun detachPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L148) |
-| `PaymentMethodsAPI.blockPaymentMethodWith` | fun | `fun blockPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [160](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L160) |
-| `PaymentMethodsAPI.unblockPaymentMethodWith` | fun | `fun unblockPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [172](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L172) |
-| `PaymentMethodsAPI.createGooglePayPaymentMethod` | fun | `fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [186](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L186) |
-| `PaymentMethodsAPI.connectPlaidBankAccount` | fun | `fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [198](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L198) |
-| `PaymentMethodsAPI.getPaymentMethods` | fun | `fun getPaymentMethods(page: Int? = null, perPage: Int? = null, completionHandler: (PaymentMethodResponses.ListPaymentMethodsResponse?, NetworkingError?) -> Uni…` | [213](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L213) |
-| `PaymentMethodsAPI.getPaymentMethodWith` | fun | `fun getPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit)` | [227](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L227) |
-| `PaymentMethodsAPI.getPaymentMethodsWithCustomer` | fun | `fun getPaymentMethodsWithCustomer(customerId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit)` | [241](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L241) |
-| `PaymentMethodsAPI.getPaymentMethodsWithAccount` | fun | `fun getPaymentMethodsWithAccount(accountId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit)` | [254](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L254) |
-| `PaymentMethodsAPI.createCardPaymentMethod` | fun | `fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true, scope: CoroutineScope, completionHandle…` | [272](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L272) |
-| `PaymentMethodsAPI.createACHPaymentMethod` | fun | `fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?…` | [302](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L302) |
-| `PaymentMethodsAPI.updatePaymentMethodWith` | fun | `fun updatePaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.UpdatePaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?…` | [317](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L317) |
-| `PaymentMethodsAPI.attachPaymentMethodWith` | fun | `fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?…` | [332](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L332) |
-| `PaymentMethodsAPI.detachPaymentMethodWith` | fun | `fun detachPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit)` | [346](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L346) |
-| `PaymentMethodsAPI.blockPaymentMethodWith` | fun | `fun blockPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit)` | [360](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L360) |
-| `PaymentMethodsAPI.unblockPaymentMethodWith` | fun | `fun unblockPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit)` | [374](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L374) |
-| `PaymentMethodsAPI.createGooglePayPaymentMethod` | fun | `fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?, Networkin…` | [388](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L388) |
-| `PaymentMethodsAPI.connectPlaidBankAccount` | fun | `fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -…` | [402](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L402) |
+| `PaymentMethodsAPI.getPaymentMethodsWithAccount` | fun | `fun getPaymentMethodsWithAccount( accountId: String, auth: FrameAuthMode = FrameAuthMode.Secret, ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?>` | [70](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L70) |
+| `PaymentMethodsAPI.createCardPaymentMethod` | fun | `fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true): Pair<FrameObjects.PaymentMethod?, Netw…` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L90) |
+| `PaymentMethodsAPI.createACHPaymentMethod` | fun | `fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [115](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L115) |
+| `PaymentMethodsAPI.updatePaymentMethodWith` | fun | `fun updatePaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.UpdatePaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingEr…` | [128](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L128) |
+| `PaymentMethodsAPI.attachPaymentMethodWith` | fun | `fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest):Pair<FrameObjects.PaymentMethod?, NetworkingErr…` | [141](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L141) |
+| `PaymentMethodsAPI.detachPaymentMethodWith` | fun | `fun detachPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [153](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L153) |
+| `PaymentMethodsAPI.blockPaymentMethodWith` | fun | `fun blockPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [165](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L165) |
+| `PaymentMethodsAPI.unblockPaymentMethodWith` | fun | `fun unblockPaymentMethodWith(paymentMethodId: String): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [177](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L177) |
+| `PaymentMethodsAPI.createGooglePayPaymentMethod` | fun | `fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L191) |
+| `PaymentMethodsAPI.connectPlaidBankAccount` | fun | `fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest): Pair<FrameObjects.PaymentMethod?, NetworkingError?>` | [203](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L203) |
+| `PaymentMethodsAPI.getPaymentMethods` | fun | `fun getPaymentMethods(page: Int? = null, perPage: Int? = null, completionHandler: (PaymentMethodResponses.ListPaymentMethodsResponse?, NetworkingError?) -> Uni…` | [218](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L218) |
+| `PaymentMethodsAPI.getPaymentMethodWith` | fun | `fun getPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit)` | [232](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L232) |
+| `PaymentMethodsAPI.getPaymentMethodsWithCustomer` | fun | `fun getPaymentMethodsWithCustomer(customerId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit)` | [246](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L246) |
+| `PaymentMethodsAPI.getPaymentMethodsWithAccount` | fun | `fun getPaymentMethodsWithAccount(accountId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit)` | [259](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L259) |
+| `PaymentMethodsAPI.createCardPaymentMethod` | fun | `fun createCardPaymentMethod(request: PaymentMethodRequests.CreateCardPaymentMethodRequest, encryptData: Boolean = true, scope: CoroutineScope, completionHandle…` | [277](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L277) |
+| `PaymentMethodsAPI.createACHPaymentMethod` | fun | `fun createACHPaymentMethod(request: PaymentMethodRequests.CreateACHPaymentMethodRequest, scope: CoroutineScope, completionHandler: (FrameObjects.PaymentMethod?…` | [307](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L307) |
+| `PaymentMethodsAPI.updatePaymentMethodWith` | fun | `fun updatePaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.UpdatePaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?…` | [322](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L322) |
+| `PaymentMethodsAPI.attachPaymentMethodWith` | fun | `fun attachPaymentMethodWith(paymentMethodId: String, request: PaymentMethodRequests.AttachPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?…` | [337](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L337) |
+| `PaymentMethodsAPI.detachPaymentMethodWith` | fun | `fun detachPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit)` | [351](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L351) |
+| `PaymentMethodsAPI.blockPaymentMethodWith` | fun | `fun blockPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit)` | [365](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L365) |
+| `PaymentMethodsAPI.unblockPaymentMethodWith` | fun | `fun unblockPaymentMethodWith(paymentMethodId: String, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -> Unit)` | [379](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L379) |
+| `PaymentMethodsAPI.createGooglePayPaymentMethod` | fun | `fun createGooglePayPaymentMethod(request: PaymentMethodRequests.CreateGooglePayPaymentMethodRequest, completionHandler: (FrameObjects.PaymentMethod?, Networkin…` | [393](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L393) |
+| `PaymentMethodsAPI.connectPlaidBankAccount` | fun | `fun connectPlaidBankAccount(request: PaymentMethodRequests.ConnectPlaidBankAccountRequest, completionHandler: (FrameObjects.PaymentMethod?, NetworkingError?) -…` | [407](FrameSDK/src/main/java/com/framepayments/framesdk/paymentmethods/PaymentMethodsAPI.kt#L407) |
 
 </details>
 
@@ -2508,11 +2578,11 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `TermsOfServiceAPI` | object | `object TermsOfServiceAPI` | [10](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L10) |
-| `TermsOfServiceAPI.createToken` | fun | `fun createToken(): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?>` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L18) |
-| `TermsOfServiceAPI.update` | fun | `fun update(request: TermsOfServiceRequests.UpdateRequest): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?>` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L30) |
-| `TermsOfServiceAPI.createToken` | fun | `fun createToken(completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit)` | [43](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L43) |
-| `TermsOfServiceAPI.update` | fun | `fun update(request: TermsOfServiceRequests.UpdateRequest, completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit)` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L56) |
+| `TermsOfServiceAPI` | object | `object TermsOfServiceAPI` | [12](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L12) |
+| `TermsOfServiceAPI.createToken` | fun | `fun createToken(): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?>` | [20](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L20) |
+| `TermsOfServiceAPI.update` | fun | `fun update(request: TermsOfServiceRequests.UpdateRequest): Pair<TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?>` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L32) |
+| `TermsOfServiceAPI.createToken` | fun | `fun createToken(completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit)` | [45](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L45) |
+| `TermsOfServiceAPI.update` | fun | `fun update(request: TermsOfServiceRequests.UpdateRequest, completionHandler: (TermsOfServiceObjects.TermsOfServiceTokenResponse?, NetworkingError?) -> Unit)` | [58](FrameSDK/src/main/java/com/framepayments/framesdk/termsofservice/TermsOfServiceAPI.kt#L58) |
 
 </details>
 
@@ -2871,7 +2941,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L50) |
+| `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [52](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L52) |
 
 </details>
 
@@ -3303,30 +3373,30 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameCheckoutViewModel` | class | `class FrameCheckoutViewModel : ViewModel()` | [41](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L41) |
-| `FrameCheckoutViewModel.accountPaymentOptions` | val | `val accountPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _accountPaymentOptions` | [45](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L45) |
-| `FrameCheckoutViewModel.didLoadAccountPaymentMethods` | val | `val didLoadAccountPaymentMethods: LiveData<Boolean> = _didLoadAccountPaymentMethods` | [53](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L53) |
-| `FrameCheckoutViewModel.customerName` | val | `val customerName = MutableLiveData( )` | [56](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L56) |
-| `FrameCheckoutViewModel.customerEmail` | val | `val customerEmail = MutableLiveData( )` | [58](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L58) |
-| `FrameCheckoutViewModel.customerInfoRequired` | val | `val customerInfoRequired: LiveData<Boolean> = _customerInfoRequired` | [67](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L67) |
-| `FrameCheckoutViewModel.billingAddress` | val | `val billingAddress = BillingAddressFieldVM(` | [85](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L85) |
-| `FrameCheckoutViewModel.selectedAccountPaymentOption` | val | `val selectedAccountPaymentOption: LiveData<FrameObjects.PaymentMethod?> = _selectedAccountPaymentOption` | [99](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L99) |
-| `FrameCheckoutViewModel.setSelectedAccountPaymentOption` | fun | `fun setSelectedAccountPaymentOption(method: FrameObjects.PaymentMethod?)` | [102](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L102) |
-| `FrameCheckoutViewModel.cardData` | var | `var cardData: PaymentCardData = PaymentCardData()` | [116](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L116) |
-| `FrameCheckoutViewModel.clearNewCardFieldErrors` | fun | `fun clearNewCardFieldErrors()` | [127](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L127) |
-| `FrameCheckoutViewModel.hasUsablePaymentInput` | val | `val hasUsablePaymentInput: LiveData<Boolean> = _hasUsablePaymentInput` | [143](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L143) |
-| `FrameCheckoutViewModel.addressMode` | var | `var addressMode: AddressMode = AddressMode.REQUIRED` | [153](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L153) |
-| `FrameCheckoutViewModel.fieldErrors` | val | `val fieldErrors: LiveData<Map<FieldKey, ValidationError>> = _fieldErrors` | [156](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L156) |
-| `FrameCheckoutViewModel.isPerformingAction` | val | `val isPerformingAction: LiveData<Boolean> = _isPerformingAction` | [167](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L167) |
-| `FrameCheckoutViewModel.loadAccountDetails` | fun | `fun loadAccountDetails(accountId: String, amount: Int)` | [177](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L177) |
-| `FrameCheckoutViewModel.setError` | fun | `fun setError(key: FieldKey, error: ValidationError?)` | [232](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L232) |
-| `FrameCheckoutViewModel.clearError` | fun | `fun clearError(key: FieldKey)` | [243](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L243) |
-| `FrameCheckoutViewModel.validateAll` | fun | `fun validateAll(forSavedCard: Boolean): Map<FieldKey, ValidationError>` | [267](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L267) |
-| `FrameCheckoutViewModel.checkoutWithSelectedPaymentMethod` | fun | `fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<Transfer?> = liveData(Dispatchers.IO)` | [291](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L291) |
+| `FrameCheckoutViewModel` | class | `class FrameCheckoutViewModel : ViewModel()` | [44](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L44) |
+| `FrameCheckoutViewModel.accountPaymentOptions` | val | `val accountPaymentOptions: LiveData<List<FrameObjects.PaymentMethod>?> = _accountPaymentOptions` | [48](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L48) |
+| `FrameCheckoutViewModel.didLoadAccountPaymentMethods` | val | `val didLoadAccountPaymentMethods: LiveData<Boolean> = _didLoadAccountPaymentMethods` | [56](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L56) |
+| `FrameCheckoutViewModel.customerName` | val | `val customerName = MutableLiveData( )` | [59](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L59) |
+| `FrameCheckoutViewModel.customerEmail` | val | `val customerEmail = MutableLiveData( )` | [61](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L61) |
+| `FrameCheckoutViewModel.customerInfoRequired` | val | `val customerInfoRequired: LiveData<Boolean> = _customerInfoRequired` | [70](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L70) |
+| `FrameCheckoutViewModel.billingAddress` | val | `val billingAddress = BillingAddressFieldVM(` | [88](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L88) |
+| `FrameCheckoutViewModel.selectedAccountPaymentOption` | val | `val selectedAccountPaymentOption: LiveData<FrameObjects.PaymentMethod?> = _selectedAccountPaymentOption` | [102](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L102) |
+| `FrameCheckoutViewModel.setSelectedAccountPaymentOption` | fun | `fun setSelectedAccountPaymentOption(method: FrameObjects.PaymentMethod?)` | [105](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L105) |
+| `FrameCheckoutViewModel.cardData` | var | `var cardData: PaymentCardData = PaymentCardData()` | [119](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L119) |
+| `FrameCheckoutViewModel.clearNewCardFieldErrors` | fun | `fun clearNewCardFieldErrors()` | [130](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L130) |
+| `FrameCheckoutViewModel.hasUsablePaymentInput` | val | `val hasUsablePaymentInput: LiveData<Boolean> = _hasUsablePaymentInput` | [146](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L146) |
+| `FrameCheckoutViewModel.addressMode` | var | `var addressMode: AddressMode = AddressMode.REQUIRED` | [156](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L156) |
+| `FrameCheckoutViewModel.fieldErrors` | val | `val fieldErrors: LiveData<Map<FieldKey, ValidationError>> = _fieldErrors` | [159](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L159) |
+| `FrameCheckoutViewModel.isPerformingAction` | val | `val isPerformingAction: LiveData<Boolean> = _isPerformingAction` | [170](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L170) |
+| `FrameCheckoutViewModel.loadAccountDetails` | fun | `fun loadAccountDetails( accountId: String, amount: Int, account: AccountObjects.Account? = null, paymentMethods: List<FrameObjects.PaymentMethod>? = null, chec…` | [191](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L191) |
+| `FrameCheckoutViewModel.setError` | fun | `fun setError(key: FieldKey, error: ValidationError?)` | [279](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L279) |
+| `FrameCheckoutViewModel.clearError` | fun | `fun clearError(key: FieldKey)` | [290](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L290) |
+| `FrameCheckoutViewModel.validateAll` | fun | `fun validateAll(forSavedCard: Boolean): Map<FieldKey, ValidationError>` | [314](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L314) |
+| `FrameCheckoutViewModel.checkoutWithSelectedPaymentMethod` | fun | `fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<Transfer?> = liveData(Dispatchers.IO)` | [338](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L338) |
 
 </details>
 
-### `FrameSDK-Onboarding` — 227 public symbols
+### `FrameSDK-Onboarding` — 228 public symbols
 
 Onboarding product: the capability-driven identity/payment verification flow, its screens, and the onboarding-only APIs (3DS, IDV, phone OTP, geocompliance, Plaid, Persona).
 
@@ -3376,21 +3446,21 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 | `OnboardingResult.Failed` | data class | `data class Failed(val message: String) : OnboardingResult()` | [225](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L225) |
 | `OnboardingConfig` | data class | `data class OnboardingConfig(` | [247](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L247) |
 | `OnboardingConfig.accountId` | val | `val accountId: String? = null,` | [248](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L248) |
-| `OnboardingConfig.clientSecret` | val | `val clientSecret: String? = null,` | [249](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L249) |
+| `OnboardingConfig.clientSecret` | val | `val clientSecret: String,` | [249](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L249) |
 | `OnboardingConfig.requiredCapabilities` | val | `val requiredCapabilities: List<Capabilities> = emptyList(),` | [250](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L250) |
 | `OnboardingConfig.skipInitNetwork` | val | `val skipInitNetwork: Boolean = false,` | [251](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L251) |
 | `OnboardingConfig.theme` | val | `val theme: FrameTheme? = null,` | [252](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L252) |
 | `OnboardingConfig.showIntroScreen` | val | `val showIntroScreen: Boolean = false,` | [253](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L253) |
 | `OnboardingConfig.showCompletionScreen` | val | `val showCompletionScreen: Boolean = true,` | [254](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L254) |
-| `PaymentCardDraft` | data class | `data class PaymentCardDraft(` | [273](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L273) |
-| `PaymentCardDraft.cardNumber` | val | `val cardNumber: String = ,` | [274](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L274) |
-| `PaymentCardDraft.expiryMonth` | val | `val expiryMonth: String = ,` | [275](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L275) |
-| `PaymentCardDraft.expiryYear` | val | `val expiryYear: String = ,` | [276](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L276) |
-| `PaymentCardDraft.cvc` | val | `val cvc: String =` | [277](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L277) |
-| `BankAccountDraft` | data class | `data class BankAccountDraft(` | [287](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L287) |
-| `BankAccountDraft.routingNumber` | val | `val routingNumber: String = ,` | [288](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L288) |
-| `BankAccountDraft.accountNumber` | val | `val accountNumber: String = ,` | [289](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L289) |
-| `BankAccountDraft.accountTypeLabel` | val | `val accountTypeLabel: String =` | [290](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L290) |
+| `PaymentCardDraft` | data class | `data class PaymentCardDraft(` | [279](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L279) |
+| `PaymentCardDraft.cardNumber` | val | `val cardNumber: String = ,` | [280](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L280) |
+| `PaymentCardDraft.expiryMonth` | val | `val expiryMonth: String = ,` | [281](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L281) |
+| `PaymentCardDraft.expiryYear` | val | `val expiryYear: String = ,` | [282](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L282) |
+| `PaymentCardDraft.cvc` | val | `val cvc: String =` | [283](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L283) |
+| `BankAccountDraft` | data class | `data class BankAccountDraft(` | [293](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L293) |
+| `BankAccountDraft.routingNumber` | val | `val routingNumber: String = ,` | [294](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L294) |
+| `BankAccountDraft.accountNumber` | val | `val accountNumber: String = ,` | [295](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L295) |
+| `BankAccountDraft.accountTypeLabel` | val | `val accountTypeLabel: String =` | [296](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/classes/Onboarding.kt#L296) |
 
 </details>
 
@@ -3566,7 +3636,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 </details>
 
-#### com/framepayments/frameonboarding/networking/phoneotpverification (30)
+#### com/framepayments/frameonboarding/networking/phoneotpverification (31)
 
 <details><summary><code>PhoneOTPVerificationAPI.kt</code> — 5 symbols</summary>
 
@@ -3597,24 +3667,25 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 </details>
 
-<details><summary><code>PhoneOTPVerificationObjects.kt</code> — 12 symbols</summary>
+<details><summary><code>PhoneOTPVerificationObjects.kt</code> — 13 symbols</summary>
 
 [`FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt`](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `PhoneOTPVerificationCreateResponse` | data class | `data class PhoneOTPVerificationCreateResponse(` | [14](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L14) |
-| `PhoneOTPVerificationCreateResponse.id` | val | `val id: String?,` | [15](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L15) |
-| `PhoneOTPVerificationCreateResponse.type` | val | `val type: String?,` | [16](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L16) |
-| `PhoneOTPVerificationCreateResponse.status` | val | `val status: String?,` | [17](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L17) |
-| `PhoneOTPVerificationCreateResponse.provider` | val | `val provider: String? = null,` | [18](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L18) |
-| `PhoneOTPVerificationCreateResponse.proveAuthToken` | val | `val proveAuthToken: String?` | [19](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L19) |
-| `PhoneOTPVerificationConfirmResponse` | data class | `data class PhoneOTPVerificationConfirmResponse(` | [29](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L29) |
-| `PhoneOTPVerificationConfirmResponse.id` | val | `val id: String?,` | [30](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L30) |
-| `PhoneOTPVerificationConfirmResponse.status` | val | `val status: String?,` | [31](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L31) |
-| `PhoneOTPVerificationConfirmResponse.prefillStatus` | val | `val prefillStatus: String? = null` | [32](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L32) |
-| `PhoneOTPVerificationError` | data class | `data class PhoneOTPVerificationError(` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L40) |
-| `PhoneOTPVerificationError.error` | val | `val error: ErrorDetail? = null` | [41](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L41) |
+| `PhoneOTPVerificationCreateResponse` | data class | `data class PhoneOTPVerificationCreateResponse(` | [15](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L15) |
+| `PhoneOTPVerificationCreateResponse.id` | val | `val id: String?,` | [16](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L16) |
+| `PhoneOTPVerificationCreateResponse.type` | val | `val type: String?,` | [17](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L17) |
+| `PhoneOTPVerificationCreateResponse.status` | val | `val status: String?,` | [18](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L18) |
+| `PhoneOTPVerificationCreateResponse.provider` | val | `val provider: String? = null,` | [19](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L19) |
+| `PhoneOTPVerificationCreateResponse.proveAuthToken` | val | `val proveAuthToken: String?` | [20](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L20) |
+| `PhoneOTPVerificationConfirmResponse` | data class | `data class PhoneOTPVerificationConfirmResponse(` | [31](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L31) |
+| `PhoneOTPVerificationConfirmResponse.id` | val | `val id: String?,` | [32](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L32) |
+| `PhoneOTPVerificationConfirmResponse.status` | val | `val status: String?,` | [33](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L33) |
+| `PhoneOTPVerificationConfirmResponse.prefillStatus` | val | `val prefillStatus: String? = null,` | [34](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L34) |
+| `PhoneOTPVerificationConfirmResponse.profile` | val | `val profile: AccountObjects.AccountProfile? = null` | [35](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L35) |
+| `PhoneOTPVerificationError` | data class | `data class PhoneOTPVerificationError(` | [43](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L43) |
+| `PhoneOTPVerificationError.error` | val | `val error: ErrorDetail? = null` | [44](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/networking/phoneotpverification/PhoneOTPVerificationObjects.kt#L44) |
 
 </details>
 
@@ -3842,7 +3913,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L40) |
+| `FrameAddPaymentMethodView` | fun | `fun FrameAddPaymentMethodView( accountId: String, clientSecret: String, onResult: ((FrameResult) -> Unit)? = null )` | [39](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPaymentMethodView.kt#L39) |
 
 </details>
 
@@ -3852,7 +3923,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameAddPayoutMethodView` | fun | `fun FrameAddPayoutMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [41](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPayoutMethodView.kt#L41) |
+| `FrameAddPayoutMethodView` | fun | `fun FrameAddPayoutMethodView( accountId: String, clientSecret: String, onResult: ((FrameResult) -> Unit)? = null )` | [40](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameAddPayoutMethodView.kt#L40) |
 
 </details>
 
@@ -3862,7 +3933,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameSelectPayoutMethodView` | fun | `fun FrameSelectPayoutMethodView( accountId: String, clientSecret: String? = null, onResult: ((FrameResult) -> Unit)? = null )` | [41](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameSelectPayoutMethodView.kt#L41) |
+| `FrameSelectPayoutMethodView` | fun | `fun FrameSelectPayoutMethodView( accountId: String, clientSecret: String, payoutMethods: List<FrameObjects.PaymentMethod>? = null, onResult: ((FrameResult) -> …` | [43](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FrameSelectPayoutMethodView.kt#L43) |
 
 </details>
 
@@ -3872,7 +3943,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [54](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L54) |
+| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [53](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L53) |
 
 </details>
 
