@@ -30,7 +30,6 @@ import com.google.android.gms.wallet.IsReadyToPayRequest
 import com.google.android.gms.wallet.PaymentsClient
 import com.google.android.gms.wallet.Wallet
 import com.google.android.gms.wallet.WalletConstants
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -384,17 +383,20 @@ class FrameGooglePayButton @JvmOverloads constructor(
                                 paymentMethodId = resolvedPaymentMethod.id
                             ),
                             confirm = true,
-                            sonarSessionId = sonarSessionId(o.id),
                         )
                         val secret = checkoutClientSecret
                         val (transfer, transferError) = if (secret == null) {
-                            TransfersV2API.createTransfer(transferRequest)
+                            TransfersV2API.createTransfer(transferRequest, accountId = o.id)
                         } else {
                             val token = CheckoutSessionsAPI.authorizationToken(o.id, secret)
                             if (token.isNullOrEmpty()) {
                                 Pair(null, NetworkingError.ServerError(401, "Checkout client secret expired."))
                             } else {
-                                TransfersV2API.createTransfer(transferRequest, checkoutClientSecret = token)
+                                TransfersV2API.createTransfer(
+                                    transferRequest,
+                                    checkoutClientSecret = token,
+                                    accountId = o.id,
+                                )
                             }
                         }
                         if (transfer == null) reportError(transferError)
@@ -514,17 +516,6 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 put("merchantName", "Frame Payments")
             })
             put("emailRequired", true)
-        }
-    }
-
-    private suspend fun sonarSessionId(accountId: String): String? {
-        val manager = FrameNetworking.sonarSessionManagerOrNull() ?: return null
-        return try {
-            manager.ensureSession(accountId)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            null
         }
     }
 }

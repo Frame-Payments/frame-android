@@ -29,7 +29,6 @@ import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -428,7 +427,6 @@ class FrameCheckoutViewModel : ViewModel() {
                 ),
                 source = TransferV2Requests.EndpointSlot(paymentMethodId = paymentMethodId),
                 confirm = false,
-                sonarSessionId = sonarSessionId(accountId),
             )
 
             val (transfer, transferError) = createCheckoutTransfer(accountId, request)
@@ -470,12 +468,12 @@ class FrameCheckoutViewModel : ViewModel() {
         accountId: String,
         request: TransferV2Requests.CreateTransferRequest,
     ): Pair<TransferV2?, NetworkingError?> {
-        val secret = checkoutClientSecret ?: return TransfersV2API.createTransfer(request)
+        val secret = checkoutClientSecret ?: return TransfersV2API.createTransfer(request, accountId = accountId)
         val token = CheckoutSessionsAPI.authorizationToken(accountId, secret)
         if (token.isNullOrEmpty()) {
             return Pair(null, NetworkingError.ServerError(401, "Checkout client secret expired."))
         }
-        return TransfersV2API.createTransfer(request, checkoutClientSecret = token)
+        return TransfersV2API.createTransfer(request, checkoutClientSecret = token, accountId = accountId)
     }
 
     private suspend fun completeThreeDSecure(transfer: TransferV2, context: Context): TransferV2? {
@@ -567,17 +565,5 @@ class FrameCheckoutViewModel : ViewModel() {
             AccountEventEmitter.emit(AccountEventName.CARD_TOKENIZED, AccountEventScreen.PAYMENT_SHEET)
         }
         return Pair(pm?.id, pmError)
-    }
-
-    // Account id stays off source; Sonar still needs it, and a lookup failure must not block the charge.
-    private suspend fun sonarSessionId(accountId: String): String? {
-        val manager = FrameNetworking.sonarSessionManagerOrNull() ?: return null
-        return try {
-            manager.ensureSession(accountId)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            null
-        }
     }
 }
