@@ -201,6 +201,7 @@ class FrameCheckoutViewModel : ViewModel() {
         this.amount = amount
         currentAccountId = accountId
         this.checkoutClientSecret = checkoutClientSecret
+        checkoutClientSecret?.recordLockedAmountIfMissing(amount, "usd")
         FrameNetworking.setAccountIdIfUnset(accountId)
         AccountEventEmitter.emit(AccountEventName.CHECKOUT_STARTED, AccountEventScreen.PAYMENT_SHEET)
 
@@ -427,6 +428,7 @@ class FrameCheckoutViewModel : ViewModel() {
                 ),
                 source = TransferV2Requests.EndpointSlot(paymentMethodId = paymentMethodId),
                 confirm = false,
+                authorizationMode = "automatic",
             )
 
             val (transfer, transferError) = createCheckoutTransfer(accountId, request)

@@ -19,4 +19,11 @@ class FrameCheckoutClientSecret(
 ) {
     /** `true` when [expiresAt] is now or earlier. */
     fun isExpired(nowSeconds: Long = System.currentTimeMillis() / 1000): Boolean = expiresAt <= nowSeconds
+
+    /** Keeps a later refresh transfer-capable when the host passed only the token and expiry. */
+    fun recordLockedAmountIfMissing(cents: Int, currency: String) {
+        if (amountCents != null || cents == 0) return
+        amountCents = cents
+        if (amountCurrency.isNullOrEmpty()) amountCurrency = currency
+    }
 }

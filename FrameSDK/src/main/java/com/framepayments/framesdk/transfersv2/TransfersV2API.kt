@@ -31,7 +31,7 @@ object TransfersV2API {
             || request.source?.paymentMethod != null
         if (!hasPaymentSource || resolved.isNullOrEmpty()) return request
 
-        val manager = FrameNetworking.sonarSessionManagerOrNull() ?: return request
+        val manager = FrameNetworking.awaitSonarSessionManager() ?: return request
         // A failure must not block the transfer; the server's rejection is the authoritative answer.
         val sessionId = try {
             manager.ensureSession(resolved)

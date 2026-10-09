@@ -250,6 +250,9 @@ class FrameGooglePayButton @JvmOverloads constructor(
         this.onResult = onResult
         this.onReadinessChanged = onReadinessChanged
         this.checkoutClientSecret = checkoutClientSecret
+        (mode as? Mode.Charge)?.let { charge ->
+            checkoutClientSecret?.recordLockedAmountIfMissing(charge.amountCents, charge.currencyCode.lowercase())
+        }
 
         checkGooglePayReadiness()
     }
@@ -383,6 +386,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
                                 paymentMethodId = resolvedPaymentMethod.id
                             ),
                             confirm = true,
+                            authorizationMode = "automatic",
                         )
                         val secret = checkoutClientSecret
                         val (transfer, transferError) = if (secret == null) {
