@@ -29,6 +29,7 @@ import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
 import com.framepayments.framesdk_ui.validation.FieldKey
 import com.framepayments.framesdk_ui.validation.ValidationError
 import com.framepayments.framesdk_ui.validation.Validators
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -425,11 +426,9 @@ class FrameCheckoutViewModel : ViewModel() {
                     value = amount,
                     currency = checkoutClientSecret?.amountCurrency ?: "usd",
                 ),
-                source = TransferV2Requests.EndpointSlot(
-                    accountId = accountId,
-                    paymentMethodId = paymentMethodId
-                ),
+                source = TransferV2Requests.EndpointSlot(paymentMethodId = paymentMethodId),
                 confirm = false,
+                sonarSessionId = sonarSessionId(accountId),
             )
 
             val (transfer, transferError) = createCheckoutTransfer(accountId, request)
@@ -568,5 +567,17 @@ class FrameCheckoutViewModel : ViewModel() {
             AccountEventEmitter.emit(AccountEventName.CARD_TOKENIZED, AccountEventScreen.PAYMENT_SHEET)
         }
         return Pair(pm?.id, pmError)
+    }
+
+    // Account id stays off source; Sonar still needs it, and a lookup failure must not block the charge.
+    private suspend fun sonarSessionId(accountId: String): String? {
+        val manager = FrameNetworking.sonarSessionManagerOrNull() ?: return null
+        return try {
+            manager.ensureSession(accountId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
     }
 }

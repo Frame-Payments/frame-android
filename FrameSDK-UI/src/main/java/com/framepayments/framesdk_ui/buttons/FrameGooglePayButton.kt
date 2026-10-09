@@ -30,6 +30,7 @@ import com.google.android.gms.wallet.IsReadyToPayRequest
 import com.google.android.gms.wallet.PaymentsClient
 import com.google.android.gms.wallet.Wallet
 import com.google.android.gms.wallet.WalletConstants
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -380,10 +381,10 @@ class FrameGooglePayButton @JvmOverloads constructor(
                                 currency = checkoutClientSecret?.amountCurrency ?: m.currencyCode.lowercase()
                             ),
                             source = TransferV2Requests.EndpointSlot(
-                                accountId = o.id,
                                 paymentMethodId = resolvedPaymentMethod.id
                             ),
                             confirm = true,
+                            sonarSessionId = sonarSessionId(o.id),
                         )
                         val secret = checkoutClientSecret
                         val (transfer, transferError) = if (secret == null) {
@@ -513,6 +514,17 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 put("merchantName", "Frame Payments")
             })
             put("emailRequired", true)
+        }
+    }
+
+    private suspend fun sonarSessionId(accountId: String): String? {
+        val manager = FrameNetworking.sonarSessionManagerOrNull() ?: return null
+        return try {
+            manager.ensureSession(accountId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
         }
     }
 }
