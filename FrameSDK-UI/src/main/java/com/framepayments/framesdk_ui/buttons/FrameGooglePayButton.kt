@@ -378,11 +378,11 @@ class FrameGooglePayButton @JvmOverloads constructor(
                     is Owner.Account -> {
                         // confirm=true: Google Pay already carries a cryptogram; this path has no
                         // TransferV2Confirmation / 3DS presenter.
+                        val (chargeCents, chargeCurrency) = resolvedCharge(m)
                         val transferRequest = TransferV2Requests.CreateTransferRequest(
                             amount = TransferV2Requests.MoneyAmount(
-                                value = checkoutClientSecret?.amountCents ?: m.amountCents,
-                                currency = checkoutClientSecret?.amountCurrency?.takeIf { it.isNotEmpty() }
-                                    ?: m.currencyCode.lowercase()
+                                value = chargeCents,
+                                currency = chargeCurrency.lowercase()
                             ),
                             source = TransferV2Requests.EndpointSlot(
                                 paymentMethodId = resolvedPaymentMethod.id
@@ -481,6 +481,13 @@ class FrameGooglePayButton @JvmOverloads constructor(
         }
     }
 
+    private fun resolvedCharge(charge: Mode.Charge): Pair<Int, String> {
+        val cents = checkoutClientSecret?.amountCents ?: charge.amountCents
+        val currency = checkoutClientSecret?.amountCurrency?.takeIf { it.isNotEmpty() }
+            ?: charge.currencyCode
+        return cents to currency
+    }
+
     private fun buildPaymentDataRequest(): JSONObject? {
         if (googlePayGateway.isEmpty() || googlePayGatewayMerchantId.isEmpty()) return null
         return JSONObject().apply {
@@ -509,9 +516,10 @@ class FrameGooglePayButton @JvmOverloads constructor(
             put("transactionInfo", JSONObject().apply {
                 when (val m = mode) {
                     is Mode.Charge -> {
+                        val (chargeCents, chargeCurrency) = resolvedCharge(m)
                         put("totalPriceStatus", "FINAL")
-                        put("totalPrice", String.format("%.2f", m.amountCents / 100.0))
-                        put("currencyCode", m.currencyCode)
+                        put("totalPrice", String.format("%.2f", chargeCents / 100.0))
+                        put("currencyCode", chargeCurrency.uppercase())
                     }
                     is Mode.AddToOwner -> {
                         // Wallet-only: no charge happens, but Google Pay still requires
