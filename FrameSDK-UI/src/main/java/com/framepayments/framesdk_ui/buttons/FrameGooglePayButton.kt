@@ -19,6 +19,7 @@ import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
 import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
+import com.framepayments.framesdk.transfersv2.FrameTransferV2Outcome
 import com.framepayments.framesdk.transfersv2.TransferV2Requests
 import com.framepayments.framesdk.transfersv2.TransfersV2API
 import com.framepayments.framesdk.wallet.WalletAPI
@@ -379,8 +380,9 @@ class FrameGooglePayButton @JvmOverloads constructor(
                         // TransferV2Confirmation / 3DS presenter.
                         val transferRequest = TransferV2Requests.CreateTransferRequest(
                             amount = TransferV2Requests.MoneyAmount(
-                                value = m.amountCents,
-                                currency = checkoutClientSecret?.amountCurrency ?: m.currencyCode.lowercase()
+                                value = checkoutClientSecret?.amountCents ?: m.amountCents,
+                                currency = checkoutClientSecret?.amountCurrency?.takeIf { it.isNotEmpty() }
+                                    ?: m.currencyCode.lowercase()
                             ),
                             source = TransferV2Requests.EndpointSlot(
                                 paymentMethodId = resolvedPaymentMethod.id
@@ -404,12 +406,16 @@ class FrameGooglePayButton @JvmOverloads constructor(
                             }
                         }
                         if (transfer == null) reportError(transferError)
+                        val outcome = transfer?.let { FrameTransferV2Outcome.terminalOutcome(it) }
                         withContext(Dispatchers.Main) {
                             val id = transfer?.id
-                            if (id != null) {
+                            if (id != null && outcome is FrameTransferV2Outcome.Succeeded) {
                                 onResult?.invoke(Result.Success(id))
                             } else {
-                                onResult?.invoke(Result.Failure(transferError?.message ?: "Failed to create transfer"))
+                                val message = (outcome as? FrameTransferV2Outcome.Failed)?.message
+                                    ?: transferError?.message
+                                    ?: "Failed to create transfer"
+                                onResult?.invoke(Result.Failure(message))
                             }
                         }
                         return@launch

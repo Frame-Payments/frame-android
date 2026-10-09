@@ -16,14 +16,20 @@ import com.google.gson.stream.JsonWriter
  * [TransferV2AccountTransfer.status]. An unrecognized value decodes to [UNKNOWN].
  */
 enum class TransferV2Status {
+    /** Waiting to finish. */
     @SerializedName("pending") PENDING,
+    /** The transfer finished successfully. */
     @SerializedName("completed") COMPLETED,
+    /** The transfer failed. */
     @SerializedName("failed") FAILED,
+    /** The transfer was canceled. */
     @SerializedName("canceled") CANCELED,
+    /** The transfer was reversed. */
     @SerializedName("reversed") REVERSED,
     /** A status this SDK version does not recognize. */
     UNKNOWN;
 
+    /** Looks up a [TransferV2Status] from its wire value. */
     companion object {
         private val byWireValue: Map<String, TransferV2Status> = entries.associateBy { status ->
             TransferV2Status::class.java.getField(status.name)
@@ -73,12 +79,16 @@ internal object TransferV2StatusAdapter : TypeAdapterFactory {
  * An unrecognized value decodes to [UNKNOWN].
  */
 enum class TransferV2Type {
+    /** A charge. */
     @SerializedName("payment") PAYMENT,
+    /** A payout. */
     @SerializedName("payout") PAYOUT,
+    /** A transfer between accounts. */
     @SerializedName("account_transfer") ACCOUNT_TRANSFER,
     /** A type this SDK version does not recognize. */
     UNKNOWN;
 
+    /** Looks up a [TransferV2Type] from its wire value. */
     companion object {
         private val byWireValue: Map<String, TransferV2Type> = entries.associateBy { type ->
             TransferV2Type::class.java.getField(type.name)
@@ -134,6 +144,22 @@ data class TransferV2Money(
 
 /**
  * Nested payment detail on a payment-type V2 transfer.
+ *
+ * @property status Payment status, such as `"succeeded"` or `"requires_confirmation"`.
+ * @property authorizationMode `"automatic"` or `"manual"` for a card payment.
+ * @property receiptEmail Email the receipt was sent to, if any.
+ * @property statementDescriptor Text shown on the cardholder statement, if any.
+ * @property productId Product this payment was created for, if any.
+ * @property paymentLinkId Payment link this payment was created from, if any.
+ * @property subscriptionId Subscription this payment belongs to, if any.
+ * @property invoiceId Invoice this payment belongs to, if any.
+ * @property cartData Itemized cart attached to the payment, if any.
+ * @property amountAuthorized Amount authorized, if any.
+ * @property amountCaptured Amount captured, if any.
+ * @property amountRefunded Amount refunded, if any.
+ * @property failureCode Machine-readable failure code, if the payment failed.
+ * @property failureReason Cardholder-safe failure text, if the payment failed.
+ * @property shipping Shipping attached to the payment, if any.
  */
 data class TransferV2Payment(
     val status: String? = null,
@@ -155,6 +181,12 @@ data class TransferV2Payment(
 
 /**
  * Nested payout detail on a payout-type V2 transfer.
+ *
+ * @property status Payout status.
+ * @property rail Rail the payout was sent on, if any.
+ * @property speed Payout speed, if any.
+ * @property failureCode Machine-readable failure code, if the payout failed.
+ * @property failureReason Failure text, if the payout failed.
  */
 data class TransferV2Payout(
     val status: String? = null,
@@ -166,6 +198,10 @@ data class TransferV2Payout(
 
 /**
  * Nested account-transfer detail on an account_transfer-type V2 transfer.
+ *
+ * @property status Account-transfer status.
+ * @property failureCode Machine-readable failure code, if the transfer failed.
+ * @property failureReason Failure text, if the transfer failed.
  */
 data class TransferV2AccountTransfer(
     val status: String? = null,
@@ -175,6 +211,12 @@ data class TransferV2AccountTransfer(
 
 /**
  * Shipping block returned on a V2 payment.
+ *
+ * @property name Recipient name.
+ * @property phone Recipient phone.
+ * @property carrier Shipping carrier, if any.
+ * @property trackingNumber Tracking number, if any.
+ * @property address Shipping address, if any.
  */
 data class TransferV2Shipping(
     val name: String? = null,
@@ -186,6 +228,13 @@ data class TransferV2Shipping(
 
 /**
  * Address fields used on V2 shipping / billing.
+ *
+ * @property line1 Primary street address.
+ * @property line2 Apartment, suite, or other secondary address.
+ * @property city City name.
+ * @property state State or province code.
+ * @property postalCode ZIP or postal code.
+ * @property country ISO 3166-1 alpha-2 country code.
  */
 data class TransferV2Address(
     @SerializedName("line_1") val line1: String? = null,
@@ -198,6 +247,10 @@ data class TransferV2Address(
 
 /**
  * A `source` or `destination` slot on a V2 transfer response.
+ *
+ * @property paymentMethod Payment method on this endpoint, if any.
+ * @property account Account on this endpoint, if any.
+ * @property wallet Wallet on this endpoint, if any.
  */
 data class TransferV2Endpoint(
     @SerializedName("payment_method") val paymentMethod: FrameObjects.PaymentMethod? = null,
@@ -207,6 +260,10 @@ data class TransferV2Endpoint(
 
 /**
  * Minimal account reference on a V2 endpoint.
+ *
+ * @property id Account id.
+ * @property accountObject The object type string. Always `"account"` when present.
+ * @property name Account display name, if any.
  */
 data class TransferV2AccountRef(
     val id: String,
@@ -216,6 +273,12 @@ data class TransferV2AccountRef(
 
 /**
  * Minimal wallet reference on a V2 endpoint.
+ *
+ * @property id Wallet id.
+ * @property walletObject The object type string. Always `"wallet"` when present.
+ * @property provider Wallet provider, if any.
+ * @property chain Chain the wallet is on, if any.
+ * @property token Token held by the wallet, if any.
  */
 data class TransferV2WalletRef(
     val id: String,

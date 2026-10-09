@@ -18,15 +18,15 @@ import java.util.UUID
 object TransfersV2API {
 
     /**
-     * Attaches Sonar on a payment-method create. The account is [FrameNetworking.accountId], or
-     * [accountId] when that is unset. Establishes the session rather than reading the cache, since a
+     * Attaches Sonar on a payment-method create. The account is [accountId], or
+     * [FrameNetworking.accountId] when that is unset. Establishes the session rather than reading the cache, since a
      * stored but stale session no longer backs a payment.
      */
     private suspend fun withSonarSession(
         request: TransferV2Requests.CreateTransferRequest,
         accountId: String? = null,
     ): TransferV2Requests.CreateTransferRequest {
-        val resolved = FrameNetworking.accountId ?: accountId
+        val resolved = accountId?.takeIf { it.isNotEmpty() } ?: FrameNetworking.accountId
         val hasPaymentSource = request.source?.paymentMethodId != null
             || request.source?.paymentMethod != null
         if (!hasPaymentSource || resolved.isNullOrEmpty()) return request

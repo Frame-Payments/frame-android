@@ -36,6 +36,7 @@ sealed class FrameTransferV2Outcome {
     data class Failed(
         /** The transfer in its failed state. */
         val transfer: TransferV2,
+        /** Cardholder-safe failure text, or null when the API gave none. */
         val message: String?
     ) : FrameTransferV2Outcome()
 

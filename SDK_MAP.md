@@ -2507,9 +2507,9 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `FrameTransferV2Outcome.Succeeded.transfer` | val | `val transfer: TransferV2` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L32) |
 | `FrameTransferV2Outcome.Failed` | data class | `data class Failed(` | [36](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L36) |
 | `FrameTransferV2Outcome.Failed.transfer` | val | `val transfer: TransferV2,` | [38](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L38) |
-| `FrameTransferV2Outcome.Failed.message` | val | `val message: String?` | [39](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L39) |
-| `FrameTransferV2Outcome.TimedOut` | object | `object TimedOut : FrameTransferV2Outcome()` | [43](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L43) |
-| `FrameTransferV2Outcome.terminalOutcome` | fun | `fun terminalOutcome(transfer: TransferV2): FrameTransferV2Outcome?` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L48) |
+| `FrameTransferV2Outcome.Failed.message` | val | `val message: String?` | [40](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L40) |
+| `FrameTransferV2Outcome.TimedOut` | object | `object TimedOut : FrameTransferV2Outcome()` | [44](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L44) |
+| `FrameTransferV2Outcome.terminalOutcome` | fun | `fun terminalOutcome(transfer: TransferV2): FrameTransferV2Outcome?` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2ClientSecret.kt#L49) |
 
 </details>
 
@@ -2566,97 +2566,97 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
 | `TransferV2Status` | enum | `enum TransferV2Status` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L18) |
-| `TransferV2Status.UNKNOWN` | entry | `entry UNKNOWN` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L25) |
-| `TransferV2Type` | enum | `enum TransferV2Type` | [75](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L75) |
-| `TransferV2Type.UNKNOWN` | entry | `entry UNKNOWN` | [80](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L80) |
-| `TransferV2Money` | data class | `data class TransferV2Money(` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L130) |
-| `TransferV2Money.value` | val | `val value: Int,` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L131) |
-| `TransferV2Money.currency` | val | `val currency: String? = null` | [132](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L132) |
-| `TransferV2Payment` | data class | `data class TransferV2Payment(` | [138](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L138) |
-| `TransferV2Payment.status` | val | `val status: String? = null,` | [139](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L139) |
-| `TransferV2Payment.authorizationMode` | val | `val authorizationMode: String? = null,` | [140](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L140) |
-| `TransferV2Payment.receiptEmail` | val | `val receiptEmail: String? = null,` | [141](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L141) |
-| `TransferV2Payment.statementDescriptor` | val | `val statementDescriptor: String? = null,` | [142](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L142) |
-| `TransferV2Payment.productId` | val | `val productId: String? = null,` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L143) |
-| `TransferV2Payment.paymentLinkId` | val | `val paymentLinkId: String? = null,` | [144](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L144) |
-| `TransferV2Payment.subscriptionId` | val | `val subscriptionId: String? = null,` | [145](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L145) |
-| `TransferV2Payment.invoiceId` | val | `val invoiceId: String? = null,` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L146) |
-| `TransferV2Payment.cartData` | val | `val cartData: Map<String, String>? = null,` | [147](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L147) |
-| `TransferV2Payment.amountAuthorized` | val | `val amountAuthorized: TransferV2Money? = null,` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L148) |
-| `TransferV2Payment.amountCaptured` | val | `val amountCaptured: TransferV2Money? = null,` | [149](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L149) |
-| `TransferV2Payment.amountRefunded` | val | `val amountRefunded: TransferV2Money? = null,` | [150](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L150) |
-| `TransferV2Payment.failureCode` | val | `val failureCode: String? = null,` | [151](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L151) |
-| `TransferV2Payment.failureReason` | val | `val failureReason: String? = null,` | [152](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L152) |
-| `TransferV2Payment.shipping` | val | `val shipping: TransferV2Shipping? = null` | [153](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L153) |
-| `TransferV2Payout` | data class | `data class TransferV2Payout(` | [159](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L159) |
-| `TransferV2Payout.status` | val | `val status: String? = null,` | [160](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L160) |
-| `TransferV2Payout.rail` | val | `val rail: String? = null,` | [161](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L161) |
-| `TransferV2Payout.speed` | val | `val speed: String? = null,` | [162](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L162) |
-| `TransferV2Payout.failureCode` | val | `val failureCode: String? = null,` | [163](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L163) |
-| `TransferV2Payout.failureReason` | val | `val failureReason: String? = null` | [164](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L164) |
-| `TransferV2AccountTransfer` | data class | `data class TransferV2AccountTransfer(` | [170](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L170) |
-| `TransferV2AccountTransfer.status` | val | `val status: String? = null,` | [171](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L171) |
-| `TransferV2AccountTransfer.failureCode` | val | `val failureCode: String? = null,` | [172](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L172) |
-| `TransferV2AccountTransfer.failureReason` | val | `val failureReason: String? = null` | [173](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L173) |
-| `TransferV2Shipping` | data class | `data class TransferV2Shipping(` | [179](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L179) |
-| `TransferV2Shipping.name` | val | `val name: String? = null,` | [180](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L180) |
-| `TransferV2Shipping.phone` | val | `val phone: String? = null,` | [181](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L181) |
-| `TransferV2Shipping.carrier` | val | `val carrier: String? = null,` | [182](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L182) |
-| `TransferV2Shipping.trackingNumber` | val | `val trackingNumber: String? = null,` | [183](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L183) |
-| `TransferV2Shipping.address` | val | `val address: TransferV2Address? = null` | [184](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L184) |
-| `TransferV2Address` | data class | `data class TransferV2Address(` | [190](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L190) |
-| `TransferV2Address.line1` | val | `val line1: String? = null,` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L191) |
-| `TransferV2Address.line2` | val | `val line2: String? = null,` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L192) |
-| `TransferV2Address.city` | val | `val city: String? = null,` | [193](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L193) |
-| `TransferV2Address.state` | val | `val state: String? = null,` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L194) |
-| `TransferV2Address.postalCode` | val | `val postalCode: String? = null,` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L195) |
-| `TransferV2Address.country` | val | `val country: String? = null` | [196](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L196) |
-| `TransferV2Endpoint` | data class | `data class TransferV2Endpoint(` | [202](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L202) |
-| `TransferV2Endpoint.paymentMethod` | val | `val paymentMethod: FrameObjects.PaymentMethod? = null,` | [203](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L203) |
-| `TransferV2Endpoint.account` | val | `val account: TransferV2AccountRef? = null,` | [204](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L204) |
-| `TransferV2Endpoint.wallet` | val | `val wallet: TransferV2WalletRef? = null` | [205](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L205) |
-| `TransferV2AccountRef` | data class | `data class TransferV2AccountRef(` | [211](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L211) |
-| `TransferV2AccountRef.id` | val | `val id: String,` | [212](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L212) |
-| `TransferV2AccountRef.accountObject` | val | `val accountObject: String? = null,` | [213](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L213) |
-| `TransferV2AccountRef.name` | val | `val name: String? = null` | [214](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L214) |
-| `TransferV2WalletRef` | data class | `data class TransferV2WalletRef(` | [220](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L220) |
-| `TransferV2WalletRef.id` | val | `val id: String,` | [221](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L221) |
-| `TransferV2WalletRef.walletObject` | val | `val walletObject: String? = null,` | [222](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L222) |
-| `TransferV2WalletRef.provider` | val | `val provider: String? = null,` | [223](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L223) |
-| `TransferV2WalletRef.chain` | val | `val chain: String? = null,` | [224](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L224) |
-| `TransferV2WalletRef.token` | val | `val token: String? = null` | [225](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L225) |
-| `UseFrameSDK` | data class | `data class UseFrameSDK(` | [235](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L235) |
-| `UseFrameSDK.source` | val | `val source: String?,` | [236](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L236) |
-| `UseFrameSDK.directoryServerName` | val | `val directoryServerName: String? = null,` | [237](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L237) |
-| `UseFrameSDK.challengeUrl` | val | `val challengeUrl: String? = null` | [238](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L238) |
-| `TransferV2NextAction` | data class | `data class TransferV2NextAction(` | [248](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L248) |
-| `TransferV2NextAction.type` | val | `val type: String? = null,` | [249](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L249) |
-| `TransferV2NextAction.redirectUrl` | val | `val redirectUrl: String? = null,` | [250](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L250) |
-| `TransferV2NextAction.useFrameSDK` | val | `val useFrameSDK: UseFrameSDK? = null` | [251](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L251) |
-| `TransferV2` | data class | `data class TransferV2(` | [281](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L281) |
-| `TransferV2.id` | val | `val id: String,` | [282](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L282) |
-| `TransferV2.transferObject` | val | `val transferObject: String? = null,` | [283](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L283) |
-| `TransferV2.type` | val | `val type: TransferV2Type? = null,` | [284](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L284) |
-| `TransferV2.status` | val | `val status: TransferV2Status? = null,` | [285](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L285) |
-| `TransferV2.description` | val | `val description: String? = null,` | [286](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L286) |
-| `TransferV2.amount` | val | `val amount: TransferV2Money? = null,` | [287](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L287) |
-| `TransferV2.fee` | val | `val fee: TransferV2Money? = null,` | [288](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L288) |
-| `TransferV2.netAmount` | val | `val netAmount: TransferV2Money? = null,` | [289](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L289) |
-| `TransferV2.livemode` | val | `val livemode: Boolean? = null,` | [290](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L290) |
-| `TransferV2.created` | val | `val created: Int? = null,` | [291](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L291) |
-| `TransferV2.pendingAt` | val | `val pendingAt: Int? = null,` | [292](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L292) |
-| `TransferV2.completedAt` | val | `val completedAt: Int? = null,` | [293](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L293) |
-| `TransferV2.failedAt` | val | `val failedAt: Int? = null,` | [294](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L294) |
-| `TransferV2.canceledAt` | val | `val canceledAt: Int? = null,` | [295](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L295) |
-| `TransferV2.reversedAt` | val | `val reversedAt: Int? = null,` | [296](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L296) |
-| `TransferV2.reference` | val | `val reference: String? = null,` | [297](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L297) |
-| `TransferV2.metadata` | val | `val metadata: Map<String, String>? = null,` | [298](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L298) |
-| `TransferV2.source` | val | `val source: TransferV2Endpoint? = null,` | [299](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L299) |
-| `TransferV2.destination` | val | `val destination: TransferV2Endpoint? = null,` | [300](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L300) |
-| `TransferV2.payment` | val | `val payment: TransferV2Payment? = null,` | [301](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L301) |
-| `TransferV2.payout` | val | `val payout: TransferV2Payout? = null,` | [302](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L302) |
-| `TransferV2.accountTransfer` | val | `val accountTransfer: TransferV2AccountTransfer? = null,` | [303](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L303) |
-| `TransferV2.nextAction` | val | `val nextAction: TransferV2NextAction? = null` | [304](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L304) |
+| `TransferV2Status.UNKNOWN` | entry | `entry UNKNOWN` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L30) |
+| `TransferV2Type` | enum | `enum TransferV2Type` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L81) |
+| `TransferV2Type.UNKNOWN` | entry | `entry UNKNOWN` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L89) |
+| `TransferV2Money` | data class | `data class TransferV2Money(` | [140](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L140) |
+| `TransferV2Money.value` | val | `val value: Int,` | [141](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L141) |
+| `TransferV2Money.currency` | val | `val currency: String? = null` | [142](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L142) |
+| `TransferV2Payment` | data class | `data class TransferV2Payment(` | [164](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L164) |
+| `TransferV2Payment.status` | val | `val status: String? = null,` | [165](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L165) |
+| `TransferV2Payment.authorizationMode` | val | `val authorizationMode: String? = null,` | [166](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L166) |
+| `TransferV2Payment.receiptEmail` | val | `val receiptEmail: String? = null,` | [167](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L167) |
+| `TransferV2Payment.statementDescriptor` | val | `val statementDescriptor: String? = null,` | [168](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L168) |
+| `TransferV2Payment.productId` | val | `val productId: String? = null,` | [169](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L169) |
+| `TransferV2Payment.paymentLinkId` | val | `val paymentLinkId: String? = null,` | [170](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L170) |
+| `TransferV2Payment.subscriptionId` | val | `val subscriptionId: String? = null,` | [171](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L171) |
+| `TransferV2Payment.invoiceId` | val | `val invoiceId: String? = null,` | [172](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L172) |
+| `TransferV2Payment.cartData` | val | `val cartData: Map<String, String>? = null,` | [173](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L173) |
+| `TransferV2Payment.amountAuthorized` | val | `val amountAuthorized: TransferV2Money? = null,` | [174](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L174) |
+| `TransferV2Payment.amountCaptured` | val | `val amountCaptured: TransferV2Money? = null,` | [175](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L175) |
+| `TransferV2Payment.amountRefunded` | val | `val amountRefunded: TransferV2Money? = null,` | [176](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L176) |
+| `TransferV2Payment.failureCode` | val | `val failureCode: String? = null,` | [177](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L177) |
+| `TransferV2Payment.failureReason` | val | `val failureReason: String? = null,` | [178](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L178) |
+| `TransferV2Payment.shipping` | val | `val shipping: TransferV2Shipping? = null` | [179](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L179) |
+| `TransferV2Payout` | data class | `data class TransferV2Payout(` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L191) |
+| `TransferV2Payout.status` | val | `val status: String? = null,` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L192) |
+| `TransferV2Payout.rail` | val | `val rail: String? = null,` | [193](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L193) |
+| `TransferV2Payout.speed` | val | `val speed: String? = null,` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L194) |
+| `TransferV2Payout.failureCode` | val | `val failureCode: String? = null,` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L195) |
+| `TransferV2Payout.failureReason` | val | `val failureReason: String? = null` | [196](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L196) |
+| `TransferV2AccountTransfer` | data class | `data class TransferV2AccountTransfer(` | [206](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L206) |
+| `TransferV2AccountTransfer.status` | val | `val status: String? = null,` | [207](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L207) |
+| `TransferV2AccountTransfer.failureCode` | val | `val failureCode: String? = null,` | [208](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L208) |
+| `TransferV2AccountTransfer.failureReason` | val | `val failureReason: String? = null` | [209](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L209) |
+| `TransferV2Shipping` | data class | `data class TransferV2Shipping(` | [221](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L221) |
+| `TransferV2Shipping.name` | val | `val name: String? = null,` | [222](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L222) |
+| `TransferV2Shipping.phone` | val | `val phone: String? = null,` | [223](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L223) |
+| `TransferV2Shipping.carrier` | val | `val carrier: String? = null,` | [224](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L224) |
+| `TransferV2Shipping.trackingNumber` | val | `val trackingNumber: String? = null,` | [225](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L225) |
+| `TransferV2Shipping.address` | val | `val address: TransferV2Address? = null` | [226](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L226) |
+| `TransferV2Address` | data class | `data class TransferV2Address(` | [239](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L239) |
+| `TransferV2Address.line1` | val | `val line1: String? = null,` | [240](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L240) |
+| `TransferV2Address.line2` | val | `val line2: String? = null,` | [241](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L241) |
+| `TransferV2Address.city` | val | `val city: String? = null,` | [242](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L242) |
+| `TransferV2Address.state` | val | `val state: String? = null,` | [243](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L243) |
+| `TransferV2Address.postalCode` | val | `val postalCode: String? = null,` | [244](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L244) |
+| `TransferV2Address.country` | val | `val country: String? = null` | [245](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L245) |
+| `TransferV2Endpoint` | data class | `data class TransferV2Endpoint(` | [255](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L255) |
+| `TransferV2Endpoint.paymentMethod` | val | `val paymentMethod: FrameObjects.PaymentMethod? = null,` | [256](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L256) |
+| `TransferV2Endpoint.account` | val | `val account: TransferV2AccountRef? = null,` | [257](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L257) |
+| `TransferV2Endpoint.wallet` | val | `val wallet: TransferV2WalletRef? = null` | [258](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L258) |
+| `TransferV2AccountRef` | data class | `data class TransferV2AccountRef(` | [268](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L268) |
+| `TransferV2AccountRef.id` | val | `val id: String,` | [269](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L269) |
+| `TransferV2AccountRef.accountObject` | val | `val accountObject: String? = null,` | [270](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L270) |
+| `TransferV2AccountRef.name` | val | `val name: String? = null` | [271](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L271) |
+| `TransferV2WalletRef` | data class | `data class TransferV2WalletRef(` | [283](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L283) |
+| `TransferV2WalletRef.id` | val | `val id: String,` | [284](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L284) |
+| `TransferV2WalletRef.walletObject` | val | `val walletObject: String? = null,` | [285](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L285) |
+| `TransferV2WalletRef.provider` | val | `val provider: String? = null,` | [286](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L286) |
+| `TransferV2WalletRef.chain` | val | `val chain: String? = null,` | [287](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L287) |
+| `TransferV2WalletRef.token` | val | `val token: String? = null` | [288](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L288) |
+| `UseFrameSDK` | data class | `data class UseFrameSDK(` | [298](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L298) |
+| `UseFrameSDK.source` | val | `val source: String?,` | [299](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L299) |
+| `UseFrameSDK.directoryServerName` | val | `val directoryServerName: String? = null,` | [300](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L300) |
+| `UseFrameSDK.challengeUrl` | val | `val challengeUrl: String? = null` | [301](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L301) |
+| `TransferV2NextAction` | data class | `data class TransferV2NextAction(` | [311](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L311) |
+| `TransferV2NextAction.type` | val | `val type: String? = null,` | [312](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L312) |
+| `TransferV2NextAction.redirectUrl` | val | `val redirectUrl: String? = null,` | [313](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L313) |
+| `TransferV2NextAction.useFrameSDK` | val | `val useFrameSDK: UseFrameSDK? = null` | [314](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L314) |
+| `TransferV2` | data class | `data class TransferV2(` | [344](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L344) |
+| `TransferV2.id` | val | `val id: String,` | [345](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L345) |
+| `TransferV2.transferObject` | val | `val transferObject: String? = null,` | [346](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L346) |
+| `TransferV2.type` | val | `val type: TransferV2Type? = null,` | [347](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L347) |
+| `TransferV2.status` | val | `val status: TransferV2Status? = null,` | [348](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L348) |
+| `TransferV2.description` | val | `val description: String? = null,` | [349](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L349) |
+| `TransferV2.amount` | val | `val amount: TransferV2Money? = null,` | [350](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L350) |
+| `TransferV2.fee` | val | `val fee: TransferV2Money? = null,` | [351](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L351) |
+| `TransferV2.netAmount` | val | `val netAmount: TransferV2Money? = null,` | [352](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L352) |
+| `TransferV2.livemode` | val | `val livemode: Boolean? = null,` | [353](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L353) |
+| `TransferV2.created` | val | `val created: Int? = null,` | [354](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L354) |
+| `TransferV2.pendingAt` | val | `val pendingAt: Int? = null,` | [355](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L355) |
+| `TransferV2.completedAt` | val | `val completedAt: Int? = null,` | [356](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L356) |
+| `TransferV2.failedAt` | val | `val failedAt: Int? = null,` | [357](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L357) |
+| `TransferV2.canceledAt` | val | `val canceledAt: Int? = null,` | [358](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L358) |
+| `TransferV2.reversedAt` | val | `val reversedAt: Int? = null,` | [359](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L359) |
+| `TransferV2.reference` | val | `val reference: String? = null,` | [360](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L360) |
+| `TransferV2.metadata` | val | `val metadata: Map<String, String>? = null,` | [361](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L361) |
+| `TransferV2.source` | val | `val source: TransferV2Endpoint? = null,` | [362](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L362) |
+| `TransferV2.destination` | val | `val destination: TransferV2Endpoint? = null,` | [363](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L363) |
+| `TransferV2.payment` | val | `val payment: TransferV2Payment? = null,` | [364](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L364) |
+| `TransferV2.payout` | val | `val payout: TransferV2Payout? = null,` | [365](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L365) |
+| `TransferV2.accountTransfer` | val | `val accountTransfer: TransferV2AccountTransfer? = null,` | [366](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L366) |
+| `TransferV2.nextAction` | val | `val nextAction: TransferV2NextAction? = null` | [367](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Objects.kt#L367) |
 
 </details>
 
@@ -2670,78 +2670,78 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `TransferV2Requests.MoneyAmount` | data class | `data class MoneyAmount(` | [16](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L16) |
 | `TransferV2Requests.MoneyAmount.value` | val | `val value: Int,` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L17) |
 | `TransferV2Requests.MoneyAmount.currency` | val | `val currency: String? =` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L18) |
-| `TransferV2Requests.Address` | data class | `data class Address(` | [24](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L24) |
-| `TransferV2Requests.Address.line1` | val | `val line1: String? = null,` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L25) |
-| `TransferV2Requests.Address.line2` | val | `val line2: String? = null,` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L26) |
-| `TransferV2Requests.Address.city` | val | `val city: String? = null,` | [27](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L27) |
-| `TransferV2Requests.Address.state` | val | `val state: String? = null,` | [28](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L28) |
-| `TransferV2Requests.Address.postalCode` | val | `val postalCode: String? = null,` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L29) |
-| `TransferV2Requests.Address.country` | val | `val country: String? = null` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L30) |
-| `TransferV2Requests.NestedPaymentMethod` | data class | `data class NestedPaymentMethod(` | [36](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L36) |
-| `TransferV2Requests.NestedPaymentMethod.accountId` | val | `val accountId: String? = null,` | [37](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L37) |
-| `TransferV2Requests.NestedPaymentMethod.type` | val | `val type: String? = null,` | [38](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L38) |
-| `TransferV2Requests.NestedPaymentMethod.cardNumber` | val | `val cardNumber: String? = null,` | [39](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L39) |
-| `TransferV2Requests.NestedPaymentMethod.expMonth` | val | `val expMonth: Int? = null,` | [40](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L40) |
-| `TransferV2Requests.NestedPaymentMethod.expYear` | val | `val expYear: Int? = null,` | [41](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L41) |
-| `TransferV2Requests.NestedPaymentMethod.cvc` | val | `val cvc: String? = null,` | [42](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L42) |
-| `TransferV2Requests.NestedPaymentMethod.accountNumber` | val | `val accountNumber: String? = null,` | [43](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L43) |
-| `TransferV2Requests.NestedPaymentMethod.routingNumber` | val | `val routingNumber: String? = null,` | [44](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L44) |
-| `TransferV2Requests.NestedPaymentMethod.accountType` | val | `val accountType: String? = null,` | [45](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L45) |
-| `TransferV2Requests.NestedPaymentMethod.cashTag` | val | `val cashTag: String? = null,` | [46](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L46) |
-| `TransferV2Requests.NestedPaymentMethod.email` | val | `val email: String? = null,` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L47) |
-| `TransferV2Requests.NestedPaymentMethod.phoneNumber` | val | `val phoneNumber: String? = null,` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L48) |
-| `TransferV2Requests.NestedPaymentMethod.handle` | val | `val handle: String? = null,` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L49) |
-| `TransferV2Requests.NestedPaymentMethod.billing` | val | `val billing: Address? = null` | [50](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L50) |
-| `TransferV2Requests.EndpointSlot` | data class | `data class EndpointSlot(` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L56) |
-| `TransferV2Requests.EndpointSlot.accountId` | val | `val accountId: String? = null,` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L57) |
-| `TransferV2Requests.EndpointSlot.paymentMethodId` | val | `val paymentMethodId: String? = null,` | [58](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L58) |
-| `TransferV2Requests.EndpointSlot.walletId` | val | `val walletId: String? = null,` | [59](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L59) |
-| `TransferV2Requests.EndpointSlot.rail` | val | `val rail: String? = null,` | [60](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L60) |
-| `TransferV2Requests.EndpointSlot.speed` | val | `val speed: String? = null,` | [61](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L61) |
-| `TransferV2Requests.EndpointSlot.paymentMethod` | val | `val paymentMethod: NestedPaymentMethod? = null` | [62](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L62) |
-| `TransferV2Requests.Shipping` | data class | `data class Shipping(` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L68) |
-| `TransferV2Requests.Shipping.line1` | val | `val line1: String? = null,` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L69) |
-| `TransferV2Requests.Shipping.line2` | val | `val line2: String? = null,` | [70](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L70) |
-| `TransferV2Requests.Shipping.city` | val | `val city: String? = null,` | [71](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L71) |
-| `TransferV2Requests.Shipping.state` | val | `val state: String? = null,` | [72](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L72) |
-| `TransferV2Requests.Shipping.postalCode` | val | `val postalCode: String? = null,` | [73](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L73) |
-| `TransferV2Requests.Shipping.country` | val | `val country: String? = null,` | [74](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L74) |
-| `TransferV2Requests.Shipping.name` | val | `val name: String? = null,` | [75](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L75) |
-| `TransferV2Requests.Shipping.phone` | val | `val phone: String? = null,` | [76](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L76) |
-| `TransferV2Requests.Shipping.carrier` | val | `val carrier: String? = null,` | [77](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L77) |
-| `TransferV2Requests.Shipping.trackingNumber` | val | `val trackingNumber: String? = null` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L78) |
-| `TransferV2Requests.External3DS` | data class | `data class External3DS(` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L84) |
-| `TransferV2Requests.External3DS.version` | val | `val version: String? = null,` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L85) |
-| `TransferV2Requests.External3DS.transactionId` | val | `val transactionId: String? = null,` | [86](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L86) |
-| `TransferV2Requests.External3DS.cryptogram` | val | `val cryptogram: String? = null,` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L87) |
-| `TransferV2Requests.External3DS.electronicCommerceIndicator` | val | `val electronicCommerceIndicator: String? = null,` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L88) |
-| `TransferV2Requests.External3DS.aresTransStatus` | val | `val aresTransStatus: String? = null` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L89) |
-| `TransferV2Requests.CardPaymentMethodOptions` | data class | `data class CardPaymentMethodOptions(` | [95](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L95) |
-| `TransferV2Requests.CardPaymentMethodOptions.external3ds` | val | `val external3ds: External3DS? = null` | [96](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L96) |
-| `TransferV2Requests.PaymentMethodOptions` | data class | `data class PaymentMethodOptions(` | [102](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L102) |
-| `TransferV2Requests.PaymentMethodOptions.card` | val | `val card: CardPaymentMethodOptions? = null` | [103](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L103) |
-| `TransferV2Requests.CreateTransferRequest` | data class | `data class CreateTransferRequest(` | [116](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L116) |
-| `TransferV2Requests.CreateTransferRequest.amount` | val | `val amount: MoneyAmount,` | [117](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L117) |
-| `TransferV2Requests.CreateTransferRequest.source` | val | `val source: EndpointSlot? = null,` | [118](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L118) |
-| `TransferV2Requests.CreateTransferRequest.destination` | val | `val destination: EndpointSlot? = null,` | [119](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L119) |
-| `TransferV2Requests.CreateTransferRequest.confirm` | val | `val confirm: Boolean? = null,` | [120](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L120) |
-| `TransferV2Requests.CreateTransferRequest.authorizationMode` | val | `val authorizationMode: String? = null,` | [121](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L121) |
-| `TransferV2Requests.CreateTransferRequest.receiptEmail` | val | `val receiptEmail: String? = null,` | [122](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L122) |
-| `TransferV2Requests.CreateTransferRequest.statementDescriptor` | val | `val statementDescriptor: String? = null,` | [123](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L123) |
-| `TransferV2Requests.CreateTransferRequest.productId` | val | `val productId: String? = null,` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L124) |
-| `TransferV2Requests.CreateTransferRequest.paymentLinkId` | val | `val paymentLinkId: String? = null,` | [125](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L125) |
-| `TransferV2Requests.CreateTransferRequest.subscriptionId` | val | `val subscriptionId: String? = null,` | [126](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L126) |
-| `TransferV2Requests.CreateTransferRequest.invoiceId` | val | `val invoiceId: String? = null,` | [127](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L127) |
-| `TransferV2Requests.CreateTransferRequest.description` | val | `val description: String? = null,` | [128](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L128) |
-| `TransferV2Requests.CreateTransferRequest.reference` | val | `val reference: String? = null,` | [129](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L129) |
-| `TransferV2Requests.CreateTransferRequest.shipping` | val | `val shipping: Shipping? = null,` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L130) |
-| `TransferV2Requests.CreateTransferRequest.paymentMethodOptions` | val | `val paymentMethodOptions: PaymentMethodOptions? = null,` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L131) |
-| `TransferV2Requests.CreateTransferRequest.cartData` | val | `val cartData: Map<String, String>? = null,` | [132](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L132) |
-| `TransferV2Requests.CreateTransferRequest.metadata` | val | `val metadata: Map<String, String>? = null,` | [133](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L133) |
-| `TransferV2Requests.CreateTransferRequest.sonarSessionId` | val | `val sonarSessionId: String? = null` | [134](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L134) |
-| `TransferV2Requests.AmountOnlyRequest` | data class | `data class AmountOnlyRequest(` | [142](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L142) |
-| `TransferV2Requests.AmountOnlyRequest.amount` | val | `val amount: MoneyAmount? = null` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L143) |
-| `UpdateTransferRequest` | typealias | `typealias UpdateTransferRequest = TransferV2Requests.CreateTransferRequest` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L148) |
+| `TransferV2Requests.Address` | data class | `data class Address(` | [31](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L31) |
+| `TransferV2Requests.Address.line1` | val | `val line1: String? = null,` | [32](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L32) |
+| `TransferV2Requests.Address.line2` | val | `val line2: String? = null,` | [33](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L33) |
+| `TransferV2Requests.Address.city` | val | `val city: String? = null,` | [34](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L34) |
+| `TransferV2Requests.Address.state` | val | `val state: String? = null,` | [35](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L35) |
+| `TransferV2Requests.Address.postalCode` | val | `val postalCode: String? = null,` | [36](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L36) |
+| `TransferV2Requests.Address.country` | val | `val country: String? = null` | [37](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L37) |
+| `TransferV2Requests.NestedPaymentMethod` | data class | `data class NestedPaymentMethod(` | [58](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L58) |
+| `TransferV2Requests.NestedPaymentMethod.accountId` | val | `val accountId: String? = null,` | [59](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L59) |
+| `TransferV2Requests.NestedPaymentMethod.type` | val | `val type: String? = null,` | [60](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L60) |
+| `TransferV2Requests.NestedPaymentMethod.cardNumber` | val | `val cardNumber: String? = null,` | [61](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L61) |
+| `TransferV2Requests.NestedPaymentMethod.expMonth` | val | `val expMonth: Int? = null,` | [62](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L62) |
+| `TransferV2Requests.NestedPaymentMethod.expYear` | val | `val expYear: Int? = null,` | [63](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L63) |
+| `TransferV2Requests.NestedPaymentMethod.cvc` | val | `val cvc: String? = null,` | [64](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L64) |
+| `TransferV2Requests.NestedPaymentMethod.accountNumber` | val | `val accountNumber: String? = null,` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L65) |
+| `TransferV2Requests.NestedPaymentMethod.routingNumber` | val | `val routingNumber: String? = null,` | [66](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L66) |
+| `TransferV2Requests.NestedPaymentMethod.accountType` | val | `val accountType: String? = null,` | [67](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L67) |
+| `TransferV2Requests.NestedPaymentMethod.cashTag` | val | `val cashTag: String? = null,` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L68) |
+| `TransferV2Requests.NestedPaymentMethod.email` | val | `val email: String? = null,` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L69) |
+| `TransferV2Requests.NestedPaymentMethod.phoneNumber` | val | `val phoneNumber: String? = null,` | [70](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L70) |
+| `TransferV2Requests.NestedPaymentMethod.handle` | val | `val handle: String? = null,` | [71](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L71) |
+| `TransferV2Requests.NestedPaymentMethod.billing` | val | `val billing: Address? = null` | [72](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L72) |
+| `TransferV2Requests.EndpointSlot` | data class | `data class EndpointSlot(` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L85) |
+| `TransferV2Requests.EndpointSlot.accountId` | val | `val accountId: String? = null,` | [86](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L86) |
+| `TransferV2Requests.EndpointSlot.paymentMethodId` | val | `val paymentMethodId: String? = null,` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L87) |
+| `TransferV2Requests.EndpointSlot.walletId` | val | `val walletId: String? = null,` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L88) |
+| `TransferV2Requests.EndpointSlot.rail` | val | `val rail: String? = null,` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L89) |
+| `TransferV2Requests.EndpointSlot.speed` | val | `val speed: String? = null,` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L90) |
+| `TransferV2Requests.EndpointSlot.paymentMethod` | val | `val paymentMethod: NestedPaymentMethod? = null` | [91](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L91) |
+| `TransferV2Requests.Shipping` | data class | `data class Shipping(` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L108) |
+| `TransferV2Requests.Shipping.line1` | val | `val line1: String? = null,` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L109) |
+| `TransferV2Requests.Shipping.line2` | val | `val line2: String? = null,` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L110) |
+| `TransferV2Requests.Shipping.city` | val | `val city: String? = null,` | [111](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L111) |
+| `TransferV2Requests.Shipping.state` | val | `val state: String? = null,` | [112](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L112) |
+| `TransferV2Requests.Shipping.postalCode` | val | `val postalCode: String? = null,` | [113](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L113) |
+| `TransferV2Requests.Shipping.country` | val | `val country: String? = null,` | [114](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L114) |
+| `TransferV2Requests.Shipping.name` | val | `val name: String? = null,` | [115](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L115) |
+| `TransferV2Requests.Shipping.phone` | val | `val phone: String? = null,` | [116](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L116) |
+| `TransferV2Requests.Shipping.carrier` | val | `val carrier: String? = null,` | [117](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L117) |
+| `TransferV2Requests.Shipping.trackingNumber` | val | `val trackingNumber: String? = null` | [118](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L118) |
+| `TransferV2Requests.External3DS` | data class | `data class External3DS(` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L130) |
+| `TransferV2Requests.External3DS.version` | val | `val version: String? = null,` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L131) |
+| `TransferV2Requests.External3DS.transactionId` | val | `val transactionId: String? = null,` | [132](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L132) |
+| `TransferV2Requests.External3DS.cryptogram` | val | `val cryptogram: String? = null,` | [133](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L133) |
+| `TransferV2Requests.External3DS.electronicCommerceIndicator` | val | `val electronicCommerceIndicator: String? = null,` | [134](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L134) |
+| `TransferV2Requests.External3DS.aresTransStatus` | val | `val aresTransStatus: String? = null` | [135](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L135) |
+| `TransferV2Requests.CardPaymentMethodOptions` | data class | `data class CardPaymentMethodOptions(` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L143) |
+| `TransferV2Requests.CardPaymentMethodOptions.external3ds` | val | `val external3ds: External3DS? = null` | [144](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L144) |
+| `TransferV2Requests.PaymentMethodOptions` | data class | `data class PaymentMethodOptions(` | [152](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L152) |
+| `TransferV2Requests.PaymentMethodOptions.card` | val | `val card: CardPaymentMethodOptions? = null` | [153](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L153) |
+| `TransferV2Requests.CreateTransferRequest` | data class | `data class CreateTransferRequest(` | [178](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L178) |
+| `TransferV2Requests.CreateTransferRequest.amount` | val | `val amount: MoneyAmount,` | [179](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L179) |
+| `TransferV2Requests.CreateTransferRequest.source` | val | `val source: EndpointSlot? = null,` | [180](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L180) |
+| `TransferV2Requests.CreateTransferRequest.destination` | val | `val destination: EndpointSlot? = null,` | [181](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L181) |
+| `TransferV2Requests.CreateTransferRequest.confirm` | val | `val confirm: Boolean? = null,` | [182](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L182) |
+| `TransferV2Requests.CreateTransferRequest.authorizationMode` | val | `val authorizationMode: String? = null,` | [183](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L183) |
+| `TransferV2Requests.CreateTransferRequest.receiptEmail` | val | `val receiptEmail: String? = null,` | [184](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L184) |
+| `TransferV2Requests.CreateTransferRequest.statementDescriptor` | val | `val statementDescriptor: String? = null,` | [185](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L185) |
+| `TransferV2Requests.CreateTransferRequest.productId` | val | `val productId: String? = null,` | [186](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L186) |
+| `TransferV2Requests.CreateTransferRequest.paymentLinkId` | val | `val paymentLinkId: String? = null,` | [187](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L187) |
+| `TransferV2Requests.CreateTransferRequest.subscriptionId` | val | `val subscriptionId: String? = null,` | [188](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L188) |
+| `TransferV2Requests.CreateTransferRequest.invoiceId` | val | `val invoiceId: String? = null,` | [189](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L189) |
+| `TransferV2Requests.CreateTransferRequest.description` | val | `val description: String? = null,` | [190](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L190) |
+| `TransferV2Requests.CreateTransferRequest.reference` | val | `val reference: String? = null,` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L191) |
+| `TransferV2Requests.CreateTransferRequest.shipping` | val | `val shipping: Shipping? = null,` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L192) |
+| `TransferV2Requests.CreateTransferRequest.paymentMethodOptions` | val | `val paymentMethodOptions: PaymentMethodOptions? = null,` | [193](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L193) |
+| `TransferV2Requests.CreateTransferRequest.cartData` | val | `val cartData: Map<String, String>? = null,` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L194) |
+| `TransferV2Requests.CreateTransferRequest.metadata` | val | `val metadata: Map<String, String>? = null,` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L195) |
+| `TransferV2Requests.CreateTransferRequest.sonarSessionId` | val | `val sonarSessionId: String? = null` | [196](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L196) |
+| `TransferV2Requests.AmountOnlyRequest` | data class | `data class AmountOnlyRequest(` | [204](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L204) |
+| `TransferV2Requests.AmountOnlyRequest.amount` | val | `val amount: MoneyAmount? = null` | [205](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L205) |
+| `UpdateTransferRequest` | typealias | `typealias UpdateTransferRequest = TransferV2Requests.CreateTransferRequest` | [210](FrameSDK/src/main/java/com/framepayments/framesdk/transfersv2/TransferV2Requests.kt#L210) |
 
 </details>
 
@@ -2952,7 +2952,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameGooglePayButton` | class | `class FrameGooglePayButton @JvmOverloads constructor(` | [68](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/buttons/FrameGooglePayButton.kt#L68) |
+| `FrameGooglePayButton` | class | `class FrameGooglePayButton @JvmOverloads constructor(` | [69](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/buttons/FrameGooglePayButton.kt#L69) |
 
 </details>
 

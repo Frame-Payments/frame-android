@@ -421,10 +421,11 @@ class FrameCheckoutViewModel : ViewModel() {
 
             // Deferred confirm: inline confirm rejects unsettled 3DS charges before
             // TransferV2Confirmation can present the challenge.
+            val lockedCents = checkoutClientSecret?.amountCents
             val request = TransferV2Requests.CreateTransferRequest(
                 amount = TransferV2Requests.MoneyAmount(
-                    value = amount,
-                    currency = checkoutClientSecret?.amountCurrency ?: "usd",
+                    value = lockedCents ?: amount,
+                    currency = checkoutClientSecret?.amountCurrency?.takeIf { it.isNotEmpty() } ?: "usd",
                 ),
                 source = TransferV2Requests.EndpointSlot(paymentMethodId = paymentMethodId),
                 confirm = false,
@@ -453,9 +454,30 @@ class FrameCheckoutViewModel : ViewModel() {
                 || paymentStatus == "requires_action"
             if (needsConfirm) {
                 emit(completeThreeDSecure(transfer, context))
-            } else {
-                AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
-                emit(transfer)
+            } else when (val outcome = FrameTransferV2Outcome.terminalOutcome(transfer)) {
+                is FrameTransferV2Outcome.Succeeded -> {
+                    AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
+                    emit(transfer)
+                }
+                is FrameTransferV2Outcome.Failed -> {
+                    val declined = FrameCheckoutError.Declined(outcome.message)
+                    AccountEventEmitter.emit(
+                        AccountEventName.CHECKOUT_PAYMENT_DECLINED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        declined.toastMessage()
+                    )
+                    FrameSnackbarController.emit(declined.toastMessage())
+                    emit(null)
+                }
+                null, FrameTransferV2Outcome.TimedOut -> {
+                    AccountEventEmitter.emit(
+                        AccountEventName.CHECKOUT_PAYMENT_FAILED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        "Transfer payment did not reach a terminal state."
+                    )
+                    FrameSnackbarController.emit(FrameCheckoutError.Unresolved().toastMessage())
+                    emit(null)
+                }
             }
         } finally {
             _isPerformingAction.postValue(false)

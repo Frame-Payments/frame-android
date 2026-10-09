@@ -20,6 +20,13 @@ object TransferV2Requests {
 
     /**
      * Address fields for nested payment-method billing or shipping.
+     *
+     * @property line1 Primary street address.
+     * @property line2 Apartment, suite, or other secondary address.
+     * @property city City name.
+     * @property state State or province code.
+     * @property postalCode ZIP or postal code.
+     * @property country ISO 3166-1 alpha-2 country code.
      */
     data class Address(
         @SerializedName("line_1") val line1: String? = null,
@@ -32,6 +39,21 @@ object TransferV2Requests {
 
     /**
      * Nested payment method create payload under `source` / `destination`.
+     *
+     * @property accountId Account that owns the new payment method.
+     * @property type Payment method type, such as `"card"` or `"ach"`.
+     * @property cardNumber Card number for a card method.
+     * @property expMonth Card expiration month.
+     * @property expYear Card expiration year.
+     * @property cvc Card security code.
+     * @property accountNumber Bank account number for an ACH method.
+     * @property routingNumber ABA routing number for an ACH method.
+     * @property accountType Bank account type, such as `"checking"`.
+     * @property cashTag Cash App tag, when that method is used.
+     * @property email Email for the payment method, when required.
+     * @property phoneNumber Phone number for the payment method, when required.
+     * @property handle Handle for the payment method, when required.
+     * @property billing Billing address for the payment method.
      */
     data class NestedPaymentMethod(
         @SerializedName("account_id") val accountId: String? = null,
@@ -52,6 +74,13 @@ object TransferV2Requests {
 
     /**
      * A `source` or `destination` slot on create/update/confirm.
+     *
+     * @property accountId Account id, when the endpoint is an account.
+     * @property paymentMethodId Saved payment method id.
+     * @property walletId Wallet id.
+     * @property rail Payout rail, when required.
+     * @property speed Payout speed, when required.
+     * @property paymentMethod Inline payment method, instead of an id.
      */
     data class EndpointSlot(
         @SerializedName("account_id") val accountId: String? = null,
@@ -64,6 +93,17 @@ object TransferV2Requests {
 
     /**
      * Shipping fields on create/update.
+     *
+     * @property line1 Primary street address.
+     * @property line2 Apartment, suite, or other secondary address.
+     * @property city City name.
+     * @property state State or province code.
+     * @property postalCode ZIP or postal code.
+     * @property country ISO 3166-1 alpha-2 country code.
+     * @property name Recipient name.
+     * @property phone Recipient phone.
+     * @property carrier Shipping carrier.
+     * @property trackingNumber Tracking number.
      */
     data class Shipping(
         @SerializedName("line_1") val line1: String? = null,
@@ -80,6 +120,12 @@ object TransferV2Requests {
 
     /**
      * External 3DS cryptogram payload under `payment_method_options.card.external_3ds`.
+     *
+     * @property version 3DS protocol version.
+     * @property transactionId Directory-server transaction id.
+     * @property cryptogram Authentication cryptogram.
+     * @property electronicCommerceIndicator Electronic commerce indicator.
+     * @property aresTransStatus Authentication response transaction status.
      */
     data class External3DS(
         val version: String? = null,
@@ -91,6 +137,8 @@ object TransferV2Requests {
 
     /**
      * Card options nested under `payment_method_options`.
+     *
+     * @property external3ds Cryptogram from a 3DS authentication that already ran.
      */
     data class CardPaymentMethodOptions(
         @SerializedName("external_3ds") val external3ds: External3DS? = null
@@ -98,6 +146,8 @@ object TransferV2Requests {
 
     /**
      * Payment method options on create/confirm.
+     *
+     * @property card Card-specific options, including an external 3DS cryptogram.
      */
     data class PaymentMethodOptions(
         val card: CardPaymentMethodOptions? = null
@@ -111,6 +161,18 @@ object TransferV2Requests {
      * @property destination Destination endpoint slot when required.
      * @property confirm Pass `false` for deferred confirm (client 3DS). Defaults to API behaviour when null.
      * @property authorizationMode `"automatic"` or `"manual"` for card payments.
+     * @property receiptEmail Email address to send the receipt to.
+     * @property statementDescriptor Text shown on the cardholder statement.
+     * @property productId Product this transfer is for.
+     * @property paymentLinkId Payment link this transfer was created from.
+     * @property subscriptionId Subscription this transfer belongs to.
+     * @property invoiceId Invoice this transfer belongs to.
+     * @property description Merchant description of the transfer.
+     * @property reference Merchant reference string.
+     * @property shipping Shipping details for the payment.
+     * @property paymentMethodOptions Card options, including an external 3DS cryptogram.
+     * @property cartData Itemized cart attached to the transfer.
+     * @property metadata Arbitrary key-value pairs for the merchant.
      * @property sonarSessionId The account's Sonar session; set by [TransfersV2API] on payment creates.
      */
     data class CreateTransferRequest(
