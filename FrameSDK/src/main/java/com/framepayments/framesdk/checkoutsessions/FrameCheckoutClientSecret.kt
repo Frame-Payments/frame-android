@@ -8,11 +8,22 @@ package com.framepayments.framesdk.checkoutsessions
  *
  * @property clientSecret The `chk_sess_…` bearer token.
  * @property expiresAt When the token stops being accepted, as a Unix timestamp in seconds.
+ * @property amountCents Locked charge amount, in the smallest currency unit. Refresh replays it.
+ * @property amountCurrency ISO 4217 code for [amountCents].
  */
 class FrameCheckoutClientSecret(
     var clientSecret: String,
     var expiresAt: Long,
+    var amountCents: Int? = null,
+    var amountCurrency: String? = null,
 ) {
     /** `true` when [expiresAt] is now or earlier. */
     fun isExpired(nowSeconds: Long = System.currentTimeMillis() / 1000): Boolean = expiresAt <= nowSeconds
+
+    /** Keeps a later refresh transfer-capable when the host passed only the token and expiry. */
+    fun recordLockedAmountIfMissing(cents: Int, currency: String) {
+        if (amountCents != null || cents == 0) return
+        amountCents = cents
+        if (amountCurrency.isNullOrEmpty()) amountCurrency = currency
+    }
 }

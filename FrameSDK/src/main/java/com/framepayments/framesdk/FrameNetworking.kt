@@ -11,18 +11,23 @@ import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
-import com.framepayments.framesdk.transfers.TransferStatusAdapter
+import com.framepayments.framesdk.transfersv2.TransferV2StatusAdapter
+import com.framepayments.framesdk.transfersv2.TransferV2TypeAdapter
 import com.framepayments.framesdk.managers.SiftManager
 import com.framepayments.framesdk.sonar.SessionManager as SonarSessionManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -101,7 +106,8 @@ object FrameNetworking {
     /** Gson instance shared across all SDK API clients. */
     val gson: Gson = GsonBuilder()
         .registerTypeAdapterFactory(LenientFieldTypeAdapterFactory)
-        .registerTypeAdapterFactory(TransferStatusAdapter)
+        .registerTypeAdapterFactory(TransferV2StatusAdapter)
+        .registerTypeAdapterFactory(TransferV2TypeAdapter)
         .create()
 
     /** Shared OkHttp client configured with Frame's standard timeouts. */
@@ -221,6 +227,8 @@ object FrameNetworking {
         private set
 
     private var sonarSessionManager: SonarSessionManager? = null
+    private val sonarReady = CompletableDeferred<SonarSessionManager?>()
+    @Volatile private var sonarInitStarted = false
     private val sdkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private lateinit var applicationContext: Context
@@ -251,6 +259,7 @@ object FrameNetworking {
         this.googlePayMerchantId = googlePayMerchantId
         debugMode = debug
         applicationContext = context.applicationContext
+        sonarInitStarted = true
 
         // Must run on the main thread — ProcessLifecycleOwner.addObserver isn't thread-safe.
         AccountEventQueue.shared.startObservingLifecycleIfNeeded()
@@ -259,34 +268,49 @@ object FrameNetworking {
         // instead of each firing their own request. Awaited before they start, otherwise they
         // race it and miss the cache.
         sdkScope.launch {
-            ConfigurationAPI.getAllConfiguration()
+            try {
+                ConfigurationAPI.getAllConfiguration()
 
-            SiftManager.initializeSift()
+                SiftManager.initializeSift()
 
-            // Evervault config first-launch reads `EncryptedSharedPreferences`, which lazily
-            // generates an AES master key in the Android Keystore — that takes hundreds of
-            // milliseconds on a cold start. Run it off the main thread so app launch isn't
-            // blocked. `EncryptedPaymentCardInput` polls `isEvervaultConfigured` before
-            // inflating, so a brief delay is safe; pre-Evervault checkout attempts simply
-            // wait through that poll.
-            sdkScope.launch { configureEvervault() }
+                // Evervault config first-launch reads `EncryptedSharedPreferences`, which lazily
+                // generates an AES master key in the Android Keystore — that takes hundreds of
+                // milliseconds on a cold start. Run it off the main thread so app launch isn't
+                // blocked. `EncryptedPaymentCardInput` polls `isEvervaultConfigured` before
+                // inflating, so a brief delay is safe; pre-Evervault checkout attempts simply
+                // wait through that poll.
+                sdkScope.launch { configureEvervault() }
 
-            sdkScope.launch { SiftManager.getPublicIp() }
+                sdkScope.launch { SiftManager.getPublicIp() }
 
-            sdkScope.launch { LegalConfiguration.prefetch() }
+                sdkScope.launch { LegalConfiguration.prefetch() }
 
-            // Initialize Sonar session as early as possible during SDK initialization.
-            // SessionManager identifies via Fingerprint itself, fresh on every request it
-            // makes — no presence gate here, since it degrades to an empty visitor id and no
-            // sealed result rather than failing when Fingerprint is unavailable.
-            sdkScope.launch {
-                try {
-                    val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), accountId)
-                    sonarSessionManager = manager
-                } catch (e: Exception) {
-                    if (debugMode) {
-                        println("Failed to initialize Sonar session: $e")
+                // Initialize Sonar session as early as possible during SDK initialization.
+                // SessionManager identifies via Fingerprint itself, fresh on every request it
+                // makes — no presence gate here, since it degrades to an empty visitor id and no
+                // sealed result rather than failing when Fingerprint is unavailable.
+                sdkScope.launch {
+                    try {
+                        val manager = SonarSessionManager.initializeWithFrameNetworking(getContext(), accountId)
+                        sonarSessionManager = manager
+                        if (!sonarReady.isCompleted) sonarReady.complete(manager)
+                    } catch (e: CancellationException) {
+                        if (!sonarReady.isCompleted) sonarReady.complete(null)
+                        throw e
+                    } catch (e: Exception) {
+                        if (!sonarReady.isCompleted) sonarReady.complete(null)
+                        if (debugMode) {
+                            println("Failed to initialize Sonar session: $e")
+                        }
                     }
+                }
+            } catch (e: CancellationException) {
+                if (!sonarReady.isCompleted) sonarReady.complete(null)
+                throw e
+            } catch (e: Exception) {
+                if (!sonarReady.isCompleted) sonarReady.complete(null)
+                if (debugMode) {
+                    println("Failed to initialize Sonar session: $e")
                 }
             }
         }
@@ -310,6 +334,20 @@ object FrameNetworking {
 
     /** Returns the SDK's [SonarSessionManager], or `null` if Sonar has not been initialized. */
     fun sonarSessionManagerOrNull(): SonarSessionManager? = sonarSessionManager
+
+    /**
+     * The Sonar manager once init finishes. Null when init was not started, failed, or did not
+     * finish in time, so a payment create can wait out the startup race without hanging.
+     */
+    internal suspend fun awaitSonarSessionManager(): SonarSessionManager? {
+        sonarSessionManager?.let { return it }
+        if (!sonarInitStarted) return null
+        return try {
+            withTimeout(10_000) { sonarReady.await() }
+        } catch (_: TimeoutCancellationException) {
+            null
+        }
+    }
 
     /**
      * Returns the application context stored during [initializeWithAPIKey].

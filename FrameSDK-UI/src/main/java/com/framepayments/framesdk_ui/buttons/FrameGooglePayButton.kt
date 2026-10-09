@@ -14,14 +14,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.checkoutsessions.CheckoutSessionsAPI
+import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
 import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
-import com.framepayments.framesdk.chargeintents.AuthorizationMode
-import com.framepayments.framesdk.chargeintents.ChargeIntentAPI
-import com.framepayments.framesdk.chargeintents.ChargeIntentsRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
-import com.framepayments.framesdk.transfers.TransferRequests
-import com.framepayments.framesdk.transfers.TransfersAPI
+import com.framepayments.framesdk.transfersv2.FrameTransferV2Outcome
+import com.framepayments.framesdk.transfersv2.TransferV2Requests
+import com.framepayments.framesdk.transfersv2.TransfersV2API
 import com.framepayments.framesdk.wallet.WalletAPI
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
@@ -45,7 +45,7 @@ import org.json.JSONObject
  *
  * Drop this into any layout to add Google Pay support. It automatically fetches
  * wallet configuration, checks device readiness, and handles the payment flow
- * through to charge intent creation.
+ * through to a V2 transfer.
  *
  * Usage:
  * ```kotlin
@@ -53,11 +53,10 @@ import org.json.JSONObject
  * googlePayButton.configure(
  *     amountCents = 1000,
  *     owner = FrameGooglePayButton.Owner.Account("acc_12345"),
- *     // or: owner = FrameGooglePayButton.Owner.Customer("cus_12345") for a ChargeIntent flow
  *     onResult = { result ->
  *         when (result) {
  *             is FrameGooglePayButton.Result.Success -> {
- *                 // result.id is a Transfer id (account owner) or ChargeIntent id (customer owner)
+ *                 // result.id is a Transfer id
  *             }
  *             is FrameGooglePayButton.Result.Failure -> { /* handle error */ }
  *             is FrameGooglePayButton.Result.Cancelled -> { /* user cancelled */ }
@@ -74,16 +73,13 @@ class FrameGooglePayButton @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     /**
-     * Identifies who owns the resulting payment method and which downstream resource
-     * the Charge mode creates:
-     *  - [Customer] → creates a [ChargeIntent]; [Result.Success.id] is the ChargeIntent id.
-     *  - [Account]  → creates a [Transfer];     [Result.Success.id] is the Transfer id.
-     * Callers infer the resource type from the owner they passed in.
+     * Identifies who owns the resulting payment method.
+     * Charges require [Account]. [Customer] can still save a card via [Mode.AddToOwner].
      */
     sealed class Owner {
-        /** A customer-scoped owner; Google Pay charges produce a ChargeIntent. */
+        /** A customer-scoped owner. Saving a card is supported; charging is not. */
         data class Customer(
-            /** The customer id (e.g. `cus_...`) that will own the ChargeIntent. */
+            /** The customer id (e.g. `cus_...`). */
             val id: String
         ) : Owner()
         /** An account-scoped owner; Google Pay charges produce a Transfer. */
@@ -96,12 +92,10 @@ class FrameGooglePayButton @JvmOverloads constructor(
     /** Outcome of a Google Pay flow initiated by [FrameGooglePayButton]. */
     sealed class Result {
         /**
-         * Charge mode: payment authorized and the downstream resource was created.
-         * `id` is a ChargeIntent id when the owner was [Owner.Customer], or a Transfer id
-         * when the owner was [Owner.Account].
+         * Charge mode: payment authorized and a V2 transfer was created.
          */
         data class Success(
-            /** The id of the created ChargeIntent or Transfer, depending on [Owner] type. */
+            /** The id of the created transfer. */
             val id: String
         ) : Result()
         /** AddToOwner mode: wallet card was attached to the customer/account as a PaymentMethod. */
@@ -121,8 +115,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
      */
     sealed class Mode {
         /**
-         * Completes payment immediately by creating a ChargeIntent (customer owner) or
-         * Transfer (account owner).
+         * Completes payment immediately by creating a V2 transfer. Customer owners cannot charge.
          *
          * @property amountCents The amount to charge in cents.
          * @property currencyCode ISO 4217 currency code (default: "USD").
@@ -155,6 +148,7 @@ class FrameGooglePayButton @JvmOverloads constructor(
     private var googlePayGateway: String = ""
     private var googlePayGatewayMerchantId: String = ""
     private var mode: Mode = Mode.Charge(amountCents = 0, owner = Owner.Account(""))
+    private var checkoutClientSecret: FrameCheckoutClientSecret? = null
 
     private var onResult: ((Result) -> Unit)? = null
     private var onReadinessChanged: ((Boolean) -> Unit)? = null
@@ -215,22 +209,25 @@ class FrameGooglePayButton @JvmOverloads constructor(
      *
      * @param amountCents The payment amount in cents (e.g., 1000 for $10.00)
      * @param owner Customer or account that owns the resulting payment method and charge.
-     *              Customer owners produce a ChargeIntent id; account owners produce a Transfer id.
+     *              Account owners produce a Transfer id. Customer owners cannot charge.
      * @param currencyCode ISO 4217 currency code (default: "USD")
      * @param onResult Callback invoked with the payment result
      * @param onReadinessChanged Optional callback invoked when Google Pay readiness changes
+     * @param checkoutClientSecret When set, the charge is created with this `chk_sess_…` bearer.
      */
     fun configure(
         amountCents: Int,
         owner: Owner,
         currencyCode: String = "USD",
         onResult: (Result) -> Unit,
-        onReadinessChanged: ((Boolean) -> Unit)? = null
+        onReadinessChanged: ((Boolean) -> Unit)? = null,
+        checkoutClientSecret: FrameCheckoutClientSecret? = null,
     ) {
         configure(
             mode = Mode.Charge(amountCents = amountCents, currencyCode = currencyCode, owner = owner),
             onResult = onResult,
-            onReadinessChanged = onReadinessChanged
+            onReadinessChanged = onReadinessChanged,
+            checkoutClientSecret = checkoutClientSecret,
         )
     }
 
@@ -247,11 +244,16 @@ class FrameGooglePayButton @JvmOverloads constructor(
     fun configure(
         mode: Mode,
         onResult: (Result) -> Unit,
-        onReadinessChanged: ((Boolean) -> Unit)? = null
+        onReadinessChanged: ((Boolean) -> Unit)? = null,
+        checkoutClientSecret: FrameCheckoutClientSecret? = null,
     ) {
         this.mode = mode
         this.onResult = onResult
         this.onReadinessChanged = onReadinessChanged
+        this.checkoutClientSecret = checkoutClientSecret
+        (mode as? Mode.Charge)?.let { charge ->
+            checkoutClientSecret?.recordLockedAmountIfMissing(charge.amountCents, charge.currencyCode.lowercase())
+        }
 
         checkGooglePayReadiness()
     }
@@ -368,47 +370,52 @@ class FrameGooglePayButton @JvmOverloads constructor(
                 }
                 is Mode.Charge -> when (val o = m.owner) {
                     is Owner.Customer -> {
-                        // Customer owner → create a ChargeIntent. `Result.Success.id` is the ChargeIntent id.
-                        val ciRequest = ChargeIntentsRequests.CreateChargeIntentRequest(
-                            amount = m.amountCents,
-                            currency = m.currencyCode.lowercase(),
-                            customer = o.id,
-                            description = null,
-                            confirm = true,
-                            paymentMethod = resolvedPaymentMethod.id,
-                            receiptEmail = null,
-                            authorizationMode = AuthorizationMode.AUTOMATIC,
-                            customerData = null,
-                            paymentMethodData = null
-                        )
-                        val (intent, ciError) = ChargeIntentAPI.createChargeIntent(ciRequest)
-                        if (intent == null) reportError(ciError)
                         withContext(Dispatchers.Main) {
-                            val id = intent?.id
-                            if (id != null) {
-                                onResult?.invoke(Result.Success(id))
-                            } else {
-                                onResult?.invoke(Result.Failure(ciError?.message ?: "Failed to create charge intent"))
-                            }
+                            onResult?.invoke(Result.Failure("Google Pay charges require an account."))
                         }
                         return@launch
                     }
                     is Owner.Account -> {
-                        // Account owner → create a Transfer. `Result.Success.id` is the Transfer id.
-                        val transferRequest = TransferRequests.CreateTransferRequest(
-                            amount = m.amountCents,
-                            accountId = o.id,
-                            currency = m.currencyCode.lowercase(),
-                            sourcePaymentMethodId = resolvedPaymentMethod.id
+                        // confirm=true: Google Pay already carries a cryptogram; this path has no
+                        // TransferV2Confirmation / 3DS presenter.
+                        val (chargeCents, chargeCurrency) = resolvedCharge(m)
+                        val transferRequest = TransferV2Requests.CreateTransferRequest(
+                            amount = TransferV2Requests.MoneyAmount(
+                                value = chargeCents,
+                                currency = chargeCurrency.lowercase()
+                            ),
+                            source = TransferV2Requests.EndpointSlot(
+                                paymentMethodId = resolvedPaymentMethod.id
+                            ),
+                            confirm = true,
+                            authorizationMode = "automatic",
                         )
-                        val (transfer, transferError) = TransfersAPI.createTransfer(transferRequest)
+                        val secret = checkoutClientSecret
+                        val (transfer, transferError) = if (secret == null) {
+                            TransfersV2API.createTransfer(transferRequest, accountId = o.id)
+                        } else {
+                            val token = CheckoutSessionsAPI.authorizationToken(o.id, secret)
+                            if (token.isNullOrEmpty()) {
+                                Pair(null, NetworkingError.ServerError(401, "Checkout client secret expired."))
+                            } else {
+                                TransfersV2API.createTransfer(
+                                    transferRequest,
+                                    checkoutClientSecret = token,
+                                    accountId = o.id,
+                                )
+                            }
+                        }
                         if (transfer == null) reportError(transferError)
+                        val outcome = transfer?.let { FrameTransferV2Outcome.terminalOutcome(it) }
                         withContext(Dispatchers.Main) {
                             val id = transfer?.id
-                            if (id != null) {
+                            if (id != null && outcome is FrameTransferV2Outcome.Succeeded) {
                                 onResult?.invoke(Result.Success(id))
                             } else {
-                                onResult?.invoke(Result.Failure(transferError?.message ?: "Failed to create transfer"))
+                                val message = (outcome as? FrameTransferV2Outcome.Failed)?.message
+                                    ?: transferError?.message
+                                    ?: "Failed to create transfer"
+                                onResult?.invoke(Result.Failure(message))
                             }
                         }
                         return@launch
@@ -474,6 +481,13 @@ class FrameGooglePayButton @JvmOverloads constructor(
         }
     }
 
+    private fun resolvedCharge(charge: Mode.Charge): Pair<Int, String> {
+        val cents = checkoutClientSecret?.amountCents ?: charge.amountCents
+        val currency = checkoutClientSecret?.amountCurrency?.takeIf { it.isNotEmpty() }
+            ?: charge.currencyCode
+        return cents to currency
+    }
+
     private fun buildPaymentDataRequest(): JSONObject? {
         if (googlePayGateway.isEmpty() || googlePayGatewayMerchantId.isEmpty()) return null
         return JSONObject().apply {
@@ -502,9 +516,10 @@ class FrameGooglePayButton @JvmOverloads constructor(
             put("transactionInfo", JSONObject().apply {
                 when (val m = mode) {
                     is Mode.Charge -> {
+                        val (chargeCents, chargeCurrency) = resolvedCharge(m)
                         put("totalPriceStatus", "FINAL")
-                        put("totalPrice", String.format("%.2f", m.amountCents / 100.0))
-                        put("currencyCode", m.currencyCode)
+                        put("totalPrice", String.format("%.2f", chargeCents / 100.0))
+                        put("currencyCode", chargeCurrency.uppercase())
                     }
                     is Mode.AddToOwner -> {
                         // Wallet-only: no charge happens, but Google Pay still requires

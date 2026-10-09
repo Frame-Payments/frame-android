@@ -111,6 +111,32 @@ class CheckoutSessionsAPITest {
     }
 
     @Test
+    fun refreshReplaysLockedAmount() = runBlocking {
+        server.enqueue(
+            MockResponse().setBody(
+                """{"id":"cs_1","account_id":"acc_1","client_secret":"chk_sess_new","object":"checkout_session","expires_at":2000000000,"livemode":false,"amount":{"value":4398,"currency":"usd"}}"""
+            )
+        )
+        server.enqueue(accountResponse())
+
+        val secret = FrameCheckoutClientSecret(
+            "chk_sess_old",
+            expiresAt = 0,
+            amountCents = 4398,
+            amountCurrency = "usd",
+        )
+        val (account, error) = CheckoutSessionsAPI.loadAccount("acc_1", secret)
+
+        assertNull(error)
+        assertEquals("Ada", account?.profile?.individual?.name?.firstName)
+        val mint = server.takeRequest()
+        assertTrue(mint.body.readUtf8().contains("\"value\":4398"))
+        assertEquals(4398, secret.amountCents)
+        assertEquals("usd", secret.amountCurrency)
+        assertEquals("chk_sess_new", secret.clientSecret)
+    }
+
+    @Test
     fun unauthorizedReadKeepsOriginal401WhenRefreshFails() = runBlocking {
         server.enqueue(MockResponse().setResponseCode(401).setBody("""{"error":"Invalid or expired client secret."}"""))
         server.enqueue(MockResponse().setResponseCode(500).setBody("""{"error":"mint failed"}"""))

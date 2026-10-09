@@ -16,6 +16,7 @@ import com.framepayments.framesdk.accounts.AccountRequests
 import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.checkoutsessions.CheckoutSessionsAPI
 import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
+import com.framepayments.framesdk.transfersv2.TransferV2Money
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
 import com.withpersona.sdk2.inquiry.Inquiry
@@ -176,7 +177,11 @@ class ContentViewModel : ViewModel() {
      * server with sk_ and pass the client secret in. Checkout refreshes an expired token with
      * the secret key configured on this example.
      */
-    suspend fun mintCheckoutClientSecret(accountIdInput: String?): FrameCheckoutClientSecret? {
+    suspend fun mintCheckoutClientSecret(
+        accountIdInput: String?,
+        amountCents: Int? = null,
+        currency: String = "usd",
+    ): FrameCheckoutClientSecret? {
         val resolvedAccountId = accountIdInput?.takeIf { it.isNotBlank() } ?: run {
             val (account, err) = createEmptyIndividualAccount()
             account?.id ?: run {
@@ -188,7 +193,8 @@ class ContentViewModel : ViewModel() {
                 return null
             }
         }
-        val (session, sessionError) = CheckoutSessionsAPI.createCheckoutSession(resolvedAccountId)
+        val amount = amountCents?.let { TransferV2Money(value = it, currency = currency) }
+        val (session, sessionError) = CheckoutSessionsAPI.createCheckoutSession(resolvedAccountId, amount)
         val clientSecret = session?.clientSecret?.takeIf { it.isNotEmpty() }
         val expiresAt = session?.expiresAt
         if (clientSecret == null || expiresAt == null) {
@@ -200,7 +206,12 @@ class ContentViewModel : ViewModel() {
             return null
         }
         _accountId.value = resolvedAccountId
-        return FrameCheckoutClientSecret(clientSecret, expiresAt)
+        return FrameCheckoutClientSecret(
+            clientSecret,
+            expiresAt,
+            amountCents = session.amount?.value ?: amountCents,
+            amountCurrency = session.amount?.currency ?: currency.takeIf { amountCents != null },
+        )
     }
 
     /** Resets the mint flow to [OnboardingMintState.Idle] so the next launch mints a fresh token. */

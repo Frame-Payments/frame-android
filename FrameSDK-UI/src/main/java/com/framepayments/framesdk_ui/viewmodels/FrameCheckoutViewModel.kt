@@ -13,17 +13,16 @@ import com.framepayments.framesdk.accountevents.AccountEventDetail
 import com.framepayments.framesdk.accountevents.AccountEventEmitter
 import com.framepayments.framesdk.accountevents.AccountEventName
 import com.framepayments.framesdk.accountevents.AccountEventScreen
-import com.framepayments.framesdk.chargeintents.ChargeIntentConfirmation
 import com.framepayments.framesdk.checkoutsessions.CheckoutSessionsAPI
 import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
-import com.framepayments.framesdk.chargeintents.FrameChargeIntentError
-import com.framepayments.framesdk.chargeintents.FrameChargeIntentOutcome
 import com.framepayments.framesdk.paymentmethods.PaymentMethodRequests
 import com.framepayments.framesdk.paymentmethods.PaymentMethodsAPI
-import com.framepayments.framesdk.transfers.Transfer
-import com.framepayments.framesdk.transfers.TransferRequests
-import com.framepayments.framesdk.transfers.TransferStatus
-import com.framepayments.framesdk.transfers.TransfersAPI
+import com.framepayments.framesdk.transfersv2.FrameTransferV2Error
+import com.framepayments.framesdk.transfersv2.FrameTransferV2Outcome
+import com.framepayments.framesdk.transfersv2.TransferV2
+import com.framepayments.framesdk.transfersv2.TransferV2Confirmation
+import com.framepayments.framesdk.transfersv2.TransferV2Requests
+import com.framepayments.framesdk.transfersv2.TransfersV2API
 import com.framepayments.framesdk_ui.AddressMode
 import com.framepayments.framesdk_ui.FrameThreeDSecureChallengePresenter
 import com.framepayments.framesdk_ui.snackbar.FrameSnackbarController
@@ -161,6 +160,7 @@ class FrameCheckoutViewModel : ViewModel() {
 
     // Internal tracking
     private var currentAccountId: String? = null
+    private var checkoutClientSecret: FrameCheckoutClientSecret? = null
     internal var amount: Int = 0
     private var loadAccountDetailsJob: Job? = null
 
@@ -200,6 +200,8 @@ class FrameCheckoutViewModel : ViewModel() {
         require(accountId.isNotEmpty()) { "FrameCheckoutViewModel.loadAccountDetails requires a non-empty accountId" }
         this.amount = amount
         currentAccountId = accountId
+        this.checkoutClientSecret = checkoutClientSecret
+        checkoutClientSecret?.recordLockedAmountIfMissing(amount, "usd")
         FrameNetworking.setAccountIdIfUnset(accountId)
         AccountEventEmitter.emit(AccountEventName.CHECKOUT_STARTED, AccountEventScreen.PAYMENT_SHEET)
 
@@ -351,13 +353,13 @@ class FrameCheckoutViewModel : ViewModel() {
      * Validates inputs and submits the checkout.
      *
      * If a saved payment method is selected, the new-card fields are skipped during validation.
-     * Creates the payment method if needed, then creates a Transfer against [currentAccountId].
+     * Creates the payment method if needed, then creates a V2 Transfer against [currentAccountId].
      * Emits `null` on validation failure, a missing account id, or a networking error.
      *
      * @param saveMethod Whether to persist the new card as a saved payment method (currently unused).
-     * @return [LiveData] that emits the created [Transfer] on success, or null on failure.
+     * @return [LiveData] that emits the created [TransferV2] on success, or null on failure.
      */
-    fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<Transfer?> = liveData(Dispatchers.IO) {
+    fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<TransferV2?> = liveData(Dispatchers.IO) {
         if (amount == 0) {
             emit(null)
             return@liveData
@@ -417,21 +419,20 @@ class FrameCheckoutViewModel : ViewModel() {
                 return@liveData
             }
 
-            // Build the transfer request (charge flow against the account).
-            // confirm=false matches iOS: an inline confirm rejects unsettled 3DS charges before
-            // ChargeIntentConfirmation can present the challenge.
-            val request = TransferRequests.CreateTransferRequest(
-                amount = amount,
-                accountId = accountId,
-                currency = "usd",
-                sourcePaymentMethodId = paymentMethodId,
-                destinationPaymentMethodId = null,
-                description = null,
-                metadata = null,
-                confirm = false
+            // Deferred confirm: inline confirm rejects unsettled 3DS charges before
+            // TransferV2Confirmation can present the challenge.
+            val lockedCents = checkoutClientSecret?.amountCents
+            val request = TransferV2Requests.CreateTransferRequest(
+                amount = TransferV2Requests.MoneyAmount(
+                    value = lockedCents ?: amount,
+                    currency = checkoutClientSecret?.amountCurrency?.takeIf { it.isNotEmpty() } ?: "usd",
+                ),
+                source = TransferV2Requests.EndpointSlot(paymentMethodId = paymentMethodId),
+                confirm = false,
+                authorizationMode = "automatic",
             )
 
-            val (transfer, transferError) = TransfersAPI.createTransfer(request)
+            val (transfer, transferError) = createCheckoutTransfer(accountId, request)
             if (transferError != null) {
                 AccountEventEmitter.emit(
                     AccountEventName.CHECKOUT_PAYMENT_FAILED,
@@ -447,26 +448,34 @@ class FrameCheckoutViewModel : ViewModel() {
                 return@liveData
             }
 
-            when (transfer.status) {
-                TransferStatus.REQUIRES_CONFIRMATION, TransferStatus.REQUIRES_THREE_D_SECURE -> {
-                    emit(completeThreeDSecure(transfer, context))
-                }
-                TransferStatus.SUCCEEDED, TransferStatus.PROCESSING, TransferStatus.REQUIRES_CAPTURE -> {
+            val paymentStatus = transfer.payment?.status
+            val needsConfirm = paymentStatus == "requires_confirmation"
+                || paymentStatus == "requires_3d_secure"
+                || paymentStatus == "requires_action"
+            if (needsConfirm) {
+                emit(completeThreeDSecure(transfer, context))
+            } else when (val outcome = FrameTransferV2Outcome.terminalOutcome(transfer)) {
+                is FrameTransferV2Outcome.Succeeded -> {
                     AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
                     emit(transfer)
                 }
-                else -> {
-                    // FAILED, EXPIRED, CANCELED, FRAUD_DECLINED, UNKNOWN, and every other terminal
-                    // status that is not a successful outcome — an allowlist here, rather than the
-                    // previous "anything but the two confirm states" check, so a status this
-                    // outcome hasn't accounted for cannot silently read as a completed checkout.
-                    val declined = FrameCheckoutError.Declined(null)
+                is FrameTransferV2Outcome.Failed -> {
+                    val declined = FrameCheckoutError.Declined(outcome.message)
                     AccountEventEmitter.emit(
                         AccountEventName.CHECKOUT_PAYMENT_DECLINED,
                         AccountEventScreen.PAYMENT_SHEET,
-                        "${transfer.status}"
+                        declined.toastMessage()
                     )
                     FrameSnackbarController.emit(declined.toastMessage())
+                    emit(null)
+                }
+                null, FrameTransferV2Outcome.TimedOut -> {
+                    AccountEventEmitter.emit(
+                        AccountEventName.CHECKOUT_PAYMENT_FAILED,
+                        AccountEventScreen.PAYMENT_SHEET,
+                        "Transfer payment did not reach a terminal state."
+                    )
+                    FrameSnackbarController.emit(FrameCheckoutError.Unresolved().toastMessage())
                     emit(null)
                 }
             }
@@ -476,25 +485,47 @@ class FrameCheckoutViewModel : ViewModel() {
     }
 
     /**
-     * Confirms a transfer the API held back, running a 3D Secure challenge if the confirm asks
+     * Confirms a V2 transfer the API held back, running a 3D Secure challenge if the confirm asks
      * for one, and reports the charge's real outcome.
      */
-    private suspend fun completeThreeDSecure(transfer: Transfer, context: Context): Transfer? {
-        val clientSecret = transfer.clientSecret ?: run {
+    private suspend fun createCheckoutTransfer(
+        accountId: String,
+        request: TransferV2Requests.CreateTransferRequest,
+    ): Pair<TransferV2?, NetworkingError?> {
+        val secret = checkoutClientSecret ?: return TransfersV2API.createTransfer(request, accountId = accountId)
+        val token = CheckoutSessionsAPI.authorizationToken(accountId, secret)
+        if (token.isNullOrEmpty()) {
+            return Pair(null, NetworkingError.ServerError(401, "Checkout client secret expired."))
+        }
+        return TransfersV2API.createTransfer(request, checkoutClientSecret = token, accountId = accountId)
+    }
+
+    private suspend fun completeThreeDSecure(transfer: TransferV2, context: Context): TransferV2? {
+        val secret = checkoutClientSecret
+        val token = if (secret == null) {
+            null
+        } else {
+            val accountId = currentAccountId
+            if (accountId.isNullOrEmpty()) null else CheckoutSessionsAPI.authorizationToken(accountId, secret)
+        }
+        if (secret != null && token.isNullOrEmpty()) {
             FrameSnackbarController.emit(FrameCheckoutError.ThreeDSecureUnavailable().toastMessage())
             return null
         }
 
-        val confirmation = ChargeIntentConfirmation(challengePresenter = FrameThreeDSecureChallengePresenter(context))
+        val confirmation = TransferV2Confirmation(
+            checkoutClientSecret = token,
+            challengePresenter = FrameThreeDSecureChallengePresenter(context),
+        )
 
         return try {
-            when (val outcome = confirmation.confirm(clientSecret)) {
-                is FrameChargeIntentOutcome.Succeeded -> {
+            when (val outcome = confirmation.confirm(transfer.id)) {
+                is FrameTransferV2Outcome.Succeeded -> {
                     AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED, AccountEventScreen.PAYMENT_SHEET)
-                    transfer
+                    outcome.transfer
                 }
-                is FrameChargeIntentOutcome.Failed -> {
-                    val declined = FrameCheckoutError.Declined(outcome.reason?.message)
+                is FrameTransferV2Outcome.Failed -> {
+                    val declined = FrameCheckoutError.Declined(outcome.message)
                     AccountEventEmitter.emit(
                         AccountEventName.CHECKOUT_PAYMENT_DECLINED,
                         AccountEventScreen.PAYMENT_SHEET,
@@ -503,7 +534,7 @@ class FrameCheckoutViewModel : ViewModel() {
                     FrameSnackbarController.emit(declined.toastMessage())
                     null
                 }
-                is FrameChargeIntentOutcome.TimedOut -> {
+                is FrameTransferV2Outcome.TimedOut -> {
                     // The charge may still settle, so this is not reported as a decline.
                     AccountEventEmitter.emit(
                         AccountEventName.CHECKOUT_PAYMENT_FAILED,
@@ -514,7 +545,7 @@ class FrameCheckoutViewModel : ViewModel() {
                     null
                 }
             }
-        } catch (e: FrameChargeIntentError) {
+        } catch (e: FrameTransferV2Error) {
             AccountEventEmitter.emit(AccountEventName.CHECKOUT_PAYMENT_FAILED, AccountEventScreen.PAYMENT_SHEET, "$e")
             FrameSnackbarController.emit(FrameCheckoutError.ThreeDSecureUnavailable().toastMessage())
             null
