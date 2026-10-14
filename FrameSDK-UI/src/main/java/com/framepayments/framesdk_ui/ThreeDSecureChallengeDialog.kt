@@ -29,6 +29,9 @@ import kotlin.coroutines.resume
  * The page is served by the card network, so the code the cardholder enters never reaches
  * this app. This reports only that the challenge finished; the Frame API decides whether the
  * charge succeeded.
+ *
+ * Account events use `card_verification_challenge_*` on [AccountEventScreen.PAYMENT_SHEET].
+ * Onboarding IDV step-up uses `step_up_*` on [AccountEventScreen.IDENTITY_VERIFICATION] instead.
  */
 class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameThreeDSecureChallengePresenting {
 
@@ -44,9 +47,9 @@ class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameT
     override suspend fun presentChallenge(challenge: UseFrameSDK): FrameThreeDSecureChallengeResult {
         val challengeUrl = challenge.challengeUrl ?: run {
             AccountEventEmitter.emit(
-                AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE,
+                AccountEventName.CARD_VERIFICATION_CHALLENGE_UNAVAILABLE,
                 AccountEventScreen.PAYMENT_SHEET,
-                detail = AccountEventDetail.STEP_UP_CHALLENGE_NEVER_LOADED
+                detail = AccountEventDetail.CARD_VERIFICATION_CHALLENGE_NEVER_LOADED
             )
             return FrameThreeDSecureChallengeResult.UNAVAILABLE
         }
@@ -56,16 +59,15 @@ class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameT
         val activity = context.findActivity()
         if (activity == null || activity.isFinishing || activity.isDestroyed) {
             AccountEventEmitter.emit(
-                AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE,
+                AccountEventName.CARD_VERIFICATION_CHALLENGE_UNAVAILABLE,
                 AccountEventScreen.PAYMENT_SHEET,
-                detail = AccountEventDetail.STEP_UP_CHALLENGE_NEVER_LOADED
+                detail = AccountEventDetail.CARD_VERIFICATION_CHALLENGE_NEVER_LOADED
             )
             return FrameThreeDSecureChallengeResult.UNAVAILABLE
         }
         AccountEventEmitter.emit(
-            AccountEventName.STEP_UP_CHALLENGE_STARTED,
+            AccountEventName.CARD_VERIFICATION_CHALLENGE_STARTED,
             AccountEventScreen.PAYMENT_SHEET,
-            detail = AccountEventDetail.STEP_UP_CHALLENGE_IS_3DS
         )
         // WebView/Toolbar/Dialog construction requires the main thread; callers may invoke this
         // from a background dispatcher (checkout runs on Dispatchers.IO).
@@ -83,19 +85,19 @@ class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameT
                 dialog.dismiss()
                 when (result) {
                     FrameThreeDSecureChallengeResult.COMPLETED -> AccountEventEmitter.emit(
-                        AccountEventName.STEP_UP_CHALLENGE_COMPLETED,
+                        AccountEventName.CARD_VERIFICATION_CHALLENGE_COMPLETED,
                         AccountEventScreen.PAYMENT_SHEET,
-                        detail = AccountEventDetail.STEP_UP_CHALLENGE_COMPLETED_CONTEXT
+                        detail = AccountEventDetail.CARD_VERIFICATION_CHALLENGE_COMPLETED_CONTEXT
                     )
                     FrameThreeDSecureChallengeResult.FAILED -> AccountEventEmitter.emit(
-                        AccountEventName.STEP_UP_CHALLENGE_ABANDONED,
+                        AccountEventName.CARD_VERIFICATION_CHALLENGE_ABANDONED,
                         AccountEventScreen.PAYMENT_SHEET,
-                        detail = AccountEventDetail.STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED
+                        detail = AccountEventDetail.CARD_VERIFICATION_CHALLENGE_CARDHOLDER_DISMISSED
                     )
                     FrameThreeDSecureChallengeResult.UNAVAILABLE -> AccountEventEmitter.emit(
-                        AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE,
+                        AccountEventName.CARD_VERIFICATION_CHALLENGE_UNAVAILABLE,
                         AccountEventScreen.PAYMENT_SHEET,
-                        detail = AccountEventDetail.STEP_UP_CHALLENGE_NEVER_LOADED
+                        detail = AccountEventDetail.CARD_VERIFICATION_CHALLENGE_NEVER_LOADED
                     )
                 }
                 continuation.resume(result)

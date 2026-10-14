@@ -34,7 +34,7 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  *   (`POST /v1/onboarding_sessions`) and handed to your app. Required. While this screen is
  *   presented every request authenticates with this token, scoping it to a single account.
  * @param payoutMethods ACH methods fetched on the host backend. When null, saved banks are loaded
- *   only if the SDK was initialized with a secret key.
+ *   with [clientSecret].
  * @param onResult Called with a [FrameResult] when the screen finishes or is cancelled. On
  *   [FrameResult.Completed] the id is the elected payout method. When null, system Back on the
  *   selection screen is left to the host.

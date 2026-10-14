@@ -53,6 +53,7 @@ enum class AccountEventName(val apiValue: String) {
     PROFILE_UPDATE_FAILED("profile_update_failed"),
     PROFILE_VALIDATION_FAILED("profile_validation_failed"),
 
+    // Onboarding identity step-up (Persona IDV). Not issuer 3DS — see card_verification_challenge_*.
     STEP_UP_STARTED("step_up_started"),
     STEP_UP_COMPLETED("step_up_completed"),
     STEP_UP_ALREADY_VERIFIED("step_up_already_verified"),
@@ -106,6 +107,12 @@ enum class AccountEventName(val apiValue: String) {
     CHECKOUT_PAYMENT_DECLINED("checkout_payment_declined"),
     CHECKOUT_PAYMENT_FAILED("checkout_payment_failed"),
     CHECKOUT_CANCELLED("checkout_cancelled"),
+    // Checkout payment confirm — issuer 3DS challenge (Transfers V2 / deferred confirm).
+    CARD_VERIFICATION_CHALLENGE_STARTED("card_verification_challenge_started"),
+    CARD_VERIFICATION_CHALLENGE_COMPLETED("card_verification_challenge_completed"),
+    CARD_VERIFICATION_CHALLENGE_ABANDONED("card_verification_challenge_abandoned"),
+    CARD_VERIFICATION_CHALLENGE_UNAVAILABLE("card_verification_challenge_unavailable"),
+    // Legacy misnamed 3DS events (iOS still emits these). Android checkout uses card_verification_challenge_*.
     STEP_UP_CHALLENGE_STARTED("step_up_challenge_started"),
     STEP_UP_CHALLENGE_COMPLETED("step_up_challenge_completed"),
     STEP_UP_CHALLENGE_ABANDONED("step_up_challenge_abandoned"),
@@ -147,10 +154,13 @@ object AccountEventDetail {
     const val ATTESTATION_NOT_SUPPORTED_REASON = "simulator or unsupported OS version"
     const val ATTESTATION_ONE_TIME_PER_DEVICE = "one-time per device"
     const val ATTESTATION_ASSERTION_RETRIED_CONTEXT = "per-payment assertion, distinct from the one-time attestation above"
+    const val CARD_VERIFICATION_CHALLENGE_NEVER_LOADED = "challenge page never loaded"
+    const val CARD_VERIFICATION_CHALLENGE_COMPLETED_CONTEXT = "cardholder finished the UI — not itself a verdict"
+    const val CARD_VERIFICATION_CHALLENGE_CARDHOLDER_DISMISSED = "cardholder cancelled/dismissed"
     const val STEP_UP_CHALLENGE_IS_3DS = "3DS"
-    const val STEP_UP_CHALLENGE_NEVER_LOADED = "challenge page never loaded"
-    const val STEP_UP_CHALLENGE_COMPLETED_CONTEXT = "cardholder finished the UI — not itself a verdict"
-    const val STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED = "cardholder cancelled/dismissed"
+    const val STEP_UP_CHALLENGE_NEVER_LOADED = CARD_VERIFICATION_CHALLENGE_NEVER_LOADED
+    const val STEP_UP_CHALLENGE_COMPLETED_CONTEXT = CARD_VERIFICATION_CHALLENGE_COMPLETED_CONTEXT
+    const val STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED = CARD_VERIFICATION_CHALLENGE_CARDHOLDER_DISMISSED
     const val PROVE_PROVIDER = "provider: prove"
     const val PERSONA_PROVIDER = "provider: persona"
     const val PLAID_PROVIDER = "provider: plaid"
