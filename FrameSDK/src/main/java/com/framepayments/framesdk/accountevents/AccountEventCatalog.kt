@@ -112,11 +112,6 @@ enum class AccountEventName(val apiValue: String) {
     CARD_VERIFICATION_CHALLENGE_COMPLETED("card_verification_challenge_completed"),
     CARD_VERIFICATION_CHALLENGE_ABANDONED("card_verification_challenge_abandoned"),
     CARD_VERIFICATION_CHALLENGE_UNAVAILABLE("card_verification_challenge_unavailable"),
-    // Legacy misnamed 3DS events (iOS still emits these). Android checkout uses card_verification_challenge_*.
-    STEP_UP_CHALLENGE_STARTED("step_up_challenge_started"),
-    STEP_UP_CHALLENGE_COMPLETED("step_up_challenge_completed"),
-    STEP_UP_CHALLENGE_ABANDONED("step_up_challenge_abandoned"),
-    STEP_UP_CHALLENGE_UNAVAILABLE("step_up_challenge_unavailable"),
     CHARGE_INTENT_CONFIRMATION_POLLING_EXHAUSTED("charge_intent_confirmation_polling_exhausted"),
 
     APPLE_PAY_STARTED("apple_pay_started"),
@@ -157,10 +152,6 @@ object AccountEventDetail {
     const val CARD_VERIFICATION_CHALLENGE_NEVER_LOADED = "challenge page never loaded"
     const val CARD_VERIFICATION_CHALLENGE_COMPLETED_CONTEXT = "cardholder finished the UI — not itself a verdict"
     const val CARD_VERIFICATION_CHALLENGE_CARDHOLDER_DISMISSED = "cardholder cancelled/dismissed"
-    const val STEP_UP_CHALLENGE_IS_3DS = "3DS"
-    const val STEP_UP_CHALLENGE_NEVER_LOADED = CARD_VERIFICATION_CHALLENGE_NEVER_LOADED
-    const val STEP_UP_CHALLENGE_COMPLETED_CONTEXT = CARD_VERIFICATION_CHALLENGE_COMPLETED_CONTEXT
-    const val STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED = CARD_VERIFICATION_CHALLENGE_CARDHOLDER_DISMISSED
     const val PROVE_PROVIDER = "provider: prove"
     const val PERSONA_PROVIDER = "provider: persona"
     const val PLAID_PROVIDER = "provider: plaid"
