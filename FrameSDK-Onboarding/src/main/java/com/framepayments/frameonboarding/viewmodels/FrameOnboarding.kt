@@ -33,6 +33,7 @@ import com.framepayments.frameonboarding.plaid.PlaidLinkService
 import com.framepayments.frameonboarding.prove.ProveAuthService
 import com.framepayments.frameonboarding.prove.ProveAuthServiceError
 import com.framepayments.framesdk.AddressSubregions
+import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
@@ -558,6 +559,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             _onboardingData.update { it.copy(resolvedAccountId = aid) }
         }
         existingAccountHasTOS = account?.termsOfService?.acceptedAt != null
+        account?.payoutPaymentMethodId?.let { _primaryPayoutMethodId.value = it }
         // `profile` on this GET is ignored. A one-time prefill arrives on phone confirm.
         updateStepUpRequirements(account?.capabilities)
         // A completed government-ID verification leaves idv active; don't ask the applicant again.
@@ -2240,13 +2242,14 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     fun createNewBusinessAccount() {}
 
     /**
-     * Loads ACH payout methods for the select-payout screen.
+     * Loads saved payment methods for the account with the onboarding client secret and splits
+     * them into cards ([savedPaymentMethods]) and bank accounts ([savedPayoutMethods]).
      *
-     * A supplied list is used as-is. Otherwise the list is fetched only when a secret key is
-     * configured and no onboarding session is active, because a client credential cannot list
-     * payment methods. Methods added later in this session stay on the in-memory list.
+     * A supplied list is used as-is for payout rows only. Otherwise the list is fetched with
+     * `onb_sess_…`; a publishable key cannot call `GET /v1/accounts/{id}/payment_methods`.
+     * Methods added later in this session stay on the in-memory lists.
      *
-     * @param supplied Host-fetched payout methods, or null to fetch when a secret key is set.
+     * @param supplied Host-fetched payout methods, or null to load with the onboarding token.
      */
     suspend fun loadSavedPaymentMethods(supplied: List<FrameObjects.PaymentMethod>? = null) {
         if (supplied != null) {
@@ -2254,17 +2257,40 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             return
         }
         val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
-        if (FrameNetworking.apiSecretKey.isEmpty() || FrameNetworking.hasActiveOnboardingSession) return
+        val token = idvClientSecret.takeIf { it.isNotEmpty() } ?: return
         val (methods, error) = withContext(Dispatchers.IO) {
-            PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
+            PaymentMethodsAPI.getPaymentMethodsWithAccount(
+                accountId,
+                auth = FrameAuthMode.ClientSecret(token),
+            )
         }
         if (error != null) {
+            AccountEventEmitter.emit(
+                AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
+                AccountEventScreen.PAYMENT_METHOD,
+                detail = "$error",
+            )
             reportUserError(userMessageForNetworkError(error))
             return
         }
-        val fetched = methods.orEmpty().mapNotNull { it.toPayoutSummary() }
-        val fetchedIds = fetched.map { it.id }.toSet()
-        _savedPayoutMethods.value = fetched + _savedPayoutMethods.value.filter { it.id !in fetchedIds }
+        val all = methods.orEmpty()
+        val fetchedCards = all.filter { it.type == FrameObjects.PaymentMethodType.CARD }.mapNotNull { it.toCardSummary() }
+        val fetchedPayout = all.mapNotNull { it.toPayoutSummary() }
+        val fetchedPayoutIds = fetchedPayout.map { it.id }.toSet()
+        _savedPaymentMethods.value = fetchedCards
+        _savedPayoutMethods.value =
+            fetchedPayout + _savedPayoutMethods.value.filter { it.id !in fetchedPayoutIds }
+    }
+
+    private fun FrameObjects.PaymentMethod.toCardSummary(): PaymentMethodSummary? {
+        if (type != FrameObjects.PaymentMethodType.CARD) return null
+        val methodId = id?.takeIf { it.isNotEmpty() } ?: return null
+        return PaymentMethodSummary(
+            id = methodId,
+            brand = card?.brand?.uppercase().orEmpty(),
+            last4 = card?.lastFourDigits.orEmpty(),
+            exp = "${card?.expirationMonth.orEmpty()}/${card?.expirationYear?.takeLast(2).orEmpty()}",
+        )
     }
 
     private fun FrameObjects.PaymentMethod.toPayoutSummary(): PaymentMethodSummary? {

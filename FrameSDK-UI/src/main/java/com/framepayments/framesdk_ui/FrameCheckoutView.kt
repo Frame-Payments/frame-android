@@ -352,10 +352,10 @@ class FrameCheckoutView @JvmOverloads constructor(
      * The Google Pay merchant identifier is read from [com.framepayments.framesdk.FrameNetworking.googlePayMerchantId]
      * — pass it once at SDK init. The Google Pay row stays hidden if it isn't configured.
      *
-     * @param account Account fetched on the host's backend with `sk_`. Prefills name and email.
-     *   When null and the SDK was initialized with a secret key, checkout fetches the account.
-     * @param paymentMethods Saved methods fetched on the host's backend with `sk_`. When null and
-     *   the SDK was initialized with a secret key, checkout fetches the list.
+     * @param account Account fetched on the host's backend. Prefills name and email. Checkout does
+     *   not GET an account itself except with [checkoutClientSecret].
+     * @param paymentMethods Saved methods fetched on the host's backend. Checkout does not list
+     *   methods itself except with [checkoutClientSecret].
      * @param checkoutClientSecret `chk_sess_` token from `POST /v1/checkout_sessions`. When set,
      *   checkout reads the name, email, and saved cards with it. An expired token is refreshed
      *   with the secret key when one is configured.

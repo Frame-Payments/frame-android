@@ -150,6 +150,16 @@ class FrameCheckoutViewModelCheckoutSecretTest {
     }
 
     @Test
+    fun loadAccountDetails_withoutCheckoutSecret_doesNotFetchAccountOrMethods() = runBlocking {
+        FrameNetworking.apiSecretKey = "sk_test_should_not_use"
+        vm.loadAccountDetails("acc_1", 100)
+        assertEquals(true, vm.didLoadAccountPaymentMethods.value)
+        assertNull(vm.customerName.value?.takeIf { it.isNotEmpty() })
+        assertTrue(vm.accountPaymentOptions.value.isNullOrEmpty())
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
     fun loadAccountDetails_cancelsPriorInFlightFetch() = runBlocking {
         server.enqueue(
             accountResponse(firstName = "Old", lastName = "Name", email = "old@example.com")

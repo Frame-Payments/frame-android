@@ -175,9 +175,8 @@ class FrameCheckoutViewModel : ViewModel() {
      * Prefills name and email and loads saved payment methods.
      *
      * A supplied [account] or [paymentMethods] list, fetched on the host's backend, is used as-is.
-     * Anything not supplied is fetched here when a checkout client secret is set, or when the SDK
-     * was initialized with a secret key. A publishable key cannot read the profile or the
-     * saved-method list, so those stay empty.
+     * Anything not supplied is fetched only when a checkout client secret is set. A publishable
+     * key cannot read the profile or saved-method list, so those stay empty without that token.
      *
      * [accountId] is required because the bundled checkout's pay button creates a
      * Transfer, which is account-scoped.
@@ -210,8 +209,8 @@ class FrameCheckoutViewModel : ViewModel() {
         refreshCustomerInfoRequired()
 
         val usingCheckoutSecret = checkoutClientSecret != null
-        val fetchAccount = account == null && (usingCheckoutSecret || FrameNetworking.apiSecretKey.isNotEmpty())
-        val fetchMethods = paymentMethods == null && (usingCheckoutSecret || FrameNetworking.apiSecretKey.isNotEmpty())
+        val fetchAccount = account == null && usingCheckoutSecret
+        val fetchMethods = paymentMethods == null && usingCheckoutSecret
         if (!fetchAccount && !fetchMethods) {
             loadAccountDetailsJob?.cancel()
             loadAccountDetailsJob = null
@@ -230,21 +229,15 @@ class FrameCheckoutViewModel : ViewModel() {
         }
         loadAccountDetailsJob = viewModelScope.launch(Dispatchers.IO) {
             if (fetchAccount) {
-                val (fetched, accountError) = if (checkoutClientSecret != null) {
-                    CheckoutSessionsAPI.loadAccount(accountId, checkoutClientSecret)
-                } else {
-                    AccountsAPI.getAccountWith(accountId)
-                }
+                val (fetched, accountError) =
+                    CheckoutSessionsAPI.loadAccount(accountId, checkoutClientSecret!!)
                 ensureActive()
                 reportError(accountError)
                 withContext(Dispatchers.Main) { applyIndividual(fetched?.profile?.individual) }
             }
             if (fetchMethods) {
-                val (fetchedMethods, paymentMethodsError) = if (checkoutClientSecret != null) {
-                    CheckoutSessionsAPI.loadPaymentMethods(accountId, checkoutClientSecret)
-                } else {
-                    PaymentMethodsAPI.getPaymentMethodsWithAccount(accountId)
-                }
+                val (fetchedMethods, paymentMethodsError) =
+                    CheckoutSessionsAPI.loadPaymentMethods(accountId, checkoutClientSecret!!)
                 ensureActive()
                 if (paymentMethodsError != null) {
                     AccountEventEmitter.emit(
