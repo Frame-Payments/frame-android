@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2135 public symbols** across 182 files in 3 modules.
+**2142 public symbols** across 182 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -55,12 +55,12 @@ reverse is never true.
 | Objects | 127 |
 | Type aliases | 4 |
 | Functions | 356 |
-| Properties (val) | 1075 |
+| Properties (val) | 1078 |
 | Properties (var) | 22 |
-| Enum entries | 161 |
-| **Total** | **2135** |
+| Enum entries | 165 |
+| **Total** | **2142** |
 
-### `FrameSDK` — 1713 public symbols
+### `FrameSDK` — 1720 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
@@ -284,9 +284,9 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-#### com/framepayments/framesdk/accountevents (173)
+#### com/framepayments/framesdk/accountevents (180)
 
-<details><summary><code>AccountEventCatalog.kt</code> — 142 symbols</summary>
+<details><summary><code>AccountEventCatalog.kt</code> — 149 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt)
 
@@ -330,110 +330,117 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `AccountEventName.PROFILE_UPDATED` | entry | `entry PROFILE_UPDATED` | [52](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L52) |
 | `AccountEventName.PROFILE_UPDATE_FAILED` | entry | `entry PROFILE_UPDATE_FAILED` | [53](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L53) |
 | `AccountEventName.PROFILE_VALIDATION_FAILED` | entry | `entry PROFILE_VALIDATION_FAILED` | [54](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L54) |
-| `AccountEventName.STEP_UP_STARTED` | entry | `entry STEP_UP_STARTED` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L56) |
-| `AccountEventName.STEP_UP_COMPLETED` | entry | `entry STEP_UP_COMPLETED` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L57) |
-| `AccountEventName.STEP_UP_ALREADY_VERIFIED` | entry | `entry STEP_UP_ALREADY_VERIFIED` | [58](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L58) |
-| `AccountEventName.STEP_UP_FAILED` | entry | `entry STEP_UP_FAILED` | [59](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L59) |
-| `AccountEventName.STEP_UP_NEEDS_REVIEW` | entry | `entry STEP_UP_NEEDS_REVIEW` | [60](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L60) |
-| `AccountEventName.STEP_UP_DATA_MISMATCH` | entry | `entry STEP_UP_DATA_MISMATCH` | [61](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L61) |
-| `AccountEventName.STEP_UP_ESCALATED` | entry | `entry STEP_UP_ESCALATED` | [62](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L62) |
-| `AccountEventName.STEP_UP_DECLINED` | entry | `entry STEP_UP_DECLINED` | [63](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L63) |
-| `AccountEventName.STEP_UP_UNAVAILABLE` | entry | `entry STEP_UP_UNAVAILABLE` | [64](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L64) |
-| `AccountEventName.STEP_UP_CANCELLED` | entry | `entry STEP_UP_CANCELLED` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L65) |
-| `AccountEventName.PAYMENT_METHOD_STEP_STARTED` | entry | `entry PAYMENT_METHOD_STEP_STARTED` | [67](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L67) |
-| `AccountEventName.SAVED_PAYMENT_METHOD_SELECTED` | entry | `entry SAVED_PAYMENT_METHOD_SELECTED` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L68) |
-| `AccountEventName.ADD_PAYMENT_METHOD_STARTED` | entry | `entry ADD_PAYMENT_METHOD_STARTED` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L69) |
-| `AccountEventName.PAYMENT_METHOD_ADDED` | entry | `entry PAYMENT_METHOD_ADDED` | [70](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L70) |
-| `AccountEventName.PAYMENT_METHOD_ADD_FAILED` | entry | `entry PAYMENT_METHOD_ADD_FAILED` | [71](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L71) |
-| `AccountEventName.CARD_VALIDATION_FAILED` | entry | `entry CARD_VALIDATION_FAILED` | [72](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L72) |
-| `AccountEventName.BILLING_ADDRESS_UPDATED` | entry | `entry BILLING_ADDRESS_UPDATED` | [73](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L73) |
-| `AccountEventName.BILLING_ADDRESS_UPDATE_FAILED` | entry | `entry BILLING_ADDRESS_UPDATE_FAILED` | [74](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L74) |
-| `AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED` | entry | `entry SAVED_PAYMENT_METHODS_LOAD_FAILED` | [75](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L75) |
-| `AccountEventName.PAYOUT_METHOD_STEP_STARTED` | entry | `entry PAYOUT_METHOD_STEP_STARTED` | [77](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L77) |
-| `AccountEventName.SAVED_PAYOUT_METHOD_SELECTED` | entry | `entry SAVED_PAYOUT_METHOD_SELECTED` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L78) |
-| `AccountEventName.ADD_PAYOUT_METHOD_STARTED` | entry | `entry ADD_PAYOUT_METHOD_STARTED` | [79](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L79) |
-| `AccountEventName.PAYOUT_METHOD_ADDED` | entry | `entry PAYOUT_METHOD_ADDED` | [80](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L80) |
-| `AccountEventName.PAYOUT_METHOD_ADD_FAILED` | entry | `entry PAYOUT_METHOD_ADD_FAILED` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L81) |
-| `AccountEventName.BANK_LINK_STARTED` | entry | `entry BANK_LINK_STARTED` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L82) |
-| `AccountEventName.BANK_LINK_COMPLETED` | entry | `entry BANK_LINK_COMPLETED` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L83) |
-| `AccountEventName.BANK_LINK_CANCELLED` | entry | `entry BANK_LINK_CANCELLED` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L84) |
-| `AccountEventName.BANK_LINK_FAILED` | entry | `entry BANK_LINK_FAILED` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L85) |
-| `AccountEventName.PAYOUT_METHOD_ELECTED` | entry | `entry PAYOUT_METHOD_ELECTED` | [86](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L86) |
-| `AccountEventName.PAYOUT_METHOD_ELECTION_FAILED` | entry | `entry PAYOUT_METHOD_ELECTION_FAILED` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L87) |
-| `AccountEventName.COMPLIANCE_CHECK_STARTED` | entry | `entry COMPLIANCE_CHECK_STARTED` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L89) |
-| `AccountEventName.COMPLIANCE_CHECK_PASSED` | entry | `entry COMPLIANCE_CHECK_PASSED` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L90) |
-| `AccountEventName.COMPLIANCE_CHECK_FAILED` | entry | `entry COMPLIANCE_CHECK_FAILED` | [91](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L91) |
-| `AccountEventName.COMPLIANCE_CHECK_VPN_DETECTED` | entry | `entry COMPLIANCE_CHECK_VPN_DETECTED` | [92](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L92) |
-| `AccountEventName.COMPLIANCE_CHECK_VPN_BYPASSED` | entry | `entry COMPLIANCE_CHECK_VPN_BYPASSED` | [93](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L93) |
-| `AccountEventName.TERMS_OF_SERVICE_SHOWN` | entry | `entry TERMS_OF_SERVICE_SHOWN` | [95](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L95) |
-| `AccountEventName.TERMS_OF_SERVICE_ACCEPTED` | entry | `entry TERMS_OF_SERVICE_ACCEPTED` | [96](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L96) |
-| `AccountEventName.TERMS_OF_SERVICE_TOKEN_FAILED` | entry | `entry TERMS_OF_SERVICE_TOKEN_FAILED` | [97](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L97) |
-| `AccountEventName.CHECKOUT_STARTED` | entry | `entry CHECKOUT_STARTED` | [99](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L99) |
-| `AccountEventName.CHECKOUT_PAYMENT_METHOD_SELECTED` | entry | `entry CHECKOUT_PAYMENT_METHOD_SELECTED` | [100](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L100) |
-| `AccountEventName.CHECKOUT_VALIDATION_FAILED` | entry | `entry CHECKOUT_VALIDATION_FAILED` | [101](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L101) |
-| `AccountEventName.CHECKOUT_PAYMENT_STARTED` | entry | `entry CHECKOUT_PAYMENT_STARTED` | [102](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L102) |
-| `AccountEventName.CARD_TOKENIZED` | entry | `entry CARD_TOKENIZED` | [103](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L103) |
-| `AccountEventName.CARD_TOKENIZATION_FAILED` | entry | `entry CARD_TOKENIZATION_FAILED` | [104](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L104) |
-| `AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED` | entry | `entry CHECKOUT_PAYMENT_SUCCEEDED` | [105](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L105) |
-| `AccountEventName.CHECKOUT_PAYMENT_DECLINED` | entry | `entry CHECKOUT_PAYMENT_DECLINED` | [106](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L106) |
-| `AccountEventName.CHECKOUT_PAYMENT_FAILED` | entry | `entry CHECKOUT_PAYMENT_FAILED` | [107](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L107) |
-| `AccountEventName.CHECKOUT_CANCELLED` | entry | `entry CHECKOUT_CANCELLED` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L108) |
-| `AccountEventName.STEP_UP_CHALLENGE_STARTED` | entry | `entry STEP_UP_CHALLENGE_STARTED` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L109) |
-| `AccountEventName.STEP_UP_CHALLENGE_COMPLETED` | entry | `entry STEP_UP_CHALLENGE_COMPLETED` | [110](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L110) |
-| `AccountEventName.STEP_UP_CHALLENGE_ABANDONED` | entry | `entry STEP_UP_CHALLENGE_ABANDONED` | [111](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L111) |
-| `AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE` | entry | `entry STEP_UP_CHALLENGE_UNAVAILABLE` | [112](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L112) |
-| `AccountEventName.CHARGE_INTENT_CONFIRMATION_POLLING_EXHAUSTED` | entry | `entry CHARGE_INTENT_CONFIRMATION_POLLING_EXHAUSTED` | [113](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L113) |
-| `AccountEventName.APPLE_PAY_STARTED` | entry | `entry APPLE_PAY_STARTED` | [115](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L115) |
-| `AccountEventName.APPLE_PAY_UNAVAILABLE` | entry | `entry APPLE_PAY_UNAVAILABLE` | [116](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L116) |
-| `AccountEventName.APPLE_PAY_AUTHORIZED` | entry | `entry APPLE_PAY_AUTHORIZED` | [117](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L117) |
-| `AccountEventName.APPLE_PAY_FAILED` | entry | `entry APPLE_PAY_FAILED` | [118](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L118) |
-| `AccountEventName.APPLE_PAY_CANCELLED` | entry | `entry APPLE_PAY_CANCELLED` | [119](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L119) |
-| `AccountEventName.APPLE_PAY_CARD_ADDED` | entry | `entry APPLE_PAY_CARD_ADDED` | [120](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L120) |
-| `AccountEventName.APPLE_PAY_ASSERTION_REJECTED` | entry | `entry APPLE_PAY_ASSERTION_REJECTED` | [121](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L121) |
-| `AccountEventName.ATTESTATION_STARTED` | entry | `entry ATTESTATION_STARTED` | [123](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L123) |
-| `AccountEventName.ATTESTATION_COMPLETED` | entry | `entry ATTESTATION_COMPLETED` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L124) |
-| `AccountEventName.ATTESTATION_NOT_SUPPORTED` | entry | `entry ATTESTATION_NOT_SUPPORTED` | [125](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L125) |
-| `AccountEventName.ATTESTATION_FAILED` | entry | `entry ATTESTATION_FAILED` | [126](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L126) |
-| `AccountEventName.ATTESTATION_RESET_AND_RETRY` | entry | `entry ATTESTATION_RESET_AND_RETRY` | [127](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L127) |
-| `AccountEventName.ATTESTATION_ASSERTION_RETRIED` | entry | `entry ATTESTATION_ASSERTION_RETRIED` | [128](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L128) |
-| `AccountEventName.FRAUD_SESSION_STARTED` | entry | `entry FRAUD_SESSION_STARTED` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L130) |
-| `AccountEventName.FRAUD_SESSION_REFRESHED` | entry | `entry FRAUD_SESSION_REFRESHED` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L131) |
-| `AccountEventName.FRAUD_SESSION_RECREATED` | entry | `entry FRAUD_SESSION_RECREATED` | [132](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L132) |
-| `AccountEventName.SONAR_SESSION_FAILED` | entry | `entry SONAR_SESSION_FAILED` | [133](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L133) |
-| `AccountEventName.FRAUD_SESSION_ADOPTED` | entry | `entry FRAUD_SESSION_ADOPTED` | [134](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L134) |
-| `AccountEventDetail` | object | `object AccountEventDetail` | [138](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L138) |
-| `AccountEventDetail.APPLE_PAY_ASSERTION_REJECTED` | val | `val APPLE_PAY_ASSERTION_REJECTED =` | [139](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L139) |
-| `AccountEventDetail.APPLE_PAY_ADD_TO_OWNER_MODE` | val | `val APPLE_PAY_ADD_TO_OWNER_MODE =` | [140](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L140) |
-| `AccountEventDetail.APPLE_PAY_SHEET_DISMISSED_NO_RESULT` | val | `val APPLE_PAY_SHEET_DISMISSED_NO_RESULT =` | [141](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L141) |
-| `AccountEventDetail.CHECKOUT_PAY_BUTTON_TAPPED` | val | `val CHECKOUT_PAY_BUTTON_TAPPED =` | [142](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L142) |
-| `AccountEventDetail.CHECKOUT_SAVED_PAYMENT_METHOD` | val | `val CHECKOUT_SAVED_PAYMENT_METHOD =` | [143](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L143) |
-| `AccountEventDetail.CHECKOUT_NEW_PAYMENT_METHOD` | val | `val CHECKOUT_NEW_PAYMENT_METHOD =` | [144](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L144) |
-| `AccountEventDetail.FRAUD_SESSION_ADOPTED_FROM_ANONYMOUS` | val | `val FRAUD_SESSION_ADOPTED_FROM_ANONYMOUS =` | [145](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L145) |
-| `AccountEventDetail.FRAUD_SESSION_REFRESH_FELL_BACK_TO_RECREATE` | val | `val FRAUD_SESSION_REFRESH_FELL_BACK_TO_RECREATE =` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L146) |
-| `AccountEventDetail.ATTESTATION_NOT_SUPPORTED_REASON` | val | `val ATTESTATION_NOT_SUPPORTED_REASON =` | [147](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L147) |
-| `AccountEventDetail.ATTESTATION_ONE_TIME_PER_DEVICE` | val | `val ATTESTATION_ONE_TIME_PER_DEVICE =` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L148) |
-| `AccountEventDetail.ATTESTATION_ASSERTION_RETRIED_CONTEXT` | val | `val ATTESTATION_ASSERTION_RETRIED_CONTEXT =` | [149](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L149) |
-| `AccountEventDetail.STEP_UP_CHALLENGE_IS_3DS` | val | `val STEP_UP_CHALLENGE_IS_3DS =` | [150](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L150) |
-| `AccountEventDetail.STEP_UP_CHALLENGE_NEVER_LOADED` | val | `val STEP_UP_CHALLENGE_NEVER_LOADED =` | [151](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L151) |
-| `AccountEventDetail.STEP_UP_CHALLENGE_COMPLETED_CONTEXT` | val | `val STEP_UP_CHALLENGE_COMPLETED_CONTEXT =` | [152](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L152) |
-| `AccountEventDetail.STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED` | val | `val STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED =` | [153](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L153) |
-| `AccountEventDetail.PROVE_PROVIDER` | val | `val PROVE_PROVIDER =` | [154](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L154) |
-| `AccountEventDetail.PERSONA_PROVIDER` | val | `val PERSONA_PROVIDER =` | [155](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L155) |
-| `AccountEventDetail.PLAID_PROVIDER` | val | `val PLAID_PROVIDER =` | [156](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L156) |
-| `AccountEventDetail.PLAID_USER_DISMISSED` | val | `val PLAID_USER_DISMISSED =` | [157](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L157) |
-| `AccountEventDetail.BILLING_ADDRESS_ONLY_VERIFICATION_PATH` | val | `val BILLING_ADDRESS_ONLY_VERIFICATION_PATH =` | [158](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L158) |
-| `AccountEventDetail.PAYOUT_METHOD_SET_AS_PRIMARY` | val | `val PAYOUT_METHOD_SET_AS_PRIMARY =` | [159](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L159) |
-| `AccountEventDetail.PAYOUT_METHOD_MANUAL_ACH_PATH` | val | `val PAYOUT_METHOD_MANUAL_ACH_PATH =` | [160](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L160) |
-| `AccountEventDetail.PAYOUT_METHOD_ADD_STARTED_MANUAL_OR_PLAID` | val | `val PAYOUT_METHOD_ADD_STARTED_MANUAL_OR_PLAID =` | [161](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L161) |
-| `AccountEventDetail.ONBOARDING_BLOCKED_NOTHING_ACTIONABLE` | val | `val ONBOARDING_BLOCKED_NOTHING_ACTIONABLE =` | [162](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L162) |
-| `AccountEventDetail.STEP_UP_ALREADY_VERIFIED_SHORT_CIRCUIT` | val | `val STEP_UP_ALREADY_VERIFIED_SHORT_CIRCUIT =` | [163](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L163) |
-| `AccountEventDetail.STEP_UP_CANCELLED_BY_USER` | val | `val STEP_UP_CANCELLED_BY_USER =` | [164](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L164) |
-| `AccountEventDetail.STEP_UP_CATEGORY_TERMINAL` | val | `val STEP_UP_CATEGORY_TERMINAL =` | [165](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L165) |
-| `AccountEventDetail.STEP_UP_CATEGORY_REVIEW` | val | `val STEP_UP_CATEGORY_REVIEW =` | [166](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L166) |
-| `AccountEventDetail.STEP_UP_CATEGORY_RETRIABLE_WITH_NEW_DATA` | val | `val STEP_UP_CATEGORY_RETRIABLE_WITH_NEW_DATA =` | [167](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L167) |
-| `AccountEventDetail.STEP_UP_CATEGORY_STEP_UP_ESCALATED` | val | `val STEP_UP_CATEGORY_STEP_UP_ESCALATED =` | [168](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L168) |
-| `AccountEventDetail.STEP_UP_CATEGORY_TRANSIENT_PROVIDER_ERROR` | val | `val STEP_UP_CATEGORY_TRANSIENT_PROVIDER_ERROR =` | [169](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L169) |
-| `AccountEventDetail.ONBOARDING_COMPLETED_APPROVED` | val | `val ONBOARDING_COMPLETED_APPROVED =` | [170](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L170) |
+| `AccountEventName.STEP_UP_STARTED` | entry | `entry STEP_UP_STARTED` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L57) |
+| `AccountEventName.STEP_UP_COMPLETED` | entry | `entry STEP_UP_COMPLETED` | [58](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L58) |
+| `AccountEventName.STEP_UP_ALREADY_VERIFIED` | entry | `entry STEP_UP_ALREADY_VERIFIED` | [59](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L59) |
+| `AccountEventName.STEP_UP_FAILED` | entry | `entry STEP_UP_FAILED` | [60](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L60) |
+| `AccountEventName.STEP_UP_NEEDS_REVIEW` | entry | `entry STEP_UP_NEEDS_REVIEW` | [61](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L61) |
+| `AccountEventName.STEP_UP_DATA_MISMATCH` | entry | `entry STEP_UP_DATA_MISMATCH` | [62](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L62) |
+| `AccountEventName.STEP_UP_ESCALATED` | entry | `entry STEP_UP_ESCALATED` | [63](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L63) |
+| `AccountEventName.STEP_UP_DECLINED` | entry | `entry STEP_UP_DECLINED` | [64](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L64) |
+| `AccountEventName.STEP_UP_UNAVAILABLE` | entry | `entry STEP_UP_UNAVAILABLE` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L65) |
+| `AccountEventName.STEP_UP_CANCELLED` | entry | `entry STEP_UP_CANCELLED` | [66](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L66) |
+| `AccountEventName.PAYMENT_METHOD_STEP_STARTED` | entry | `entry PAYMENT_METHOD_STEP_STARTED` | [68](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L68) |
+| `AccountEventName.SAVED_PAYMENT_METHOD_SELECTED` | entry | `entry SAVED_PAYMENT_METHOD_SELECTED` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L69) |
+| `AccountEventName.ADD_PAYMENT_METHOD_STARTED` | entry | `entry ADD_PAYMENT_METHOD_STARTED` | [70](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L70) |
+| `AccountEventName.PAYMENT_METHOD_ADDED` | entry | `entry PAYMENT_METHOD_ADDED` | [71](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L71) |
+| `AccountEventName.PAYMENT_METHOD_ADD_FAILED` | entry | `entry PAYMENT_METHOD_ADD_FAILED` | [72](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L72) |
+| `AccountEventName.CARD_VALIDATION_FAILED` | entry | `entry CARD_VALIDATION_FAILED` | [73](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L73) |
+| `AccountEventName.BILLING_ADDRESS_UPDATED` | entry | `entry BILLING_ADDRESS_UPDATED` | [74](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L74) |
+| `AccountEventName.BILLING_ADDRESS_UPDATE_FAILED` | entry | `entry BILLING_ADDRESS_UPDATE_FAILED` | [75](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L75) |
+| `AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED` | entry | `entry SAVED_PAYMENT_METHODS_LOAD_FAILED` | [76](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L76) |
+| `AccountEventName.PAYOUT_METHOD_STEP_STARTED` | entry | `entry PAYOUT_METHOD_STEP_STARTED` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L78) |
+| `AccountEventName.SAVED_PAYOUT_METHOD_SELECTED` | entry | `entry SAVED_PAYOUT_METHOD_SELECTED` | [79](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L79) |
+| `AccountEventName.ADD_PAYOUT_METHOD_STARTED` | entry | `entry ADD_PAYOUT_METHOD_STARTED` | [80](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L80) |
+| `AccountEventName.PAYOUT_METHOD_ADDED` | entry | `entry PAYOUT_METHOD_ADDED` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L81) |
+| `AccountEventName.PAYOUT_METHOD_ADD_FAILED` | entry | `entry PAYOUT_METHOD_ADD_FAILED` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L82) |
+| `AccountEventName.BANK_LINK_STARTED` | entry | `entry BANK_LINK_STARTED` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L83) |
+| `AccountEventName.BANK_LINK_COMPLETED` | entry | `entry BANK_LINK_COMPLETED` | [84](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L84) |
+| `AccountEventName.BANK_LINK_CANCELLED` | entry | `entry BANK_LINK_CANCELLED` | [85](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L85) |
+| `AccountEventName.BANK_LINK_FAILED` | entry | `entry BANK_LINK_FAILED` | [86](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L86) |
+| `AccountEventName.PAYOUT_METHOD_ELECTED` | entry | `entry PAYOUT_METHOD_ELECTED` | [87](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L87) |
+| `AccountEventName.PAYOUT_METHOD_ELECTION_FAILED` | entry | `entry PAYOUT_METHOD_ELECTION_FAILED` | [88](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L88) |
+| `AccountEventName.COMPLIANCE_CHECK_STARTED` | entry | `entry COMPLIANCE_CHECK_STARTED` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L90) |
+| `AccountEventName.COMPLIANCE_CHECK_PASSED` | entry | `entry COMPLIANCE_CHECK_PASSED` | [91](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L91) |
+| `AccountEventName.COMPLIANCE_CHECK_FAILED` | entry | `entry COMPLIANCE_CHECK_FAILED` | [92](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L92) |
+| `AccountEventName.COMPLIANCE_CHECK_VPN_DETECTED` | entry | `entry COMPLIANCE_CHECK_VPN_DETECTED` | [93](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L93) |
+| `AccountEventName.COMPLIANCE_CHECK_VPN_BYPASSED` | entry | `entry COMPLIANCE_CHECK_VPN_BYPASSED` | [94](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L94) |
+| `AccountEventName.TERMS_OF_SERVICE_SHOWN` | entry | `entry TERMS_OF_SERVICE_SHOWN` | [96](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L96) |
+| `AccountEventName.TERMS_OF_SERVICE_ACCEPTED` | entry | `entry TERMS_OF_SERVICE_ACCEPTED` | [97](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L97) |
+| `AccountEventName.TERMS_OF_SERVICE_TOKEN_FAILED` | entry | `entry TERMS_OF_SERVICE_TOKEN_FAILED` | [98](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L98) |
+| `AccountEventName.CHECKOUT_STARTED` | entry | `entry CHECKOUT_STARTED` | [100](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L100) |
+| `AccountEventName.CHECKOUT_PAYMENT_METHOD_SELECTED` | entry | `entry CHECKOUT_PAYMENT_METHOD_SELECTED` | [101](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L101) |
+| `AccountEventName.CHECKOUT_VALIDATION_FAILED` | entry | `entry CHECKOUT_VALIDATION_FAILED` | [102](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L102) |
+| `AccountEventName.CHECKOUT_PAYMENT_STARTED` | entry | `entry CHECKOUT_PAYMENT_STARTED` | [103](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L103) |
+| `AccountEventName.CARD_TOKENIZED` | entry | `entry CARD_TOKENIZED` | [104](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L104) |
+| `AccountEventName.CARD_TOKENIZATION_FAILED` | entry | `entry CARD_TOKENIZATION_FAILED` | [105](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L105) |
+| `AccountEventName.CHECKOUT_PAYMENT_SUCCEEDED` | entry | `entry CHECKOUT_PAYMENT_SUCCEEDED` | [106](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L106) |
+| `AccountEventName.CHECKOUT_PAYMENT_DECLINED` | entry | `entry CHECKOUT_PAYMENT_DECLINED` | [107](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L107) |
+| `AccountEventName.CHECKOUT_PAYMENT_FAILED` | entry | `entry CHECKOUT_PAYMENT_FAILED` | [108](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L108) |
+| `AccountEventName.CHECKOUT_CANCELLED` | entry | `entry CHECKOUT_CANCELLED` | [109](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L109) |
+| `AccountEventName.CARD_VERIFICATION_CHALLENGE_STARTED` | entry | `entry CARD_VERIFICATION_CHALLENGE_STARTED` | [111](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L111) |
+| `AccountEventName.CARD_VERIFICATION_CHALLENGE_COMPLETED` | entry | `entry CARD_VERIFICATION_CHALLENGE_COMPLETED` | [112](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L112) |
+| `AccountEventName.CARD_VERIFICATION_CHALLENGE_ABANDONED` | entry | `entry CARD_VERIFICATION_CHALLENGE_ABANDONED` | [113](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L113) |
+| `AccountEventName.CARD_VERIFICATION_CHALLENGE_UNAVAILABLE` | entry | `entry CARD_VERIFICATION_CHALLENGE_UNAVAILABLE` | [114](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L114) |
+| `AccountEventName.STEP_UP_CHALLENGE_STARTED` | entry | `entry STEP_UP_CHALLENGE_STARTED` | [116](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L116) |
+| `AccountEventName.STEP_UP_CHALLENGE_COMPLETED` | entry | `entry STEP_UP_CHALLENGE_COMPLETED` | [117](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L117) |
+| `AccountEventName.STEP_UP_CHALLENGE_ABANDONED` | entry | `entry STEP_UP_CHALLENGE_ABANDONED` | [118](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L118) |
+| `AccountEventName.STEP_UP_CHALLENGE_UNAVAILABLE` | entry | `entry STEP_UP_CHALLENGE_UNAVAILABLE` | [119](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L119) |
+| `AccountEventName.CHARGE_INTENT_CONFIRMATION_POLLING_EXHAUSTED` | entry | `entry CHARGE_INTENT_CONFIRMATION_POLLING_EXHAUSTED` | [120](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L120) |
+| `AccountEventName.APPLE_PAY_STARTED` | entry | `entry APPLE_PAY_STARTED` | [122](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L122) |
+| `AccountEventName.APPLE_PAY_UNAVAILABLE` | entry | `entry APPLE_PAY_UNAVAILABLE` | [123](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L123) |
+| `AccountEventName.APPLE_PAY_AUTHORIZED` | entry | `entry APPLE_PAY_AUTHORIZED` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L124) |
+| `AccountEventName.APPLE_PAY_FAILED` | entry | `entry APPLE_PAY_FAILED` | [125](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L125) |
+| `AccountEventName.APPLE_PAY_CANCELLED` | entry | `entry APPLE_PAY_CANCELLED` | [126](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L126) |
+| `AccountEventName.APPLE_PAY_CARD_ADDED` | entry | `entry APPLE_PAY_CARD_ADDED` | [127](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L127) |
+| `AccountEventName.APPLE_PAY_ASSERTION_REJECTED` | entry | `entry APPLE_PAY_ASSERTION_REJECTED` | [128](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L128) |
+| `AccountEventName.ATTESTATION_STARTED` | entry | `entry ATTESTATION_STARTED` | [130](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L130) |
+| `AccountEventName.ATTESTATION_COMPLETED` | entry | `entry ATTESTATION_COMPLETED` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L131) |
+| `AccountEventName.ATTESTATION_NOT_SUPPORTED` | entry | `entry ATTESTATION_NOT_SUPPORTED` | [132](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L132) |
+| `AccountEventName.ATTESTATION_FAILED` | entry | `entry ATTESTATION_FAILED` | [133](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L133) |
+| `AccountEventName.ATTESTATION_RESET_AND_RETRY` | entry | `entry ATTESTATION_RESET_AND_RETRY` | [134](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L134) |
+| `AccountEventName.ATTESTATION_ASSERTION_RETRIED` | entry | `entry ATTESTATION_ASSERTION_RETRIED` | [135](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L135) |
+| `AccountEventName.FRAUD_SESSION_STARTED` | entry | `entry FRAUD_SESSION_STARTED` | [137](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L137) |
+| `AccountEventName.FRAUD_SESSION_REFRESHED` | entry | `entry FRAUD_SESSION_REFRESHED` | [138](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L138) |
+| `AccountEventName.FRAUD_SESSION_RECREATED` | entry | `entry FRAUD_SESSION_RECREATED` | [139](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L139) |
+| `AccountEventName.SONAR_SESSION_FAILED` | entry | `entry SONAR_SESSION_FAILED` | [140](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L140) |
+| `AccountEventName.FRAUD_SESSION_ADOPTED` | entry | `entry FRAUD_SESSION_ADOPTED` | [141](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L141) |
+| `AccountEventDetail` | object | `object AccountEventDetail` | [145](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L145) |
+| `AccountEventDetail.APPLE_PAY_ASSERTION_REJECTED` | val | `val APPLE_PAY_ASSERTION_REJECTED =` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L146) |
+| `AccountEventDetail.APPLE_PAY_ADD_TO_OWNER_MODE` | val | `val APPLE_PAY_ADD_TO_OWNER_MODE =` | [147](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L147) |
+| `AccountEventDetail.APPLE_PAY_SHEET_DISMISSED_NO_RESULT` | val | `val APPLE_PAY_SHEET_DISMISSED_NO_RESULT =` | [148](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L148) |
+| `AccountEventDetail.CHECKOUT_PAY_BUTTON_TAPPED` | val | `val CHECKOUT_PAY_BUTTON_TAPPED =` | [149](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L149) |
+| `AccountEventDetail.CHECKOUT_SAVED_PAYMENT_METHOD` | val | `val CHECKOUT_SAVED_PAYMENT_METHOD =` | [150](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L150) |
+| `AccountEventDetail.CHECKOUT_NEW_PAYMENT_METHOD` | val | `val CHECKOUT_NEW_PAYMENT_METHOD =` | [151](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L151) |
+| `AccountEventDetail.FRAUD_SESSION_ADOPTED_FROM_ANONYMOUS` | val | `val FRAUD_SESSION_ADOPTED_FROM_ANONYMOUS =` | [152](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L152) |
+| `AccountEventDetail.FRAUD_SESSION_REFRESH_FELL_BACK_TO_RECREATE` | val | `val FRAUD_SESSION_REFRESH_FELL_BACK_TO_RECREATE =` | [153](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L153) |
+| `AccountEventDetail.ATTESTATION_NOT_SUPPORTED_REASON` | val | `val ATTESTATION_NOT_SUPPORTED_REASON =` | [154](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L154) |
+| `AccountEventDetail.ATTESTATION_ONE_TIME_PER_DEVICE` | val | `val ATTESTATION_ONE_TIME_PER_DEVICE =` | [155](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L155) |
+| `AccountEventDetail.ATTESTATION_ASSERTION_RETRIED_CONTEXT` | val | `val ATTESTATION_ASSERTION_RETRIED_CONTEXT =` | [156](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L156) |
+| `AccountEventDetail.CARD_VERIFICATION_CHALLENGE_NEVER_LOADED` | val | `val CARD_VERIFICATION_CHALLENGE_NEVER_LOADED =` | [157](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L157) |
+| `AccountEventDetail.CARD_VERIFICATION_CHALLENGE_COMPLETED_CONTEXT` | val | `val CARD_VERIFICATION_CHALLENGE_COMPLETED_CONTEXT =` | [158](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L158) |
+| `AccountEventDetail.CARD_VERIFICATION_CHALLENGE_CARDHOLDER_DISMISSED` | val | `val CARD_VERIFICATION_CHALLENGE_CARDHOLDER_DISMISSED =` | [159](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L159) |
+| `AccountEventDetail.STEP_UP_CHALLENGE_IS_3DS` | val | `val STEP_UP_CHALLENGE_IS_3DS =` | [160](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L160) |
+| `AccountEventDetail.STEP_UP_CHALLENGE_NEVER_LOADED` | val | `val STEP_UP_CHALLENGE_NEVER_LOADED = CARD_VERIFICATION_CHALLENGE_NEVER_LOADED` | [161](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L161) |
+| `AccountEventDetail.STEP_UP_CHALLENGE_COMPLETED_CONTEXT` | val | `val STEP_UP_CHALLENGE_COMPLETED_CONTEXT = CARD_VERIFICATION_CHALLENGE_COMPLETED_CONTEXT` | [162](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L162) |
+| `AccountEventDetail.STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED` | val | `val STEP_UP_CHALLENGE_CARDHOLDER_DISMISSED = CARD_VERIFICATION_CHALLENGE_CARDHOLDER_DISMISSED` | [163](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L163) |
+| `AccountEventDetail.PROVE_PROVIDER` | val | `val PROVE_PROVIDER =` | [164](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L164) |
+| `AccountEventDetail.PERSONA_PROVIDER` | val | `val PERSONA_PROVIDER =` | [165](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L165) |
+| `AccountEventDetail.PLAID_PROVIDER` | val | `val PLAID_PROVIDER =` | [166](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L166) |
+| `AccountEventDetail.PLAID_USER_DISMISSED` | val | `val PLAID_USER_DISMISSED =` | [167](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L167) |
+| `AccountEventDetail.BILLING_ADDRESS_ONLY_VERIFICATION_PATH` | val | `val BILLING_ADDRESS_ONLY_VERIFICATION_PATH =` | [168](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L168) |
+| `AccountEventDetail.PAYOUT_METHOD_SET_AS_PRIMARY` | val | `val PAYOUT_METHOD_SET_AS_PRIMARY =` | [169](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L169) |
+| `AccountEventDetail.PAYOUT_METHOD_MANUAL_ACH_PATH` | val | `val PAYOUT_METHOD_MANUAL_ACH_PATH =` | [170](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L170) |
+| `AccountEventDetail.PAYOUT_METHOD_ADD_STARTED_MANUAL_OR_PLAID` | val | `val PAYOUT_METHOD_ADD_STARTED_MANUAL_OR_PLAID =` | [171](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L171) |
+| `AccountEventDetail.ONBOARDING_BLOCKED_NOTHING_ACTIONABLE` | val | `val ONBOARDING_BLOCKED_NOTHING_ACTIONABLE =` | [172](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L172) |
+| `AccountEventDetail.STEP_UP_ALREADY_VERIFIED_SHORT_CIRCUIT` | val | `val STEP_UP_ALREADY_VERIFIED_SHORT_CIRCUIT =` | [173](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L173) |
+| `AccountEventDetail.STEP_UP_CANCELLED_BY_USER` | val | `val STEP_UP_CANCELLED_BY_USER =` | [174](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L174) |
+| `AccountEventDetail.STEP_UP_CATEGORY_TERMINAL` | val | `val STEP_UP_CATEGORY_TERMINAL =` | [175](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L175) |
+| `AccountEventDetail.STEP_UP_CATEGORY_REVIEW` | val | `val STEP_UP_CATEGORY_REVIEW =` | [176](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L176) |
+| `AccountEventDetail.STEP_UP_CATEGORY_RETRIABLE_WITH_NEW_DATA` | val | `val STEP_UP_CATEGORY_RETRIABLE_WITH_NEW_DATA =` | [177](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L177) |
+| `AccountEventDetail.STEP_UP_CATEGORY_STEP_UP_ESCALATED` | val | `val STEP_UP_CATEGORY_STEP_UP_ESCALATED =` | [178](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L178) |
+| `AccountEventDetail.STEP_UP_CATEGORY_TRANSIENT_PROVIDER_ERROR` | val | `val STEP_UP_CATEGORY_TRANSIENT_PROVIDER_ERROR =` | [179](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L179) |
+| `AccountEventDetail.ONBOARDING_COMPLETED_APPROVED` | val | `val ONBOARDING_COMPLETED_APPROVED =` | [180](FrameSDK/src/main/java/com/framepayments/framesdk/accountevents/AccountEventCatalog.kt#L180) |
 
 </details>
 
@@ -2939,8 +2946,8 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameThreeDSecureChallengePresenter` | class | `class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameThreeDSecureChallengePresenting` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/ThreeDSecureChallengeDialog.kt#L33) |
-| `FrameThreeDSecureChallengePresenter.presentChallenge` | fun | `fun presentChallenge(challenge: UseFrameSDK): FrameThreeDSecureChallengeResult` | [44](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/ThreeDSecureChallengeDialog.kt#L44) |
+| `FrameThreeDSecureChallengePresenter` | class | `class FrameThreeDSecureChallengePresenter(private val context: Context) : FrameThreeDSecureChallengePresenting` | [36](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/ThreeDSecureChallengeDialog.kt#L36) |
+| `FrameThreeDSecureChallengePresenter.presentChallenge` | fun | `fun presentChallenge(challenge: UseFrameSDK): FrameThreeDSecureChallengeResult` | [47](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/ThreeDSecureChallengeDialog.kt#L47) |
 
 </details>
 
@@ -3376,11 +3383,11 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 | `FrameCheckoutViewModel.addressMode` | var | `var addressMode: AddressMode = AddressMode.REQUIRED` | [156](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L156) |
 | `FrameCheckoutViewModel.fieldErrors` | val | `val fieldErrors: LiveData<Map<FieldKey, ValidationError>> = _fieldErrors` | [159](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L159) |
 | `FrameCheckoutViewModel.isPerformingAction` | val | `val isPerformingAction: LiveData<Boolean> = _isPerformingAction` | [172](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L172) |
-| `FrameCheckoutViewModel.loadAccountDetails` | fun | `fun loadAccountDetails( accountId: String, amount: Int, account: AccountObjects.Account? = null, paymentMethods: List<FrameObjects.PaymentMethod>? = null, chec…` | [193](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L193) |
-| `FrameCheckoutViewModel.setError` | fun | `fun setError(key: FieldKey, error: ValidationError?)` | [303](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L303) |
-| `FrameCheckoutViewModel.clearError` | fun | `fun clearError(key: FieldKey)` | [314](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L314) |
-| `FrameCheckoutViewModel.validateAll` | fun | `fun validateAll(forSavedCard: Boolean): Map<FieldKey, ValidationError>` | [338](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L338) |
-| `FrameCheckoutViewModel.checkoutWithSelectedPaymentMethod` | fun | `fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<TransferV2?> = liveData(Dispatchers.IO)` | [362](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L362) |
+| `FrameCheckoutViewModel.loadAccountDetails` | fun | `fun loadAccountDetails( accountId: String, amount: Int, account: AccountObjects.Account? = null, paymentMethods: List<FrameObjects.PaymentMethod>? = null, chec…` | [192](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L192) |
+| `FrameCheckoutViewModel.setError` | fun | `fun setError(key: FieldKey, error: ValidationError?)` | [296](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L296) |
+| `FrameCheckoutViewModel.clearError` | fun | `fun clearError(key: FieldKey)` | [307](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L307) |
+| `FrameCheckoutViewModel.validateAll` | fun | `fun validateAll(forSavedCard: Boolean): Map<FieldKey, ValidationError>` | [331](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L331) |
+| `FrameCheckoutViewModel.checkoutWithSelectedPaymentMethod` | fun | `fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<TransferV2?> = liveData(Dispatchers.IO)` | [355](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L355) |
 
 </details>
 
