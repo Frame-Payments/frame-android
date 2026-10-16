@@ -156,6 +156,9 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private val _beneficialOwners = MutableStateFlow<List<BeneficialOwner>>(emptyList())
     val beneficialOwners: StateFlow<List<BeneficialOwner>> = _beneficialOwners.asStateFlow()
 
+    /** Owner written from personal info. A later submit updates this record even if the email changed. */
+    private var submittedBusinessOwnerId: String? = null
+
     fun setBusinessRole(role: BusinessRole) {
         _businessRole.value = role
         _businessRoleError.value = null
@@ -1434,21 +1437,24 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             roles = listOf(role.apiValue),
             invite = false
         )
-        val (owners, listError) = BeneficialOwnersAPI.list(accountId)
-        if (listError != null) {
-            reportUserError(userMessageForNetworkError(listError))
-            return false
+        val existingId = submittedBusinessOwnerId ?: run {
+            val (owners, listError) = BeneficialOwnersAPI.list(accountId)
+            if (listError != null) {
+                reportUserError(userMessageForNetworkError(listError))
+                return false
+            }
+            owners?.data?.firstOrNull { it.email.equals(email, ignoreCase = true) }?.id
         }
-        val existing = owners?.data?.firstOrNull { it.email.equals(email, ignoreCase = true) }
-        val error = if (existing != null) {
-            BeneficialOwnersAPI.update(accountId, existing.id, request).second
+        val (written, error) = if (existingId != null) {
+            BeneficialOwnersAPI.update(accountId, existingId, request)
         } else {
-            BeneficialOwnersAPI.create(accountId, request).second
+            BeneficialOwnersAPI.create(accountId, request)
         }
         if (error != null) {
             reportUserError(userMessageForNetworkError(error))
             return false
         }
+        submittedBusinessOwnerId = written?.id ?: existingId
         return true
     }
 
@@ -1572,6 +1578,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 val (_, error) = AccountsAPI.updateAccount(
                     accountId,
                     AccountRequests.UpdateAccountRequest(
+                        termsOfService = termsOfServiceForUpdate(),
                         profile = AccountRequests.UpdateAccountProfile(
                             business = AccountRequests.UpdateBusinessAccount(
                                 legalBusinessName = legalName,
