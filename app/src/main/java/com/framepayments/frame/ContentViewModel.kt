@@ -46,10 +46,14 @@ sealed class OnboardingMintState {
      * [accountId]. Onboarding must be launched with this same [accountId], or it creates a new
      * account the session was never scoped to and every request after that gets PII-gated.
      */
-    data class Ready(val clientSecret: String, val accountId: String) : OnboardingMintState()
+    data class Ready(
+        val clientSecret: String,
+        val accountId: String,
+        val accountType: AccountObjects.AccountType = AccountObjects.AccountType.INDIVIDUAL
+    ) : OnboardingMintState()
 
     /** Minting failed; [message] explains why so the UI can offer a retry. */
-    data class Error(val message: String) : OnboardingMintState()
+    data class Error(val message: String, val business: Boolean = false) : OnboardingMintState()
 }
 
 class ContentViewModel : ViewModel() {
@@ -124,6 +128,55 @@ class ContentViewModel : ViewModel() {
                 }
                 is MintResult.Err -> {
                     _onboardingMintState.value = OnboardingMintState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    /** Creates a business account with sk_, then mints a session for that account only. */
+    @Suppress("DEPRECATION")
+    fun mintBusinessOnboarding() {
+        mintJob?.cancel()
+        _onboardingMintState.value = OnboardingMintState.Loading
+        mintJob = viewModelScope.launch {
+            val suffix = java.util.UUID.randomUUID().toString().take(8).lowercase()
+            val (account, err) = AccountsAPI.createAccount(
+                AccountRequests.CreateAccountRequest(
+                    type = AccountObjects.AccountType.BUSINESS,
+                    profile = AccountRequests.CreateAccountProfile(
+                        business = AccountObjects.BusinessAccount(
+                            legalBusinessName = "Example Business",
+                            businessType = "private_corporation",
+                            email = "business-$suffix@example.com"
+                        )
+                    ),
+                    capabilities = listOf("phone_verification", "geo_compliance")
+                )
+            )
+            val createdId = account?.id
+            if (createdId == null) {
+                _onboardingMintState.value = OnboardingMintState.Error(
+                    err?.toastMessage() ?: "Could not create a business account.",
+                    business = true
+                )
+                return@launch
+            }
+            when (val result = mintSession(
+                accountIdInput = createdId,
+                steps = listOf(
+                    OnboardingSessionRequests.OnboardingSessionStep.GEO_COMPLIANCE,
+                    OnboardingSessionRequests.OnboardingSessionStep.PAYMENT_METHOD
+                )
+            )) {
+                is MintResult.Ok -> {
+                    _onboardingMintState.value = OnboardingMintState.Ready(
+                        result.session.clientSecret,
+                        result.session.accountId,
+                        AccountObjects.AccountType.BUSINESS
+                    )
+                }
+                is MintResult.Err -> {
+                    _onboardingMintState.value = OnboardingMintState.Error(result.message, business = true)
                 }
             }
         }

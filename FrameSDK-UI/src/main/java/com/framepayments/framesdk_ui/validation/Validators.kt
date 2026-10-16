@@ -224,6 +224,18 @@ object Validators {
     }
 
     /**
+     * Validates that [value] is exactly 9 ASCII digits (a full SSN).
+     *
+     * @param value SSN entered by the customer, digits only.
+     * @return Null if valid, a localized error string otherwise.
+     */
+    fun validateSSN(value: String): String? {
+        if (value.isEmpty()) return "SSN is required"
+        val isValid = value.length == 9 && value.all { it.isAsciiDigit() }
+        return if (isValid) null else "Enter a 9-digit Social Security number"
+    }
+
+    /**
      * Validates that [value] is a 9-digit US ABA routing number with a valid checksum.
      *
      * @param value Routing number string entered by the customer.

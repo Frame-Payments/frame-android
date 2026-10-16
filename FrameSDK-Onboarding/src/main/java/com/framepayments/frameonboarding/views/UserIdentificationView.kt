@@ -63,6 +63,8 @@ import com.framepayments.framesdk.configurations.LegalConfiguration
 import com.framepayments.framesdk.customeridentity.CustomerIdentityRequests
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
+import com.framepayments.frameonboarding.classes.BusinessRole
+import com.framepayments.framesdk.accounts.AccountObjects
 import com.framepayments.framesdk_ui.reusable.BillingAddressDetailView
 import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.frameonboarding.reusable.CustomerInformationView
@@ -107,6 +109,8 @@ internal fun UserIdentificationView(
     val awaitingAccountRefresh by viewModel.awaitingAccountProfileRefresh.collectAsState()
     val termsToken by viewModel.termsOfServiceToken.collectAsState()
     val onboardingData by viewModel.onboardingData.collectAsState()
+    val businessRole by viewModel.businessRole.collectAsState()
+    val businessRoleError by viewModel.businessRoleError.collectAsState()
     val fieldErrors by viewModel.fieldErrors.collectAsState()
     val personaInquiryToLaunch by viewModel.personaInquiryToLaunch.collectAsState()
     val isVerifyingGovId by viewModel.isVerifyingGovId.collectAsState()
@@ -460,7 +464,17 @@ internal fun UserIdentificationView(
                                 isVerifyingGovId = isVerifyingGovId,
                                 onVerifyWithoutSsn = { viewModel.verifyIdentityWithoutSsn() },
                                 onUseSsnInstead = { viewModel.resetIdentityVerification() },
-                                allowSsnInstead = !viewModel.governmentIdRequired
+                                allowSsnInstead = !viewModel.governmentIdRequired,
+                                businessRoleLabel = businessRole?.label,
+                                businessRoleError = businessRoleError,
+                                onBusinessRoleSelected = if (viewModel.accountType == AccountObjects.AccountType.BUSINESS) {
+                                    { apiValue ->
+                                        BusinessRole.entries.firstOrNull { it.apiValue == apiValue }
+                                            ?.let(viewModel::setBusinessRole)
+                                    }
+                                } else {
+                                    null
+                                }
                             )
 
                             Spacer(Modifier.height(24.dp))
@@ -504,7 +518,9 @@ internal fun UserIdentificationView(
                                     }
                                 }
                                 else -> {
-                                    val infoOK = customerInfoVM.validate(ssnOptional = skipsSsnEntry)
+                                    val infoOK = customerInfoVM.validate(
+                                        ssnOptional = skipsSsnEntry
+                                    )
                                     val addressOK = personalAddressVM.validate()
                                     if (!infoOK || !addressOK) {
                                         AccountEventEmitter.emit(

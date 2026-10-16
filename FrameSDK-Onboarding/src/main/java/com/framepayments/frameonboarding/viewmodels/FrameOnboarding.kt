@@ -9,6 +9,7 @@ import com.framepayments.frameonboarding.classes.BankAccountDraft
 import com.framepayments.frameonboarding.classes.OnboardingData
 import com.framepayments.frameonboarding.classes.PhoneCountrySelection
 import com.framepayments.framesdk_ui.validation.Validators
+import com.framepayments.frameonboarding.classes.BusinessRole
 import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
 import com.framepayments.frameonboarding.classes.OnboardingOutcome
 import com.framepayments.frameonboarding.classes.OnboardingResult
@@ -21,6 +22,9 @@ import com.framepayments.frameonboarding.classes.capabilitiesWithDependencies
 import com.framepayments.frameonboarding.classes.computeFlowSegments
 import com.framepayments.frameonboarding.classes.computeOrderedSteps
 import com.framepayments.frameonboarding.classes.toFlowSegment
+import com.framepayments.frameonboarding.networking.beneficialowners.BeneficialOwner
+import com.framepayments.frameonboarding.networking.beneficialowners.BeneficialOwnerWriteRequest
+import com.framepayments.frameonboarding.networking.beneficialowners.BeneficialOwnersAPI
 import com.framepayments.frameonboarding.networking.idv.IdvAPI
 import com.framepayments.frameonboarding.networking.idv.IdvCompletionRouting
 import com.framepayments.frameonboarding.networking.phoneotpverification.PhoneOTPVerificationAPI
@@ -125,19 +129,46 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     private fun requiredCapabilityApiStrings(): List<String> =
         _requiredCapabilities.value.map { it.apiValue }
 
-    private var _orderedSteps: List<OnboardingStep> = run {
-        var steps = computeOrderedSteps(_requiredCapabilities.value, originallyRequiredCapabilities)
-        if (!config.showIntroScreen) steps = steps.filter { it != OnboardingStep.VerificationWelcome }
-        if (!config.showCompletionScreen) steps = steps.filter { it != OnboardingStep.VerificationSubmitted }
-        steps
-    }
-    private var _flowSegments: List<OnboardingFlowSegment> = computeFlowSegments(
-        _requiredCapabilities.value,
-        originallyRequiredCapabilities
-    )
+    private var _orderedSteps: List<OnboardingStep> = stepsFor(_requiredCapabilities.value)
+    private var _flowSegments: List<OnboardingFlowSegment> = segmentsFor(_requiredCapabilities.value)
 
     val orderedSteps: List<OnboardingStep> get() = _orderedSteps
     val flowSegments: List<OnboardingFlowSegment> get() = _flowSegments
+
+    val accountType: AccountObjects.AccountType get() = config.accountType
+
+    private val _accountTypeMismatch = MutableStateFlow<String?>(
+        if (config.accountType == AccountObjects.AccountType.BUSINESS && config.accountId.isNullOrBlank()) {
+            "Business onboarding needs an existing business account."
+        } else {
+            null
+        }
+    )
+    /** Set when the host's account type does not match the account on the session. */
+    val accountTypeMismatch: StateFlow<String?> = _accountTypeMismatch.asStateFlow()
+
+    private val _businessRole = MutableStateFlow<BusinessRole?>(null)
+    val businessRole: StateFlow<BusinessRole?> = _businessRole.asStateFlow()
+
+    private val _businessRoleError = MutableStateFlow<String?>(null)
+    val businessRoleError: StateFlow<String?> = _businessRoleError.asStateFlow()
+
+    private val _beneficialOwners = MutableStateFlow<List<BeneficialOwner>>(emptyList())
+    val beneficialOwners: StateFlow<List<BeneficialOwner>> = _beneficialOwners.asStateFlow()
+
+    /** Owner written from personal info. A later submit updates this record even if the email changed. */
+    private var submittedBusinessOwnerId: String? = null
+
+    fun setBusinessRole(role: BusinessRole) {
+        _businessRole.value = role
+        _businessRoleError.value = null
+    }
+
+    /** Closes a type mismatch. The host receives [OnboardingResult.Failed]. */
+    fun dismissAccountTypeMismatch() {
+        val message = _accountTypeMismatch.value ?: return
+        _result.value = OnboardingResult.Failed(message)
+    }
 
     val navigationState = OnboardingState(_orderedSteps.first())
 
@@ -506,17 +537,31 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         )
     }
 
-    fun updateOnboardingFlow() {
-        val caps = _requiredCapabilities.value
-        var steps = computeOrderedSteps(caps, originallyRequiredCapabilities)
+    private fun stepsFor(capabilities: List<Capabilities>): List<OnboardingStep> {
+        var steps = computeOrderedSteps(capabilities, originallyRequiredCapabilities, config.accountType)
         if (!config.showIntroScreen) steps = steps.filter { it != OnboardingStep.VerificationWelcome }
         if (!config.showCompletionScreen) steps = steps.filter { it != OnboardingStep.VerificationSubmitted }
-        _orderedSteps = steps
-        var segments = computeFlowSegments(caps, originallyRequiredCapabilities)
-        // Keep progress capsules in sync with the screens that actually exist.
+        return steps
+    }
+
+    private fun segmentsFor(capabilities: List<Capabilities>): List<OnboardingFlowSegment> {
+        var segments = computeFlowSegments(capabilities, originallyRequiredCapabilities, config.accountType)
         if (!config.showCompletionScreen) {
             segments = segments.filter { it != OnboardingFlowSegment.VERIFICATION_SUBMITTED }
         }
+        return segments
+    }
+
+    private fun accountTypeArticle(type: AccountObjects.AccountType): String = when (type) {
+        AccountObjects.AccountType.INDIVIDUAL -> "an individual"
+        AccountObjects.AccountType.BUSINESS -> "a business"
+    }
+
+    fun updateOnboardingFlow() {
+        val caps = _requiredCapabilities.value
+        val steps = stepsFor(caps)
+        val segments = segmentsFor(caps)
+        _orderedSteps = steps
         _flowSegments = segments
         if (steps.isEmpty()) {
             viewModelScope.launch { finishOnboarding() }
@@ -559,6 +604,13 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             _onboardingData.update { it.copy(resolvedAccountId = aid) }
         }
         existingAccountHasTOS = account?.termsOfService?.acceptedAt != null
+        val loadedType = account?.type
+        if (loadedType != null && loadedType != config.accountType) {
+            _accountTypeMismatch.value =
+                "This onboarding is for ${accountTypeArticle(config.accountType)} account. " +
+                    "The account on this session is ${accountTypeArticle(loadedType)} account."
+            return
+        }
         account?.payoutPaymentMethodId?.let { _primaryPayoutMethodId.value = it }
         // `profile` on this GET is ignored. A one-time prefill arrives on phone confirm.
         updateStepUpRequirements(account?.capabilities)
@@ -1308,6 +1360,32 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                     addressLine2 = addressLine2
                 )
                 _onboardingData.update { it.copy(stateCode = normalizedState) }
+                if (config.accountType == AccountObjects.AccountType.BUSINESS) {
+                    if (!writeBusinessOwner(
+                            firstName, lastName, email, dob, ssnLastFour, billingAddress
+                        )
+                    ) {
+                        return@launch
+                    }
+                    val accountId = _resolvedAccountId.value ?: return@launch
+                    val (account, accountError) = AccountsAPI.getAccountWith(accountId, forTesting = false)
+                    if (account == null) {
+                        reportUserError(userMessageForNetworkError(accountError))
+                        return@launch
+                    }
+                    updateStepUpRequirements(account.capabilities)
+                    blockedOutcome(account)?.let { outcome ->
+                        concludeOnboarding(outcome)
+                        return@launch
+                    }
+                    val data = _onboardingData.value
+                    if (governmentIdRequired && !data.identityVerifiedViaGovId) {
+                        verifyIdentityWithoutSsn(advanceOnVerified = true)
+                    } else {
+                        moveNext()
+                    }
+                    return@launch
+                }
                 val account = upsertIndividualAccountForPersonalInfo(firstName, lastName, email, dob, ssnLastFour, billingAddress)
                     ?: return@launch
                 // Nothing left the applicant can act on — don't advance into dead-end steps.
@@ -1320,6 +1398,204 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 val data = _onboardingData.value
                 if (governmentIdRequired && !data.identityVerifiedViaGovId) {
                     verifyIdentityWithoutSsn(advanceOnVerified = true)
+                } else {
+                    moveNext()
+                }
+            } finally {
+                endAction()
+            }
+        }
+    }
+
+    private suspend fun writeBusinessOwner(
+        firstName: String,
+        lastName: String,
+        email: String,
+        dob: String,
+        ssn: String,
+        billingAddress: FrameObjects.BillingAddress
+    ): Boolean {
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return false
+        val role = _businessRole.value ?: run {
+            _businessRoleError.value = "Select your role"
+            return false
+        }
+        val request = BeneficialOwnerWriteRequest(
+            firstName = firstName.ifBlank { null },
+            lastName = lastName.ifBlank { null },
+            email = email.ifBlank { null },
+            dob = dob.ifBlank { null },
+            ssnLastFour = ssn.ifBlank { null },
+            phoneNumber = _phoneNumber.value.ifBlank { null },
+            phoneCountryCode = _phoneCountry.value.dialCode,
+            addressLine1 = billingAddress.addressLine1?.ifBlank { null },
+            addressLine2 = billingAddress.addressLine2?.ifBlank { null },
+            city = billingAddress.city?.ifBlank { null },
+            state = billingAddress.state?.ifBlank { null },
+            postalCode = billingAddress.postalCode?.ifBlank { null },
+            country = billingAddress.country?.ifBlank { null },
+            roles = listOf(role.apiValue),
+            invite = false
+        )
+        val existingId = submittedBusinessOwnerId ?: run {
+            val (owners, listError) = BeneficialOwnersAPI.list(accountId)
+            if (listError != null) {
+                reportUserError(userMessageForNetworkError(listError))
+                return false
+            }
+            owners?.data?.firstOrNull { it.email.equals(email, ignoreCase = true) }?.id
+        }
+        val (written, error) = if (existingId != null) {
+            BeneficialOwnersAPI.update(accountId, existingId, request)
+        } else {
+            BeneficialOwnersAPI.create(accountId, request)
+        }
+        if (error != null) {
+            reportUserError(userMessageForNetworkError(error))
+            return false
+        }
+        submittedBusinessOwnerId = written?.id ?: existingId
+        return true
+    }
+
+    fun loadBeneficialOwners() {
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        viewModelScope.launch {
+            val (owners, error) = BeneficialOwnersAPI.list(accountId)
+            if (error != null) {
+                reportUserError(userMessageForNetworkError(error))
+            } else {
+                _beneficialOwners.value = owners?.data.orEmpty()
+            }
+        }
+    }
+
+    fun inviteBeneficialOwner(
+        firstName: String,
+        lastName: String,
+        email: String,
+        role: BusinessRole,
+        onComplete: (Boolean) -> Unit
+    ) {
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        if (!beginAction()) return
+        viewModelScope.launch {
+            try {
+                val (_, error) = BeneficialOwnersAPI.create(
+                    accountId,
+                    BeneficialOwnerWriteRequest(
+                        firstName = firstName,
+                        lastName = lastName,
+                        email = email,
+                        roles = listOf(role.apiValue),
+                        invite = true
+                    )
+                )
+                if (error != null) {
+                    reportUserError(userMessageForNetworkError(error))
+                    onComplete(false)
+                } else {
+                    val (owners, listError) = BeneficialOwnersAPI.list(accountId)
+                    if (listError == null) {
+                        _beneficialOwners.value = owners?.data.orEmpty()
+                    } else {
+                        reportUserError(userMessageForNetworkError(listError))
+                    }
+                    onComplete(true)
+                }
+            } finally {
+                endAction()
+            }
+        }
+    }
+
+    fun resendBeneficialOwnerInvite(ownerId: String) {
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        if (!beginAction()) return
+        viewModelScope.launch {
+            try {
+                val error = BeneficialOwnersAPI.resendInvite(accountId, ownerId)
+                if (error != null) reportUserError(userMessageForNetworkError(error))
+            } finally {
+                endAction()
+            }
+        }
+    }
+
+    fun removeBeneficialOwner(ownerId: String) {
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        if (!beginAction()) return
+        viewModelScope.launch {
+            try {
+                val error = BeneficialOwnersAPI.destroy(accountId, ownerId)
+                if (error != null) {
+                    reportUserError(userMessageForNetworkError(error))
+                } else {
+                    val (owners, listError) = BeneficialOwnersAPI.list(accountId)
+                    if (listError == null) _beneficialOwners.value = owners?.data.orEmpty()
+                }
+            } finally {
+                endAction()
+            }
+        }
+    }
+
+    fun confirmBeneficialOwners() {
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        if (!beginAction()) return
+        viewModelScope.launch {
+            try {
+                val error = BeneficialOwnersAPI.confirm(accountId)
+                if (error != null) {
+                    reportUserError(userMessageForNetworkError(error))
+                } else {
+                    moveNext()
+                }
+            } finally {
+                endAction()
+            }
+        }
+    }
+
+    fun submitBusinessDetails(
+        legalName: String,
+        businessType: String,
+        mcc: String,
+        ein: String,
+        email: String,
+        website: String,
+        legalAddress: FrameObjects.BillingAddress,
+        samePhysicalAddress: Boolean,
+        physicalAddress: FrameObjects.BillingAddress?
+    ) {
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        if (!beginAction()) return
+        viewModelScope.launch {
+            try {
+                val site = website.trim().let { raw ->
+                    if (raw.isEmpty() || raw.contains("://")) raw else "https://$raw"
+                }
+                val (_, error) = AccountsAPI.updateAccount(
+                    accountId,
+                    AccountRequests.UpdateAccountRequest(
+                        termsOfService = termsOfServiceForUpdate(),
+                        profile = AccountRequests.UpdateAccountProfile(
+                            business = AccountRequests.UpdateBusinessAccount(
+                                legalBusinessName = legalName,
+                                businessType = businessType,
+                                email = email,
+                                website = site,
+                                address = legalAddress,
+                                ein = ein,
+                                mcc = mcc,
+                                samePhysicalAndLegalAddress = samePhysicalAddress,
+                                physicalAddress = if (samePhysicalAddress) null else physicalAddress
+                            )
+                        )
+                    )
+                )
+                if (error != null) {
+                    reportUserError(userMessageForNetworkError(error))
                 } else {
                     moveNext()
                 }

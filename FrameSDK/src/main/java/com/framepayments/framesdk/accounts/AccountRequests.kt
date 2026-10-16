@@ -111,6 +111,9 @@ object AccountRequests {
      * @property naics Updated NAICS industry code.
      * @property address Updated business address.
      * @property phone Updated business phone number.
+     * @property ein Updated Employer Identification Number.
+     * @property samePhysicalAndLegalAddress Whether the place of business is the legal address.
+     * @property physicalAddress The place of business, when it differs from the legal address.
      */
     data class UpdateBusinessAccount(
         @SerializedName("legal_business_name") val legalBusinessName: String? = null,
@@ -123,7 +126,10 @@ object AccountRequests {
         val mcc: String? = null,
         val naics: String? = null,
         val address: FrameObjects.BillingAddress? = null,
-        val phone: AccountObjects.AccountPhoneNumber? = null
+        val phone: AccountObjects.AccountPhoneNumber? = null,
+        val ein: String? = null,
+        @SerializedName("same_physical_and_legal_address") val samePhysicalAndLegalAddress: Boolean? = null,
+        @SerializedName("physical_address") val physicalAddress: FrameObjects.BillingAddress? = null
     )
 
     /**

@@ -200,7 +200,10 @@ fun PlaygroundScreen(
                                     color = Color.White.copy(alpha = 0.85f)
                                 )
                                 Spacer(modifier = Modifier.height(24.dp))
-                                Button(onClick = { viewModel.mintOnboardingClientSecret(accountId) }) {
+                                Button(onClick = {
+                                    if (mintState.business) viewModel.mintBusinessOnboarding()
+                                    else viewModel.mintOnboardingClientSecret(accountId)
+                                }) {
                                     Text("Retry")
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
@@ -221,10 +224,8 @@ fun PlaygroundScreen(
                                 // creates a brand-new account the session was never scoped to, and every
                                 // request after that gets PII-gated (profile withheld, prefill silently fails).
                                 accountId = mintState.accountId,
-                                // The onb_sess_… token minted from the configured sk_ (demo/testing only). In
-                                // production your backend mints this (POST /v1/onboarding_sessions) and passes
-                                // it in as the clientSecret, scoping every onboarding request to one account.
                                 clientSecret = mintState.clientSecret,
+                                accountType = mintState.accountType,
                                 requiredCapabilities = listOf(
                                     Capabilities.KYC_PREFILL,
                                     Capabilities.AGE_VERIFICATION,
@@ -425,6 +426,10 @@ fun PlaygroundScreen(
                 // Example app has no backend. Production apps mint POST /v1/onboarding_sessions
                 // on their server with sk_ and pass the client secret in.
                 viewModel.mintOnboardingClientSecret(accountId)
+                showOnboarding = true
+            }
+            PlaygroundButton(text = "Show Business Onboarding") {
+                viewModel.mintBusinessOnboarding()
                 showOnboarding = true
             }
             PlaygroundButton(

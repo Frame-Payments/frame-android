@@ -126,9 +126,11 @@ class CustomerInformationFieldVM(
      *
      * @param ssnOptional When true, SSN validation is skipped entirely (used when the customer has
      *   verified their identity with a government ID and no longer needs to supply an SSN).
+     * @param collectsFullSSN When true, the field must be 9 digits. Individual onboarding collects
+     *   the last four.
      * @return True if all fields pass validation; false if any errors were found.
      */
-    fun validate(ssnOptional: Boolean = false): Boolean {
+    fun validate(ssnOptional: Boolean = false, collectsFullSSN: Boolean = false): Boolean {
         val next = mutableMapOf<Field, String>()
         val id = _identity.value
 
@@ -154,8 +156,8 @@ class CustomerInformationFieldVM(
             }
 
         if (!ssnOptional) {
-            Validators.validateSSNLast4(id.ssn)
-                ?.let { next[Field.SSN] = it }
+            val ssnError = if (collectsFullSSN) Validators.validateSSN(id.ssn) else Validators.validateSSNLast4(id.ssn)
+            ssnError?.let { next[Field.SSN] = it }
         }
 
         _errors.value = next
@@ -171,7 +173,7 @@ class CustomerInformationFieldVM(
                 val a = id.address
                 listOf(
                     id.firstName, id.lastName, id.email, id.phoneNumber,
-                    id.dateOfBirth, id.ssn,
+                    id.dateOfBirth, id.ssn.takeUnless { it.length > 4 }.orEmpty(),
                     a.addressLine1.orEmpty(), a.addressLine2.orEmpty(),
                     a.city.orEmpty(), a.state.orEmpty(),
                     a.postalCode, a.country.orEmpty(),
