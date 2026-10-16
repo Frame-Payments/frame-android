@@ -99,7 +99,7 @@ fun OnboardingContainerView(
                     detail = "last step reached: ${segment.analyticsName}"
                 )
             }
-            else -> return
+            is OnboardingResult.Failed -> Unit
         }
         resultDelivery.delivered = true
         currentOnResult(r)

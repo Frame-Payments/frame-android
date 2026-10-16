@@ -324,6 +324,17 @@ fun CustomerInformationView(
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
+            if (showGovIdVerification) {
+                Text(
+                    text = "No Social Security number? Verify with an ID document",
+                    style = theme.fonts.caption,
+                    color = theme.colors.textSecondary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = !isVerifyingGovId, onClick = onVerifyWithoutSsn)
+                        .padding(top = 4.dp),
+                )
+            }
         } else if (showSsnField) {
             Text(
                 text = "Last 4 digits of Social Security number",

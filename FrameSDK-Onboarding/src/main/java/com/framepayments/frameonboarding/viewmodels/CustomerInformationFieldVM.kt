@@ -173,7 +173,7 @@ class CustomerInformationFieldVM(
                 val a = id.address
                 listOf(
                     id.firstName, id.lastName, id.email, id.phoneNumber,
-                    id.dateOfBirth, id.ssn,
+                    id.dateOfBirth, id.ssn.takeUnless { it.length > 4 }.orEmpty(),
                     a.addressLine1.orEmpty(), a.addressLine2.orEmpty(),
                     a.city.orEmpty(), a.state.orEmpty(),
                     a.postalCode, a.country.orEmpty(),
