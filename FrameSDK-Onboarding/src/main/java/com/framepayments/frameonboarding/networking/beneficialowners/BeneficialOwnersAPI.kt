@@ -25,6 +25,7 @@ internal data class BeneficialOwnerWriteRequest(
     val email: String? = null,
     val dob: String? = null,
     val ssn: String? = null,
+    @SerializedName("ssn_last_four") val ssnLastFour: String? = null,
     @SerializedName("phone_number") val phoneNumber: String? = null,
     @SerializedName("phone_country_code") val phoneCountryCode: String? = null,
     @SerializedName("address_line1") val addressLine1: String? = null,

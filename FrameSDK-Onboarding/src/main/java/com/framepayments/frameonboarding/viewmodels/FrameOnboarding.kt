@@ -1425,7 +1425,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
             lastName = lastName.ifBlank { null },
             email = email.ifBlank { null },
             dob = dob.ifBlank { null },
-            ssn = ssn.ifBlank { null },
+            ssnLastFour = ssn.ifBlank { null },
             phoneNumber = _phoneNumber.value.ifBlank { null },
             phoneCountryCode = _phoneCountry.value.dialCode,
             addressLine1 = billingAddress.addressLine1?.ifBlank { null },

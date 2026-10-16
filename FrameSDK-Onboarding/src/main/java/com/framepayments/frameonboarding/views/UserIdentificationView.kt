@@ -465,7 +465,6 @@ internal fun UserIdentificationView(
                                 onVerifyWithoutSsn = { viewModel.verifyIdentityWithoutSsn() },
                                 onUseSsnInstead = { viewModel.resetIdentityVerification() },
                                 allowSsnInstead = !viewModel.governmentIdRequired,
-                                collectsFullSSN = viewModel.accountType == AccountObjects.AccountType.BUSINESS,
                                 businessRoleLabel = businessRole?.label,
                                 businessRoleError = businessRoleError,
                                 onBusinessRoleSelected = if (viewModel.accountType == AccountObjects.AccountType.BUSINESS) {
@@ -519,10 +518,8 @@ internal fun UserIdentificationView(
                                     }
                                 }
                                 else -> {
-                                    val collectsFullSSN = viewModel.accountType == AccountObjects.AccountType.BUSINESS
                                     val infoOK = customerInfoVM.validate(
-                                        ssnOptional = skipsSsnEntry,
-                                        collectsFullSSN = collectsFullSSN
+                                        ssnOptional = skipsSsnEntry
                                     )
                                     val addressOK = personalAddressVM.validate()
                                     if (!infoOK || !addressOK) {
