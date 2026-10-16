@@ -3,6 +3,7 @@ package com.framepayments.frameonboarding.classes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.framepayments.framesdk.accounts.AccountObjects
 import com.framepayments.framesdk_ui.theme.FrameTheme
 
 internal class OnboardingState(
@@ -40,6 +41,10 @@ sealed class OnboardingStep {
     data object SelectPayoutMethod: OnboardingStep()
     /** Screen for adding a new payout method (bank account). */
     data object AddPayoutMethod: OnboardingStep()
+    /** Legal entity details for a business account. */
+    data object BusinessDetails: OnboardingStep()
+    /** Owners and controllers for a business account. */
+    data object OwnersAndControllers: OnboardingStep()
     /** Confirmation screen shown after all verification data has been submitted. */
     data object VerificationSubmitted: OnboardingStep()
 }
@@ -106,9 +111,11 @@ fun capabilitiesWithDependencies(capabilities: List<Capabilities>): Set<Capabili
  */
 internal enum class OnboardingFlowSegment(val order: Int, val analyticsName: String) {
     PERSONAL_INFORMATION(0, "personalInformation"),
-    CONFIRM_PAYMENT_METHOD(1, "confirmPaymentMethod"),
-    CONFIRM_PAYOUT_METHOD(2, "confirmBankAccount"),
-    VERIFICATION_SUBMITTED(3, "verificationSubmitted")
+    BUSINESS_DETAILS(1, "businessDetails"),
+    OWNERS_AND_CONTROLLERS(2, "ownersAndControllers"),
+    CONFIRM_PAYMENT_METHOD(3, "confirmPaymentMethod"),
+    CONFIRM_PAYOUT_METHOD(4, "confirmBankAccount"),
+    VERIFICATION_SUBMITTED(5, "verificationSubmitted")
 }
 
 internal fun Capabilities.toFlowSegment(): OnboardingFlowSegment = when (this) {
@@ -134,6 +141,8 @@ internal fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this)
         OnboardingStep.SelectPayoutMethod,
         OnboardingStep.AddPayoutMethod
     )
+    OnboardingFlowSegment.BUSINESS_DETAILS -> listOf(OnboardingStep.BusinessDetails)
+    OnboardingFlowSegment.OWNERS_AND_CONTROLLERS -> listOf(OnboardingStep.OwnersAndControllers)
     OnboardingFlowSegment.VERIFICATION_SUBMITTED -> listOf(OnboardingStep.VerificationSubmitted)
 }
 
@@ -147,7 +156,28 @@ internal fun OnboardingFlowSegment.toSteps(): List<OnboardingStep> = when (this)
  */
 internal fun computeFlowSegments(
     requiredCapabilities: List<Capabilities>,
-    originallyRequiredCapabilities: List<Capabilities> = requiredCapabilities
+    originallyRequiredCapabilities: List<Capabilities> = requiredCapabilities,
+    accountType: AccountObjects.AccountType = AccountObjects.AccountType.INDIVIDUAL
+): List<OnboardingFlowSegment> {
+    val base = capabilityFlowSegments(requiredCapabilities, originallyRequiredCapabilities)
+    if (accountType != AccountObjects.AccountType.BUSINESS) return base
+    val withBusiness = (
+        base.filter { it != OnboardingFlowSegment.VERIFICATION_SUBMITTED } + listOf(
+            OnboardingFlowSegment.PERSONAL_INFORMATION,
+            OnboardingFlowSegment.BUSINESS_DETAILS,
+            OnboardingFlowSegment.OWNERS_AND_CONTROLLERS
+        )
+    ).distinct().sortedBy { it.order }
+    return if (base.contains(OnboardingFlowSegment.VERIFICATION_SUBMITTED)) {
+        withBusiness + OnboardingFlowSegment.VERIFICATION_SUBMITTED
+    } else {
+        withBusiness
+    }
+}
+
+private fun capabilityFlowSegments(
+    requiredCapabilities: List<Capabilities>,
+    originallyRequiredCapabilities: List<Capabilities>
 ): List<OnboardingFlowSegment> {
     if (requiredCapabilities.isEmpty()) {
         return if (originallyRequiredCapabilities.isEmpty()) {
@@ -165,9 +195,10 @@ internal fun computeFlowSegments(
 
 internal fun computeOrderedSteps(
     requiredCapabilities: List<Capabilities>,
-    originallyRequiredCapabilities: List<Capabilities> = requiredCapabilities
+    originallyRequiredCapabilities: List<Capabilities> = requiredCapabilities,
+    accountType: AccountObjects.AccountType = AccountObjects.AccountType.INDIVIDUAL
 ): List<OnboardingStep> {
-    return computeFlowSegments(requiredCapabilities, originallyRequiredCapabilities)
+    return computeFlowSegments(requiredCapabilities, originallyRequiredCapabilities, accountType)
         .flatMap { it.toSteps() }
 }
 
@@ -180,6 +211,8 @@ internal fun OnboardingStep.toFlowSegment(): OnboardingFlowSegment = when (this)
     OnboardingStep.VerifyYourCard -> OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD
     OnboardingStep.SelectPayoutMethod,
     OnboardingStep.AddPayoutMethod -> OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD
+    OnboardingStep.BusinessDetails -> OnboardingFlowSegment.BUSINESS_DETAILS
+    OnboardingStep.OwnersAndControllers -> OnboardingFlowSegment.OWNERS_AND_CONTROLLERS
     OnboardingStep.VerificationSubmitted -> OnboardingFlowSegment.VERIFICATION_SUBMITTED
 }
 
@@ -243,11 +276,14 @@ sealed class OnboardingResult {
  *   and the first capability-driven step is shown immediately.
  * @property showCompletionScreen When false, the "Verification Submitted" screen is omitted
  *   and the flow completes immediately after the last capability step.
+ * @property accountType Which flow to present. [AccountObjects.AccountType.BUSINESS] requires an
+ *   existing business account. Defaults to individual so existing callers stay on that flow.
  */
 data class OnboardingConfig(
     val accountId: String? = null,
     val clientSecret: String,
     val requiredCapabilities: List<Capabilities> = emptyList(),
+    val accountType: AccountObjects.AccountType = AccountObjects.AccountType.INDIVIDUAL,
     val skipInitNetwork: Boolean = false,
     val theme: FrameTheme? = null,
     val showIntroScreen: Boolean = false,

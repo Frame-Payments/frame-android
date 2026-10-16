@@ -36,4 +36,42 @@ class ComputeOrderedStepsTest {
         assertTrue(steps.contains(OnboardingStep.SelectPaymentMethod))
         assertTrue(steps.contains(OnboardingStep.AddPaymentMethod))
     }
+
+    @Test
+    fun businessInsertsDetailsAndOwnersBeforePayment() {
+        val segments = computeFlowSegments(
+            requiredCapabilities = listOf(Capabilities.CARD_SEND, Capabilities.BANK_ACCOUNT_RECEIVE),
+            accountType = com.framepayments.framesdk.accounts.AccountObjects.AccountType.BUSINESS
+        )
+        assertEquals(
+            listOf(
+                OnboardingFlowSegment.PERSONAL_INFORMATION,
+                OnboardingFlowSegment.BUSINESS_DETAILS,
+                OnboardingFlowSegment.OWNERS_AND_CONTROLLERS,
+                OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD,
+                OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD,
+                OnboardingFlowSegment.VERIFICATION_SUBMITTED
+            ),
+            segments
+        )
+    }
+
+    @Test
+    fun businessWithoutCapabilitiesStillCollectsTheBusinessSteps() {
+        val steps = computeOrderedSteps(
+            requiredCapabilities = emptyList(),
+            originallyRequiredCapabilities = emptyList(),
+            accountType = com.framepayments.framesdk.accounts.AccountObjects.AccountType.BUSINESS
+        )
+        assertEquals(
+            listOf(
+                OnboardingStep.VerifyIdentification,
+                OnboardingStep.BusinessDetails,
+                OnboardingStep.OwnersAndControllers
+            ),
+            steps.filter {
+                it != OnboardingStep.VerificationWelcome && it != OnboardingStep.VerificationSubmitted
+            }
+        )
+    }
 }

@@ -134,6 +134,9 @@ class ValidatorsTest {
 
     @Test fun ssnLast4_valid() {
         assertNull(Validators.validateSSNLast4("1234"))
+        assertNull(Validators.validateSSN("123456788"))
+        assertEquals("Enter a 9-digit Social Security number", Validators.validateSSN("1234"))
+        assertEquals("SSN is required", Validators.validateSSN(""))
     }
 
     // ABA checksum: 011000015 is a known-valid Federal Reserve routing number.
