@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2141 public symbols** across 182 files in 3 modules.
+**2144 public symbols** across 182 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -54,19 +54,19 @@ reverse is never true.
 | Interfaces | 4 |
 | Objects | 129 |
 | Type aliases | 4 |
-| Functions | 357 |
+| Functions | 360 |
 | Properties (val) | 1078 |
 | Properties (var) | 22 |
 | Enum entries | 161 |
-| **Total** | **2141** |
+| **Total** | **2144** |
 
-### `FrameSDK` — 1715 public symbols
+### `FrameSDK` — 1716 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
-#### com/framepayments/framesdk (155)
+#### com/framepayments/framesdk (156)
 
-<details><summary><code>AddressSubregions.kt</code> — 10 symbols</summary>
+<details><summary><code>AddressSubregions.kt</code> — 11 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/AddressSubregions.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/AddressSubregions.kt)
 
@@ -81,7 +81,8 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `AddressSubregions.subregions` | fun | `fun subregions(forCountry: String): List<AddressSubregion>?` | [107](FrameSDK/src/main/java/com/framepayments/framesdk/AddressSubregions.kt#L107) |
 | `AddressSubregions.codes` | fun | `fun codes(forCountry: String): Set<String>? =` | [114](FrameSDK/src/main/java/com/framepayments/framesdk/AddressSubregions.kt#L114) |
 | `AddressSubregions.subregion` | fun | `fun subregion(forCode: String, countryCode: String): AddressSubregion?` | [118](FrameSDK/src/main/java/com/framepayments/framesdk/AddressSubregions.kt#L118) |
-| `AddressSubregions.normalize` | fun | `fun normalize(value: String, countryCode: String): String` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/AddressSubregions.kt#L124) |
+| `AddressSubregions.resolve` | fun | `fun resolve(value: String, countryCode: String): String?` | [124](FrameSDK/src/main/java/com/framepayments/framesdk/AddressSubregions.kt#L124) |
+| `AddressSubregions.normalize` | fun | `fun normalize(value: String, countryCode: String): String` | [138](FrameSDK/src/main/java/com/framepayments/framesdk/AddressSubregions.kt#L138) |
 
 </details>
 
@@ -2830,7 +2831,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-### `FrameSDK-UI` — 195 public symbols
+### `FrameSDK-UI` — 197 public symbols
 
 Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, shared reusable components (payment method rows, card brand art).
 
@@ -3246,7 +3247,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-#### com/framepayments/framesdk_ui/validation (41)
+#### com/framepayments/framesdk_ui/validation (43)
 
 <details><summary><code>FieldKey.kt</code> — 9 symbols</summary>
 
@@ -3284,7 +3285,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-<details><summary><code>Validators.kt</code> — 23 symbols</summary>
+<details><summary><code>Validators.kt</code> — 25 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt)
 
@@ -3308,11 +3309,13 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 | `Validators.validateCardExpiry` | fun | `fun validateCardExpiry(month: String, year: String): String?` | [200](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L200) |
 | `Validators.validateSSNLast4` | fun | `fun validateSSNLast4(value: String): String?` | [220](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L220) |
 | `Validators.validateSSN` | fun | `fun validateSSN(value: String): String?` | [232](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L232) |
-| `Validators.validateRoutingNumberUS` | fun | `fun validateRoutingNumberUS(value: String): String?` | [244](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L244) |
-| `Validators.validateAccountNumberUS` | fun | `fun validateAccountNumberUS(value: String, min: Int = 4, max: Int = 17): String?` | [264](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L264) |
-| `Validators.validateDateOfBirth` | fun | `fun validateDateOfBirth( year: String, month: String, day: String, minAge: Int = 18, maxAge: Int = 120 ): String?` | [283](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L283) |
-| `Validators.validatePostalCode` | fun | `fun validatePostalCode(value: String, countryCode: String): String?` | [341](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L341) |
-| `Validators.validatePhoneE164` | fun | `fun validatePhoneE164(raw: String, regionCode: String): String?` | [359](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L359) |
+| `Validators.validateEIN` | fun | `fun validateEIN(value: String): String?` | [239](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L239) |
+| `Validators.validateWebsite` | fun | `fun validateWebsite(value: String): String?` | [254](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L254) |
+| `Validators.validateRoutingNumberUS` | fun | `fun validateRoutingNumberUS(value: String): String?` | [276](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L276) |
+| `Validators.validateAccountNumberUS` | fun | `fun validateAccountNumberUS(value: String, min: Int = 4, max: Int = 17): String?` | [296](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L296) |
+| `Validators.validateDateOfBirth` | fun | `fun validateDateOfBirth( year: String, month: String, day: String, minAge: Int = 18, maxAge: Int = 120 ): String?` | [315](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L315) |
+| `Validators.validatePostalCode` | fun | `fun validatePostalCode(value: String, countryCode: String): String?` | [373](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L373) |
+| `Validators.validatePhoneE164` | fun | `fun validatePhoneE164(raw: String, regionCode: String): String?` | [391](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L391) |
 
 </details>
 
@@ -3343,7 +3346,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 | `BillingAddressMode.INTERNATIONAL` | entry | `entry INTERNATIONAL` | [20](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/BillingAddressFieldVM.kt#L20) |
 | `BillingAddressFieldVM` | class | `class BillingAddressFieldVM(` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/BillingAddressFieldVM.kt#L34) |
 | `BillingAddressFieldVM.mode` | val | `val mode: BillingAddressMode` | [36](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/BillingAddressFieldVM.kt#L36) |
-| `Saver` | fun | `fun Saver(mode: BillingAddressMode): Saver<BillingAddressFieldVM, Any> =` | [145](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/BillingAddressFieldVM.kt#L145) |
+| `Saver` | fun | `fun Saver(mode: BillingAddressMode): Saver<BillingAddressFieldVM, Any> =` | [154](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/BillingAddressFieldVM.kt#L154) |
 
 </details>
 
