@@ -145,6 +145,12 @@ class ValidatorsTest {
         assertEquals("Enter a valid website.", Validators.validateWebsite("https://"))
         assertNull(Validators.validateWebsite("example.com"))
         assertNull(Validators.validateWebsite("https://example.com"))
+        assertNull(Validators.validateWebsite("example.com/landing?ref=https://x.io"))
+        assertEquals(
+            "https://example.com/landing?ref=https://x.io",
+            Validators.normalizeWebsite("example.com/landing?ref=https://x.io")
+        )
+        assertEquals("https://example.com", Validators.normalizeWebsite("https://example.com"))
     }
 
     @Test fun ssnLast4_valid() {

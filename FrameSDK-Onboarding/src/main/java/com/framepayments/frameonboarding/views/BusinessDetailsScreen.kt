@@ -199,7 +199,7 @@ internal fun BusinessDetailsScreen(viewModel: FrameOnboardingViewModel) {
                         mcc = category!!.code,
                         ein = ein.filter { it.isDigit() },
                         email = email.trim(),
-                        website = website,
+                        website = Validators.normalizeWebsite(website),
                         legalAddress = legalAddress.address.value,
                         samePhysicalAddress = samePhysicalAddress,
                         physicalAddress = physicalAddress.address.value

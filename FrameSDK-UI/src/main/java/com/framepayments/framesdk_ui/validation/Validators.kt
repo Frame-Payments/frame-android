@@ -250,15 +250,22 @@ object Validators {
         "246813579", "135792468", "369258147", "951357246", "864213579"
     )
 
-    /** Host-only values get `https://` the same way business-details submit does. */
-    fun validateWebsite(value: String): String? {
+    /** Prefix `https://` unless the value already starts with a URL scheme. */
+    fun normalizeWebsite(value: String): String {
         val trimmed = value.trim()
-        if (trimmed.isEmpty()) return "Enter a website."
-        val site = if (trimmed.contains(Regex("^[a-z][a-z0-9+.-]*://", RegexOption.IGNORE_CASE))) {
+        if (trimmed.isEmpty()) return trimmed
+        return if (trimmed.contains(Regex("^[a-z][a-z0-9+.-]*://", RegexOption.IGNORE_CASE))) {
             trimmed
         } else {
             "https://$trimmed"
         }
+    }
+
+    /** Host-only values get `https://` the same way business-details submit does. */
+    fun validateWebsite(value: String): String? {
+        val trimmed = value.trim()
+        if (trimmed.isEmpty()) return "Enter a website."
+        val site = normalizeWebsite(trimmed)
         val uri = runCatching { java.net.URI(site) }.getOrNull() ?: return "Enter a valid website."
         val scheme = uri.scheme?.lowercase()
         val host = uri.host

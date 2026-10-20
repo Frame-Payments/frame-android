@@ -1591,9 +1591,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         if (!beginAction()) return
         viewModelScope.launch {
             try {
-                val site = website.trim().let { raw ->
-                    if (raw.isEmpty() || raw.contains("://")) raw else "https://$raw"
-                }
+                val site = Validators.normalizeWebsite(website)
                 val (_, error) = AccountsAPI.updateAccount(
                     accountId,
                     AccountRequests.UpdateAccountRequest(
