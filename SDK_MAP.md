@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2144 public symbols** across 182 files in 3 modules.
+**2145 public symbols** across 182 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -54,11 +54,11 @@ reverse is never true.
 | Interfaces | 4 |
 | Objects | 129 |
 | Type aliases | 4 |
-| Functions | 360 |
+| Functions | 361 |
 | Properties (val) | 1078 |
 | Properties (var) | 22 |
 | Enum entries | 161 |
-| **Total** | **2144** |
+| **Total** | **2145** |
 
 ### `FrameSDK` — 1716 public symbols
 
@@ -2831,7 +2831,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-### `FrameSDK-UI` — 197 public symbols
+### `FrameSDK-UI` — 198 public symbols
 
 Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, shared reusable components (payment method rows, card brand art).
 
@@ -3247,7 +3247,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-#### com/framepayments/framesdk_ui/validation (43)
+#### com/framepayments/framesdk_ui/validation (44)
 
 <details><summary><code>FieldKey.kt</code> — 9 symbols</summary>
 
@@ -3285,7 +3285,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-<details><summary><code>Validators.kt</code> — 25 symbols</summary>
+<details><summary><code>Validators.kt</code> — 26 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt)
 
@@ -3310,12 +3310,13 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 | `Validators.validateSSNLast4` | fun | `fun validateSSNLast4(value: String): String?` | [220](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L220) |
 | `Validators.validateSSN` | fun | `fun validateSSN(value: String): String?` | [232](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L232) |
 | `Validators.validateEIN` | fun | `fun validateEIN(value: String): String?` | [239](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L239) |
-| `Validators.validateWebsite` | fun | `fun validateWebsite(value: String): String?` | [254](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L254) |
-| `Validators.validateRoutingNumberUS` | fun | `fun validateRoutingNumberUS(value: String): String?` | [276](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L276) |
-| `Validators.validateAccountNumberUS` | fun | `fun validateAccountNumberUS(value: String, min: Int = 4, max: Int = 17): String?` | [296](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L296) |
-| `Validators.validateDateOfBirth` | fun | `fun validateDateOfBirth( year: String, month: String, day: String, minAge: Int = 18, maxAge: Int = 120 ): String?` | [315](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L315) |
-| `Validators.validatePostalCode` | fun | `fun validatePostalCode(value: String, countryCode: String): String?` | [373](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L373) |
-| `Validators.validatePhoneE164` | fun | `fun validatePhoneE164(raw: String, regionCode: String): String?` | [391](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L391) |
+| `Validators.normalizeWebsite` | fun | `fun normalizeWebsite(value: String): String` | [254](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L254) |
+| `Validators.validateWebsite` | fun | `fun validateWebsite(value: String): String?` | [265](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L265) |
+| `Validators.validateRoutingNumberUS` | fun | `fun validateRoutingNumberUS(value: String): String?` | [283](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L283) |
+| `Validators.validateAccountNumberUS` | fun | `fun validateAccountNumberUS(value: String, min: Int = 4, max: Int = 17): String?` | [303](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L303) |
+| `Validators.validateDateOfBirth` | fun | `fun validateDateOfBirth( year: String, month: String, day: String, minAge: Int = 18, maxAge: Int = 120 ): String?` | [322](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L322) |
+| `Validators.validatePostalCode` | fun | `fun validatePostalCode(value: String, countryCode: String): String?` | [380](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L380) |
+| `Validators.validatePhoneE164` | fun | `fun validatePhoneE164(raw: String, regionCode: String): String?` | [398](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/validation/Validators.kt#L398) |
 
 </details>
 
