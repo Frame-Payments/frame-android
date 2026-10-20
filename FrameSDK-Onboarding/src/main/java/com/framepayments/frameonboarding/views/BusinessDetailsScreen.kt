@@ -35,6 +35,7 @@ import com.framepayments.framesdk_ui.reusable.BillingAddressDetailView
 import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
+import com.framepayments.framesdk_ui.validation.Validators
 import com.framepayments.framesdk_ui.viewmodels.BillingAddressFieldVM
 import com.framepayments.framesdk_ui.viewmodels.BillingAddressMode
 
@@ -155,39 +156,54 @@ internal fun BusinessDetailsScreen(viewModel: FrameOnboardingViewModel) {
                 if (!samePhysicalAddress) {
                     BillingAddressDetailView(viewModel = physicalAddress, headerTitle = "Physical address")
                 }
-                fieldError?.let { message ->
-                    Text(
-                        text = message,
-                        style = theme.fonts.caption,
-                        color = theme.colors.error,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
+            }
+            fieldError?.let { message ->
+                Text(
+                    text = message,
+                    style = theme.fonts.caption,
+                    color = theme.colors.error,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
             }
             ContinueButton(isLoading = isLoading) {
-                fieldError = when {
+                val message = when {
                     legalName.isBlank() -> "Enter the legal business name."
                     structure == null -> "Select a business type."
                     category == null -> "Select a business category."
-                    ein.length != 9 -> "Enter a 9-digit EIN."
-                    website.isBlank() -> "Enter a website."
-                    email.isBlank() -> "Enter a business email."
-                    !legalAddress.validate() -> null
-                    !samePhysicalAddress && !physicalAddress.validate() -> null
-                    else -> {
-                        viewModel.submitBusinessDetails(
-                            legalName = legalName.trim(),
-                            businessType = structure!!.apiValue,
-                            mcc = category!!.code,
-                            ein = ein,
-                            email = email.trim(),
-                            website = website,
-                            legalAddress = legalAddress.address.value,
-                            samePhysicalAddress = samePhysicalAddress,
-                            physicalAddress = physicalAddress.address.value
-                        )
-                        null
-                    }
+                    else -> Validators.validateEIN(ein)
+                        ?: Validators.validateWebsite(website)
+                        ?: Validators.validateEmailAddress(email)?.let {
+                            if (it == "Email is required") "Enter a business email." else it
+                        }
+                        ?: run {
+                            legalAddress.normalize()
+                            if (!legalAddress.validate()) {
+                                legalAddress.errors.value.values.firstOrNull() ?: "Enter the legal address."
+                            } else if (!samePhysicalAddress) {
+                                physicalAddress.normalize()
+                                if (!physicalAddress.validate()) {
+                                    physicalAddress.errors.value.values.firstOrNull()
+                                        ?: "Enter the physical address."
+                                } else null
+                            } else null
+                        }
+                }
+                if (message != null) {
+                    fieldError = message
+                    viewModel.reportUserError(message)
+                } else {
+                    fieldError = null
+                    viewModel.submitBusinessDetails(
+                        legalName = legalName.trim(),
+                        businessType = structure!!.apiValue,
+                        mcc = category!!.code,
+                        ein = ein.filter { it.isDigit() },
+                        email = email.trim(),
+                        website = website,
+                        legalAddress = legalAddress.address.value,
+                        samePhysicalAddress = samePhysicalAddress,
+                        physicalAddress = physicalAddress.address.value
+                    )
                 }
             }
         }

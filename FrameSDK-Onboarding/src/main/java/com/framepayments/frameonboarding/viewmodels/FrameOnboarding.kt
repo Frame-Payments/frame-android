@@ -301,7 +301,7 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         _userErrorMessage.value = null
     }
 
-    private fun reportUserError(message: String) {
+    fun reportUserError(message: String) {
         _userErrorMessage.value = message
     }
 
@@ -1415,9 +1415,13 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         ssn: String,
         billingAddress: FrameObjects.BillingAddress
     ): Boolean {
-        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return false
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: run {
+            reportUserError("Business onboarding needs an existing business account.")
+            return false
+        }
         val role = _businessRole.value ?: run {
             _businessRoleError.value = "Select your role"
+            reportUserError("Select your role.")
             return false
         }
         val request = BeneficialOwnerWriteRequest(
@@ -1477,7 +1481,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         role: BusinessRole,
         onComplete: (Boolean) -> Unit
     ) {
-        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: run {
+            reportUserError("Business onboarding needs an existing business account.")
+            return
+        }
         if (!beginAction()) return
         viewModelScope.launch {
             try {
@@ -1510,7 +1517,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun resendBeneficialOwnerInvite(ownerId: String) {
-        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: run {
+            reportUserError("Business onboarding needs an existing business account.")
+            return
+        }
         if (!beginAction()) return
         viewModelScope.launch {
             try {
@@ -1523,7 +1533,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun removeBeneficialOwner(ownerId: String) {
-        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: run {
+            reportUserError("Business onboarding needs an existing business account.")
+            return
+        }
         if (!beginAction()) return
         viewModelScope.launch {
             try {
@@ -1541,7 +1554,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
     }
 
     fun confirmBeneficialOwners() {
-        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: run {
+            reportUserError("Business onboarding needs an existing business account.")
+            return
+        }
         if (!beginAction()) return
         viewModelScope.launch {
             try {
@@ -1568,7 +1584,10 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
         samePhysicalAddress: Boolean,
         physicalAddress: FrameObjects.BillingAddress?
     ) {
-        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: return
+        val accountId = _resolvedAccountId.value?.takeIf { it.isNotEmpty() } ?: run {
+            reportUserError("Business onboarding needs an existing business account.")
+            return
+        }
         if (!beginAction()) return
         viewModelScope.launch {
             try {

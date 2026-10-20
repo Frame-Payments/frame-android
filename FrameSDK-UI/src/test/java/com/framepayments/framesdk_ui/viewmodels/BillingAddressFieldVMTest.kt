@@ -118,6 +118,19 @@ class BillingAddressFieldVMTest {
         assertNotNull(vm.errorFor(BillingAddressFieldVM.Field.POSTAL))
     }
 
+    @Test fun normalize_resolvesFullStateNameToCode() {
+        val vm = BillingAddressFieldVM(
+            FrameObjects.BillingAddress(
+                city = "Austin", country = "US", state = "Texas", postalCode = "78701",
+                addressLine1 = "1 Congress Avenue", addressLine2 = null
+            ),
+            BillingAddressMode.US_ONLY
+        )
+        vm.normalize()
+        assert(vm.address.value.state == "TX")
+        assertTrue(vm.validate())
+    }
+
     @Test fun usOnly_pinsCountryToUS() {
         val vm = BillingAddressFieldVM(
             FrameObjects.BillingAddress(

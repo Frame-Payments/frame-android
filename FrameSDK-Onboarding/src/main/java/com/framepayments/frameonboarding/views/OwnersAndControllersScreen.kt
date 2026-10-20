@@ -141,6 +141,7 @@ internal fun OwnersAndControllersScreen(viewModel: FrameOnboardingViewModel) {
                         TextButton(onClick = {
                             if (firstName.isBlank() || lastName.isBlank() || email.isBlank()) {
                                 formError = "Enter a name and email."
+                                viewModel.reportUserError("Enter a name and email.")
                             } else {
                                 formError = null
                                 viewModel.inviteBeneficialOwner(

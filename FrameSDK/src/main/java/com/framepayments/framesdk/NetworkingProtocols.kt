@@ -99,7 +99,11 @@ sealed class NetworkingError : Exception() {
                 "sonar_session_required" -> "We couldn't verify this device. Please try again."
                 "geo_compliance_blocked" -> "Payments aren't available in your location."
                 "geo_compliance_vpn_detected" -> "Please turn off your VPN or proxy and try again."
-                else -> null
+                else -> if (message.contains("ein encrypted", ignoreCase = true)) {
+                    "Enter a valid EIN."
+                } else {
+                    null
+                }
             }
         /// Pull a user-facing message from the Frame error envelope JSON. The server's
         /// `error_details` field is polymorphic — sometimes an object with a `message` key,

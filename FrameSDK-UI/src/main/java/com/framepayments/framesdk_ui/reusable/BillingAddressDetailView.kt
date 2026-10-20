@@ -107,8 +107,10 @@ fun BillingAddressDetailView(
             Box(modifier = Modifier.weight(1f)) {
                 if (subregions != null) {
                     val subregionName = remember(address.state, countryCode) {
+                        val raw = address.state.orEmpty()
+                        val code = AddressSubregions.resolve(raw, countryCode) ?: raw
                         AddressSubregions.subregion(
-                            forCode = address.state.orEmpty(),
+                            forCode = code,
                             countryCode = countryCode
                         )?.name.orEmpty()
                     }

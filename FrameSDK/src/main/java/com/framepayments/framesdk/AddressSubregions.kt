@@ -120,9 +120,24 @@ object AddressSubregions {
         return subregions(countryCode)?.firstOrNull { it.code == needle }
     }
 
-    /** Trims a subregion, upcasing it only for countries whose subregions are validated as codes. */
+    /** Mapbox and typed input send a code (`TX`, `US-TX`) or a full name (`Texas`). */
+    fun resolve(value: String, countryCode: String): String? {
+        val trimmed = value.trim()
+        if (trimmed.isEmpty()) return null
+        subregion(forCode = trimmed, countryCode = countryCode)?.let { return it.code }
+        val stripped = trimmed.substringAfterLast('-')
+        if (!stripped.equals(trimmed, ignoreCase = true)) {
+            subregion(forCode = stripped, countryCode = countryCode)?.let { return it.code }
+        }
+        return subregions(countryCode)?.firstOrNull {
+            it.name.equals(trimmed, ignoreCase = true)
+        }?.code
+    }
+
+    /** Trims a subregion, resolving a name or prefixed code to the stored form. */
     fun normalize(value: String, countryCode: String): String {
         val trimmed = value.trim()
+        resolve(trimmed, countryCode)?.let { return it }
         return if (subregions(countryCode) == null) trimmed else trimmed.uppercase()
     }
 }

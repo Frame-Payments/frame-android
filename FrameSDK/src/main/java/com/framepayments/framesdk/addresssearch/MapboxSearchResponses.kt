@@ -44,7 +44,9 @@ internal object MapboxSearchResponses {
             val name: String?,
             /** The short code for the level, e.g. `US-CA` for a region or `US` for a country. Absent for levels that have no code, such as a city. */
             @SerializedName("region_code") val regionCode: String?,
-            @SerializedName("country_code") val countryCode: String?
+            @SerializedName("region_code_full") val regionCodeFull: String? = null,
+            @SerializedName("country_code") val countryCode: String?,
+            @SerializedName("country_code_alpha_3") val countryCodeAlpha3: String? = null
         )
     }
 }

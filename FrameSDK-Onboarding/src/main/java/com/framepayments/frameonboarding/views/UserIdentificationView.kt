@@ -528,6 +528,12 @@ internal fun UserIdentificationView(
                                             AccountEventScreen.PERSONAL_INFORMATION,
                                             detail = "info valid: $infoOK, address valid: $addressOK"
                                         )
+                                        if (viewModel.accountType == AccountObjects.AccountType.BUSINESS) {
+                                            val message = customerInfoVM.errors.value.values.firstOrNull()
+                                                ?: personalAddressVM.errors.value.values.firstOrNull()
+                                                ?: "Check the highlighted fields."
+                                            viewModel.reportUserError(message)
+                                        }
                                     }
                                     if (infoOK && addressOK) {
                                         val id = customerInfoVM.identity.value

@@ -235,6 +235,38 @@ object Validators {
         return if (isValid) null else "Enter a 9-digit Social Security number"
     }
 
+    /** Matches the API: 9 digits, and not a sequential or repeating placeholder. */
+    fun validateEIN(value: String): String? {
+        val digits = value.filter { it.isAsciiDigit() }
+        if (digits.length != 9) return "Enter a 9-digit EIN."
+        if (digits in invalidIdentificationNumbers) return "Enter a valid EIN."
+        return null
+    }
+
+    private val invalidIdentificationNumbers = setOf(
+        "123456789", "987654321", "000000000",
+        "111111111", "222222222", "333333333", "444444444",
+        "555555555", "666666666", "777777777", "888888888", "999999999",
+        "246813579", "135792468", "369258147", "951357246", "864213579"
+    )
+
+    /** Host-only values get `https://` the same way business-details submit does. */
+    fun validateWebsite(value: String): String? {
+        val trimmed = value.trim()
+        if (trimmed.isEmpty()) return "Enter a website."
+        val site = if (trimmed.contains(Regex("^[a-z][a-z0-9+.-]*://", RegexOption.IGNORE_CASE))) {
+            trimmed
+        } else {
+            "https://$trimmed"
+        }
+        val uri = runCatching { java.net.URI(site) }.getOrNull() ?: return "Enter a valid website."
+        val scheme = uri.scheme?.lowercase()
+        val host = uri.host
+        if (scheme != "http" && scheme != "https") return "Enter a valid website."
+        if (host.isNullOrBlank() || !host.contains('.')) return "Enter a valid website."
+        return null
+    }
+
     /**
      * Validates that [value] is a 9-digit US ABA routing number with a valid checksum.
      *
