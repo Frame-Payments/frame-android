@@ -166,7 +166,11 @@ internal fun OwnersAndControllersScreen(viewModel: FrameOnboardingViewModel) {
                     }
                 }
             }
-            ContinueButton(isLoading = isLoading, onClick = { viewModel.confirmBeneficialOwners() })
+            ContinueButton(
+                isLoading = isLoading,
+                modifier = Modifier.padding(16.dp),
+                onClick = { viewModel.confirmBeneficialOwners() }
+            )
         }
     }
 }

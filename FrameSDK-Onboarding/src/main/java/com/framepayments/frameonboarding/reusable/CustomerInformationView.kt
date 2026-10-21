@@ -16,8 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -42,6 +42,7 @@ import com.framepayments.frameonboarding.classes.BusinessRole
 import com.framepayments.frameonboarding.validation.DateOfBirthFormatter
 import com.framepayments.frameonboarding.viewmodels.CustomerInformationFieldVM
 import com.framepayments.framesdk_ui.reusable.PhoneNumberTextField
+import com.framepayments.framesdk_ui.reusable.SelectableOutlinedField
 import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import java.text.SimpleDateFormat
@@ -426,46 +427,51 @@ fun CustomerInformationView(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BusinessRolePicker(
     selectedLabel: String?,
     error: String?,
     onSelected: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showPicker by remember { mutableStateOf(false) }
     val theme = LocalFrameTheme.current
-    Text(
-        text = "Role",
-        style = theme.fonts.label,
-        color = theme.colors.textSecondary,
-        modifier = Modifier.padding(bottom = 4.dp)
+    SelectableOutlinedField(
+        value = selectedLabel.orEmpty(),
+        prompt = "Select your role",
+        error = error,
+        onClick = { showPicker = true }
     )
-    Box {
-        TextButton(onClick = { expanded = true }) {
-            Text(
-                text = selectedLabel ?: "Select your role",
-                style = theme.fonts.body,
-                color = theme.colors.textPrimary
-            )
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            BusinessRole.entries.forEach { role ->
-                DropdownMenuItem(
-                    text = { Text(role.label) },
-                    onClick = {
-                        onSelected(role.apiValue)
-                        expanded = false
-                    }
+    if (showPicker) {
+        ModalBottomSheet(onDismissRequest = { showPicker = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                Text(
+                    text = "Select your role",
+                    style = theme.fonts.headline,
+                    color = theme.colors.textPrimary,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
+                BusinessRole.entries.forEach { role ->
+                    Text(
+                        text = role.label,
+                        style = theme.fonts.body,
+                        color = theme.colors.textPrimary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onSelected(role.apiValue)
+                                showPicker = false
+                            }
+                            .padding(vertical = 12.dp)
+                    )
+                }
             }
         }
-    }
-    error?.let { message ->
-        Text(
-            text = message,
-            color = theme.colors.error,
-            style = theme.fonts.caption
-        )
     }
 }
 

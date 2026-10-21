@@ -33,6 +33,7 @@ import com.framepayments.frameonboarding.viewmodels.FrameOnboardingViewModel
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk_ui.reusable.BillingAddressDetailView
 import com.framepayments.framesdk_ui.reusable.ContinueButton
+import com.framepayments.framesdk_ui.reusable.SelectableOutlinedField
 import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import com.framepayments.framesdk_ui.validation.Validators
@@ -100,8 +101,17 @@ internal fun BusinessDetailsScreen(viewModel: FrameOnboardingViewModel) {
                     modifier = Modifier.padding(top = 4.dp)
                 )
                 Spacer(Modifier.height(theme.spacing.formBlock))
-                PickerRow("Business type", structure?.label) { showTypePicker = true }
-                PickerRow("Business category", category?.name) { showCategoryPicker = true }
+                SelectableOutlinedField(
+                    value = structure?.label.orEmpty(),
+                    prompt = "Business type",
+                    onClick = { showTypePicker = true }
+                )
+                Spacer(Modifier.height(theme.spacing.formBlock))
+                SelectableOutlinedField(
+                    value = category?.name.orEmpty(),
+                    prompt = "Business category",
+                    onClick = { showCategoryPicker = true }
+                )
                 Text(
                     text = "Choose the category that best describes what your business sells.",
                     style = theme.fonts.caption,
@@ -165,7 +175,10 @@ internal fun BusinessDetailsScreen(viewModel: FrameOnboardingViewModel) {
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
-            ContinueButton(isLoading = isLoading) {
+            ContinueButton(
+                isLoading = isLoading,
+                modifier = Modifier.padding(16.dp)
+            ) {
                 val message = when {
                     legalName.isBlank() -> "Enter the legal business name."
                     structure == null -> "Select a business type."
@@ -242,21 +255,6 @@ private fun newAddressVM() = BillingAddressFieldVM(
     ),
     mode = BillingAddressMode.INTERNATIONAL
 )
-
-@Composable
-private fun PickerRow(title: String, value: String?, onClick: () -> Unit) {
-    val theme = LocalFrameTheme.current
-    Column(modifier = Modifier.padding(bottom = 8.dp)) {
-        Text(text = title, style = theme.fonts.label, color = theme.colors.textSecondary)
-        TextButton(onClick = onClick) {
-            Text(
-                text = value ?: "Select",
-                style = theme.fonts.body,
-                color = theme.colors.textPrimary
-            )
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
