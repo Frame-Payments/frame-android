@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -18,7 +20,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.framepayments.frameonboarding.classes.Capabilities
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.frameonboarding.classes.OnboardingFlowSegment
@@ -95,7 +99,7 @@ fun OnboardingContainerView(
                     detail = "last step reached: ${segment.analyticsName}"
                 )
             }
-            else -> return
+            is OnboardingResult.Failed -> Unit
         }
         resultDelivery.delivered = true
         currentOnResult(r)
@@ -203,6 +207,24 @@ fun OnboardingContainerView(
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                val mismatch by viewModel.accountTypeMismatch.collectAsState()
+                if (mismatch != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = mismatch!!,
+                            style = theme.fonts.body,
+                            color = theme.colors.textPrimary
+                        )
+                        TextButton(
+                            onClick = { viewModel.dismissAccountTypeMismatch() }
+                        ) { Text("Close") }
+                    }
+                } else {
                 ProgressIndicator(
                     currentStep = viewModel.navigationState.currentStep,
                     flowSegments = viewModel.flowSegments,
@@ -217,13 +239,16 @@ fun OnboardingContainerView(
                         onboardingData = onboardingData
                     )
                 }
+                }
             }
         }
     }
 }
 /** Mirrors iOS `OnboardingFlow.accountEventScreenName`, which maps at segment granularity. */
 private fun OnboardingFlowSegment.accountEventScreen(): AccountEventScreen = when (this) {
-    OnboardingFlowSegment.PERSONAL_INFORMATION -> AccountEventScreen.PERSONAL_INFORMATION
+    OnboardingFlowSegment.PERSONAL_INFORMATION,
+    OnboardingFlowSegment.BUSINESS_DETAILS,
+    OnboardingFlowSegment.OWNERS_AND_CONTROLLERS -> AccountEventScreen.PERSONAL_INFORMATION
     OnboardingFlowSegment.CONFIRM_PAYMENT_METHOD -> AccountEventScreen.PAYMENT_METHOD
     OnboardingFlowSegment.CONFIRM_PAYOUT_METHOD -> AccountEventScreen.PAYOUT_METHOD
     OnboardingFlowSegment.VERIFICATION_SUBMITTED -> AccountEventScreen.ONBOARDING

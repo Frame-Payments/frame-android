@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -36,9 +38,11 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.framepayments.frameonboarding.classes.BusinessRole
 import com.framepayments.frameonboarding.validation.DateOfBirthFormatter
 import com.framepayments.frameonboarding.viewmodels.CustomerInformationFieldVM
 import com.framepayments.framesdk_ui.reusable.PhoneNumberTextField
+import com.framepayments.framesdk_ui.reusable.SelectableOutlinedField
 import com.framepayments.framesdk_ui.reusable.ValidatedTextField
 import com.framepayments.framesdk_ui.theme.LocalFrameTheme
 import java.text.SimpleDateFormat
@@ -75,7 +79,13 @@ fun CustomerInformationView(
     /** Invoked when the customer taps "Use SSN instead" to undo government-ID verification. */
     onUseSsnInstead: () -> Unit = {},
     /** When false (a government ID is required), "Use SSN instead" is hidden. */
-    allowSsnInstead: Boolean = true
+    allowSsnInstead: Boolean = true,
+    /** Business owners enter all 9 digits. Individuals enter the last four. */
+    collectsFullSSN: Boolean = false,
+    /** When non-null, a role picker is shown under email. */
+    businessRoleLabel: String? = null,
+    businessRoleError: String? = null,
+    onBusinessRoleSelected: ((String) -> Unit)? = null
 ) {
     val identity by viewModel.identity.collectAsState()
     val phoneCountry by viewModel.phoneCountry.collectAsState()
@@ -168,6 +178,15 @@ fun CustomerInformationView(
             onClearError = { viewModel.clearError(CustomerInformationFieldVM.Field.EMAIL) },
             autofillContentType = ContentType.EmailAddress
         )
+
+        if (onBusinessRoleSelected != null) {
+            Spacer(Modifier.height(16.dp))
+            BusinessRolePicker(
+                selectedLabel = businessRoleLabel,
+                error = businessRoleError,
+                onSelected = onBusinessRoleSelected
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
 
@@ -273,6 +292,50 @@ fun CustomerInformationView(
                     }
                 }
             }
+        } else if (showSsnField && collectsFullSSN) {
+            Text(
+                text = "Social Security number",
+                style = theme.fonts.label,
+                color = theme.colors.textSecondary,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+            OutlinedTextField(
+                value = identity.ssn,
+                onValueChange = { v ->
+                    val filtered = v.filter(Char::isDigit).take(9)
+                    viewModel.updateIdentity { it.copy(ssn = filtered) }
+                    if (errors[CustomerInformationFieldVM.Field.SSN] != null) {
+                        viewModel.clearError(CustomerInformationFieldVM.Field.SSN)
+                    }
+                },
+                placeholder = {
+                    Text("000000000", style = theme.fonts.body, color = theme.colors.textSecondary)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                textStyle = theme.fonts.body,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = errors[CustomerInformationFieldVM.Field.SSN] != null
+            )
+            errors[CustomerInformationFieldVM.Field.SSN]?.let { msg ->
+                Text(
+                    text = msg,
+                    color = theme.colors.error,
+                    style = theme.fonts.caption,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+            if (showGovIdVerification) {
+                Text(
+                    text = "No Social Security number? Verify with an ID document",
+                    style = theme.fonts.caption,
+                    color = theme.colors.textSecondary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = !isVerifyingGovId, onClick = onVerifyWithoutSsn)
+                        .padding(top = 4.dp),
+                )
+            }
         } else if (showSsnField) {
             Text(
                 text = "Last 4 digits of Social Security number",
@@ -359,6 +422,54 @@ fun CustomerInformationView(
                         .clickable(enabled = !isVerifyingGovId, onClick = onVerifyWithoutSsn)
                         .padding(top = 4.dp),
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BusinessRolePicker(
+    selectedLabel: String?,
+    error: String?,
+    onSelected: (String) -> Unit
+) {
+    var showPicker by remember { mutableStateOf(false) }
+    val theme = LocalFrameTheme.current
+    SelectableOutlinedField(
+        value = selectedLabel.orEmpty(),
+        prompt = "Select your role",
+        error = error,
+        onClick = { showPicker = true }
+    )
+    if (showPicker) {
+        ModalBottomSheet(onDismissRequest = { showPicker = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 24.dp)
+            ) {
+                Text(
+                    text = "Select your role",
+                    style = theme.fonts.headline,
+                    color = theme.colors.textPrimary,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                BusinessRole.entries.forEach { role ->
+                    Text(
+                        text = role.label,
+                        style = theme.fonts.body,
+                        color = theme.colors.textPrimary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onSelected(role.apiValue)
+                                showPicker = false
+                            }
+                            .padding(vertical = 12.dp)
+                    )
+                }
             }
         }
     }

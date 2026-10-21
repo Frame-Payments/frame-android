@@ -250,6 +250,13 @@ class FrameNetworkingTest {
     }
 
     @Test
+    fun toastMessage_mapsEinEncryptedValidation() {
+        val raw = """{"error_details":{"message":"Profile update failed: Validation failed: Ein encrypted If this number is correct, please contact support."}}"""
+        val message = NetworkingError.ServerError(422, raw).toastMessage()
+        assertEquals("Error: Enter a valid EIN.", message)
+    }
+
+    @Test
     fun toastMessage_transportUsesFallbackNotConfigurationError() {
         val msg = NetworkingError.InvalidURL.toastMessage()
         assertTrue(msg.contains("Something went wrong"))

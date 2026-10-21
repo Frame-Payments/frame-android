@@ -135,6 +135,10 @@ internal fun OnboardingScreenRouter(
             )
         }
 
+        OnboardingStep.BusinessDetails -> BusinessDetailsScreen(viewModel)
+
+        OnboardingStep.OwnersAndControllers -> OwnersAndControllersScreen(viewModel)
+
         OnboardingStep.VerificationSubmitted -> {
             val finalOutcome by viewModel.finalOutcome.collectAsState()
             val isResolvingOutcome by viewModel.isResolvingOutcome.collectAsState()

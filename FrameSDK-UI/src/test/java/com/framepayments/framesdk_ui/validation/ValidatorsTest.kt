@@ -132,8 +132,32 @@ class ValidatorsTest {
         assertEquals("Enter last 4 digits of SSN", Validators.validateSSNLast4("12a4"))
     }
 
+    @Test fun ein_rejectsPlaceholderAndAcceptsARealShape() {
+        assertEquals("Enter a valid EIN.", Validators.validateEIN("123456789"))
+        assertEquals("Enter a valid EIN.", Validators.validateEIN("12-3456789"))
+        assertEquals("Enter a 9-digit EIN.", Validators.validateEIN("1234"))
+        assertNull(Validators.validateEIN("472839156"))
+    }
+
+    @Test fun website_acceptsHostOrHTTPURL() {
+        assertEquals("Enter a website.", Validators.validateWebsite(""))
+        assertEquals("Enter a valid website.", Validators.validateWebsite("not a url"))
+        assertEquals("Enter a valid website.", Validators.validateWebsite("https://"))
+        assertNull(Validators.validateWebsite("example.com"))
+        assertNull(Validators.validateWebsite("https://example.com"))
+        assertNull(Validators.validateWebsite("example.com/landing?ref=https://x.io"))
+        assertEquals(
+            "https://example.com/landing?ref=https://x.io",
+            Validators.normalizeWebsite("example.com/landing?ref=https://x.io")
+        )
+        assertEquals("https://example.com", Validators.normalizeWebsite("https://example.com"))
+    }
+
     @Test fun ssnLast4_valid() {
         assertNull(Validators.validateSSNLast4("1234"))
+        assertNull(Validators.validateSSN("123456788"))
+        assertEquals("Enter a 9-digit Social Security number", Validators.validateSSN("1234"))
+        assertEquals("SSN is required", Validators.validateSSN(""))
     }
 
     // ABA checksum: 011000015 is a known-valid Federal Reserve routing number.

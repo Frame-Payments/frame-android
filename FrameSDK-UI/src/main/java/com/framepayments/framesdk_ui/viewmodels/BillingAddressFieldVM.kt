@@ -111,6 +111,15 @@ class BillingAddressFieldVM(
         }
     }
 
+    /** Resolves a full state name or prefixed code before validation. */
+    fun normalize() {
+        val country = _address.value.country?.takeIf { it.isNotBlank() } ?: "US"
+        val resolved = AddressSubregions.normalize(_address.value.state.orEmpty(), country)
+        if (resolved != _address.value.state) {
+            _address.update { it.copy(state = resolved.ifEmpty { null }) }
+        }
+    }
+
     /** Sets the state/province code and clears any existing [Field.STATE] error. */
     fun setSubregion(code: String) {
         val country = _address.value.country?.takeIf { it.isNotBlank() } ?: "US"
