@@ -3793,7 +3793,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `CustomerInformationView` | fun | `fun CustomerInformationView( viewModel: CustomerInformationFieldVM, headerTitle: String = , showHeader: Boolean = true, showGovIdVerification: Boolean = false,…` | [60](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/CustomerInformationView.kt#L60) |
+| `CustomerInformationView` | fun | `fun CustomerInformationView( viewModel: CustomerInformationFieldVM, headerTitle: String = , showHeader: Boolean = true, showGovIdVerification: Boolean = false,…` | [61](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/reusable/CustomerInformationView.kt#L61) |
 
 </details>
 
