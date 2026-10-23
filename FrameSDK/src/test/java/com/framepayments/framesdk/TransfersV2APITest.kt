@@ -78,6 +78,19 @@ class TransfersV2APITest {
     }
 
     @Test
+    fun testCreateTransferFailsWhenSonarSessionCannotAttach() = runBlocking {
+        val (result, error) = TransfersV2API.createTransfer(
+            makeCreateRequest(),
+            idempotencyKey = "key-1",
+            accountId = "acc_123",
+        )
+
+        assertNull(result)
+        assertEquals(NetworkingError.UnknownError, error)
+        assertEquals(0, mockWebServer.requestCount)
+    }
+
+    @Test
     fun testCreateTransferGeneratesIdempotencyKey() = runBlocking {
         mockWebServer.enqueue(
             MockResponse()
