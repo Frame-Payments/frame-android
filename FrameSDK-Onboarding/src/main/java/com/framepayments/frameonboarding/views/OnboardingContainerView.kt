@@ -1,5 +1,6 @@
 package com.framepayments.frameonboarding.views
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -111,11 +112,14 @@ fun OnboardingContainerView(
         onDispose {
             if (!resultDelivery.delivered) {
                 val pending = viewModel.result.value
-                if (pending == null) {
-                    viewModel.cancel()
-                    deliverTerminalResult(OnboardingResult.Cancelled)
-                } else {
-                    deliverTerminalResult(pending)
+                val mismatch = viewModel.accountTypeMismatch.value
+                when {
+                    pending != null -> deliverTerminalResult(pending)
+                    mismatch != null -> deliverTerminalResult(OnboardingResult.Failed(mismatch))
+                    else -> {
+                        viewModel.cancel()
+                        deliverTerminalResult(OnboardingResult.Cancelled)
+                    }
                 }
             }
             viewModel.close()
@@ -209,6 +213,7 @@ fun OnboardingContainerView(
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                 val mismatch by viewModel.accountTypeMismatch.collectAsState()
                 if (mismatch != null) {
+                    BackHandler { viewModel.dismissAccountTypeMismatch() }
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
