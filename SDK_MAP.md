@@ -3941,7 +3941,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [57](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L57) |
+| `OnboardingContainerView` | fun | `fun OnboardingContainerView( config: OnboardingConfig, onResult: (OnboardingResult) -> Unit )` | [58](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/OnboardingContainerView.kt#L58) |
 
 </details>
 
