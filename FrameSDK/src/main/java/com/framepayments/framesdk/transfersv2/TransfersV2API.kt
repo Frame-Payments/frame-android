@@ -31,16 +31,9 @@ object TransfersV2API {
             || request.source?.paymentMethod != null
         if (!hasPaymentSource || resolved.isNullOrEmpty()) return request
 
-        val manager = FrameNetworking.awaitSonarSessionManager() ?: return request
-        // A failure must not block the transfer; the server's rejection is the authoritative answer.
-        val sessionId = try {
-            manager.ensureSession(resolved)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            null
-        }
-        return if (sessionId != null) request.copy(sonarSessionId = sessionId) else request
+        val manager = FrameNetworking.awaitSonarSessionManager()
+            ?: error("Sonar session unavailable")
+        return request.copy(sonarSessionId = manager.ensureSession(resolved))
     }
 
     private suspend fun postOrPatch(
@@ -55,6 +48,9 @@ object TransfersV2API {
 
     /**
      * Creates a V2 transfer. Requires an `Idempotency-Key` (generated when [idempotencyKey] is null or blank).
+     *
+     * A payment-method create fails with [NetworkingError.UnknownError] when the Sonar session
+     * cannot attach. Payouts (no payment source) still create without a session.
      *
      * @param request The request payload describing the transfer to create.
      * @param idempotencyKey Optional idempotency key; a UUID is generated when null or blank.
@@ -73,6 +69,8 @@ object TransfersV2API {
      *
      * The session must have been minted with a locked amount. The server stamps that amount,
      * authorization mode, and checkout session id; the client still sends `Idempotency-Key`.
+     * Payment-method creates fail closed when the Sonar session cannot attach, same as the
+     * secret-key overload.
      *
      * @param checkoutClientSecret The `chk_sess_…` token. An empty token returns `(null, null)`.
      * @param accountId Account for the Sonar session when [FrameNetworking.accountId] is unset.
@@ -95,11 +93,14 @@ object TransfersV2API {
     ): Pair<TransferV2?, NetworkingError?> {
         val key = if (!idempotencyKey.isNullOrEmpty()) idempotencyKey else UUID.randomUUID().toString()
         val endpoint = TransferV2Endpoints.CreateTransfer(key)
-        val (data, error) = FrameNetworking.performDataTaskWithRequest(
-            endpoint,
-            withSonarSession(request, accountId),
-            auth
-        )
+        val attached = try {
+            withSonarSession(request, accountId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            return Pair(null, NetworkingError.UnknownError)
+        }
+        val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, attached, auth)
         return Pair(data?.let { FrameNetworking.parseResponse<TransferV2>(data) }, error)
     }
 
