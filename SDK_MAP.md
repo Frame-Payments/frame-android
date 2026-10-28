@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2145 public symbols** across 182 files in 3 modules.
+**2146 public symbols** across 183 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -54,11 +54,11 @@ reverse is never true.
 | Interfaces | 4 |
 | Objects | 129 |
 | Type aliases | 4 |
-| Functions | 361 |
+| Functions | 362 |
 | Properties (val) | 1078 |
 | Properties (var) | 22 |
 | Enum entries | 161 |
-| **Total** | **2145** |
+| **Total** | **2146** |
 
 ### `FrameSDK` — 1716 public symbols
 
@@ -2831,11 +2831,11 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-### `FrameSDK-UI` — 198 public symbols
+### `FrameSDK-UI` — 199 public symbols
 
 Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, shared reusable components (payment method rows, card brand art).
 
-#### com/framepayments/framesdk_ui (38)
+#### com/framepayments/framesdk_ui (39)
 
 <details><summary><code>AddressMode.kt</code> — 4 symbols</summary>
 
@@ -2933,6 +2933,16 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
 | `FrameCheckoutView` | class | `class FrameCheckoutView @JvmOverloads constructor(` | [52](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameCheckoutView.kt#L52) |
+
+</details>
+
+<details><summary><code>FrameDepositView.kt</code> — 1 symbols</summary>
+
+[`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameDepositView.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameDepositView.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `FrameDepositView` | fun | `fun FrameDepositView( accountId: String, minAmount: Int? = null, maxAmount: Int? = null, isContinuing: Boolean = false, onContinue: (amountCents: Int) -> Unit,…` | [60](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameDepositView.kt#L60) |
 
 </details>
 
