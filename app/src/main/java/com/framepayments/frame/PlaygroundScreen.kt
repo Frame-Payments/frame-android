@@ -3,8 +3,8 @@ package com.framepayments.frame
 import android.app.Activity
 import android.app.Application
 import android.content.Intent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -32,11 +32,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,7 +53,6 @@ import com.framepayments.frameonboarding.views.FrameSelectPayoutMethodView
 import com.framepayments.frameonboarding.views.OnboardingContainerView
 import com.framepayments.frameonboarding.classes.OnboardingConfig
 import com.framepayments.framesdk.FrameResult
-import com.framepayments.framesdk_ui.FrameDepositView
 import com.framepayments.framesdk_ui.buttons.FrameGooglePayButton
 import com.plaid.link.FastOpenPlaidLink
 import com.plaid.link.Plaid
@@ -105,16 +101,11 @@ fun PlaygroundScreen(
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
     var isMintingCheckout by remember { mutableStateOf(false) }
-    var showDeposit by rememberSaveable { mutableStateOf(false) }
-    var isContinuingDeposit by remember { mutableStateOf(false) }
-    var depositAttempt by remember { mutableIntStateOf(0) }
-    val depositStillOpen = rememberUpdatedState(showDeposit)
 
-    val depositCheckoutLauncher = rememberLauncherForActivityResult(
+    val depositLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        isContinuingDeposit = false
-        if (result.resultCode == Activity.RESULT_OK) showDeposit = false
+        result.data?.getStringExtra("accountId")?.takeIf { it.isNotBlank() }?.let(viewModel::setAccountId)
     }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
@@ -440,7 +431,11 @@ fun PlaygroundScreen(
                 }
             }
             PlaygroundButton(text = "Deposit") {
-                showDeposit = true
+                depositLauncher.launch(
+                    Intent(context, DepositActivity::class.java).apply {
+                        putExtra("accountId", accountId)
+                    }
+                )
             }
             PlaygroundButton(text = "Show Onboarding Flow") {
                 // Example app has no backend. Production apps mint POST /v1/onboarding_sessions
@@ -481,50 +476,6 @@ fun PlaygroundScreen(
                 pendingStandaloneView = StandaloneView.SELECT_PAYOUT_METHOD
             }
         }
-    }
-
-    if (showDeposit) {
-        FrameDepositView(
-            accountId = accountId,
-            isContinuing = isContinuingDeposit,
-            onContinue = { cents ->
-                if (isContinuingDeposit) return@FrameDepositView
-                isContinuingDeposit = true
-                val attempt = depositAttempt
-                scope.launch {
-                    var launched = false
-                    try {
-                        // Host mints chk_sess_ because the session locks the amount.
-                        val secret = viewModel.mintCheckoutClientSecret(accountId, amountCents = cents)
-                        if (!depositStillOpen.value || attempt != depositAttempt || secret == null) return@launch
-                        if (secret.amountCents != cents) {
-                            demoResultMessage = DemoResultMessage(
-                                "Deposit",
-                                "Checkout session amount did not match.",
-                            )
-                            return@launch
-                        }
-                        val intent = Intent(context, CheckoutActivity::class.java).apply {
-                            putExtra("totalCents", cents)
-                            putExtra("accountId", viewModel.accountId.value)
-                            putExtra("checkoutClientSecret", secret.clientSecret)
-                            putExtra("checkoutClientSecretExpiresAt", secret.expiresAt)
-                            putExtra("checkoutAmountCents", secret.amountCents ?: cents)
-                            secret.amountCurrency?.let { putExtra("checkoutAmountCurrency", it) }
-                        }
-                        launched = true
-                        depositCheckoutLauncher.launch(intent)
-                    } finally {
-                        if (!launched && attempt == depositAttempt) isContinuingDeposit = false
-                    }
-                }
-            },
-            onCancel = {
-                depositAttempt += 1
-                showDeposit = false
-                isContinuingDeposit = false
-            },
-        )
     }
 
     demoAlert?.let { message ->
