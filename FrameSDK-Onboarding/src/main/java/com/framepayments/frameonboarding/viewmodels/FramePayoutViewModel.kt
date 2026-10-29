@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.FrameResult
@@ -16,6 +17,7 @@ import com.framepayments.framesdk_ui.reusable.deleteAmountDigit
 internal class FramePayoutViewModel(
     availableAmount: Int,
     currencyCode: String = "usd",
+    private val savedState: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
     var availableAmount: Int by mutableIntStateOf(maxOf(0, availableAmount))
         private set
@@ -35,10 +37,16 @@ internal class FramePayoutViewModel(
         private set
     var didFinish: Boolean by mutableStateOf(false)
         private set
-    var submitIdempotencyKey: String? = null
-        private set
-    var submitIdempotencyFingerprint: String? = null
-        private set
+    var submitIdempotencyKey: String? = savedState[IDEM_KEY]
+        private set(value) {
+            field = value
+            savedState[IDEM_KEY] = value
+        }
+    var submitIdempotencyFingerprint: String? = savedState[IDEM_FINGERPRINT]
+        private set(value) {
+            field = value
+            savedState[IDEM_FINGERPRINT] = value
+        }
 
     var onResult: ((FrameResult) -> Unit)? = null
 
@@ -125,6 +133,10 @@ internal class FramePayoutViewModel(
     fun finish(result: FrameResult) {
         if (didFinish) return
         didFinish = true
+        if (result is FrameResult.Completed) {
+            submitIdempotencyKey = null
+            submitIdempotencyFingerprint = null
+        }
         onResult?.invoke(result)
     }
 
@@ -137,6 +149,8 @@ internal class FramePayoutViewModel(
 
     companion object {
         val quickAmounts = listOf(1_000, 2_500, 5_000, 10_000)
+        internal const val IDEM_KEY = "submitIdempotencyKey"
+        internal const val IDEM_FINGERPRINT = "submitIdempotencyFingerprint"
 
         fun shouldRotateIdempotency(error: NetworkingError): Boolean {
             val code = (error as? NetworkingError.ServerError)?.statusCode ?: return false

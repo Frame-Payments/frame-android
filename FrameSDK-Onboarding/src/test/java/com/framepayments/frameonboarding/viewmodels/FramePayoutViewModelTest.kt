@@ -1,6 +1,8 @@
 package com.framepayments.frameonboarding.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import com.framepayments.framesdk.FrameObjects
+import com.framepayments.framesdk.FrameResult
 import com.framepayments.framesdk.NetworkingError
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -170,6 +172,41 @@ class FramePayoutViewModelTest {
         assertEquals(first, second)
         val third = vm.rememberIdempotencyKey(2_000, "pm_1")
         assertTrue(first != third)
+    }
+
+    @Test
+    fun restoredIdempotencyKeyReusedWhenFingerprintMatches() {
+        val state = SavedStateHandle(
+            mapOf(
+                FramePayoutViewModel.IDEM_KEY to "restored-key",
+                FramePayoutViewModel.IDEM_FINGERPRINT to "1000|pm_1",
+            ),
+        )
+        val vm = FramePayoutViewModel(availableAmount = 5_000, savedState = state)
+        assertEquals("restored-key", vm.rememberIdempotencyKey(1_000, "pm_1"))
+        assertTrue("restored-key" != vm.rememberIdempotencyKey(2_000, "pm_1"))
+    }
+
+    @Test
+    fun completedPayoutClearsSavedIdempotency() {
+        val state = SavedStateHandle()
+        val vm = FramePayoutViewModel(availableAmount = 5_000, savedState = state)
+        val key = vm.rememberIdempotencyKey(1_000, "pm_1")
+        vm.finish(FrameResult.Completed("tr_1"))
+        assertNull(state.get<String>(FramePayoutViewModel.IDEM_KEY))
+        assertNull(state.get<String>(FramePayoutViewModel.IDEM_FINGERPRINT))
+        val restored = FramePayoutViewModel(availableAmount = 5_000, savedState = state)
+        assertTrue(key != restored.rememberIdempotencyKey(1_000, "pm_1"))
+    }
+
+    @Test
+    fun rotateClearsSavedIdempotency() {
+        val state = SavedStateHandle()
+        val vm = FramePayoutViewModel(availableAmount = 5_000, savedState = state)
+        vm.rememberIdempotencyKey(1_000, "pm_1")
+        vm.rotateIdempotencyKeyIfNeeded(NetworkingError.ServerError(409, "consumed"))
+        assertNull(state.get<String>(FramePayoutViewModel.IDEM_KEY))
+        assertNull(state.get<String>(FramePayoutViewModel.IDEM_FINGERPRINT))
     }
 
     @Test
