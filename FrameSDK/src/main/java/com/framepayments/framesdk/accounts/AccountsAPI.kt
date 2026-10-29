@@ -5,6 +5,7 @@ import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.managers.SiftManager
+import com.framepayments.framesdk.payoutsessions.decodePayoutAccountResource
 
 /** Provides coroutine and callback-based operations for managing accounts. */
 object AccountsAPI {
@@ -82,7 +83,8 @@ object AccountsAPI {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.GetAccountWith(accountId)
         val (data, error) = FrameNetworking.performDataTask(endpoint, auth)
-        val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
+        if (error != null) return Pair(null, error)
+        val decodedResponse = decodePayoutAccountResource(data)
         if (!forTesting) {
             decodedResponse?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
@@ -135,6 +137,8 @@ object AccountsAPI {
     /**
      * Elects a payment method as the account's payout destination (its primary bank).
      *
+     * Accepts `onb_sess_`, `pyt_sess_`, or a secret key. A publishable key is rejected.
+     *
      * @param accountId The ID of the account.
      * @param request The payment method to elect.
      * @return A pair of the updated [AccountObjects.Account] and any [NetworkingError].
@@ -146,7 +150,8 @@ object AccountsAPI {
         if (accountId.isEmpty()) return Pair(null, null)
         val endpoint = AccountEndpoints.ElectPayoutMethod(accountId)
         val (data, error) = FrameNetworking.performDataTaskWithRequest(endpoint, request)
-        return Pair(data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }, error)
+        if (error != null) return Pair(null, error)
+        return Pair(decodePayoutAccountResource(data), null)
     }
 
     /**
@@ -287,12 +292,16 @@ object AccountsAPI {
         if (accountId.isEmpty()) return completionHandler(null, null)
         val endpoint = AccountEndpoints.GetAccountWith(accountId)
         FrameNetworking.performDataTask(endpoint, FrameAuthMode.Publishable) { data, error ->
-            val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
+            if (error != null) {
+                completionHandler(null, error)
+                return@performDataTask
+            }
+            val decodedResponse = decodePayoutAccountResource(data)
             decodedResponse?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
                 SiftManager.collectLoginEvent(customerId = it.id ?: "", email = email)
             }
-            completionHandler(decodedResponse, error)
+            completionHandler(decodedResponse, null)
         }
     }
 

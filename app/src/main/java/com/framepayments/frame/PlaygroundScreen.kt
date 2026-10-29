@@ -67,6 +67,9 @@ private enum class StandaloneView {
     ADD_PAYMENT_METHOD, ADD_PAYOUT_METHOD, SELECT_PAYOUT_METHOD
 }
 
+/** Stand-in withdrawable balance for the example payout. The SDK does not fetch balance. */
+private const val examplePayoutAvailableCents = 5_000
+
 private data class DemoResultMessage(val title: String, val body: String)
 
 /** Renders a [FrameResult] as a title/body pair for [DemoResultMessage], matching the FrameExample-iOS pattern. */
@@ -101,11 +104,24 @@ fun PlaygroundScreen(
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
     var isMintingCheckout by remember { mutableStateOf(false) }
+    var isMintingPayout by remember { mutableStateOf(false) }
 
     val depositLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         result.data?.getStringExtra("accountId")?.takeIf { it.isNotBlank() }?.let(viewModel::setAccountId)
+    }
+
+    val payoutLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        result.data?.getStringExtra("accountId")?.takeIf { it.isNotBlank() }?.let(viewModel::setAccountId)
+        val transferId = result.data?.getStringExtra("transferId")
+        demoResultMessage = when {
+            result.resultCode == Activity.RESULT_OK && transferId != null ->
+                DemoResultMessage("Payout", "Completed: $transferId")
+            else -> DemoResultMessage("Payout", "Cancelled")
+        }
     }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
@@ -436,6 +452,34 @@ fun PlaygroundScreen(
                         putExtra("accountId", accountId)
                     }
                 )
+            }
+            PlaygroundButton(
+                text = if (isMintingPayout) "Opening Payout…" else "Payout",
+                enabled = !isMintingPayout,
+            ) {
+                if (isMintingPayout) return@PlaygroundButton
+                isMintingPayout = true
+                scope.launch {
+                    try {
+                        val secret = viewModel.mintPayoutClientSecret(
+                            accountId,
+                            amountCents = examplePayoutAvailableCents,
+                        )
+                        if (secret != null) {
+                            payoutLauncher.launch(
+                                Intent(context, PayoutActivity::class.java).apply {
+                                    putExtra("accountId", viewModel.accountId.value)
+                                    putExtra("payoutClientSecret", secret.clientSecret)
+                                    putExtra("payoutClientSecretExpiresAt", secret.expiresAt)
+                                    putExtra("payoutAmountCents", secret.amountCents)
+                                    putExtra("payoutAmountCurrency", secret.amountCurrency)
+                                }
+                            )
+                        }
+                    } finally {
+                        isMintingPayout = false
+                    }
+                }
             }
             PlaygroundButton(text = "Show Onboarding Flow") {
                 // Example app has no backend. Production apps mint POST /v1/onboarding_sessions

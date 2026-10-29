@@ -75,7 +75,8 @@ sealed class FrameAuthMode {
      * Authenticate with a server-minted, per-object client secret used as a Bearer token.
      *
      * Covers the charge-intent `client_secret` (`ci_<id>_secret_…`), onboarding-session
-     * tokens (`onb_sess_…`), and the checkout token (`chk_sess_…`).
+     * tokens (`onb_sess_…`), the checkout token (`chk_sess_…`), and the payout token
+     * (`pyt_sess_…`).
      *
      * @property token The client secret value to use as the Bearer token.
      */
@@ -381,16 +382,17 @@ object FrameNetworking {
      * a bare publishable key would allow cross-account access. Call [endOnboardingSession] when the
      * onboarding flow completes or is dismissed.
      *
-     * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your backend.
+     * @param clientSecret The onboarding-session token (`onb_sess_…`) or payout-session token
+     *   (`pyt_sess_…`) minted by your backend.
      */
     fun beginOnboardingSession(clientSecret: String) {
-        if (!clientSecret.startsWith("onb_sess_")) {
+        if (!clientSecret.startsWith("onb_sess_") && !clientSecret.startsWith("pyt_sess_")) {
             Log.w(
                 "FrameSDK",
                 "⚠️ Frame: beginOnboardingSession was called with a token that is not an onboarding-session " +
-                    "token (onb_sess_…). Onboarding requests authenticate with this value verbatim, so a publishable " +
-                    "key, secret key, or charge-intent client secret will not scope the flow to an account and may be " +
-                    "rejected. Mint the token from your backend via POST /v1/onboarding_sessions."
+                    "token (onb_sess_…) or payout-session token (pyt_sess_…). Requests authenticate with this value " +
+                    "verbatim, so a publishable key, secret key, or charge-intent client secret will not scope the " +
+                    "flow to an account and may be rejected."
             )
         }
         onboardingSessionToken = clientSecret
@@ -418,6 +420,15 @@ object FrameNetworking {
      */
     val hasActiveOnboardingSession: Boolean
         get() = onboardingSessionToken != null
+
+    /**
+     * The active onboarding-session or payout-session token, or `null` if none is set.
+     *
+     * Used to restore a host session after a nested picker replaces it with `pyt_sess_`.
+     *
+     * @return The current session bearer, or `null`.
+     */
+    fun currentOnboardingSessionToken(): String? = onboardingSessionToken
 
     private fun bearerToken(auth: FrameAuthMode): String {
         // An explicit .clientSecret always wins. .PublishableOnly also wins over any active

@@ -30,8 +30,8 @@ import com.framepayments.framesdk_ui.theme.FrameTheme
  * account's primary payout destination, and [FrameResult.Completed] is reported only after that.
  *
  * @param accountId The Frame account ID whose payout method is being selected.
- * @param clientSecret The onboarding-session token (`onb_sess_…`) minted by your server
- *   (`POST /v1/onboarding_sessions`) and handed to your app. Required. While this screen is
+ * @param clientSecret The onboarding-session token (`onb_sess_…`) or payout-session token
+ *   (`pyt_sess_…`) minted by your server and handed to your app. Required. While this screen is
  *   presented every request authenticates with this token, scoping it to a single account.
  * @param payoutMethods ACH methods fetched on the host backend. When null, saved banks are loaded
  *   with [clientSecret].
@@ -66,14 +66,17 @@ fun FrameSelectPayoutMethodView(
     var selectedIdWhenAddOpened by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(accountId, clientSecret) {
-        FrameNetworking.endOnboardingSession(clientSecret)
         viewModel.loadSavedPaymentMethods(payoutMethods)
-        FrameNetworking.beginOnboardingSession(clientSecret)
         viewModel.launchCheckExistingAccount(updateCapabilities = false)
     }
     DisposableEffect(clientSecret) {
+        val previous = FrameNetworking.currentOnboardingSessionToken()
+        FrameNetworking.beginOnboardingSession(clientSecret)
         onDispose {
             FrameNetworking.endOnboardingSession(clientSecret)
+            if (previous != null && previous != clientSecret) {
+                FrameNetworking.beginOnboardingSession(previous)
+            }
         }
     }
 

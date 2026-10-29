@@ -7,6 +7,7 @@ import com.framepayments.framesdk.FrameAuthMode
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
+import com.framepayments.framesdk.checkoutsessions.decodeSessionPaymentMethods
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -64,8 +65,9 @@ object PaymentMethodsAPI {
      *
      * @param accountId The unique identifier of the account whose payment methods to retrieve.
      * @param auth Credential for the request. Defaults to the secret key. Checkout passes a
-     *   `chk_sess_` token here.
-     * @return A pair of the list of payment methods and a networking error.
+     *   `chk_sess_` token here; payout and select-payout-method pass `pyt_sess_` or `onb_sess_`.
+     * @return A pair of the list of payment methods and a networking error. Error JSON is `null`,
+     *   not an empty list.
      */
     suspend fun getPaymentMethodsWithAccount(
         accountId: String,
@@ -73,7 +75,8 @@ object PaymentMethodsAPI {
     ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?> {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithAccount(accountId)
         val (data, error) = FrameNetworking.performDataTask(endpoint, auth)
-        return Pair(data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error)
+        if (error != null) return Pair(null, error)
+        return Pair(decodeSessionPaymentMethods(data), null)
     }
 
     /**
@@ -259,7 +262,11 @@ object PaymentMethodsAPI {
     fun getPaymentMethodsWithAccount(accountId: String, completionHandler: (List<FrameObjects.PaymentMethod>?, NetworkingError?) -> Unit) {
         val endpoint = PaymentMethodEndpoints.GetPaymentMethodsWithAccount(accountId)
         FrameNetworking.performDataTask(endpoint) { data, error ->
-            completionHandler( data?.let { FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)?.data }, error )
+            if (error != null) {
+                completionHandler(null, error)
+                return@performDataTask
+            }
+            completionHandler(decodeSessionPaymentMethods(data), null)
         }
     }
 

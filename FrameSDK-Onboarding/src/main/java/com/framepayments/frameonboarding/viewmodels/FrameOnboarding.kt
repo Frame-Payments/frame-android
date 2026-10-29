@@ -2557,16 +2557,18 @@ internal class FrameOnboardingViewModel(private val config: OnboardingConfig) : 
                 auth = FrameAuthMode.ClientSecret(token),
             )
         }
-        if (error != null) {
-            AccountEventEmitter.emit(
-                AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
-                AccountEventScreen.PAYMENT_METHOD,
-                detail = "$error",
-            )
-            reportUserError(userMessageForNetworkError(error))
+        if (error != null || methods == null) {
+            if (error != null) {
+                AccountEventEmitter.emit(
+                    AccountEventName.SAVED_PAYMENT_METHODS_LOAD_FAILED,
+                    AccountEventScreen.PAYMENT_METHOD,
+                    detail = "$error",
+                )
+                reportUserError(userMessageForNetworkError(error))
+            }
             return
         }
-        val all = methods.orEmpty()
+        val all = methods
         val fetchedCards = all.filter { it.type == FrameObjects.PaymentMethodType.CARD }.mapNotNull { it.toCardSummary() }
         val fetchedPayout = all.mapNotNull { it.toPayoutSummary() }
         val fetchedPayoutIds = fetchedPayout.map { it.id }.toSet()

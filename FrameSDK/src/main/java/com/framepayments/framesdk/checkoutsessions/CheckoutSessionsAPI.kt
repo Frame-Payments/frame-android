@@ -68,10 +68,7 @@ object CheckoutSessionsAPI {
                 auth = FrameAuthMode.ClientSecret(token),
             )
             if (error != null) return@authorized Pair(null, error)
-            val methods = data
-                ?.let { FrameNetworking.parseResponse<CheckoutPaymentMethodList>(it)?.data }
-                ?.map { it.toPaymentMethod() }
-            Pair(methods, null)
+            Pair(decodeSessionPaymentMethods(data), null)
         }
     }
 

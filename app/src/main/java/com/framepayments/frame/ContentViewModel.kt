@@ -16,6 +16,8 @@ import com.framepayments.framesdk.accounts.AccountRequests
 import com.framepayments.framesdk.accounts.AccountsAPI
 import com.framepayments.framesdk.checkoutsessions.CheckoutSessionsAPI
 import com.framepayments.framesdk.checkoutsessions.FrameCheckoutClientSecret
+import com.framepayments.framesdk.payoutsessions.FramePayoutClientSecret
+import com.framepayments.framesdk.payoutsessions.PayoutSessionsAPI
 import com.framepayments.framesdk.transfersv2.TransferV2Money
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionRequests
 import com.framepayments.framesdk.onboardingsessions.OnboardingSessionsAPI
@@ -264,6 +266,49 @@ class ContentViewModel : ViewModel() {
             expiresAt,
             amountCents = session.amount?.value,
             amountCurrency = session.amount?.currency,
+        )
+    }
+
+    /**
+     * Example app has no backend. Production apps mint `POST /v1/payout_sessions` on their
+     * server with sk_ and pass the client secret in. Payout refreshes an expired token with
+     * the secret key configured on this example.
+     */
+    suspend fun mintPayoutClientSecret(
+        accountIdInput: String?,
+        amountCents: Int,
+        currency: String = "usd",
+    ): FramePayoutClientSecret? {
+        if (amountCents <= 0) return null
+        val resolvedAccountId = accountIdInput?.takeIf { it.isNotBlank() } ?: run {
+            val (account, err) = createEmptyIndividualAccount()
+            account?.id ?: run {
+                _demoAlert.value = DemoAlertMessage(
+                    title = "Payout",
+                    body = err?.let { "Couldn't create an account to pay out: $it" }
+                        ?: "Account creation did not return an account id.",
+                )
+                return null
+            }
+        }
+        _accountId.value = resolvedAccountId
+        val amount = TransferV2Money(value = amountCents, currency = currency)
+        val (session, sessionError) = PayoutSessionsAPI.createPayoutSession(resolvedAccountId, amount)
+        val clientSecret = session?.clientSecret?.takeIf { it.isNotEmpty() }
+        val expiresAt = session?.expiresAt
+        if (clientSecret == null || expiresAt == null) {
+            _demoAlert.value = DemoAlertMessage(
+                title = "Payout",
+                body = sessionError?.let { "Couldn't mint a payout client secret: $it" }
+                    ?: "Payout session response did not include a client secret.",
+            )
+            return null
+        }
+        return FramePayoutClientSecret(
+            clientSecret = clientSecret,
+            expiresAt = expiresAt,
+            amountCents = session.amount?.value ?: amountCents,
+            amountCurrency = session.amount?.currency ?: currency,
         )
     }
 
