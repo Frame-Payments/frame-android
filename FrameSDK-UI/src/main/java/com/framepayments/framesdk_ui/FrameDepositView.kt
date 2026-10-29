@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -40,8 +42,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk_ui.reusable.ContinueButton
 import com.framepayments.framesdk_ui.reusable.FrameAmountKeypad
@@ -149,13 +151,18 @@ fun FrameDepositView(
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
+                    BasicText(
                         text = CurrencyFormatter.convertCentsToCurrencyString(viewModel.typedCents),
-                        style = fonts.depositAmount,
-                        color = colors.textPrimary,
-                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                        style = fonts.depositAmount.copy(
+                            color = colors.textPrimary,
+                            textAlign = TextAlign.Center,
+                        ),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = (fonts.depositAmount.fontSize.value * 0.4f).sp,
+                            maxFontSize = fonts.depositAmount.fontSize,
+                        ),
                     )
                 }
                 Row(

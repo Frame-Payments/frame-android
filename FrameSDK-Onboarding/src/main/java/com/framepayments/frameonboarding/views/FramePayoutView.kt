@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -46,8 +48,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.framepayments.frameonboarding.R
 import com.framepayments.frameonboarding.reusable.MethodOptionRow
 import com.framepayments.frameonboarding.viewmodels.FramePayoutViewModel
@@ -295,13 +297,18 @@ fun FramePayoutView(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(
+                    BasicText(
                         text = viewModel.amountText,
-                        style = fonts.depositAmount,
-                        color = colors.textPrimary,
-                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                        style = fonts.depositAmount.copy(
+                            color = colors.textPrimary,
+                            textAlign = TextAlign.Center,
+                        ),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = (fonts.depositAmount.fontSize.value * 0.4f).sp,
+                            maxFontSize = fonts.depositAmount.fontSize,
+                        ),
                     )
                     Text(
                         text = "Available ${viewModel.availableText}",
@@ -410,7 +417,7 @@ private fun payoutViewModel(
     currencyCode: String,
 ): FramePayoutViewModel {
     val owner = LocalViewModelStoreOwner.current
-    val factory = remember(accountId, amountCents, currencyCode) {
+    val factory = remember(accountId) {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
@@ -424,12 +431,12 @@ private fun payoutViewModel(
     }
     return if (owner != null) {
         viewModel(
-            key = "frame-payout:$accountId:$amountCents:$currencyCode",
+            key = "frame-payout:$accountId",
             factory = factory,
             viewModelStoreOwner = owner,
         )
     } else {
-        remember(accountId, amountCents, currencyCode) {
+        remember(accountId) {
             FramePayoutViewModel(availableAmount = amountCents, currencyCode = currencyCode)
         }
     }
