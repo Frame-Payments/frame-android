@@ -3020,7 +3020,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameDepositView` | fun | `fun FrameDepositView( accountId: String, minAmount: Int? = null, maxAmount: Int? = null, isContinuing: Boolean = false, onContinue: (amountCents: Int) -> Unit,…` | [69](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameDepositView.kt#L69) |
+| `FrameDepositView` | fun | `fun FrameDepositView( accountId: String, minAmount: Int? = null, maxAmount: Int? = null, isContinuing: Boolean = false, onContinue: (amountCents: Int) -> Unit,…` | [71](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameDepositView.kt#L71) |
 
 </details>
 
@@ -3267,7 +3267,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameFonts` | data class | `data class FrameFonts(` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L31) |
+| `FrameFonts` | data class | `data class FrameFonts @JvmOverloads constructor(` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L31) |
 | `FrameFonts.title` | val | `val title: TextStyle,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L32) |
 | `FrameFonts.heading` | val | `val heading: TextStyle,` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L33) |
 | `FrameFonts.headline` | val | `val headline: TextStyle,` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L34) |
@@ -3276,11 +3276,11 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 | `FrameFonts.label` | val | `val label: TextStyle,` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L37) |
 | `FrameFonts.caption` | val | `val caption: TextStyle,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L38) |
 | `FrameFonts.button` | val | `val button: TextStyle,` | [39](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L39) |
-| `FrameFonts.depositAmount` | val | `val depositAmount: TextStyle,` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L40) |
+| `FrameFonts.depositAmount` | val | `val depositAmount: TextStyle = DefaultDepositAmount,` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L40) |
 | `Soehne` | val | `val Soehne: FontFamily = FontFamily(` | [45](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L45) |
-| `defaults` | fun | `fun defaults(): FrameFonts = soehneDefaults()` | [55](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L55) |
-| `defaultsForViews` | fun | `fun defaultsForViews(): FrameFonts = soehneDefaults()` | [58](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L58) |
-| `fromTypography` | fun | `fun fromTypography(typography: Typography): FrameFonts = FrameFonts( title = typography.headlineLarge.copy(fontWeight = FontWeight.Bold), heading = typography.…` | [109](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L109) |
+| `defaults` | fun | `fun defaults(): FrameFonts = soehneDefaults()` | [61](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L61) |
+| `defaultsForViews` | fun | `fun defaultsForViews(): FrameFonts = soehneDefaults()` | [64](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L64) |
+| `fromTypography` | fun | `fun fromTypography(typography: Typography): FrameFonts = FrameFonts( title = typography.headlineLarge.copy(fontWeight = FontWeight.Bold), heading = typography.…` | [110](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L110) |
 
 </details>
 
@@ -4053,7 +4053,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FramePayoutView` | fun | `fun FramePayoutView( accountId: String, clientSecret: FramePayoutClientSecret, onResult: (FrameResult) -> Unit, )` | [110](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FramePayoutView.kt#L110) |
+| `FramePayoutView` | fun | `fun FramePayoutView( accountId: String, clientSecret: FramePayoutClientSecret, onResult: (FrameResult) -> Unit, )` | [112](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FramePayoutView.kt#L112) |
 
 </details>
 
