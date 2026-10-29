@@ -169,6 +169,33 @@ class FrameNetworkingTest {
     }
 
     @Test
+    fun endingPayoutPickerRestoresThePreviousOnboardingSession() = runBlocking {
+        FrameNetworking.beginOnboardingSession("onb_sess_host")
+        val previous = FrameNetworking.currentOnboardingSessionToken()
+        FrameNetworking.beginOnboardingSession("pyt_sess_live")
+        FrameNetworking.endOnboardingSession("pyt_sess_live")
+        if (previous != null && previous != "pyt_sess_live") {
+            FrameNetworking.beginOnboardingSession(previous)
+        }
+
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/test"), FrameAuthMode.Secret)
+        assertEquals("Bearer onb_sess_host", mockWebServer.takeRequest().getHeader("Authorization"))
+    }
+
+    @Test
+    fun payoutSessionDoesNotAuthenticateSonarWithPayoutToken() = runBlocking {
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))
+
+        FrameNetworking.beginOnboardingSession("pyt_sess_live")
+        FrameNetworking.performDataTask(TestEndpoint("GET", "/v1/charge_sessions"), FrameAuthMode.PublishableOnly)
+
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer pk_test_key", recorded.getHeader("Authorization"))
+        assertFalse(recorded.getHeader("Authorization")!!.contains("pyt_sess_"))
+    }
+
+    @Test
     fun onboardingSessionOverridesPublishableAuth() = runBlocking {
         // Account-scoped calls tagged .Publishable authenticate as the session while one is active.
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody("""{"ok":true}"""))

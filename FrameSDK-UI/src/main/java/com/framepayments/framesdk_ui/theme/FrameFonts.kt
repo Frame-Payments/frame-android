@@ -28,7 +28,7 @@ import androidx.compose.material3.Typography
  * @property depositAmount Typed amount on [com.framepayments.framesdk_ui.FrameDepositView].
  */
 @Immutable
-data class FrameFonts(
+data class FrameFonts @JvmOverloads constructor(
     val title: TextStyle,
     val heading: TextStyle,
     val headline: TextStyle,
@@ -37,7 +37,7 @@ data class FrameFonts(
     val label: TextStyle,
     val caption: TextStyle,
     val button: TextStyle,
-    val depositAmount: TextStyle,
+    val depositAmount: TextStyle = DefaultDepositAmount,
 ) {
     /** Factory helpers for default and fallback [FrameFonts] instances. */
     companion object {
@@ -47,6 +47,12 @@ data class FrameFonts(
             Font(R.font.soehne_kraftig, FontWeight.Medium),
             Font(R.font.soehne_dreiviertelfett, FontWeight.SemiBold),
             Font(R.font.soehne_fett, FontWeight.Bold),
+        )
+
+        private val DefaultDepositAmount: TextStyle = TextStyle(
+            fontFamily = Soehne,
+            fontWeight = FontWeight.Bold,
+            fontSize = 72.sp,
         )
 
         /** Default Soehne typography for Compose hosts. */
@@ -97,11 +103,6 @@ data class FrameFonts(
                 fontFamily = Soehne,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 17.sp
-            ),
-            depositAmount = TextStyle(
-                fontFamily = Soehne,
-                fontWeight = FontWeight.Bold,
-                fontSize = 72.sp
             ),
         )
 

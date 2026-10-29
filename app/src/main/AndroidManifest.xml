@@ -31,6 +31,9 @@
             android:name=".DepositActivity"
             android:exported="false" />
         <activity
+            android:name=".PayoutActivity"
+            android:exported="false" />
+        <activity
             android:name=".CheckoutActivity" />
     </application>
 

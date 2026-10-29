@@ -296,6 +296,33 @@ class TransfersV2APITest {
     }
 
     @Test
+    fun testPayoutSessionCreateSendsSessionBearer() = runBlocking {
+        val responseBody = """{"id":"tr_v2_1","status":"pending","type":"payout"}"""
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))
+
+        val request = TransferV2Requests.CreateTransferRequest(
+            amount = TransferV2Requests.MoneyAmount(value = 1000, currency = "usd"),
+            destination = TransferV2Requests.EndpointSlot(paymentMethodId = "pm_1"),
+        )
+        val (result, _) = TransfersV2API.createPayoutTransfer(
+            request,
+            payoutClientSecret = "pyt_sess_live",
+            idempotencyKey = "payout-key",
+        )
+
+        assertNotNull(result)
+        val recorded = mockWebServer.takeRequest()
+        assertEquals("Bearer pyt_sess_live", recorded.getHeader("Authorization"))
+        assertTrue(recorded.path!!.endsWith("/v2/transfers"))
+        assertEquals("payout-key", recorded.getHeader("Idempotency-Key"))
+        val body = recorded.body.readUtf8()
+        assertFalse(body.contains("client_secret"))
+        assertFalse(body.contains("\"source\""))
+        assertFalse(body.contains("sonar_session_id"))
+        assertTrue(body.contains("\"payment_method_id\":\"pm_1\""))
+    }
+
+    @Test
     fun testCheckoutSessionConfirmOmitsIdempotencyKey() = runBlocking {
         val responseBody = """{"id":"tr_v2_1","status":"pending","type":"payment","payment":{"status":"succeeded"}}"""
         mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(responseBody))

@@ -1,7 +1,9 @@
 package com.framepayments.framesdk.checkoutsessions
 
+import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.paymentmethods.PaymentMethodResponses
 import com.framepayments.framesdk.transfersv2.TransferV2Money
 import com.google.gson.annotations.SerializedName
 
@@ -141,4 +143,18 @@ internal data class CheckoutAchPayload(
             lastFour = lastFour,
         )
     }
+}
+
+/**
+ * Decodes a full or slim payment-method list. Error JSON is `null`, not an empty list.
+ *
+ * @param data Raw response bytes.
+ * @return Methods when [data] has a `data` array, otherwise `null`.
+ */
+internal fun decodeSessionPaymentMethods(data: ByteArray?): List<FrameObjects.PaymentMethod>? {
+    val full = FrameNetworking.parseResponse<PaymentMethodResponses.ListPaymentMethodsResponse>(data)
+    full?.data?.let { return it }
+    val payload = FrameNetworking.parseResponse<CheckoutPaymentMethodList>(data) ?: return null
+    val methods = payload.data ?: return null
+    return methods.map { it.toPaymentMethod() }
 }

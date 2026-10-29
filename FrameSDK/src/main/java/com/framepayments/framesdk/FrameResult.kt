@@ -5,6 +5,7 @@ package com.framepayments.framesdk
  *
  * - [Completed.id] carries the resource id produced by the flow:
  *   `FrameCheckoutView` / `FrameCartView` → Transfer id.
+ *   `FramePayoutView` → Transfer id created with the payout session.
  *   `OnboardingContainerView` → the selected PaymentMethod id, or empty string if the flow
  *   completed without one.
  * - [Cancelled] is emitted when the user dismisses the surface without completing.

@@ -18,10 +18,15 @@ import com.framepayments.framesdk_ui.theme.LocalFrameTheme
  * Numeric keypad that edits an amount in the currency's smallest unit (cents).
  *
  * Digits append from the right (`1`, `2`, `3` → `123` cents / $1.23). Extra digits that would
- * exceed [maxAmount] are ignored. Payout will reuse this control.
+ * exceed [maxAmount] are ignored. Deposit and payout share this control.
+ *
+ * @param cents Current amount in cents.
+ * @param onCentsChange Called with the next amount after a digit or backspace.
+ * @param modifier Layout modifier.
+ * @param maxAmount Optional cap. Digits that would exceed it are ignored.
  */
 @Composable
-internal fun FrameAmountKeypad(
+fun FrameAmountKeypad(
     cents: Int,
     onCentsChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -56,7 +61,15 @@ internal fun FrameAmountKeypad(
     }
 }
 
-internal fun appendAmountDigit(digit: Int, to: Int, maxAmount: Int?): Int {
+/**
+ * Appends [digit] from the right. Returns [to] when the next value would exceed [maxAmount].
+ *
+ * @param digit A single digit `0…9`.
+ * @param to Current amount in cents.
+ * @param maxAmount Optional cap.
+ * @return The next amount in cents.
+ */
+fun appendAmountDigit(digit: Int, to: Int, maxAmount: Int?): Int {
     if (digit !in 0..9) return to
     if (to > (Int.MAX_VALUE - digit) / 10) return to
     val next = to * 10 + digit
@@ -64,7 +77,13 @@ internal fun appendAmountDigit(digit: Int, to: Int, maxAmount: Int?): Int {
     return next
 }
 
-internal fun deleteAmountDigit(from: Int): Int = from / 10
+/**
+ * Removes the last digit from [from].
+ *
+ * @param from Current amount in cents.
+ * @return The previous amount in cents, or `0`.
+ */
+fun deleteAmountDigit(from: Int): Int = from / 10
 
 @Composable
 private fun KeypadButton(

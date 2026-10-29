@@ -12,8 +12,8 @@ import java.util.UUID
 /**
  * Provides suspend and callback-based functions for managing V2 transfers (`/v2/transfers`).
  *
- * Secret-key calls use [com.framepayments.framesdk.FrameAuthMode.Secret]. Checkout creates and
- * confirms with `Authorization: Bearer chk_sess_…` when a checkout client secret is passed.
+ * Secret-key calls use [com.framepayments.framesdk.FrameAuthMode.Secret]. Checkout and payout
+ * creates use `Authorization: Bearer chk_sess_…` / `pyt_sess_…` when that client secret is passed.
  */
 object TransfersV2API {
 
@@ -83,6 +83,29 @@ object TransfersV2API {
     ): Pair<TransferV2?, NetworkingError?> {
         if (checkoutClientSecret.isEmpty()) return Pair(null, null)
         return createTransfer(request, idempotencyKey, accountId, FrameAuthMode.ClientSecret(checkoutClientSecret))
+    }
+
+    /**
+     * Creates a V2 transfer under a payout session.
+     *
+     * The session must have been minted with an amount cap. The client amount must be in
+     * `(0, cap]` in the session currency. Destination must be a payment method on the
+     * session account. The server injects the account source. Sonar is not attached.
+     *
+     * @param request Destination-only create body (`amount` + `destination.payment_method_id`).
+     * @param payoutClientSecret The `pyt_sess_…` token. An empty token returns `(null, null)`.
+     * @param idempotencyKey Optional idempotency key; a UUID is generated when null or blank.
+     * @param accountId Passed through for Sonar if the request includes a payment source. Payouts skip Sonar.
+     * @return A [Pair] of ([TransferV2]?, [NetworkingError]?).
+     */
+    suspend fun createPayoutTransfer(
+        request: TransferV2Requests.CreateTransferRequest,
+        payoutClientSecret: String,
+        idempotencyKey: String? = null,
+        accountId: String? = null,
+    ): Pair<TransferV2?, NetworkingError?> {
+        if (payoutClientSecret.isEmpty()) return Pair(null, null)
+        return createTransfer(request, idempotencyKey, accountId, FrameAuthMode.ClientSecret(payoutClientSecret))
     }
 
     private suspend fun createTransfer(
