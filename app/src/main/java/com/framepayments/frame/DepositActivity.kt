@@ -14,12 +14,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -63,10 +65,15 @@ private fun DepositExample(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var resolvedAccountId by rememberSaveable { mutableStateOf(accountId) }
     var isContinuing by remember { mutableStateOf(false) }
     var attempt by remember { mutableIntStateOf(0) }
     var mismatch by remember { mutableStateOf(false) }
     val demoAlert by viewModel.demoAlert.collectAsState()
+
+    LaunchedEffect(resolvedAccountId) {
+        if (resolvedAccountId.isNotBlank()) onAccountResolved(resolvedAccountId)
+    }
 
     val checkoutLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -76,7 +83,7 @@ private fun DepositExample(
     }
 
     FrameDepositView(
-        accountId = accountId,
+        accountId = resolvedAccountId,
         isContinuing = isContinuing,
         onContinue = { cents ->
             if (isContinuing) return@FrameDepositView
@@ -85,14 +92,16 @@ private fun DepositExample(
             scope.launch {
                 var launched = false
                 try {
-                    val secret = viewModel.mintCheckoutClientSecret(accountId, amountCents = cents)
+                    val secret = viewModel.mintCheckoutClientSecret(
+                        resolvedAccountId.takeIf { it.isNotBlank() },
+                        amountCents = cents,
+                    )
+                    viewModel.accountId.value.takeIf { it.isNotBlank() }?.let { resolvedAccountId = it }
                     if (thisAttempt != attempt || secret == null) return@launch
                     if (secret.amountCents != cents) {
                         mismatch = true
                         return@launch
                     }
-                    val resolvedAccountId = viewModel.accountId.value
-                    onAccountResolved(resolvedAccountId)
                     val intent = Intent(context, CheckoutActivity::class.java).apply {
                         putExtra("totalCents", cents)
                         putExtra("accountId", resolvedAccountId)

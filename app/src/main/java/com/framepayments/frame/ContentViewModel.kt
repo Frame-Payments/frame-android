@@ -246,6 +246,7 @@ class ContentViewModel : ViewModel() {
                 return null
             }
         }
+        _accountId.value = resolvedAccountId
         val amount = amountCents?.let { TransferV2Money(value = it, currency = currency) }
         val (session, sessionError) = CheckoutSessionsAPI.createCheckoutSession(resolvedAccountId, amount)
         val clientSecret = session?.clientSecret?.takeIf { it.isNotEmpty() }
@@ -258,12 +259,11 @@ class ContentViewModel : ViewModel() {
             )
             return null
         }
-        _accountId.value = resolvedAccountId
         return FrameCheckoutClientSecret(
             clientSecret,
             expiresAt,
-            amountCents = session.amount?.value ?: amountCents,
-            amountCurrency = session.amount?.currency ?: currency.takeIf { amountCents != null },
+            amountCents = session.amount?.value,
+            amountCurrency = session.amount?.currency,
         )
     }
 
