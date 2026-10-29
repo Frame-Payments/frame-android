@@ -1,8 +1,10 @@
 package com.framepayments.frame
 
+import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -99,6 +101,12 @@ fun PlaygroundScreen(
     var pendingStandaloneView by remember { mutableStateOf<StandaloneView?>(null) }
     var demoResultMessage by remember { mutableStateOf<DemoResultMessage?>(null) }
     var isMintingCheckout by remember { mutableStateOf(false) }
+
+    val depositLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        result.data?.getStringExtra("accountId")?.takeIf { it.isNotBlank() }?.let(viewModel::setAccountId)
+    }
 
     val plaidLauncher = rememberLauncherForActivityResult(FastOpenPlaidLink()) { result ->
         when (result) {
@@ -421,6 +429,13 @@ fun PlaygroundScreen(
                         isMintingCheckout = false
                     }
                 }
+            }
+            PlaygroundButton(text = "Deposit") {
+                depositLauncher.launch(
+                    Intent(context, DepositActivity::class.java).apply {
+                        putExtra("accountId", accountId)
+                    }
+                )
             }
             PlaygroundButton(text = "Show Onboarding Flow") {
                 // Example app has no backend. Production apps mint POST /v1/onboarding_sessions

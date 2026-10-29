@@ -27,7 +27,10 @@
             android:name=".CartTestActivity"
             android:exported="false">
         </activity>
-<activity
+        <activity
+            android:name=".DepositActivity"
+            android:exported="false" />
+        <activity
             android:name=".CheckoutActivity" />
     </application>
 

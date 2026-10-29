@@ -25,6 +25,7 @@ import androidx.compose.material3.Typography
  * @property label Field labels above inputs.
  * @property caption Captions, hints, and fine print.
  * @property button Primary and secondary button labels.
+ * @property depositAmount Typed amount on [com.framepayments.framesdk_ui.FrameDepositView].
  */
 @Immutable
 data class FrameFonts(
@@ -36,6 +37,7 @@ data class FrameFonts(
     val label: TextStyle,
     val caption: TextStyle,
     val button: TextStyle,
+    val depositAmount: TextStyle,
 ) {
     /** Factory helpers for default and fallback [FrameFonts] instances. */
     companion object {
@@ -96,6 +98,11 @@ data class FrameFonts(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 17.sp
             ),
+            depositAmount = TextStyle(
+                fontFamily = Soehne,
+                fontWeight = FontWeight.Bold,
+                fontSize = 72.sp
+            ),
         )
 
         /** Material 3 fallback when Soehne resources are unavailable. */
@@ -108,6 +115,10 @@ data class FrameFonts(
             label = typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
             caption = typography.labelSmall,
             button = typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+            depositAmount = typography.headlineLarge.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 72.sp
+            ),
         )
     }
 }
