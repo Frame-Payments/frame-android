@@ -158,7 +158,6 @@ fun FrameDepositView(
                             color = colors.textPrimary,
                             textAlign = TextAlign.Center,
                         ),
-                        maxLines = 1,
                         autoSize = TextAutoSize.StepBased(
                             minFontSize = (fonts.depositAmount.fontSize.value * 0.4f).sp,
                             maxFontSize = fonts.depositAmount.fontSize,
