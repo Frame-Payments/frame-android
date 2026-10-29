@@ -46,6 +46,27 @@ class FrameDepositViewModelTest {
     }
 
     @Test
+    fun quickAmountsApplyAndHonorBounds() {
+        assertEquals(listOf(1_000, 2_500, 5_000, 10_000), FrameDepositViewModel.quickAmounts)
+
+        val vm = FrameDepositViewModel(minAmount = 2_500, maxAmount = 5_000)
+        assertFalse(vm.isQuickAmountAvailable(1_000))
+        assertTrue(vm.isQuickAmountAvailable(2_500))
+        assertTrue(vm.isQuickAmountAvailable(5_000))
+        assertFalse(vm.isQuickAmountAvailable(10_000))
+
+        vm.applyQuickAmount(1_000)
+        assertEquals(0, vm.typedCents)
+
+        vm.applyQuickAmount(2_500)
+        assertEquals(2_500, vm.typedCents)
+        assertTrue(vm.isAmountInRange)
+
+        vm.applyQuickAmount(10_000)
+        assertEquals(2_500, vm.typedCents)
+    }
+
+    @Test
     fun deleteRemovesTheLastDigit() {
         val vm = FrameDepositViewModel(maxAmount = 100)
         vm.appendDigit(1)

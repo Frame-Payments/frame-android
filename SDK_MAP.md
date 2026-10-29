@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2146 public symbols** across 183 files in 3 modules.
+**2148 public symbols** across 184 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -55,10 +55,10 @@ reverse is never true.
 | Objects | 129 |
 | Type aliases | 4 |
 | Functions | 362 |
-| Properties (val) | 1078 |
+| Properties (val) | 1080 |
 | Properties (var) | 22 |
 | Enum entries | 161 |
-| **Total** | **2146** |
+| **Total** | **2148** |
 
 ### `FrameSDK` — 1716 public symbols
 
@@ -2831,7 +2831,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-### `FrameSDK-UI` — 199 public symbols
+### `FrameSDK-UI` — 201 public symbols
 
 Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, shared reusable components (payment method rows, card brand art).
 
@@ -2942,7 +2942,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameDepositView` | fun | `fun FrameDepositView( accountId: String, minAmount: Int? = null, maxAmount: Int? = null, isContinuing: Boolean = false, onContinue: (amountCents: Int) -> Unit,…` | [60](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameDepositView.kt#L60) |
+| `FrameDepositView` | fun | `fun FrameDepositView( accountId: String, minAmount: Int? = null, maxAmount: Int? = null, isContinuing: Boolean = false, onContinue: (amountCents: Int) -> Unit,…` | [69](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/FrameDepositView.kt#L69) |
 
 </details>
 
@@ -3139,7 +3139,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-#### com/framepayments/framesdk_ui/theme (53)
+#### com/framepayments/framesdk_ui/theme (54)
 
 <details><summary><code>FrameColors.kt</code> — 21 symbols</summary>
 
@@ -3171,25 +3171,26 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-<details><summary><code>FrameFonts.kt</code> — 13 symbols</summary>
+<details><summary><code>FrameFonts.kt</code> — 14 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FrameFonts` | data class | `data class FrameFonts(` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L30) |
-| `FrameFonts.title` | val | `val title: TextStyle,` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L31) |
-| `FrameFonts.heading` | val | `val heading: TextStyle,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L32) |
-| `FrameFonts.headline` | val | `val headline: TextStyle,` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L33) |
-| `FrameFonts.body` | val | `val body: TextStyle,` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L34) |
-| `FrameFonts.bodySmall` | val | `val bodySmall: TextStyle,` | [35](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L35) |
-| `FrameFonts.label` | val | `val label: TextStyle,` | [36](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L36) |
-| `FrameFonts.caption` | val | `val caption: TextStyle,` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L37) |
-| `FrameFonts.button` | val | `val button: TextStyle,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L38) |
-| `Soehne` | val | `val Soehne: FontFamily = FontFamily(` | [43](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L43) |
-| `defaults` | fun | `fun defaults(): FrameFonts = soehneDefaults()` | [53](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L53) |
-| `defaultsForViews` | fun | `fun defaultsForViews(): FrameFonts = soehneDefaults()` | [56](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L56) |
-| `fromTypography` | fun | `fun fromTypography(typography: Typography): FrameFonts = FrameFonts( title = typography.headlineLarge.copy(fontWeight = FontWeight.Bold), heading = typography.…` | [102](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L102) |
+| `FrameFonts` | data class | `data class FrameFonts(` | [31](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L31) |
+| `FrameFonts.title` | val | `val title: TextStyle,` | [32](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L32) |
+| `FrameFonts.heading` | val | `val heading: TextStyle,` | [33](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L33) |
+| `FrameFonts.headline` | val | `val headline: TextStyle,` | [34](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L34) |
+| `FrameFonts.body` | val | `val body: TextStyle,` | [35](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L35) |
+| `FrameFonts.bodySmall` | val | `val bodySmall: TextStyle,` | [36](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L36) |
+| `FrameFonts.label` | val | `val label: TextStyle,` | [37](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L37) |
+| `FrameFonts.caption` | val | `val caption: TextStyle,` | [38](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L38) |
+| `FrameFonts.button` | val | `val button: TextStyle,` | [39](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L39) |
+| `FrameFonts.depositAmount` | val | `val depositAmount: TextStyle,` | [40](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L40) |
+| `Soehne` | val | `val Soehne: FontFamily = FontFamily(` | [45](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L45) |
+| `defaults` | fun | `fun defaults(): FrameFonts = soehneDefaults()` | [55](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L55) |
+| `defaultsForViews` | fun | `fun defaultsForViews(): FrameFonts = soehneDefaults()` | [58](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L58) |
+| `fromTypography` | fun | `fun fromTypography(typography: Typography): FrameFonts = FrameFonts( title = typography.headlineLarge.copy(fontWeight = FontWeight.Bold), heading = typography.…` | [109](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/theme/FrameFonts.kt#L109) |
 
 </details>
 
@@ -3330,7 +3331,7 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-#### com/framepayments/framesdk_ui/viewmodels (33)
+#### com/framepayments/framesdk_ui/viewmodels (34)
 
 <details><summary><code>AvailableCountries.kt</code> — 5 symbols</summary>
 
@@ -3398,6 +3399,16 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 | `FrameCheckoutViewModel.clearError` | fun | `fun clearError(key: FieldKey)` | [307](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L307) |
 | `FrameCheckoutViewModel.validateAll` | fun | `fun validateAll(forSavedCard: Boolean): Map<FieldKey, ValidationError>` | [331](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L331) |
 | `FrameCheckoutViewModel.checkoutWithSelectedPaymentMethod` | fun | `fun checkoutWithSelectedPaymentMethod(saveMethod: Boolean, context: Context): LiveData<TransferV2?> = liveData(Dispatchers.IO)` | [355](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameCheckoutViewModel.kt#L355) |
+
+</details>
+
+<details><summary><code>FrameDepositViewModel.kt</code> — 1 symbols</summary>
+
+[`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameDepositViewModel.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameDepositViewModel.kt)
+
+| Symbol | Kind | Declaration | Line |
+|--------|------|-------------|------|
+| `quickAmounts` | val | `val quickAmounts = listOf(1_000, 2_500, 5_000, 10_000)` | [50](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/viewmodels/FrameDepositViewModel.kt#L50) |
 
 </details>
 

@@ -3,14 +3,20 @@ package com.framepayments.framesdk_ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -28,8 +34,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -133,19 +142,39 @@ fun FrameDepositView(
                     }
                 }
                 HorizontalDivider(color = colors.surfaceStroke)
-                Text(
-                    text = CurrencyFormatter.convertCentsToCurrencyString(viewModel.typedCents),
-                    style = fonts.title,
-                    color = colors.textPrimary,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = CurrencyFormatter.convertCentsToCurrencyString(viewModel.typedCents),
+                        style = fonts.depositAmount,
+                        color = colors.textPrimary,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .padding(top = spacing.sectionTop),
-                )
-                Spacer(Modifier.weight(1f))
+                        .padding(bottom = spacing.sectionGap),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sectionGap),
+                ) {
+                    FrameDepositViewModel.quickAmounts.forEach { cents ->
+                        QuickAmountChip(
+                            cents = cents,
+                            selected = viewModel.typedCents == cents,
+                            enabled = !isContinuing && viewModel.isQuickAmountAvailable(cents),
+                            modifier = Modifier.weight(1f),
+                            onClick = { viewModel.applyQuickAmount(cents) },
+                        )
+                    }
+                }
                 FrameAmountKeypad(
                     cents = viewModel.typedCents,
                     onCentsChange = { cents ->
@@ -163,6 +192,49 @@ fun FrameDepositView(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun QuickAmountChip(
+    cents: Int,
+    selected: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val theme = LocalFrameTheme.current
+    val shape = RoundedCornerShape(theme.radii.medium)
+    val fill = when {
+        !enabled -> theme.colors.disabledButton
+        selected -> theme.colors.primaryButton
+        else -> theme.colors.surface
+    }
+    val text = when {
+        !enabled -> theme.colors.disabledButtonText
+        selected -> theme.colors.primaryButtonText
+        else -> theme.colors.textPrimary
+    }
+    val stroke = when {
+        !enabled -> theme.colors.disabledButtonStroke
+        selected -> theme.colors.primaryButton
+        else -> theme.colors.surfaceStroke
+    }
+    Box(
+        modifier = modifier
+            .heightIn(min = 44.dp)
+            .clip(shape)
+            .background(fill)
+            .border(1.dp, stroke, shape)
+            .semantics { contentDescription = "Deposit $${cents / 100}" }
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "$${cents / 100}",
+            style = theme.fonts.button,
+            color = text,
+        )
     }
 }
 

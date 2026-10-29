@@ -22,6 +22,18 @@ internal class FrameDepositViewModel(
             return true
         }
 
+    fun isQuickAmountAvailable(cents: Int): Boolean {
+        if (cents <= 0) return false
+        if (minAmount != null && cents < minAmount) return false
+        if (maxAmount != null && cents > maxAmount) return false
+        return true
+    }
+
+    fun applyQuickAmount(cents: Int) {
+        if (!isQuickAmountAvailable(cents)) return
+        typedCents = cents
+    }
+
     fun replaceTypedCents(cents: Int) {
         typedCents = cents
     }
@@ -32,5 +44,9 @@ internal class FrameDepositViewModel(
 
     fun deleteDigit() {
         typedCents = deleteAmountDigit(typedCents)
+    }
+
+    companion object {
+        val quickAmounts = listOf(1_000, 2_500, 5_000, 10_000)
     }
 }
