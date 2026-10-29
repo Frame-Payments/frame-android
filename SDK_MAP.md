@@ -4020,8 +4020,8 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `quickAmounts` | val | `val quickAmounts = listOf(1_000, 2_500, 5_000, 10_000)` | [139](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/viewmodels/FramePayoutViewModel.kt#L139) |
-| `shouldRotateIdempotency` | fun | `fun shouldRotateIdempotency(error: NetworkingError): Boolean` | [141](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/viewmodels/FramePayoutViewModel.kt#L141) |
+| `quickAmounts` | val | `val quickAmounts = listOf(1_000, 2_500, 5_000, 10_000)` | [151](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/viewmodels/FramePayoutViewModel.kt#L151) |
+| `shouldRotateIdempotency` | fun | `fun shouldRotateIdempotency(error: NetworkingError): Boolean` | [155](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/viewmodels/FramePayoutViewModel.kt#L155) |
 
 </details>
 
@@ -4053,7 +4053,7 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FramePayoutView` | fun | `fun FramePayoutView( accountId: String, clientSecret: FramePayoutClientSecret, onResult: (FrameResult) -> Unit, )` | [108](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FramePayoutView.kt#L108) |
+| `FramePayoutView` | fun | `fun FramePayoutView( accountId: String, clientSecret: FramePayoutClientSecret, onResult: (FrameResult) -> Unit, )` | [110](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/views/FramePayoutView.kt#L110) |
 
 </details>
 
