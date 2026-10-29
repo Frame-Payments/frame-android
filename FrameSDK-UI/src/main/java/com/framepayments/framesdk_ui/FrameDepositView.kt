@@ -125,7 +125,7 @@ fun FrameDepositView(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Deposit",
+                        text = "Deposit Funds",
                         style = fonts.heading,
                         color = colors.textPrimary,
                         modifier = Modifier.padding(horizontal = 16.dp),

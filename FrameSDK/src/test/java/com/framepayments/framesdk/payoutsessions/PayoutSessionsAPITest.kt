@@ -8,6 +8,7 @@ import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.QueryItem
 import com.framepayments.framesdk.checkoutsessions.decodeSessionPaymentMethods
 import com.framepayments.framesdk.transfersv2.TransferV2Money
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
@@ -214,6 +215,50 @@ class PayoutSessionsAPITest {
         assertNull(error)
         assertEquals("pm_bank", primaryId)
         assertEquals("Bearer pyt_sess_old", server.takeRequest().getHeader("Authorization"))
+    }
+
+    @Test
+    fun loadAccountReturnsDecodingFailedOnMalformedBody() = runBlocking {
+        server.enqueue(MockResponse().setBody("""{"id":"acc_1"}"""))
+
+        val secret = FramePayoutClientSecret("pyt_sess_live", expiresAt = 2_000_000_000, amountCents = 5_000)
+        val (primaryId, error) = PayoutSessionsAPI.loadAccount("acc_1", secret)
+
+        assertNull(primaryId)
+        assertEquals(NetworkingError.DecodingFailed, error)
+    }
+
+    @Test
+    fun loadPaymentMethodsReturnsDecodingFailedOnErrorJson() = runBlocking {
+        server.enqueue(MockResponse().setBody("""{"error":{"message":"Invalid or expired client secret."}}"""))
+
+        val secret = FramePayoutClientSecret("pyt_sess_live", expiresAt = 2_000_000_000, amountCents = 5_000)
+        val (methods, error) = PayoutSessionsAPI.loadPaymentMethods("acc_1", secret)
+
+        assertNull(methods)
+        assertEquals(NetworkingError.DecodingFailed, error)
+    }
+
+    @Test
+    fun concurrentExpiredReadsShareOneMint() = runBlocking {
+        server.enqueue(sessionResponse())
+        server.enqueue(accountResponse())
+        server.enqueue(accountResponse())
+
+        val secret = FramePayoutClientSecret("pyt_sess_old", expiresAt = 0, amountCents = 5_000)
+        val first = async { PayoutSessionsAPI.loadAccount("acc_1", secret) }
+        val second = async { PayoutSessionsAPI.loadAccount("acc_1", secret) }
+        val (firstId, firstError) = first.await()
+        val (secondId, secondError) = second.await()
+
+        assertNull(firstError)
+        assertNull(secondError)
+        assertEquals("pm_bank", firstId)
+        assertEquals("pm_bank", secondId)
+        assertEquals("pyt_sess_new", secret.clientSecret)
+        assertEquals("Bearer sk_test_payout", server.takeRequest().getHeader("Authorization"))
+        assertEquals("Bearer pyt_sess_new", server.takeRequest().getHeader("Authorization"))
+        assertEquals("Bearer pyt_sess_new", server.takeRequest().getHeader("Authorization"))
     }
 
     @Test

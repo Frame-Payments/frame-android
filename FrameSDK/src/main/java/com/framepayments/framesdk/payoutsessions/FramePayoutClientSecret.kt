@@ -1,5 +1,12 @@
 package com.framepayments.framesdk.payoutsessions
 
+import com.framepayments.framesdk.NetworkingError
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+
 /**
  * A short-lived `pyt_sess_` token that payout uses to list banks and create a transfer.
  *
@@ -18,6 +25,37 @@ class FramePayoutClientSecret(
     var amountCents: Int,
     var amountCurrency: String = "usd",
 ) {
+    private val refreshMutex = Mutex()
+    private var inFlight: CompletableDeferred<Pair<String?, NetworkingError?>>? = null
+
     /** `true` when [expiresAt] is now or earlier. */
     fun isExpired(nowSeconds: Long = System.currentTimeMillis() / 1000): Boolean = expiresAt <= nowSeconds
+
+    /** One in-flight mint at a time; overlapping callers share that result. */
+    internal suspend fun serializedRefresh(
+        body: suspend () -> Pair<String?, NetworkingError?>,
+    ): Pair<String?, NetworkingError?> {
+        val (deferred, leader) = refreshMutex.withLock {
+            inFlight?.let { it to false } ?: run {
+                val created = CompletableDeferred<Pair<String?, NetworkingError?>>()
+                inFlight = created
+                created to true
+            }
+        }
+        if (leader) {
+            try {
+                deferred.complete(body())
+            } catch (t: Throwable) {
+                deferred.complete(Pair(null, null))
+                throw t
+            } finally {
+                withContext(NonCancellable) {
+                    refreshMutex.withLock {
+                        if (inFlight === deferred) inFlight = null
+                    }
+                }
+            }
+        }
+        return deferred.await()
+    }
 }

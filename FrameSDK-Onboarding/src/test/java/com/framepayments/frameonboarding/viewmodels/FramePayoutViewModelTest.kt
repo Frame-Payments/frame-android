@@ -197,4 +197,28 @@ class FramePayoutViewModelTest {
         vm.applyLoadedMethods(listOf(bank("pm_a"), bank("pm_b")), primaryId = null)
         assertNull(vm.selectedPaymentMethodId)
     }
+
+    @Test
+    fun updateAvailableAmountClampsTypedCents() {
+        val vm = FramePayoutViewModel(availableAmount = 5_000)
+        vm.replaceTypedCents(5_000)
+        vm.updateAvailableAmount(2_500)
+        assertEquals(2_500, vm.availableAmount)
+        assertEquals(2_500, vm.typedCents)
+        vm.updateAvailableAmount(10_000)
+        assertEquals(10_000, vm.availableAmount)
+        assertEquals(2_500, vm.typedCents)
+    }
+
+    @Test
+    fun sessionCurrencyFormatsAmounts() {
+        val vm = FramePayoutViewModel(availableAmount = 2_000, currencyCode = "gbp")
+        vm.replaceTypedCents(1_000)
+        assertFalse(vm.amountText.contains("$"))
+        assertFalse(vm.availableText.contains("$"))
+        assertFalse(vm.formattedAmount(1_000).contains("$"))
+        vm.updateAvailableAmount(1_500, currencyCode = "eur")
+        assertFalse(vm.availableText.contains("$"))
+        assertFalse(vm.amountText.contains("$"))
+    }
 }

@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2184 public symbols** across 192 files in 3 modules.
+**2185 public symbols** across 192 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -54,11 +54,11 @@ reverse is never true.
 | Interfaces | 4 |
 | Objects | 131 |
 | Type aliases | 4 |
-| Functions | 373 |
+| Functions | 374 |
 | Properties (val) | 1093 |
 | Properties (var) | 26 |
 | Enum entries | 161 |
-| **Total** | **2184** |
+| **Total** | **2185** |
 
 ### `FrameSDK` — 1746 public symbols
 
@@ -1837,11 +1837,11 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FramePayoutClientSecret` | class | `class FramePayoutClientSecret(` | [15](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L15) |
-| `FramePayoutClientSecret.clientSecret` | var | `var clientSecret: String,` | [16](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L16) |
-| `FramePayoutClientSecret.expiresAt` | var | `var expiresAt: Long,` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L17) |
-| `FramePayoutClientSecret.amountCents` | var | `var amountCents: Int,` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L18) |
-| `FramePayoutClientSecret.amountCurrency` | var | `var amountCurrency: String = ,` | [19](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L19) |
+| `FramePayoutClientSecret` | class | `class FramePayoutClientSecret(` | [22](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L22) |
+| `FramePayoutClientSecret.clientSecret` | var | `var clientSecret: String,` | [23](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L23) |
+| `FramePayoutClientSecret.expiresAt` | var | `var expiresAt: Long,` | [24](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L24) |
+| `FramePayoutClientSecret.amountCents` | var | `var amountCents: Int,` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L25) |
+| `FramePayoutClientSecret.amountCurrency` | var | `var amountCurrency: String = ,` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/FramePayoutClientSecret.kt#L26) |
 
 </details>
 
@@ -1899,8 +1899,8 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `PayoutSessionsAPI` | object | `object PayoutSessionsAPI` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/PayoutSessionsAPI.kt#L17) |
 | `PayoutSessionsAPI.createPayoutSession` | fun | `fun createPayoutSession( accountId: String, amount: TransferV2Money, ): Pair<PayoutSession?, NetworkingError?>` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/PayoutSessionsAPI.kt#L25) |
 | `PayoutSessionsAPI.loadAccount` | fun | `fun loadAccount( accountId: String, secret: FramePayoutClientSecret, ): Pair<String?, NetworkingError?>` | [47](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/PayoutSessionsAPI.kt#L47) |
-| `PayoutSessionsAPI.loadPaymentMethods` | fun | `fun loadPaymentMethods( accountId: String, secret: FramePayoutClientSecret, ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?>` | [69](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/PayoutSessionsAPI.kt#L69) |
-| `PayoutSessionsAPI.authorizationToken` | fun | `fun authorizationToken( accountId: String, secret: FramePayoutClientSecret, ): String? = tokenForRead(accountId, secret).first` | [90](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/PayoutSessionsAPI.kt#L90) |
+| `PayoutSessionsAPI.loadPaymentMethods` | fun | `fun loadPaymentMethods( accountId: String, secret: FramePayoutClientSecret, ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?>` | [71](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/PayoutSessionsAPI.kt#L71) |
+| `PayoutSessionsAPI.authorizationToken` | fun | `fun authorizationToken( accountId: String, secret: FramePayoutClientSecret, ): String? = tokenForRead(accountId, secret).first` | [94](FrameSDK/src/main/java/com/framepayments/framesdk/payoutsessions/PayoutSessionsAPI.kt#L94) |
 
 </details>
 
@@ -2908,11 +2908,11 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-### `FrameSDK-UI` — 204 public symbols
+### `FrameSDK-UI` — 205 public symbols
 
 Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, shared reusable components (payment method rows, card brand art).
 
-#### com/framepayments/framesdk_ui (39)
+#### com/framepayments/framesdk_ui (40)
 
 <details><summary><code>AddressMode.kt</code> — 4 symbols</summary>
 
@@ -2927,14 +2927,15 @@ Checkout and cart UI: Compose and XML views, theming, validation, Google Pay, sh
 
 </details>
 
-<details><summary><code>CurrencyFormatter.kt</code> — 2 symbols</summary>
+<details><summary><code>CurrencyFormatter.kt</code> — 3 symbols</summary>
 
 [`FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/CurrencyFormatter.kt`](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/CurrencyFormatter.kt)
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `CurrencyFormatter` | object | `object CurrencyFormatter` | [7](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/CurrencyFormatter.kt#L7) |
-| `CurrencyFormatter.convertCentsToCurrencyString` | fun | `fun convertCentsToCurrencyString(cents: Int): String` | [16](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/CurrencyFormatter.kt#L16) |
+| `CurrencyFormatter` | object | `object CurrencyFormatter` | [10](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/CurrencyFormatter.kt#L10) |
+| `CurrencyFormatter.convertCentsToCurrencyString` | fun | `fun convertCentsToCurrencyString(cents: Int): String` | [19](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/CurrencyFormatter.kt#L19) |
+| `CurrencyFormatter.convertCentsToCurrencyString` | fun | `fun convertCentsToCurrencyString(cents: Int, currencyCode: String): String` | [30](FrameSDK-UI/src/main/java/com/framepayments/framesdk_ui/CurrencyFormatter.kt#L30) |
 
 </details>
 
@@ -4019,8 +4020,8 @@ Onboarding product: the capability-driven identity/payment verification flow, it
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `quickAmounts` | val | `val quickAmounts = listOf(1_000, 2_500, 5_000, 10_000)` | [121](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/viewmodels/FramePayoutViewModel.kt#L121) |
-| `shouldRotateIdempotency` | fun | `fun shouldRotateIdempotency(error: NetworkingError): Boolean` | [123](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/viewmodels/FramePayoutViewModel.kt#L123) |
+| `quickAmounts` | val | `val quickAmounts = listOf(1_000, 2_500, 5_000, 10_000)` | [139](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/viewmodels/FramePayoutViewModel.kt#L139) |
+| `shouldRotateIdempotency` | fun | `fun shouldRotateIdempotency(error: NetworkingError): Boolean` | [141](FrameSDK-Onboarding/src/main/java/com/framepayments/frameonboarding/viewmodels/FramePayoutViewModel.kt#L141) |
 
 </details>
 

@@ -110,7 +110,7 @@ fun FramePayoutView(
     clientSecret: FramePayoutClientSecret,
     onResult: (FrameResult) -> Unit,
 ) {
-    val viewModel = payoutViewModel(accountId, clientSecret.amountCents)
+    val viewModel = payoutViewModel(accountId, clientSecret.amountCents, clientSecret.amountCurrency)
     SideEffect { viewModel.onResult = onResult }
     val snackbarHostState = remember { SnackbarHostState() }
     var showPayoutMethods by remember { mutableStateOf(false) }
@@ -136,11 +136,15 @@ fun FramePayoutView(
         viewModel.isLoadingMethods = true
         try {
             val (methods, listError) = PayoutSessionsAPI.loadPaymentMethods(accountId, clientSecret)
-            val (primaryId, _) = PayoutSessionsAPI.loadAccount(accountId, clientSecret)
+            val (primaryId, accountError) = PayoutSessionsAPI.loadAccount(accountId, clientSecret)
             if (viewModel.didFinish) return
+            viewModel.updateAvailableAmount(clientSecret.amountCents, clientSecret.amountCurrency)
             if (listError != null) {
                 toast(listError.toastMessage())
                 if (viewModel.didLoadMethods) return
+            }
+            if (accountError != null) {
+                toast(accountError.toastMessage())
             }
             viewModel.applyLoadedMethods(methods.orEmpty(), primaryId)
         } finally {
@@ -156,15 +160,13 @@ fun FramePayoutView(
                 toast("Could not load payout methods. Please try again.")
                 return@launch
             }
+            viewModel.updateAvailableAmount(clientSecret.amountCents, clientSecret.amountCurrency)
             showPayoutMethods = true
         }
     }
 
     fun submit() {
-        val methodId = viewModel.selectedPaymentMethod?.id ?: return
-        if (!viewModel.canConfirm || viewModel.isCreating) return
-        val cents = viewModel.typedCents
-        val idempotencyKey = viewModel.rememberIdempotencyKey(cents, methodId)
+        if (!viewModel.canConfirm || viewModel.isCreating || viewModel.selectedPaymentMethod?.id == null) return
         viewModel.isCreating = true
         viewModel.viewModelScope.launch {
             try {
@@ -174,6 +176,21 @@ fun FramePayoutView(
                         if (!viewModel.didFinish) toast("Could not send this payout. Please try again.")
                         return@withContext
                     }
+                    val enteredCents = viewModel.typedCents
+                    viewModel.updateAvailableAmount(clientSecret.amountCents, clientSecret.amountCurrency)
+                    if (viewModel.typedCents != enteredCents) {
+                        if (!viewModel.didFinish) {
+                            toast("Available amount updated. Confirm to send ${viewModel.amountText}.")
+                        }
+                        return@withContext
+                    }
+                    val methodId = viewModel.selectedPaymentMethod?.id
+                    if (!viewModel.canConfirm || methodId == null) {
+                        if (!viewModel.didFinish) toast("Could not send this payout. Please try again.")
+                        return@withContext
+                    }
+                    val cents = viewModel.typedCents
+                    val idempotencyKey = viewModel.rememberIdempotencyKey(cents, methodId)
                     val request = TransferV2Requests.CreateTransferRequest(
                         amount = TransferV2Requests.MoneyAmount(
                             value = cents,
@@ -251,7 +268,7 @@ fun FramePayoutView(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Payout",
+                        text = "Initiate Payout",
                         style = fonts.heading,
                         color = colors.textPrimary,
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -356,7 +373,7 @@ fun FramePayoutView(
                 ) {
                     FramePayoutViewModel.quickAmounts.forEach { cents ->
                         QuickAmountChip(
-                            cents = cents,
+                            label = viewModel.formattedAmount(cents),
                             selected = viewModel.typedCents == cents,
                             enabled = !viewModel.isCreating && viewModel.isQuickAmountAvailable(cents),
                             modifier = Modifier.weight(1f),
@@ -385,30 +402,39 @@ fun FramePayoutView(
 }
 
 @Composable
-private fun payoutViewModel(accountId: String, amountCents: Int): FramePayoutViewModel {
+private fun payoutViewModel(
+    accountId: String,
+    amountCents: Int,
+    currencyCode: String,
+): FramePayoutViewModel {
     val owner = LocalViewModelStoreOwner.current
-    val factory = remember(accountId, amountCents) {
+    val factory = remember(accountId, amountCents, currencyCode) {
         object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return FramePayoutViewModel(availableAmount = amountCents) as T
+                return FramePayoutViewModel(
+                    availableAmount = amountCents,
+                    currencyCode = currencyCode,
+                ) as T
             }
         }
     }
     return if (owner != null) {
         viewModel(
-            key = "frame-payout:$accountId:$amountCents",
+            key = "frame-payout:$accountId:$amountCents:$currencyCode",
             factory = factory,
             viewModelStoreOwner = owner,
         )
     } else {
-        remember(accountId, amountCents) { FramePayoutViewModel(availableAmount = amountCents) }
+        remember(accountId, amountCents, currencyCode) {
+            FramePayoutViewModel(availableAmount = amountCents, currencyCode = currencyCode)
+        }
     }
 }
 
 @Composable
 private fun QuickAmountChip(
-    cents: Int,
+    label: String,
     selected: Boolean,
     enabled: Boolean,
     modifier: Modifier = Modifier,
@@ -437,12 +463,12 @@ private fun QuickAmountChip(
             .clip(shape)
             .background(fill)
             .border(1.dp, stroke, shape)
-            .semantics { contentDescription = "Payout $${cents / 100}" }
+            .semantics { contentDescription = "Payout $label" }
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "$${cents / 100}",
+            text = label,
             style = theme.fonts.button,
             color = text,
         )

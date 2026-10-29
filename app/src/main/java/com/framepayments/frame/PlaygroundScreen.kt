@@ -446,7 +446,7 @@ fun PlaygroundScreen(
                     }
                 }
             }
-            PlaygroundButton(text = "Deposit") {
+            PlaygroundButton(text = "Deposit Funds") {
                 depositLauncher.launch(
                     Intent(context, DepositActivity::class.java).apply {
                         putExtra("accountId", accountId)
@@ -454,7 +454,7 @@ fun PlaygroundScreen(
                 )
             }
             PlaygroundButton(
-                text = if (isMintingPayout) "Opening Payout…" else "Payout",
+                text = if (isMintingPayout) "Opening Payout…" else "Initiate Payout",
                 enabled = !isMintingPayout,
             ) {
                 if (isMintingPayout) return@PlaygroundButton

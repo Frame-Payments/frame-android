@@ -15,8 +15,13 @@ import com.framepayments.framesdk_ui.reusable.deleteAmountDigit
 /** Amount and destination state for [com.framepayments.frameonboarding.views.FramePayoutView]. */
 internal class FramePayoutViewModel(
     availableAmount: Int,
+    currencyCode: String = "usd",
 ) : ViewModel() {
-    val availableAmount: Int = maxOf(0, availableAmount)
+    var availableAmount: Int by mutableIntStateOf(maxOf(0, availableAmount))
+        private set
+    private var currencyCode: String by mutableStateOf(
+        currencyCode.trim().ifEmpty { "usd" },
+    )
 
     var typedCents: Int by mutableIntStateOf(0)
         private set
@@ -47,10 +52,23 @@ internal class FramePayoutViewModel(
         get() = isAmountInRange && selectedPaymentMethod != null && !isLoadingMethods
 
     val amountText: String
-        get() = CurrencyFormatter.convertCentsToCurrencyString(typedCents)
+        get() = formattedAmount(typedCents)
 
     val availableText: String
-        get() = CurrencyFormatter.convertCentsToCurrencyString(availableAmount)
+        get() = formattedAmount(availableAmount)
+
+    fun formattedAmount(cents: Int): String =
+        CurrencyFormatter.convertCentsToCurrencyString(cents, currencyCode)
+
+    fun updateAvailableAmount(amount: Int, currencyCode: String? = null) {
+        availableAmount = maxOf(0, amount)
+        if (!currencyCode.isNullOrEmpty()) {
+            this.currencyCode = currencyCode
+        }
+        if (typedCents > availableAmount) {
+            typedCents = availableAmount
+        }
+    }
 
     fun isQuickAmountAvailable(cents: Int): Boolean = cents > 0 && cents <= availableAmount
 

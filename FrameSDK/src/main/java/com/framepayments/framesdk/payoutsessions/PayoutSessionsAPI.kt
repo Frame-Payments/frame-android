@@ -54,7 +54,9 @@ object PayoutSessionsAPI {
                 auth = FrameAuthMode.ClientSecret(token),
             )
             if (error != null) return@authorized Pair(null, error)
-            Pair(decodePayoutAccountResource(data)?.payoutPaymentMethodId, null)
+            val account = decodePayoutAccountResource(data)
+                ?: return@authorized Pair(null, NetworkingError.DecodingFailed)
+            Pair(account.payoutPaymentMethodId, null)
         }
     }
 
@@ -64,7 +66,7 @@ object PayoutSessionsAPI {
      *
      * @param accountId The account the token may read.
      * @param secret The payout session used as the Bearer token.
-     * @return Saved methods, and any networking error. Error JSON is `null`, not an empty list.
+     * @return Saved methods, and any networking error. A malformed body is [NetworkingError.DecodingFailed], not an empty list.
      */
     suspend fun loadPaymentMethods(
         accountId: String,
@@ -76,7 +78,9 @@ object PayoutSessionsAPI {
                 auth = FrameAuthMode.ClientSecret(token),
             )
             if (error != null) return@authorized Pair(null, error)
-            Pair(decodeSessionPaymentMethods(data), null)
+            val methods = decodeSessionPaymentMethods(data)
+                ?: return@authorized Pair(null, NetworkingError.DecodingFailed)
+            Pair(methods, null)
         }
     }
 
@@ -106,7 +110,10 @@ object PayoutSessionsAPI {
         }
         val (value, error) = read(token)
         if (!unauthorized(error)) return Pair(value, error)
-        val (refreshed, _) = refresh(accountId, secret)
+        if (secret.clientSecret != token && secret.clientSecret.isNotEmpty()) {
+            return read(secret.clientSecret)
+        }
+        val (refreshed, _) = secret.serializedRefresh { refresh(accountId, secret) }
         if (refreshed == null) return Pair(null, error)
         return read(refreshed)
     }
@@ -118,7 +125,7 @@ object PayoutSessionsAPI {
         if (!secret.isExpired() && secret.clientSecret.isNotEmpty()) {
             return Pair(secret.clientSecret, null)
         }
-        val refreshed = refresh(accountId, secret)
+        val refreshed = secret.serializedRefresh { refresh(accountId, secret) }
         if (refreshed.first != null || refreshed.second != null) return refreshed
         if (secret.clientSecret.isNotEmpty()) return Pair(secret.clientSecret, null)
         return Pair(null, null)
