@@ -54,7 +54,12 @@ object CheckoutSessionsAPI {
             val account = data?.let { FrameNetworking.parseResponse<CheckoutAccountPayload>(it)?.toAccount() }
             account?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
-                SiftManager.collectLoginEvent(customerId = it.siftAttributionId, email = email)
+                val siftId = it.siftUserId
+                if (!siftId.isNullOrEmpty()) {
+                    SiftManager.collectLoginEvent(customerId = siftId, email = email, overwrite = true)
+                } else {
+                    SiftManager.collectLoginEvent(customerId = it.id ?: "", email = email, overwrite = false)
+                }
             }
             Pair(account, null)
         }

@@ -25,15 +25,16 @@ object SiftManager {
     @JvmOverloads
     fun collectLoginEvent(customerId: String, email: String, overwrite: Boolean = true) {
         synchronized(userIdLock) {
+            if (customerId.isEmpty()) return
+            if (userId == customerId) return
+            if (userId.isNotEmpty() && !overwrite) return
             try {
-                if (customerId.isEmpty()) return
-                if (userId == customerId) return
-                if (userId.isNotEmpty() && !overwrite) return
-                userId = customerId
                 Sift.setUserId(customerId)
                 Sift.collect()
+                userId = customerId
             } catch (e: Exception) {
-                // Sift may not be initialized in test environments
+                // Sift may not be initialized in test environments; still record intent.
+                userId = customerId
             }
         }
     }

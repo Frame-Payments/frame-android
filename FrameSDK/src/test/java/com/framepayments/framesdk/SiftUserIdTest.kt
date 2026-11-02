@@ -96,6 +96,44 @@ class SiftUserIdTest {
     }
 
     @Test
+    fun laterAccountResponseWithoutSiftUserIdDoesNotReplacePreferredId() = runBlocking {
+        mockWebServer.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"id":"acc_123","object":"account","type":"individual","status":"pending","sift_user_id":"idt_789","created":1,"updated":1,"livemode":false}"""
+            )
+        )
+        mockWebServer.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"id":"acc_123","object":"account","type":"individual","status":"active","created":1,"updated":1,"livemode":false}"""
+            )
+        )
+
+        val profile = AccountRequests.CreateAccountProfile(
+            business = null,
+            individual = AccountRequests.CreateIndividualAccount(
+                name = com.framepayments.framesdk.accounts.AccountObjects.IndividualAccountName("John", null, "Doe", null),
+                email = "john@test.com",
+                phone = com.framepayments.framesdk.accounts.AccountObjects.AccountPhoneNumber("1234567890", "1"),
+                address = null,
+                birthdate = null,
+                ssn = null,
+            ),
+        )
+        AccountsAPI.createAccount(
+            AccountRequests.CreateAccountRequest(
+                type = com.framepayments.framesdk.accounts.AccountObjects.AccountType.INDIVIDUAL,
+                externalId = null,
+                termsOfService = null,
+                metadata = null,
+                profile = profile,
+            )
+        )
+        AccountsAPI.getAccountWith("acc_123")
+
+        assertEquals("idt_789", SiftManager.userId)
+    }
+
+    @Test
     fun checkoutLoadAccountSetsSiftUserId() = runBlocking {
         mockWebServer.enqueue(
             MockResponse().setBody(

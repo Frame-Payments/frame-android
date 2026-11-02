@@ -23,7 +23,12 @@ object AccountsAPI {
         val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
         decodedResponse?.let {
             val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
-            SiftManager.collectLoginEvent(customerId = it.siftAttributionId, email = email)
+            val siftId = it.siftUserId
+            if (!siftId.isNullOrEmpty()) {
+                SiftManager.collectLoginEvent(customerId = siftId, email = email, overwrite = true)
+            } else {
+                SiftManager.collectLoginEvent(customerId = it.id ?: "", email = email, overwrite = false)
+            }
         }
         return Pair(decodedResponse, error)
     }
@@ -88,7 +93,12 @@ object AccountsAPI {
         if (!forTesting) {
             decodedResponse?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
-                SiftManager.collectLoginEvent(customerId = it.siftAttributionId, email = email)
+                val siftId = it.siftUserId
+                if (!siftId.isNullOrEmpty()) {
+                    SiftManager.collectLoginEvent(customerId = siftId, email = email, overwrite = true)
+                } else {
+                    SiftManager.collectLoginEvent(customerId = it.id ?: "", email = email, overwrite = false)
+                }
             }
         }
         return Pair(decodedResponse, error)
@@ -235,7 +245,12 @@ object AccountsAPI {
             val decodedResponse = data?.let { FrameNetworking.parseResponse<AccountObjects.Account>(it) }
             decodedResponse?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
-                SiftManager.collectLoginEvent(customerId = it.siftAttributionId, email = email)
+                val siftId = it.siftUserId
+                if (!siftId.isNullOrEmpty()) {
+                    SiftManager.collectLoginEvent(customerId = siftId, email = email, overwrite = true)
+                } else {
+                    SiftManager.collectLoginEvent(customerId = it.id ?: "", email = email, overwrite = false)
+                }
             }
             completionHandler(decodedResponse, error)
         }
@@ -299,7 +314,12 @@ object AccountsAPI {
             val decodedResponse = decodePayoutAccountResource(data)
             decodedResponse?.let {
                 val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
-                SiftManager.collectLoginEvent(customerId = it.siftAttributionId, email = email)
+                val siftId = it.siftUserId
+                if (!siftId.isNullOrEmpty()) {
+                    SiftManager.collectLoginEvent(customerId = siftId, email = email, overwrite = true)
+                } else {
+                    SiftManager.collectLoginEvent(customerId = it.id ?: "", email = email, overwrite = false)
+                }
             }
             completionHandler(decodedResponse, null)
         }
