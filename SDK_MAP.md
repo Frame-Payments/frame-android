@@ -43,7 +43,7 @@ reverse is never true.
 
 ## Public API inventory
 
-**2185 public symbols** across 192 files in 3 modules.
+**2186 public symbols** across 192 files in 3 modules.
 
 | Kind | Count |
 |------|-------|
@@ -55,12 +55,12 @@ reverse is never true.
 | Objects | 131 |
 | Type aliases | 4 |
 | Functions | 374 |
-| Properties (val) | 1093 |
+| Properties (val) | 1094 |
 | Properties (var) | 26 |
 | Enum entries | 161 |
-| **Total** | **2185** |
+| **Total** | **2186** |
 
-### `FrameSDK` — 1746 public symbols
+### `FrameSDK` — 1747 public symbols
 
 Core SDK: networking for every Frame API resource, account events, Sonar fraud sessions, Fingerprint device identification, Evervault card encryption.
 
@@ -514,7 +514,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-#### com/framepayments/framesdk/accounts (199)
+#### com/framepayments/framesdk/accounts (200)
 
 <details><summary><code>AccountEndpoints.kt</code> — 28 symbols</summary>
 
@@ -553,7 +553,7 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 </details>
 
-<details><summary><code>AccountObjects.kt</code> — 76 symbols</summary>
+<details><summary><code>AccountObjects.kt</code> — 77 symbols</summary>
 
 [`FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt`](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt)
 
@@ -612,29 +612,30 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `AccountObjects.AccountStep.label` | val | `val label: String?,` | [166](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L166) |
 | `AccountObjects.AccountStep.fields` | val | `val fields: List<String>?,` | [167](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L167) |
 | `AccountObjects.AccountStep.currentlyDue` | val | `val currentlyDue: List<String>?` | [168](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L168) |
-| `AccountObjects.Account` | data class | `data class Account(` | [189](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L189) |
-| `AccountObjects.Account.id` | val | `val id: String?,` | [190](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L190) |
-| `AccountObjects.Account.accountObject` | val | `val accountObject: String?,` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L191) |
-| `AccountObjects.Account.type` | val | `val type: AccountType?,` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L192) |
-| `AccountObjects.Account.status` | val | `val status: AccountStatus?,` | [193](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L193) |
-| `AccountObjects.Account.externalId` | val | `val externalId: String? = null,` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L194) |
-| `AccountObjects.Account.metadata` | val | `val metadata: Map<String, String>? = null,` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L195) |
-| `AccountObjects.Account.termsOfService` | val | `val termsOfService: AccountTermsOfService? = null,` | [196](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L196) |
-| `AccountObjects.Account.profile` | val | `val profile: AccountProfile? = null,` | [197](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L197) |
-| `AccountObjects.Account.capabilities` | val | `val capabilities: List<CapabilityObjects.Capability>? = null,` | [198](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L198) |
-| `AccountObjects.Account.steps` | val | `val steps: List<AccountStep>? = null,` | [199](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L199) |
-| `AccountObjects.Account.created` | val | `val created: Int?,` | [200](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L200) |
-| `AccountObjects.Account.updated` | val | `val updated: Int?,` | [201](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L201) |
-| `AccountObjects.Account.livemode` | val | `val livemode: Boolean?,` | [202](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L202) |
-| `AccountObjects.Account.payoutPaymentMethodId` | val | `val payoutPaymentMethodId: String? = null` | [204](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L204) |
-| `AccountObjects.PhoneVerification` | data class | `data class PhoneVerification(` | [218](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L218) |
-| `AccountObjects.PhoneVerification.id` | val | `val id: String?,` | [219](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L219) |
-| `AccountObjects.PhoneVerification.verificationObject` | val | `val verificationObject: String?,` | [220](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L220) |
-| `AccountObjects.PhoneVerification.accountId` | val | `val accountId: String?,` | [221](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L221) |
-| `AccountObjects.PhoneVerification.status` | val | `val status: String?,` | [222](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L222) |
-| `AccountObjects.PhoneVerification.created` | val | `val created: Int?,` | [223](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L223) |
-| `AccountObjects.PhoneVerification.updated` | val | `val updated: Int?,` | [224](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L224) |
-| `AccountObjects.PhoneVerification.livemode` | val | `val livemode: Boolean?` | [225](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L225) |
+| `AccountObjects.Account` | data class | `data class Account(` | [190](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L190) |
+| `AccountObjects.Account.id` | val | `val id: String?,` | [191](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L191) |
+| `AccountObjects.Account.accountObject` | val | `val accountObject: String?,` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L192) |
+| `AccountObjects.Account.type` | val | `val type: AccountType?,` | [193](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L193) |
+| `AccountObjects.Account.status` | val | `val status: AccountStatus?,` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L194) |
+| `AccountObjects.Account.externalId` | val | `val externalId: String? = null,` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L195) |
+| `AccountObjects.Account.metadata` | val | `val metadata: Map<String, String>? = null,` | [196](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L196) |
+| `AccountObjects.Account.termsOfService` | val | `val termsOfService: AccountTermsOfService? = null,` | [197](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L197) |
+| `AccountObjects.Account.profile` | val | `val profile: AccountProfile? = null,` | [198](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L198) |
+| `AccountObjects.Account.capabilities` | val | `val capabilities: List<CapabilityObjects.Capability>? = null,` | [199](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L199) |
+| `AccountObjects.Account.steps` | val | `val steps: List<AccountStep>? = null,` | [200](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L200) |
+| `AccountObjects.Account.created` | val | `val created: Int?,` | [201](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L201) |
+| `AccountObjects.Account.updated` | val | `val updated: Int?,` | [202](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L202) |
+| `AccountObjects.Account.livemode` | val | `val livemode: Boolean?,` | [203](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L203) |
+| `AccountObjects.Account.payoutPaymentMethodId` | val | `val payoutPaymentMethodId: String? = null,` | [205](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L205) |
+| `AccountObjects.Account.siftUserId` | val | `val siftUserId: String? = null,` | [206](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L206) |
+| `AccountObjects.PhoneVerification` | data class | `data class PhoneVerification(` | [224](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L224) |
+| `AccountObjects.PhoneVerification.id` | val | `val id: String?,` | [225](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L225) |
+| `AccountObjects.PhoneVerification.verificationObject` | val | `val verificationObject: String?,` | [226](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L226) |
+| `AccountObjects.PhoneVerification.accountId` | val | `val accountId: String?,` | [227](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L227) |
+| `AccountObjects.PhoneVerification.status` | val | `val status: String?,` | [228](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L228) |
+| `AccountObjects.PhoneVerification.created` | val | `val created: Int?,` | [229](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L229) |
+| `AccountObjects.PhoneVerification.updated` | val | `val updated: Int?,` | [230](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L230) |
+| `AccountObjects.PhoneVerification.livemode` | val | `val livemode: Boolean?` | [231](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountObjects.kt#L231) |
 
 </details>
 
@@ -735,28 +736,28 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 |--------|------|-------------|------|
 | `AccountsAPI` | object | `object AccountsAPI` | [11](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L11) |
 | `AccountsAPI.createAccount` | fun | `fun createAccount(request: AccountRequests.CreateAccountRequest): Pair<AccountObjects.Account?, NetworkingError?>` | [20](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L20) |
-| `AccountsAPI.updateAccount` | fun | `fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest): Pair<AccountObjects.Account?, NetworkingError?>` | [38](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L38) |
-| `AccountsAPI.getAccounts` | fun | `fun getAccounts( status: AccountObjects.AccountStatus? = null, type: AccountObjects.AccountType? = null, externalId: String? = null, includeDisabled: Boolean =…` | [56](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L56) |
-| `AccountsAPI.getAccountWith` | fun | `fun getAccountWith( accountId: String, forTesting: Boolean = false, auth: FrameAuthMode = FrameAuthMode.Publishable, ): Pair<AccountObjects.Account?, Networkin…` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L78) |
-| `AccountsAPI.deleteAccountWith` | fun | `fun deleteAccountWith(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [103](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L103) |
-| `AccountsAPI.searchAccounts` | fun | `fun searchAccounts( email: String? = null, externalId: String? = null, type: AccountObjects.AccountType? = null, status: AccountObjects.AccountStatus? = null, …` | [121](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L121) |
-| `AccountsAPI.electPayoutMethod` | fun | `fun electPayoutMethod( accountId: String, request: AccountRequests.ElectPayoutMethodRequest ): Pair<AccountObjects.Account?, NetworkingError?>` | [146](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L146) |
-| `AccountsAPI.restrictAccount` | fun | `fun restrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [163](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L163) |
-| `AccountsAPI.unrestrictAccount` | fun | `fun unrestrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [176](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L176) |
-| `AccountsAPI.createPhoneVerification` | fun | `fun createPhoneVerification(accountId: String): Pair<AccountObjects.PhoneVerification?, NetworkingError?>` | [189](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L189) |
-| `AccountsAPI.confirmPhoneVerification` | fun | `fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest): Pair<AccountObjects.PhoneVer…` | [204](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L204) |
-| `AccountsAPI.getPlaidLinkToken` | fun | `fun getPlaidLinkToken(accountId: String): Pair<AccountResponses.PlaidLinkTokenResponse?, NetworkingError?>` | [217](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L217) |
-| `AccountsAPI.createAccount` | fun | `fun createAccount(request: AccountRequests.CreateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [232](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L232) |
-| `AccountsAPI.updateAccount` | fun | `fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [251](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L251) |
-| `AccountsAPI.getAccounts` | fun | `fun getAccounts( status: AccountObjects.AccountStatus? = null, type: AccountObjects.AccountType? = null, externalId: String? = null, includeDisabled: Boolean =…` | [270](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L270) |
-| `AccountsAPI.getAccountWith` | fun | `fun getAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [291](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L291) |
-| `AccountsAPI.deleteAccountWith` | fun | `fun deleteAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [314](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L314) |
-| `AccountsAPI.searchAccounts` | fun | `fun searchAccounts( email: String? = null, externalId: String? = null, type: AccountObjects.AccountType? = null, status: AccountObjects.AccountStatus? = null, …` | [333](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L333) |
-| `AccountsAPI.restrictAccount` | fun | `fun restrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [357](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L357) |
-| `AccountsAPI.unrestrictAccount` | fun | `fun unrestrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [371](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L371) |
-| `AccountsAPI.createPhoneVerification` | fun | `fun createPhoneVerification(accountId: String, completionHandler: (AccountObjects.PhoneVerification?, NetworkingError?) -> Unit)` | [385](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L385) |
-| `AccountsAPI.confirmPhoneVerification` | fun | `fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest, completionHandler: (AccountOb…` | [401](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L401) |
-| `AccountsAPI.getPlaidLinkToken` | fun | `fun getPlaidLinkToken(accountId: String, completionHandler: (AccountResponses.PlaidLinkTokenResponse?, NetworkingError?) -> Unit)` | [415](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L415) |
+| `AccountsAPI.updateAccount` | fun | `fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest): Pair<AccountObjects.Account?, NetworkingError?>` | [43](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L43) |
+| `AccountsAPI.getAccounts` | fun | `fun getAccounts( status: AccountObjects.AccountStatus? = null, type: AccountObjects.AccountType? = null, externalId: String? = null, includeDisabled: Boolean =…` | [61](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L61) |
+| `AccountsAPI.getAccountWith` | fun | `fun getAccountWith( accountId: String, forTesting: Boolean = false, auth: FrameAuthMode = FrameAuthMode.Publishable, ): Pair<AccountObjects.Account?, Networkin…` | [83](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L83) |
+| `AccountsAPI.deleteAccountWith` | fun | `fun deleteAccountWith(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [113](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L113) |
+| `AccountsAPI.searchAccounts` | fun | `fun searchAccounts( email: String? = null, externalId: String? = null, type: AccountObjects.AccountType? = null, status: AccountObjects.AccountStatus? = null, …` | [131](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L131) |
+| `AccountsAPI.electPayoutMethod` | fun | `fun electPayoutMethod( accountId: String, request: AccountRequests.ElectPayoutMethodRequest ): Pair<AccountObjects.Account?, NetworkingError?>` | [156](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L156) |
+| `AccountsAPI.restrictAccount` | fun | `fun restrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [173](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L173) |
+| `AccountsAPI.unrestrictAccount` | fun | `fun unrestrictAccount(accountId: String): Pair<AccountObjects.Account?, NetworkingError?>` | [186](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L186) |
+| `AccountsAPI.createPhoneVerification` | fun | `fun createPhoneVerification(accountId: String): Pair<AccountObjects.PhoneVerification?, NetworkingError?>` | [199](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L199) |
+| `AccountsAPI.confirmPhoneVerification` | fun | `fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest): Pair<AccountObjects.PhoneVer…` | [214](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L214) |
+| `AccountsAPI.getPlaidLinkToken` | fun | `fun getPlaidLinkToken(accountId: String): Pair<AccountResponses.PlaidLinkTokenResponse?, NetworkingError?>` | [227](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L227) |
+| `AccountsAPI.createAccount` | fun | `fun createAccount(request: AccountRequests.CreateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [242](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L242) |
+| `AccountsAPI.updateAccount` | fun | `fun updateAccount(accountId: String, request: AccountRequests.UpdateAccountRequest, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [266](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L266) |
+| `AccountsAPI.getAccounts` | fun | `fun getAccounts( status: AccountObjects.AccountStatus? = null, type: AccountObjects.AccountType? = null, externalId: String? = null, includeDisabled: Boolean =…` | [285](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L285) |
+| `AccountsAPI.getAccountWith` | fun | `fun getAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [306](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L306) |
+| `AccountsAPI.deleteAccountWith` | fun | `fun deleteAccountWith(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [334](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L334) |
+| `AccountsAPI.searchAccounts` | fun | `fun searchAccounts( email: String? = null, externalId: String? = null, type: AccountObjects.AccountType? = null, status: AccountObjects.AccountStatus? = null, …` | [353](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L353) |
+| `AccountsAPI.restrictAccount` | fun | `fun restrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [377](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L377) |
+| `AccountsAPI.unrestrictAccount` | fun | `fun unrestrictAccount(accountId: String, completionHandler: (AccountObjects.Account?, NetworkingError?) -> Unit)` | [391](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L391) |
+| `AccountsAPI.createPhoneVerification` | fun | `fun createPhoneVerification(accountId: String, completionHandler: (AccountObjects.PhoneVerification?, NetworkingError?) -> Unit)` | [405](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L405) |
+| `AccountsAPI.confirmPhoneVerification` | fun | `fun confirmPhoneVerification(accountId: String, verificationId: String, request: AccountRequests.ConfirmPhoneVerificationRequest, completionHandler: (AccountOb…` | [421](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L421) |
+| `AccountsAPI.getPlaidLinkToken` | fun | `fun getPlaidLinkToken(accountId: String, completionHandler: (AccountResponses.PlaidLinkTokenResponse?, NetworkingError?) -> Unit)` | [435](FrameSDK/src/main/java/com/framepayments/framesdk/accounts/AccountsAPI.kt#L435) |
 
 </details>
 
@@ -953,11 +954,11 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `CheckoutSessionsAPI` | object | `object CheckoutSessionsAPI` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L17) |
-| `CheckoutSessionsAPI.createCheckoutSession` | fun | `fun createCheckoutSession( accountId: String, amount: TransferV2Money? = null, ): Pair<CheckoutSession?, NetworkingError?>` | [25](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L25) |
-| `CheckoutSessionsAPI.loadAccount` | fun | `fun loadAccount( accountId: String, secret: FrameCheckoutClientSecret, ): Pair<AccountObjects.Account?, NetworkingError?>` | [43](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L43) |
-| `CheckoutSessionsAPI.loadPaymentMethods` | fun | `fun loadPaymentMethods( accountId: String, secret: FrameCheckoutClientSecret, ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?>` | [61](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L61) |
-| `CheckoutSessionsAPI.authorizationToken` | fun | `fun authorizationToken( accountId: String, secret: FrameCheckoutClientSecret, ): String? = tokenForRead(accountId, secret).first` | [78](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L78) |
+| `CheckoutSessionsAPI` | object | `object CheckoutSessionsAPI` | [18](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L18) |
+| `CheckoutSessionsAPI.createCheckoutSession` | fun | `fun createCheckoutSession( accountId: String, amount: TransferV2Money? = null, ): Pair<CheckoutSession?, NetworkingError?>` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L26) |
+| `CheckoutSessionsAPI.loadAccount` | fun | `fun loadAccount( accountId: String, secret: FrameCheckoutClientSecret, ): Pair<AccountObjects.Account?, NetworkingError?>` | [44](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L44) |
+| `CheckoutSessionsAPI.loadPaymentMethods` | fun | `fun loadPaymentMethods( accountId: String, secret: FrameCheckoutClientSecret, ): Pair<List<FrameObjects.PaymentMethod>?, NetworkingError?>` | [72](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L72) |
+| `CheckoutSessionsAPI.authorizationToken` | fun | `fun authorizationToken( accountId: String, secret: FrameCheckoutClientSecret, ): String? = tokenForRead(accountId, secret).first` | [89](FrameSDK/src/main/java/com/framepayments/framesdk/checkoutsessions/CheckoutSessionsAPI.kt#L89) |
 
 </details>
 
@@ -1629,11 +1630,11 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 |--------|------|-------------|------|
 | `SiftManager` | object | `object SiftManager` | [12](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L12) |
 | `SiftManager.userId` | var | `var userId: String =` | [13](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L13) |
-| `SiftManager.collectLoginEvent` | fun | `fun collectLoginEvent(customerId: String, email: String)` | [15](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L15) |
-| `SiftManager.initializeSift` | fun | `fun initializeSift()` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L26) |
-| `SiftManager.getPublicIp` | fun | `fun getPublicIp(): String?` | [65](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L65) |
-| `SiftManager.getIPAddress` | fun | `fun getIPAddress(): String? = getPublicIp()` | [82](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L82) |
-| `SiftManager.getCachedIPAddress` | fun | `fun getCachedIPAddress(): String? = cachedPublicIp` | [91](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L91) |
+| `SiftManager.collectLoginEvent` | fun | `fun collectLoginEvent(customerId: String, email: String, overwrite: Boolean = true)` | [26](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L26) |
+| `SiftManager.initializeSift` | fun | `fun initializeSift()` | [42](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L42) |
+| `SiftManager.getPublicIp` | fun | `fun getPublicIp(): String?` | [81](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L81) |
+| `SiftManager.getIPAddress` | fun | `fun getIPAddress(): String? = getPublicIp()` | [98](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L98) |
+| `SiftManager.getCachedIPAddress` | fun | `fun getCachedIPAddress(): String? = cachedPublicIp` | [107](FrameSDK/src/main/java/com/framepayments/framesdk/managers/SiftManager.kt#L107) |
 
 </details>
 
