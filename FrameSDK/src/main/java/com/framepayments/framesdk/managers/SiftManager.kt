@@ -12,14 +12,30 @@ import java.io.InputStreamReader
 object SiftManager {
     var userId: String = ""
 
-    fun collectLoginEvent(customerId: String, email: String) {
-        try {
-            if (userId.isNotEmpty()) return
-            userId = customerId
-            Sift.setUserId(customerId)
-            Sift.collect()
-        } catch (e: Exception) {
-            // Sift may not be initialized in test environments
+    private val userIdLock = Any()
+
+    /**
+     * Associates a Sift user id. Prefer the account response's `sift_user_id` (identity id)
+     * over the Frame account id so device data and server payment events share one Sift user.
+     *
+     * @param customerId The Sift `$user_id` to attach.
+     * @param email Unused today; kept for call-site parity with iOS `$login` collection.
+     * @param overwrite When `false`, leaves an already-set user id alone (redundancy call sites).
+     */
+    @JvmOverloads
+    fun collectLoginEvent(customerId: String, email: String, overwrite: Boolean = true) {
+        synchronized(userIdLock) {
+            if (customerId.isEmpty()) return
+            if (userId == customerId) return
+            if (userId.isNotEmpty() && !overwrite) return
+            try {
+                Sift.setUserId(customerId)
+                Sift.collect()
+                userId = customerId
+            } catch (e: Exception) {
+                // Sift may not be initialized in test environments; still record intent.
+                userId = customerId
+            }
         }
     }
 

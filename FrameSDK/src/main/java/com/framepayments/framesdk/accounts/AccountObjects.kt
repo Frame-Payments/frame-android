@@ -185,6 +185,7 @@ object AccountObjects {
      * @property updated Unix timestamp of the last account update.
      * @property livemode `true` when the account exists in the live environment.
      * @property payoutPaymentMethodId The payment method elected as the account's payout destination.
+     * @property siftUserId Sift `$user_id` for this account. Prefer this over [id] when calling [com.framepayments.framesdk.managers.SiftManager.collectLoginEvent].
      */
     data class Account(
         val id: String?,
@@ -201,8 +202,13 @@ object AccountObjects {
         val updated: Int?,
         val livemode: Boolean?,
         // Trailing so positional constructors that omit it keep `created`/`updated`/`livemode` in place.
-        @SerializedName("payout_payment_method_id") val payoutPaymentMethodId: String? = null
-    )
+        @SerializedName("payout_payment_method_id") val payoutPaymentMethodId: String? = null,
+        @SerializedName("sift_user_id") val siftUserId: String? = null,
+    ) {
+        /** Sift `$user_id` when the API sent one; otherwise the account id. */
+        val siftAttributionId: String
+            get() = siftUserId?.takeIf { it.isNotEmpty() } ?: (id ?: "")
+    }
 
     /**
      * Represents a phone number verification attempt for an account.
