@@ -5,6 +5,7 @@ import com.framepayments.framesdk.FrameNetworking
 import com.framepayments.framesdk.FrameObjects
 import com.framepayments.framesdk.NetworkingError
 import com.framepayments.framesdk.accounts.AccountObjects
+import com.framepayments.framesdk.managers.SiftManager
 import com.framepayments.framesdk.transfersv2.TransferV2Money
 
 /**
@@ -50,7 +51,12 @@ object CheckoutSessionsAPI {
                 auth = FrameAuthMode.ClientSecret(token),
             )
             if (error != null) return@authorized Pair(null, error)
-            Pair(data?.let { FrameNetworking.parseResponse<CheckoutAccountPayload>(it)?.toAccount() }, null)
+            val account = data?.let { FrameNetworking.parseResponse<CheckoutAccountPayload>(it)?.toAccount() }
+            account?.let {
+                val email = it.profile?.individual?.email ?: it.profile?.business?.email ?: ""
+                SiftManager.collectLoginEvent(customerId = it.siftAttributionId, email = email)
+            }
+            Pair(account, null)
         }
     }
 

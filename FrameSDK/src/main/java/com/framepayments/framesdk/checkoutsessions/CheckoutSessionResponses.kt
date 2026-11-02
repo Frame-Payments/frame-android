@@ -39,6 +39,7 @@ data class CheckoutSession(
 internal data class CheckoutAccountPayload(
     val id: String?,
     @SerializedName("object") val accountObject: String?,
+    @SerializedName("sift_user_id") val siftUserId: String? = null,
     val profile: CheckoutAccountProfilePayload?,
 ) {
     fun toAccount(): AccountObjects.Account {
@@ -60,6 +61,7 @@ internal data class CheckoutAccountPayload(
             created = null,
             updated = null,
             livemode = null,
+            siftUserId = siftUserId,
         )
     }
 }
