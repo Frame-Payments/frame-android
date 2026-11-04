@@ -2,8 +2,9 @@ package com.framepayments.framesdk.fingerprint
 
 import android.content.Context
 import android.util.Log
-import com.fingerprintjs.android.fpjs_pro.Configuration
-import com.fingerprintjs.android.fpjs_pro.FingerprintJSFactory
+import com.fingerprint.android.Configuration
+import com.fingerprint.android.Fingerprint
+import com.fingerprint.android.FingerprintFactory
 import com.framepayments.framesdk.configurations.ConfigurationAPI
 import com.framepayments.framesdk.configurations.ConfigurationResponses
 import com.framepayments.framesdk.configurations.SecureConfigurationStorage
@@ -27,14 +28,9 @@ object FingerprintCapability {
  * behaviour toggles are exposed here.
  */
 object FingerprintConfig {
-    /**
-     * Whether to request extended response format from Fingerprint.
-     *
-     * Forced on regardless of this setting when the configuration API serves a sealed key,
-     * since the sealed result is only present on the extended response.
-     */
+    /** Whether Fingerprint is permitted to use device location data when generating a fingerprint. */
     @JvmStatic
-    var extendedResponseFormat: Boolean = false
+    var allowUseOfLocationData: Boolean = false
 }
 
 /**
@@ -60,7 +56,7 @@ data class FingerprintIdentification(
 
 object FingerprintManager {
     @Volatile
-    private var client: com.fingerprintjs.android.fpjs_pro.FingerprintJS? = null
+    private var client: Fingerprint? = null
 
     /**
      * Fetches the Fingerprint configuration from the Frame API, falling back to the
@@ -94,7 +90,7 @@ object FingerprintManager {
 
     private fun configuredClient(
         context: Context,
-        completion: (com.fingerprintjs.android.fpjs_pro.FingerprintJS?) -> Unit
+        completion: (Fingerprint?) -> Unit
     ) {
         val existing = client
         if (existing != null) {
@@ -110,23 +106,20 @@ object FingerprintManager {
                 return@fetchConfiguration
             }
 
-            // A sealed key forces the extended format on regardless of the integrator's setting.
-            // Left to the public flag — which defaults to off — sealedResult comes back null for
-            // every request and the session silently posts nothing to identify the device with.
             val configuration = Configuration(
                 apiKey = apiKey,
                 region = region(config.region),
-                extendedResponseFormat = config.isSealed || FingerprintConfig.extendedResponseFormat
+                allowUseOfLocationData = FingerprintConfig.allowUseOfLocationData
             )
 
-            val instance = FingerprintJSFactory(context.applicationContext).createInstance(configuration)
+            val instance = FingerprintFactory(context.applicationContext).createInstance(configuration)
             client = instance
             completion(instance)
         }
     }
 
     /**
-     * Default request timeout for [getVisitorId]. The FingerprintPro SDK treats `0`
+     * Default request timeout for [getVisitorId]. The Fingerprint SDK treats `0`
      * as "no timeout" and keeps the callback pending indefinitely on a slow / blocked
      * device, which stalls every downstream caller that awaits the visitorId. 3000ms
      * is comfortably above a healthy device's typical fingerprint time (~500-1500ms)
@@ -152,8 +145,7 @@ object FingerprintManager {
 
     /**
      * Asks Fingerprint to identify this device, returning both the visitor id and the sealed
-     * result (present only once the environment serves a sealed key with the extended
-     * response format).
+     * result (present only once the environment serves a sealed key).
      *
      * The result is never cached by this call: the API rejects a sealed payload stamped
      * outside a ten-minute window in either direction, so every request that needs one has to
@@ -178,12 +170,17 @@ object FingerprintManager {
             fpClient.getVisitorId(
                 timeoutMillis = timeoutMillis ?: DEFAULT_GET_VISITOR_ID_TIMEOUT_MS,
                 listener = { response ->
-                    completion(FingerprintIdentification(visitorId = response.visitorId, sealedResult = response.sealedResult))
+                    completion(
+                        FingerprintIdentification(
+                            visitorId = response.visitorId.orEmpty(),
+                            sealedResult = response.sealedResult
+                        )
+                    )
                 },
                 errorListener = { error ->
                     Log.e(
                         "FingerprintManager",
-                        "Fingerprint getVisitorId failed: ${error::class.simpleName} — ${error.description} (requestId=${error.requestId})"
+                        "Fingerprint getVisitorId failed: ${error::class.simpleName} — ${error.description} (eventId=${error.eventId})"
                     )
                     completion(null)
                 }

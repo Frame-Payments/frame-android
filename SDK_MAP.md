@@ -1394,19 +1394,19 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 
 | Symbol | Kind | Declaration | Line |
 |--------|------|-------------|------|
-| `FingerprintCapability` | object | `object FingerprintCapability` | [14](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L14) |
-| `FingerprintCapability.HEADER` | val | `val HEADER =` | [16](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L16) |
-| `FingerprintCapability.SEALED` | val | `val SEALED =` | [19](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L19) |
-| `FingerprintConfig` | object | `object FingerprintConfig` | [29](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L29) |
-| `FingerprintConfig.extendedResponseFormat` | var | `var extendedResponseFormat: Boolean = false` | [37](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L37) |
-| `FingerprintIdentification` | data class | `data class FingerprintIdentification(` | [52](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L52) |
-| `FingerprintIdentification.visitorId` | val | `val visitorId: String,` | [53](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L53) |
-| `FingerprintIdentification.sealedResult` | val | `val sealedResult: String?` | [54](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L54) |
-| `FingerprintManager` | object | `object FingerprintManager` | [61](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L61) |
-| `FingerprintManager.DEFAULT_GET_VISITOR_ID_TIMEOUT_MS` | val | `val DEFAULT_GET_VISITOR_ID_TIMEOUT_MS: Int = 3000` | [136](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L136) |
-| `FingerprintManager.getVisitorId` | fun | `fun getVisitorId( context: Context, timeoutMillis: Int? = null, completion: (visitorId: String?) -> Unit )` | [145](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L145) |
-| `FingerprintManager.identify` | fun | `fun identify( context: Context, timeoutMillis: Int? = null, completion: (FingerprintIdentification?) -> Unit )` | [166](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L166) |
-| `FingerprintManager.identify` | fun | `fun identify(context: Context, timeoutMillis: Int? = null): FingerprintIdentification? =` | [195](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L195) |
+| `FingerprintCapability` | object | `object FingerprintCapability` | [15](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L15) |
+| `FingerprintCapability.HEADER` | val | `val HEADER =` | [17](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L17) |
+| `FingerprintCapability.SEALED` | val | `val SEALED =` | [20](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L20) |
+| `FingerprintConfig` | object | `object FingerprintConfig` | [30](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L30) |
+| `FingerprintConfig.allowUseOfLocationData` | var | `var allowUseOfLocationData: Boolean = false` | [33](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L33) |
+| `FingerprintIdentification` | data class | `data class FingerprintIdentification(` | [48](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L48) |
+| `FingerprintIdentification.visitorId` | val | `val visitorId: String,` | [49](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L49) |
+| `FingerprintIdentification.sealedResult` | val | `val sealedResult: String?` | [50](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L50) |
+| `FingerprintManager` | object | `object FingerprintManager` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L57) |
+| `FingerprintManager.DEFAULT_GET_VISITOR_ID_TIMEOUT_MS` | val | `val DEFAULT_GET_VISITOR_ID_TIMEOUT_MS: Int = 3000` | [129](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L129) |
+| `FingerprintManager.getVisitorId` | fun | `fun getVisitorId( context: Context, timeoutMillis: Int? = null, completion: (visitorId: String?) -> Unit )` | [138](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L138) |
+| `FingerprintManager.identify` | fun | `fun identify( context: Context, timeoutMillis: Int? = null, completion: (FingerprintIdentification?) -> Unit )` | [158](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L158) |
+| `FingerprintManager.identify` | fun | `fun identify(context: Context, timeoutMillis: Int? = null): FingerprintIdentification? =` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L192) |
 
 </details>
 
