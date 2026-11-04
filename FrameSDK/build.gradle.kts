@@ -61,7 +61,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.androidx.security.crypto)
     implementation(libs.kotlin.reflect)
-    implementation("com.fingerprint.android:pro:2.13.1")
+    implementation("com.fingerprint.android:sdk:4.2.0")
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver)
     testImplementation(libs.robolectric)
