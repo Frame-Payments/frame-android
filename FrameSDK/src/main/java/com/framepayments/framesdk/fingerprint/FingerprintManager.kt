@@ -140,7 +140,9 @@ object FingerprintManager {
         timeoutMillis: Int? = null,
         completion: (visitorId: String?) -> Unit
     ) {
-        identify(context, timeoutMillis) { identification -> completion(identification?.visitorId) }
+        identify(context, timeoutMillis) { identification ->
+            completion(identification?.visitorId?.takeIf { it.isNotEmpty() })
+        }
     }
 
     /**
