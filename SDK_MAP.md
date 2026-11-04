@@ -1405,8 +1405,8 @@ Core SDK: networking for every Frame API resource, account events, Sonar fraud s
 | `FingerprintManager` | object | `object FingerprintManager` | [57](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L57) |
 | `FingerprintManager.DEFAULT_GET_VISITOR_ID_TIMEOUT_MS` | val | `val DEFAULT_GET_VISITOR_ID_TIMEOUT_MS: Int = 3000` | [129](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L129) |
 | `FingerprintManager.getVisitorId` | fun | `fun getVisitorId( context: Context, timeoutMillis: Int? = null, completion: (visitorId: String?) -> Unit )` | [138](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L138) |
-| `FingerprintManager.identify` | fun | `fun identify( context: Context, timeoutMillis: Int? = null, completion: (FingerprintIdentification?) -> Unit )` | [158](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L158) |
-| `FingerprintManager.identify` | fun | `fun identify(context: Context, timeoutMillis: Int? = null): FingerprintIdentification? =` | [192](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L192) |
+| `FingerprintManager.identify` | fun | `fun identify( context: Context, timeoutMillis: Int? = null, completion: (FingerprintIdentification?) -> Unit )` | [160](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L160) |
+| `FingerprintManager.identify` | fun | `fun identify(context: Context, timeoutMillis: Int? = null): FingerprintIdentification? =` | [194](FrameSDK/src/main/java/com/framepayments/framesdk/fingerprint/FingerprintManager.kt#L194) |
 
 </details>
 
